@@ -111,35 +111,17 @@ async fn main() {
   let mut sigquit = signal::unix::signal(SignalKind::interrupt()).expect("SIGQUIT stream failed");
 
   select! {
-        _ = sigterm.recv() => {
-           cancellation.cancel();
-            drop(tx);
+    _ = sigterm.recv() => { info!("SIGTERM signal received.");}
+    _ = sigquit.recv() => { info!("SIGQUIT signal received.");}
+    _ = sigint.recv() => { info!("SIGINT signal received.");}
+  }
 
-            info!("Shutting down services");
-            _ = poll_service_handle.await;
-            _ = store_service_handle.await;
-            info!("Shutting http server");
-            server_handle.abort();
-        }
-        _ = sigquit.recv() => {
-           cancellation.cancel();
-            drop(tx);
+  cancellation.cancel();
+  drop(tx);
 
-            info!("Shutting down services");
-            _ = poll_service_handle.await;
-            _ = store_service_handle.await;
-            info!("Shutting http server");
-            server_handle.abort();
-        }
-        _ = sigint.recv() => {
-            cancellation.cancel();
-            drop(tx);
-
-            info!("Shutting down services");
-            _ = poll_service_handle.await;
-            _ = store_service_handle.await;
-            info!("Shutting http server");
-            server_handle.abort();
-        }
-      };
+  info!("Shutting down services");
+  _ = poll_service_handle.await;
+  _ = store_service_handle.await;
+  info!("Shutting http server");
+  server_handle.abort();
 }
