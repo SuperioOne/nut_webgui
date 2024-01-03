@@ -40,7 +40,6 @@ export default class ConfirmationModal extends HTMLElement {
 
     this.#dialogElement = document.createElement("dialog");
     this.#dialogElement.className = "modal modal-bottom sm:modal-middle";
-    this.#dialogElement.id = crypto.randomUUID();
     this.#dialogElement.innerHTML = `
      <div class="modal-box">
         <h3 class="font-bold text-lg">${title}</h3>
