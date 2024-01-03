@@ -2,6 +2,7 @@ use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::time::Duration;
 use tokio::{select, spawn};
+use tokio::net::ToSocketAddrs;
 use tokio::sync::mpsc::Sender;
 use tokio::task::JoinHandle;
 use tokio::time::{sleep};
@@ -14,7 +15,7 @@ use crate::upsd_client::errors::{NutClientErrors};
 
 #[derive(Debug)]
 pub struct UpsPollerConfig {
-  pub address: SocketAddr,
+  pub address: String,
   pub poll_freq: Duration,
   pub write_channel: Sender<UpsUpdateMessage>,
   pub cancellation: CancellationToken,
@@ -37,8 +38,8 @@ pub fn ups_poller_service(config: UpsPollerConfig) -> JoinHandle<()> {
     } = config;
 
     let mut should_reconnect = false;
-    let mut client = UpsClient::create(address).await.expect("Cannot connect to the UPS daemon service.");
-    info!(message = "Connected to UPS daemon service.", address = address.to_string());
+    let mut client = UpsClient::create(&address).await.expect("Cannot connect to the UPS daemon service.");
+    info!(message = "Connected to UPS daemon service.", address = &address);
 
     while !cancellation.is_cancelled() {
       match update_ups_store(&mut client, &write_channel).await {
@@ -97,7 +98,7 @@ pub fn ups_poller_service(config: UpsPollerConfig) -> JoinHandle<()> {
   })
 }
 
-async fn update_ups_store(client: &mut UpsClient, channel: &Sender<UpsUpdateMessage>) -> Result<(), PollServiceError> {
+async fn update_ups_store<A>(client: &mut UpsClient<A>, channel: &Sender<UpsUpdateMessage>) -> Result<(), PollServiceError> where A: ToSocketAddrs {
   let ups_list = client.get_ups_list().await
     .map_err(|err| { PollServiceError::ClientError(err) })?;
 

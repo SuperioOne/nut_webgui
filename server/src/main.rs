@@ -8,6 +8,7 @@ use std::panic;
 use std::sync::Arc;
 use clap::Parser;
 use tokio::{signal};
+use tokio::signal::unix::SignalKind;
 use tokio::sync::{mpsc, RwLock};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_util::sync::CancellationToken;
@@ -28,8 +29,8 @@ struct ServerArgs {
   poll_freq: u64,
 
   /// NUT server address
-  #[arg(long, default_value_t = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)))]
-  upsd_addr: IpAddr,
+  #[arg(long, default_value_t = String::from("localhost"))]
+  upsd_addr: String,
 
   /// NUT server address
   #[arg(long, default_value_t = 3493)]
@@ -80,7 +81,7 @@ async fn main() {
   }));
 
   // spawn background services
-  let upsd_address = SocketAddr::new(args.upsd_addr, args.upsd_port);
+  let upsd_address = format!("{}:{}", args.upsd_addr, args.upsd_port);
   let poll_service_handle = ups_poller_service(UpsPollerConfig {
     address: upsd_address.clone(),
     poll_freq: Duration::from_secs(args.poll_freq),
@@ -104,6 +105,8 @@ async fn main() {
       user: args.upsd_user,
     },
   });
+
+
 
   match signal::ctrl_c().await {
     Ok(()) => {

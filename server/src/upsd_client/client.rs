@@ -1,22 +1,21 @@
-use std::net::SocketAddr;
 use std::ops::AddAssign;
 use tokio::io;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::TcpStream;
+use tokio::net::{TcpStream, ToSocketAddrs};
 use crate::{extract_error, is_error_response, is_list_end, is_ok_response};
 use crate::upsd_client::errors::NutClientErrors;
 use crate::upsd_client::{Cmd, Ups, Var};
 use crate::upsd_client::parser::{parse_cmd_list, parse_ups_list, parse_var_list};
 
 #[derive(Debug)]
-pub struct UpsClient {
-  address: SocketAddr,
+pub struct UpsClient<A> where A: ToSocketAddrs {
+  address: A,
   connection: TcpStream,
 }
 
 #[derive(Debug)]
-pub struct UpsAuthClient {
-  base_client: UpsClient,
+pub struct UpsAuthClient<A> where A: ToSocketAddrs {
+  base_client: UpsClient<A>,
   password: Box<str>,
   username: Box<str>,
 }
@@ -29,10 +28,10 @@ pub trait Client {
   async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<Var>, NutClientErrors>;
 }
 
-impl UpsClient {
-  pub async fn create(address: SocketAddr) -> Result<UpsClient, NutClientErrors>
+impl<A> UpsClient<A> where A: ToSocketAddrs {
+  pub async fn create(address: A) -> Result<UpsClient<A>, NutClientErrors>
   {
-    let connection = TcpStream::connect(address)
+    let connection = TcpStream::connect(&address)
       .await
       .map_err(|e| NutClientErrors::IOError(e.kind()))?;
 
@@ -65,7 +64,7 @@ impl UpsClient {
     Ok(BufReader::new(&mut self.connection))
   }
 
-  pub async fn with_auth(self, username: &str, password: &str) -> Result<UpsAuthClient, NutClientErrors> {
+  pub async fn with_auth(self, username: &str, password: &str) -> Result<UpsAuthClient<A>, NutClientErrors> {
     let auth_client = UpsAuthClient {
       base_client: self,
       username: Box::from(username),
@@ -76,7 +75,7 @@ impl UpsClient {
   }
 }
 
-impl Client for UpsClient {
+impl<A> Client for UpsClient<A> where A: ToSocketAddrs {
   async fn close(&mut self) -> Result<(), NutClientErrors>
   {
     self.connection.shutdown()
@@ -179,10 +178,10 @@ impl Client for UpsClient {
   }
 }
 
-impl UpsAuthClient {
-  pub async fn create(address: SocketAddr, username: &str, password: &str) -> Result<UpsAuthClient, NutClientErrors>
+impl<A> UpsAuthClient<A> where A: ToSocketAddrs {
+  pub async fn create(address: A, username: &str, password: &str) -> Result<UpsAuthClient<A>, NutClientErrors>
   {
-    let connection = TcpStream::connect(address)
+    let connection = TcpStream::connect(&address)
       .await
       .map_err(|e| NutClientErrors::IOError(e.kind()))?;
 
@@ -239,7 +238,7 @@ impl UpsAuthClient {
   }
 }
 
-impl Client for UpsAuthClient {
+impl<A> Client for UpsAuthClient<A> where A: ToSocketAddrs {
   async fn close(&mut self) -> Result<(), NutClientErrors> {
     self.base_client.close().await
   }

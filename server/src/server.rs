@@ -27,7 +27,7 @@ pub struct HttpServerConfig {
 pub(crate) struct UpsdConfig {
   pub pass: Option<String>,
   pub user: Option<String>,
-  pub addr: SocketAddr,
+  pub addr: String,
 }
 
 pub(crate) struct ServerState {
