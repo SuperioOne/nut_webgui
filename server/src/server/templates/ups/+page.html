@@ -1,0 +1,73 @@
+{% extends "../+layout.html" %}
+{% block head %}
+<script>
+  function trigger_confirmation(commandName) {
+    const target = event.target;
+    ConfirmationModal.create({
+      cancelText: "Cancel",
+      confirmText: "Run",
+      message: "Are you sure about the run the '" + commandName + "' command?",
+      title: "Command Confirmation"
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        target.dispatchEvent(new CustomEvent("command-confirmed"))
+      }
+    });
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="w-full flex flex-row justify-center sm:p-10 md:p-12">
+  <div class="text-base-content w-full max-w-7xl p-3 flex flex-col gap-6">
+    <div
+        hx-swap="innerHTML focus-scroll:false"
+        hx-get="/ups/{{title}}?section=info"
+        hx-trigger="every 10s"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-3 gap-y-3"
+    >
+      {{ info }}
+    </div>
+    <details class="collapse collapse-arrow bg-base-200">
+      <summary class="collapse-title text-xl font-black">Variables</summary>
+      <div
+          hx-get="/ups/{{title}}?section=var"
+          hx-trigger="every 10s"
+          hx-swap="innerHTML focus-scroll:false"
+          class="collapse-content p-3"
+      >
+        {{ variables }}
+      </div>
+    </details>
+    {% if commands.len() > 0 %}
+    <details class="collapse collapse-arrow bg-base-200">
+      <summary class="collapse-title text-xl font-black">Commands</summary>
+      <div class="collapse-content p-3">
+        <ul class="flex flex-col [&>li]:border-b-2 [&>li]:border-neutral-content/10 [&>li]:p-3 last:border-none">
+          {% for row in commands %}
+          <li class="last:border-none hover:bg-base-100 box-border">
+            <div class="flex flex-row justify-between">
+              <div>
+                {{ row }}
+              </div>
+              <button
+                  name="command"
+                  hx-post="/ups/{{title}}/command"
+                  hx-trigger="command-confirmed"
+                  hx-swap="none"
+                  value="{{row}}"
+                  class="btn btn-outline btn-primary"
+                  onclick="trigger_confirmation('{{row}}')"
+              >
+                Run
+              </button>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </details>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

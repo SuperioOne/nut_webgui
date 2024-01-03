@@ -1,0 +1,6 @@
+/* Register all required css files here*/
+@import "web_components/node_modules/@carbon/charts/styles.min.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

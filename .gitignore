@@ -1,0 +1,8 @@
+server/target/
+*/node_modules/
+/node_modules
+/server/static
+/.idea
+/.vscode
+*/dist
+/dist

@@ -1,0 +1,20 @@
+{
+  "private": true,
+  "name": "nut_webgui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "./start_dev_server.sh",
+    "watch": "tailwindcss -i ./style.css -o ./server/static/style.css --minify --watch",
+    "build": "tailwindcss -i ./style.css -o ./server/static/style.css --minify",
+    "build:release": "tailwindcss -i ./style.css -o ./dist/static/style.css --minify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "daisyui": "^4.5.0",
+    "tailwindcss": "^3.4.0"
+  }
+}
