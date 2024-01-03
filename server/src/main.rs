@@ -7,7 +7,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::panic;
 use std::sync::Arc;
 use clap::Parser;
-use tokio::{signal};
+use tokio::{select, signal};
 use tokio::signal::unix::SignalKind;
 use tokio::sync::{mpsc, RwLock};
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -106,21 +106,40 @@ async fn main() {
     },
   });
 
+  let mut sigterm = signal::unix::signal(SignalKind::terminate()).expect("SIGTERM stream failed");
+  let mut sigint = signal::unix::signal(SignalKind::interrupt()).expect("SIGINT stream failed");
+  let mut sigquit = signal::unix::signal(SignalKind::interrupt()).expect("SIGQUIT stream failed");
 
+  select! {
+        _ = sigterm.recv() => {
+           cancellation.cancel();
+            drop(tx);
 
-  match signal::ctrl_c().await {
-    Ok(()) => {
-      cancellation.cancel();
-      drop(tx);
+            info!("Shutting down services");
+            _ = poll_service_handle.await;
+            _ = store_service_handle.await;
+            info!("Shutting http server");
+            server_handle.abort();
+        }
+        _ = sigquit.recv() => {
+           cancellation.cancel();
+            drop(tx);
 
-      info!("Shutting down services");
-      _ = poll_service_handle.await;
-      _ = store_service_handle.await;
-      info!("Shutting http server");
-      server_handle.abort();
-    }
-    Err(err) => {
-      error!("Unable to listen for shutdown signal: {}", err);
-    }
-  }
+            info!("Shutting down services");
+            _ = poll_service_handle.await;
+            _ = store_service_handle.await;
+            info!("Shutting http server");
+            server_handle.abort();
+        }
+        _ = sigint.recv() => {
+            cancellation.cancel();
+            drop(tx);
+
+            info!("Shutting down services");
+            _ = poll_service_handle.await;
+            _ = store_service_handle.await;
+            info!("Shutting http server");
+            server_handle.abort();
+        }
+      };
 }
