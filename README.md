@@ -1,8 +1,8 @@
 # NUT Web GUI
 
-![version:0.1.0](https://img.shields.io/badge/version-0.1.0-red)
-![version:0.1.0](https://img.shields.io/badge/linux/amd64-0.1.0-green)
-![version:0.1.0](https://img.shields.io/badge/linux/arm64-0.1.0-green)
+[![version:0.1.0](https://img.shields.io/badge/version-0.1.0-red)](https://github.com/SuperioOne/nut_webgui/releases/tag/v0.1.0)
+[![version:0.1.0](https://img.shields.io/badge/linux/amd64-0.1.0-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
+[![version:0.1.0](https://img.shields.io/badge/linux/arm64-0.1.0-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
 
 Web-based simple interface for [Network UPS Tools](https://networkupstools.org/).
 
@@ -22,7 +22,11 @@ docker run --rm -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass 
 > man([upsd.users](https://networkupstools.org/docs/man/upsd.users.html)).
 
 ![DetailImage](docs/images/details.jpg)
+
+
 ![ListImage](docs/images/list.jpg)
+
+
 ![INSTCMDImage](docs/images/inst_cmd.jpg)
 
 ## Command-Line Arguments
