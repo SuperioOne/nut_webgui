@@ -1,6 +1,6 @@
 # STAGE: Web component and style builder
 ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM node:latest as UI_BUILDER
+FROM --platform=$TARGETPLATFORM docker.io/node:latest as UI_BUILDER
 RUN npm install -g pnpm
 WORKDIR /build_dir
 COPY ./package.json ./pnpm-lock.yaml ./style.css ./tailwind.config.js ./
@@ -12,7 +12,7 @@ RUN pnpm run build:release && pnpm run -C ./web_components build:release
 
 # STAGE: Server builder
 ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM rust:latest as SERVER_BUILDER
+FROM --platform=$TARGETPLATFORM docker.io/rust:latest as SERVER_BUILDER
 ARG RUST_TOOLCHAIN
 RUN apt-get update && \
     apt-get -y install ca-certificates cmake musl-tools libssl-dev openssl gcc-aarch64-linux-gnu clang llvm libc6-dev-arm64-cross && \
@@ -24,7 +24,7 @@ COPY ./server/.cargo ./.cargo
 RUN cargo build --target=$RUST_TOOLCHAIN -r
 
 # STAGE: Main image
-FROM --platform=$TARGETPLATFORM alpine:latest
+FROM --platform=$TARGETPLATFORM docker.io/alpine:latest
 ARG RUST_TOOLCHAIN
 RUN adduser -H -D -g "<nut_web>" nut_webgui
 COPY --chmod=750 --chown=root:nut_webgui --from=SERVER_BUILDER "./build_dir/target/$RUST_TOOLCHAIN/release/nut_webgui" /opt/nut_webgui/nut_webgui
