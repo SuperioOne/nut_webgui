@@ -12,13 +12,13 @@
   "author": "",
   "devDependencies": {
     "esbuild": "^0.19.11",
-    "htmx.org": "^1.9.10",
-    "vitest": "^1.1.1"
+    "vitest": "^1.2.1"
   },
   "dependencies": {
-    "@carbon/charts": "^1.13.17",
+    "@carbon/charts": "^1.13.23",
     "d3": "^7.8.5",
     "d3-cloud": "^1.2.7",
-    "d3-sankey": "^0.12.3"
+    "d3-sankey": "^0.12.3",
+    "htmx.org": "^1.9.10"
   }
 }

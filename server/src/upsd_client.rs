@@ -1,9 +1,9 @@
-use crate::upsd_client::protocol::{UpsVariable};
+use crate::upsd_client::protocol::UpsVariable;
 
-pub mod protocol;
+pub mod client;
 pub mod errors;
 mod parser;
-pub mod client;
+pub mod protocol;
 
 #[derive(Debug)]
 pub struct Ups {

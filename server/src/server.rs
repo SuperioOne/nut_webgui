@@ -1,21 +1,21 @@
-use std::net::{SocketAddr};
+use crate::ups_mem_store::UpsStore;
+use axum::routing::{get, post};
+use axum::Router;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use axum::Router;
-use axum::routing::{get, post};
 use tokio::spawn;
-use tokio::sync::{RwLock};
+use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
 use tower::ServiceBuilder;
-use tower_http::timeout::TimeoutLayer;
 use tower_http::services::ServeDir;
+use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::TraceLayer;
-use crate::ups_mem_store::UpsStore;
 
-pub mod utils;
-pub mod ups_info;
 pub mod notifications;
 mod routes;
+pub mod ups_info;
+pub mod utils;
 
 pub struct HttpServerConfig {
   pub listen: SocketAddr,
@@ -41,13 +41,10 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       store,
       listen,
       upsd_config,
-      static_dir
+      static_dir,
     } = config;
 
-    let state = Arc::new(ServerState {
-      store,
-      upsd_config,
-    });
+    let state = Arc::new(ServerState { store, upsd_config });
 
     let middleware = ServiceBuilder::new()
       .layer(TraceLayer::new_for_http())

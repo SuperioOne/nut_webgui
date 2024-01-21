@@ -1,7 +1,7 @@
-use std::collections::{HashMap};
-use std::collections::hash_map::Iter;
-use serde::{Serialize};
 use crate::upsd_client::protocol::UpsVariable;
+use serde::Serialize;
+use std::collections::hash_map::Iter;
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize)]
 pub struct UpsEntry {
@@ -12,9 +12,7 @@ pub struct UpsEntry {
 }
 
 #[derive(Debug)]
-pub(crate) struct UpsStore
-{
-  name: Box<str>,
+pub(crate) struct UpsStore {
   ups_list: HashMap<Box<str>, UpsEntry>,
 }
 
@@ -36,21 +34,19 @@ impl<'a> IntoIterator for &'a UpsStore {
 
   fn into_iter(self) -> Self::IntoIter {
     UpsStoreIterator {
-      iterator: self.ups_list.iter()
+      iterator: self.ups_list.iter(),
     }
   }
 }
 
 impl UpsStore {
-  pub fn new(name: &str) -> UpsStore {
+  pub fn new() -> UpsStore {
     UpsStore {
       ups_list: HashMap::new(),
-      name: Box::from(name),
     }
   }
 
-  pub fn create_or_update(&mut self, entry: UpsEntry)
-  {
+  pub fn create_or_update(&mut self, entry: UpsEntry) {
     let key = entry.name.clone();
     self.ups_list.insert(key, entry);
   }

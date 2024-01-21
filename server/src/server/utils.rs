@@ -1,17 +1,15 @@
-const ERROR_CLASS: &'static str = "error";
-const SUCCESS_CLASS: &'static str = "success";
-const WARNING_CLASS: &'static str = "warning";
+const ERROR_CLASS: &str = "error";
+const SUCCESS_CLASS: &str = "success";
+const WARNING_CLASS: &str = "warning";
 
 #[macro_export]
 macro_rules! htmx_redirect {
-    ($c:expr, $u:expr) => {
-      {
-        let code: axum::http::StatusCode = $c;
-        let uri: &str = $u;
-        let headers = axum::http::HeaderMap::new();
-        (code, [("HX-Redirect", uri)], headers)
-      }
-    };
+  ($c:expr, $u:expr) => {{
+    let code: axum::http::StatusCode = $c;
+    let uri: &str = $u;
+    let headers = axum::http::HeaderMap::new();
+    (code, [("HX-Redirect", uri)], headers)
+  }};
 }
 
 pub fn get_range_class(value: &u8, from: u8, to: u8) -> &'static str {
@@ -23,14 +21,12 @@ pub fn get_range_class(value: &u8, from: u8, to: u8) -> &'static str {
     } else {
       ERROR_CLASS
     }
+  } else if *value <= from {
+    SUCCESS_CLASS
+  } else if *value >= from && *value < to {
+    WARNING_CLASS
   } else {
-    if *value <= from {
-      SUCCESS_CLASS
-    } else if *value >= from && *value < to {
-      WARNING_CLASS
-    } else {
-      ERROR_CLASS
-    }
+    ERROR_CLASS
   }
 }
 
@@ -49,7 +45,7 @@ pub fn get_status_text(value: &str) -> &str {
     "RB" => "REPLACE BATTERY",
     "TEST" => "TESTING",
     "TRIM" => "HIGH VOLTAGE",
-    val => val
+    val => val,
   }
 }
 
@@ -70,6 +66,6 @@ pub fn get_status_class(value: &str) -> Option<&'static str> {
     "TEST" => Some(WARNING_CLASS),
     "TRIM" => Some(ERROR_CLASS),
     "BYPASS" => Some(WARNING_CLASS),
-    _ => None
+    _ => None,
   }
 }

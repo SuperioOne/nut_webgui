@@ -1,25 +1,25 @@
-mod ups_service;
 mod server;
-mod upsd_client;
 pub mod ups_mem_store;
+mod ups_service;
+mod upsd_client;
 
+use crate::server::{start_http_server, HttpServerConfig, UpsdConfig};
+use crate::ups_service::storage_service::{ups_storage_service, UpsStorageConfig};
+use crate::ups_service::ups_poll_service::{ups_poller_service, UpsPollerConfig};
+use crate::ups_service::UpsUpdateMessage;
+use clap::Parser;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::panic;
 use std::sync::Arc;
-use clap::Parser;
-use tokio::{select, signal};
 use tokio::signal::unix::SignalKind;
-use tokio::sync::{mpsc, RwLock};
 use tokio::sync::mpsc::{Receiver, Sender};
-use tokio_util::sync::CancellationToken;
+use tokio::sync::{mpsc, RwLock};
 use tokio::time::Duration;
+use tokio::{select, signal};
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info};
 use tracing_subscriber::fmt;
 use ups_mem_store::UpsStore;
-use crate::server::{HttpServerConfig, start_http_server, UpsdConfig};
-use crate::ups_service::{UpsUpdateMessage};
-use crate::ups_service::storage_service::{ups_storage_service, UpsStorageConfig};
-use crate::ups_service::ups_poll_service::{ups_poller_service, UpsPollerConfig};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -65,14 +65,12 @@ struct ServerArgs {
 async fn main() {
   let args = ServerArgs::parse();
 
-  fmt()
-    .with_max_level(args.log_level)
-    .init();
+  fmt().with_max_level(args.log_level).init();
   debug!("Server initialized with {:?}", &args);
 
   let cancellation = CancellationToken::new();
   let (tx, rx): (Sender<UpsUpdateMessage>, Receiver<UpsUpdateMessage>) = mpsc::channel(4096);
-  let store = UpsStore::new("default");
+  let store = UpsStore::new();
   let store_arc = Arc::new(RwLock::new(store));
 
   panic::set_hook(Box::new(|info| {

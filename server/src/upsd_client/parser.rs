@@ -1,77 +1,75 @@
-use crate::upsd_client::{Cmd, Ups, Var};
 use crate::upsd_client::errors::NutClientErrors;
-use crate::upsd_client::protocol::{UpsVariable};
+use crate::upsd_client::protocol::UpsVariable;
+use crate::upsd_client::{Cmd, Ups, Var};
 
 #[macro_export]
 macro_rules! is_error_response {
-  ( $x:expr ) => {
-    {
-      let value: &str = $x;
-      value.starts_with("ERR")
-    }
-  }
+  ( $x:expr ) => {{
+    let value: &str = $x;
+    value.starts_with("ERR")
+  }};
 }
 
 #[macro_export]
 macro_rules! is_ok_response {
-  ( $x:expr ) => { "OK\n" == $x }
+  ( $x:expr ) => {
+    "OK\n" == $x
+  };
 }
 
 #[macro_export]
 macro_rules! is_list_end {
-    ( $x:expr ) => {
-    {
-      let line: &str = $x;
-      line.starts_with("END LIST")
-    }
-  };
-  ( $x:expr, $t:expr ) => {
-    {
-      let line: &str = $x;
-      let end = format!("END LIST {}", $t);
-      line.starts_with(&end)
-    }
-  };
+  ( $x:expr ) => {{
+    let line: &str = $x;
+    line.starts_with("END LIST")
+  }};
+  ( $x:expr, $t:expr ) => {{
+    let line: &str = $x;
+    let end = format!("END LIST {}", $t);
+    line.starts_with(&end)
+  }};
 }
 
 #[macro_export]
 macro_rules! extract_error {
-    ($x:expr) => {
-      {
-        let line: &str = $x;
-        crate::upsd_client::protocol::UpsError::from(&line[2..])
-      }
-    };
+  ($x:expr) => {{
+    let line: &str = $x;
+    $crate::upsd_client::protocol::UpsError::from(&line[2..])
+  }};
 }
 
 macro_rules! check_list_start {
-  ( $x:expr, $t:expr ) => {
-    {
-      let value: Option<&str> = $x;
-      let list_type: &str = $t;
-      let list_start: &str = &format!("BEGIN LIST {}", list_type);
-      match value {
-        Some(line) if !line.starts_with(list_start) => {
-          let message = format!("{0} list does not start with correct line. Unexpected line received '{1}'.", list_type, line);
-          Err(NutClientErrors::ParseError(message))
-        }
-        Some(line) if is_error_response!(line) => {
-          let error = extract_error!(&line);
-          Err(NutClientErrors::ProtocolError(error))
-        }
-        None => {
-          let message = format!("{0} list does not start with correct line. Line is empty.", list_type);
-          Err(NutClientErrors::ParseError(message))
-        }
-        _ => Ok(())
+  ( $x:expr, $t:expr ) => {{
+    let value: Option<&str> = $x;
+    let list_type: &str = $t;
+    let list_start: &str = &format!("BEGIN LIST {}", list_type);
+    match value {
+      Some(line) if !line.starts_with(list_start) => {
+        let message = format!(
+          "{0} list does not start with correct line. Unexpected line received '{1}'.",
+          list_type, line
+        );
+        Err(NutClientErrors::ParseError(message))
       }
+      Some(line) if is_error_response!(line) => {
+        let error = extract_error!(&line);
+        Err(NutClientErrors::ProtocolError(error))
+      }
+      None => {
+        let message = format!(
+          "{0} list does not start with correct line. Line is empty.",
+          list_type
+        );
+        Err(NutClientErrors::ParseError(message))
+      }
+      _ => Ok(()),
     }
-  }
+  }};
 }
 
 pub(crate) fn parse_cmd_list(buffer: &str) -> Result<Vec<Cmd>, NutClientErrors> {
-  let mut line_iter = buffer.lines().into_iter();
-  _ = check_list_start!(line_iter.next(), "CMD")?;
+  let mut line_iter = buffer.lines();
+  check_list_start!(line_iter.next(), "CMD")?;
   let mut commands: Vec<Cmd> = vec![];
 
   while let Some(line) = line_iter.next() {
@@ -83,12 +81,14 @@ pub(crate) fn parse_cmd_list(buffer: &str) -> Result<Vec<Cmd>, NutClientErrors> 
     }
   }
 
-  Err(NutClientErrors::ParseError("Invalid command list structure. END LIST is missing.".into()))
+  Err(NutClientErrors::ParseError(
+    "Invalid command list structure. END LIST is missing.".into(),
+  ))
 }
 
 pub(crate) fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> {
-  let mut line_iter = buffer.lines().into_iter();
-  _ = check_list_start!(line_iter.next(), "UPS")?;
+  let mut line_iter = buffer.lines();
+  check_list_start!(line_iter.next(), "UPS")?;
   let mut commands: Vec<Ups> = vec![];
 
   while let Some(line) = line_iter.next() {
@@ -100,12 +100,14 @@ pub(crate) fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> 
     }
   }
 
-  Err(NutClientErrors::ParseError("Invalid command list structure. END LIST is missing.".into()))
+  Err(NutClientErrors::ParseError(
+    "Invalid command list structure. END LIST is missing.".into(),
+  ))
 }
 
 pub(crate) fn parse_var_list(buffer: &str) -> Result<Vec<Var>, NutClientErrors> {
-  let mut line_iter = buffer.lines().into_iter();
-  _ = check_list_start!(line_iter.next(), "VAR")?;
+  let mut line_iter = buffer.lines();
+  check_list_start!(line_iter.next(), "VAR")?;
   let mut variables: Vec<Var> = vec![];
 
   while let Some(line) = line_iter.next() {
@@ -117,13 +119,13 @@ pub(crate) fn parse_var_list(buffer: &str) -> Result<Vec<Var>, NutClientErrors> 
     }
   }
 
-  Err(NutClientErrors::ParseError("Invalid command list structure. END LIST is missing.".into()))
+  Err(NutClientErrors::ParseError(
+    "Invalid command list structure. END LIST is missing.".into(),
+  ))
 }
 
-pub(crate) fn parse_variable(line: &str) -> Result<Var, NutClientErrors>
-{
-  let words = shell_words::split(line)
-    .map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
+pub(crate) fn parse_variable(line: &str) -> Result<Var, NutClientErrors> {
+  let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
 
   match words.as_slice() {
     [op, ups_name, var_name, value_slice] if op == "VAR" => {
@@ -131,56 +133,51 @@ pub(crate) fn parse_variable(line: &str) -> Result<Var, NutClientErrors>
       let var = UpsVariable::try_from((var_name.as_str(), value_slice.as_str()))
         .map_err(|_| NutClientErrors::ParseError("Invalid value type.".into()))?;
 
-      Ok(Var {
-        var,
-        name,
-      })
+      Ok(Var { var, name })
     }
-    _ => Err(NutClientErrors::ParseError("Unexpected variable format".into()))
+    _ => Err(NutClientErrors::ParseError(
+      "Unexpected variable format".into(),
+    )),
   }
 }
 
-pub(crate) fn parse_cmd(line: &str) -> Result<Cmd, NutClientErrors>
-{
-  let words = shell_words::split(line)
-    .map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
+pub(crate) fn parse_cmd(line: &str) -> Result<Cmd, NutClientErrors> {
+  let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
 
   match words.as_slice() {
     [op, ups_name, cmd_name] if op == "CMD" => {
       let name = Box::from(ups_name.as_str());
       let cmd = Box::from(cmd_name.as_str());
 
-      Ok(Cmd {
-        name,
-        cmd,
-      })
+      Ok(Cmd { name, cmd })
     }
-    _ => Err(NutClientErrors::ParseError("Unexpected command format".into()))
+    _ => Err(NutClientErrors::ParseError(
+      "Unexpected command format".into(),
+    )),
   }
 }
 
-pub(crate) fn parse_ups(line: &str) -> Result<Ups, NutClientErrors>
-{
-  let words = shell_words::split(line)
-    .map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
+pub(crate) fn parse_ups(line: &str) -> Result<Ups, NutClientErrors> {
+  let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
 
   match words.as_slice() {
     [op, ups_name, ups_desc] if op == "UPS" => {
       let name = Box::from(ups_name.as_str());
       let desc = Box::from(ups_desc.as_str());
 
-      Ok(Ups {
-        name,
-        desc,
-      })
+      Ok(Ups { name, desc })
     }
-    _ => Err(NutClientErrors::ParseError("Unexpected UPS info format".into()))
+    _ => Err(NutClientErrors::ParseError(
+      "Unexpected UPS info format".into(),
+    )),
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::upsd_client::parser::{parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable};
+  use crate::upsd_client::parser::{
+    parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable,
+  };
   use crate::upsd_client::protocol::UpsVariable;
   use crate::upsd_client::{Cmd, Ups, Var};
 
@@ -188,8 +185,7 @@ mod tests {
   fn test_parse_variable_numeric() {
     let expected = UpsVariable::BatteryCharge(87);
 
-    if let Ok(Var { name, var }) = parse_variable("VAR bx1600mi battery.charge \"87\"")
-    {
+    if let Ok(Var { name, var }) = parse_variable("VAR bx1600mi battery.charge \"87\"") {
       assert_eq!("bx1600mi", name.as_ref());
       assert_eq!(expected, var);
     } else {
@@ -200,8 +196,7 @@ mod tests {
   #[test]
   fn test_parse_variable_text() {
     let expected = UpsVariable::DriverName("test value".into());
-    if let Ok(Var { name, var }) = parse_variable("VAR bx1600mi driver.name \"test value\"")
-    {
+    if let Ok(Var { name, var }) = parse_variable("VAR bx1600mi driver.name \"test value\"") {
       assert_eq!("bx1600mi", name.as_ref());
       assert_eq!(expected, var);
     } else {
@@ -211,8 +206,7 @@ mod tests {
 
   #[test]
   fn test_parse_cmd() {
-    if let Ok(Cmd { name, cmd }) = parse_cmd("CMD bx1600mi beeper.disable")
-    {
+    if let Ok(Cmd { name, cmd }) = parse_cmd("CMD bx1600mi beeper.disable") {
       assert_eq!("bx1600mi", name.as_ref());
       assert_eq!("beeper.disable", cmd.as_ref());
     } else {
@@ -222,8 +216,7 @@ mod tests {
 
   #[test]
   fn test_parse_ups() {
-    if let Ok(Ups { name, desc }) = parse_ups("UPS bx1600mi \"APC Back-UPS BX1600MI\"")
-    {
+    if let Ok(Ups { name, desc }) = parse_ups("UPS bx1600mi \"APC Back-UPS BX1600MI\"") {
       assert_eq!("bx1600mi", name.as_ref());
       assert_eq!("APC Back-UPS BX1600MI", desc.as_ref());
     } else {

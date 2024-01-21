@@ -8,9 +8,7 @@ struct NotFound<'a> {
 }
 
 pub async fn handler() -> impl IntoResponse {
-  let content = NotFound {
-    title: "Not Found"
-  };
+  let content = NotFound { title: "Not Found" };
 
   content.into_response()
 }

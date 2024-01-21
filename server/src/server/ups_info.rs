@@ -1,5 +1,5 @@
-use crate::upsd_client::protocol::{UpsVariable};
 use crate::ups_mem_store::UpsEntry;
+use crate::upsd_client::protocol::UpsVariable;
 
 #[derive(Debug)]
 pub struct UpsInfo {
@@ -28,12 +28,24 @@ impl UpsInfo {
 
     for variable in &ups.variables {
       match variable {
-        UpsVariable::UpsLoad(val) => { ups_info.load = Some(*val); }
-        UpsVariable::UpsPowerNominal(val) => { ups_info.power_nominal = Some(*val); }
-        UpsVariable::BatteryCharge(val) => { ups_info.charge = Some(*val); }
-        UpsVariable::BatteryLow(val) => { ups_info.charge_low = Some(*val); }
-        UpsVariable::BatteryRuntime(val) => { ups_info.runtime = Some(*val); }
-        UpsVariable::UpsStatus(val) => { ups_info.status = Some(val.to_string()); }
+        UpsVariable::UpsLoad(val) => {
+          ups_info.load = Some(*val);
+        }
+        UpsVariable::UpsPowerNominal(val) => {
+          ups_info.power_nominal = Some(*val);
+        }
+        UpsVariable::BatteryCharge(val) => {
+          ups_info.charge = Some(*val);
+        }
+        UpsVariable::BatteryLow(val) => {
+          ups_info.charge_low = Some(*val);
+        }
+        UpsVariable::BatteryRuntime(val) => {
+          ups_info.runtime = Some(*val);
+        }
+        UpsVariable::UpsStatus(val) => {
+          ups_info.status = Some(val.to_string());
+        }
         _ => {}
       }
     }

@@ -1,6 +1,6 @@
+use serde::Serialize;
 use std::fmt::{Display, Formatter};
 use std::num::ParseIntError;
-use serde::{Serialize};
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize)]
 pub enum UpsVariable {
@@ -48,8 +48,7 @@ pub enum UpsVariable {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Serialize)]
-pub enum UpsStatus
-{
+pub enum UpsStatus {
   Alarm,
   Boost,
   Bypass,
@@ -73,8 +72,7 @@ pub enum UpsStatus
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub(crate) enum UpsError
-{
+pub(crate) enum UpsError {
   // ACCESS-DENIED
   AccessDenied,
   // ALREADY-ATTACHED
@@ -148,13 +146,12 @@ impl From<&str> for UpsStatus {
       "TICK" => UpsStatus::Tick,
       "TOCK" => UpsStatus::Tock,
       "TRIM" => UpsStatus::Trim,
-      _ => UpsStatus::Unknown(String::from(value))
+      _ => UpsStatus::Unknown(String::from(value)),
     }
   }
 }
 
-impl Display for UpsStatus
-{
+impl Display for UpsStatus {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     let status_text = match self {
       UpsStatus::Alarm => "ALARM",
@@ -176,15 +173,14 @@ impl Display for UpsStatus
       UpsStatus::Tick => "TICK",
       UpsStatus::Tock => "TOCK",
       UpsStatus::Trim => "TRIM",
-      UpsStatus::Unknown(value) => value
+      UpsStatus::Unknown(value) => value,
     };
 
     f.write_str(status_text)
   }
 }
 
-impl Display for UpsError
-{
+impl Display for UpsError {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     let error_text = match self {
       UpsError::AccessDenied => "ACCESS-DENIED",
@@ -211,7 +207,7 @@ impl Display for UpsError
       UpsError::UnknownUps => "UNKNOWN-UPS",
       UpsError::UsernameRequired => "USERNAME-REQUIRED",
       UpsError::VarNotSupported => "VAR-NOT-SUPPORTED",
-      UpsError::Unknown(value) => value.as_str()
+      UpsError::Unknown(value) => value.as_str(),
     };
 
     f.write_str(error_text)
@@ -245,14 +241,13 @@ impl From<&str> for UpsError {
       "UNKNOWN-UPS" => UpsError::UnknownUps,
       "USERNAME-REQUIRED" => UpsError::UsernameRequired,
       "VAR-NOT-SUPPORTED" => UpsError::VarNotSupported,
-      _ => UpsError::Unknown(value.to_owned())
+      _ => UpsError::Unknown(value.to_owned()),
     }
   }
 }
 
 impl UpsVariable {
-  pub fn name(&self) -> String
-  {
+  pub fn name(&self) -> String {
     match self {
       UpsVariable::BatteryCharge(_) => String::from("battery.charge"),
       UpsVariable::BatteryLow(_) => String::from("battery.charge.low"),
@@ -294,7 +289,7 @@ impl UpsVariable {
       UpsVariable::UpsTimerShutdown(_) => String::from("ups.timer.shutdown"),
       UpsVariable::UpsTimerStart(_) => String::from("ups.timer.start"),
       UpsVariable::UpsVendorId(_) => String::from("ups.vendorid"),
-      UpsVariable::Generic(name, _) => name.clone()
+      UpsVariable::Generic(name, _) => name.clone(),
     }
   }
 
@@ -345,8 +340,7 @@ impl UpsVariable {
   }
 }
 
-impl TryFrom<(&str, &str)> for UpsVariable
-{
+impl TryFrom<(&str, &str)> for UpsVariable {
   type Error = ParseIntError;
   fn try_from(from_value: (&str, &str)) -> Result<Self, Self::Error> {
     let (name, value) = from_value;
@@ -364,7 +358,9 @@ impl TryFrom<(&str, &str)> for UpsVariable
       "driver.parameter.offdelay" => UpsVariable::DriverParameterOffDelay(value.parse::<i32>()?),
       "driver.parameter.ondelay" => UpsVariable::DriverParameterOnDelay(value.parse::<i32>()?),
       "driver.parameter.pollfreq" => UpsVariable::DriverParameterPollFreq(value.parse::<i32>()?),
-      "driver.parameter.pollinterval" => UpsVariable::DriverParameterPollInterval(value.parse::<i32>()?),
+      "driver.parameter.pollinterval" => {
+        UpsVariable::DriverParameterPollInterval(value.parse::<i32>()?)
+      }
       "driver.parameter.port" => UpsVariable::DriverParameterPort(value.into()),
       "driver.parameter.synchronous" => UpsVariable::DriverParameterSynchronous(value.into()),
       "driver.parameter.vendorid" => UpsVariable::DriverParameterVendorId(value.into()),
@@ -391,7 +387,7 @@ impl TryFrom<(&str, &str)> for UpsVariable
       "ups.timer.shutdown" => UpsVariable::UpsTimerShutdown(value.parse::<i32>()?),
       "ups.timer.start" => UpsVariable::UpsTimerStart(value.parse::<i32>()?),
       "ups.vendorid" => UpsVariable::UpsVendorId(value.into()),
-      param => UpsVariable::Generic(param.into(), value.into())
+      param => UpsVariable::Generic(param.into(), value.into()),
     };
 
     Ok(ups_variable)

@@ -1,6 +1,6 @@
+use askama::Template;
 use std::fmt::{Display, Formatter};
 use std::time::Duration;
-use askama::Template;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -42,7 +42,11 @@ impl NotificationTemplate {
   /// * `ttl`: Optional Time to live as milliseconds, Default is 3000ms.
   ///
   /// returns: NotificationTemplate
-  pub fn new(message: String, notification_type: Notification, ttl: Option<Duration>) -> NotificationTemplate {
+  pub fn new(
+    message: String,
+    notification_type: Notification,
+    ttl: Option<Duration>,
+  ) -> NotificationTemplate {
     let id = format!("notification_{}", Uuid::new_v4());
     let duration = ttl.unwrap_or(DEFAULT_DURATION);
 
@@ -54,4 +58,3 @@ impl NotificationTemplate {
     }
   }
 }
-
