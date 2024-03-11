@@ -1,4 +1,4 @@
-use crate::upsd_client::protocol::UpsError;
+use crate::upsd_client::ups_variables::UpsError;
 use std::io;
 
 #[derive(Debug)]

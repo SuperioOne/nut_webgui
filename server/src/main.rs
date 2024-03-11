@@ -1,9 +1,9 @@
-mod server;
+mod http_server;
 pub mod ups_mem_store;
 mod ups_service;
 mod upsd_client;
 
-use crate::server::{start_http_server, HttpServerConfig, UpsdConfig};
+use crate::http_server::{start_http_server, HttpServerConfig, UpsdConfig};
 use crate::ups_service::storage_service::{ups_storage_service, UpsStorageConfig};
 use crate::ups_service::ups_poll_service::{ups_poller_service, UpsPollerConfig};
 use crate::ups_service::UpsUpdateMessage;
@@ -72,6 +72,7 @@ async fn main() {
   let (tx, rx): (Sender<UpsUpdateMessage>, Receiver<UpsUpdateMessage>) = mpsc::channel(4096);
   let store = UpsStore::new();
   let store_arc = Arc::new(RwLock::new(store));
+  let upsd_address = format!("{}:{}", args.upsd_addr, args.upsd_port);
 
   panic::set_hook(Box::new(|info| {
     error!("Panic details: {}", info);
@@ -79,13 +80,13 @@ async fn main() {
   }));
 
   // spawn background services
-  let upsd_address = format!("{}:{}", args.upsd_addr, args.upsd_port);
   let poll_service_handle = ups_poller_service(UpsPollerConfig {
     address: upsd_address.clone(),
     poll_freq: Duration::from_secs(args.poll_freq),
-    write_channel: tx.clone(),
+    write_channel: tx,
     cancellation: cancellation.clone(),
   });
+
   let store_service_handle = ups_storage_service(UpsStorageConfig {
     read_channel: rx,
     cancellation: cancellation.clone(),
@@ -94,7 +95,7 @@ async fn main() {
 
   // http server
   let server_handle = start_http_server(HttpServerConfig {
-    store: store_arc.clone(),
+    store: store_arc,
     listen: SocketAddr::new(args.listen, args.port),
     static_dir: args.static_dir,
     upsd_config: UpsdConfig {
@@ -115,7 +116,6 @@ async fn main() {
   }
 
   cancellation.cancel();
-  drop(tx);
 
   info!("Shutting down services");
   _ = poll_service_handle.await;

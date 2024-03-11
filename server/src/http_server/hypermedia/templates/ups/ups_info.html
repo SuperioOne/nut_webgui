@@ -1,0 +1,101 @@
+<div class="flex flex-row justify-between col-span-full bg-base-200 rounded-lg p-6 items-center">
+  <div>
+    <h1 class="font-bold text-xl">
+      {{info.name}}
+    </h1>
+    <p class="font-light text-sm text-accent py-2">
+      {{info.desc}}
+    </p>
+  </div>
+  {% match info.status %}
+  {% when Some with (status) %}
+  <div class="font-bold text-xl text-center">
+    <h1>Status</h1>
+    {% let status_text = crate::http_server::hypermedia::utils::get_status_text(status) %}
+    {% match crate::http_server::hypermedia::utils::get_status_class(status) %}
+    {% when Some with (status_class) %}
+    <p>
+      <span class="text-{{status_class}}">{{ status_text }}</span>
+    </p>
+    {% when None %}
+    <p class="text-primary">{{ status_text }}</p>
+    {% endmatch %}
+  </div>
+  {% when None %}
+  {% endmatch %}
+</div>
+
+{% match info.load %}
+{% when Some with (load_val) %}
+<div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+  <div class="font-bold">Load</div>
+  <div class="flex flex-row justify-center flex-grow items-center">
+    {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load_val, 50, 75) %}
+    <chart-gauge
+        class="fill-{{load_level_class}}"
+        value="{{load_val}}"
+        height="200px"
+        width="100%"
+        theme="g90"
+    >
+    </chart-gauge>
+  </div>
+  {% match Self::get_power(self) %}
+  {% when Some with (power) %}
+  <div class="font-bold text-sm">Estimated power <span class="text-primary">{{power}} Watt</span></div>
+  {% when None %}
+  {% endmatch %}
+</div>
+{% when None %}
+{% endmatch %}
+
+{% match info.charge %}
+{% when Some with (charge) %}
+<div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+  <div class="font-bold">Battery</div>
+  <div class="flex flex-row justify-center flex-grow items-center">
+    {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60, 10) %}
+    <chart-gauge
+        class="fill-{{battery_level_class}}"
+        value="{{charge}}"
+        height="200px"
+        width="100%"
+        theme="g90"
+    >
+    </chart-gauge>
+  </div>
+  {% match info.runtime %}
+  {% when Some with (runtime) %}
+  <div class="font-bold text-sm">Remaining run time <span class="text-primary">{{ runtime }} seconds</span></div>
+  {% when None %}
+  {% endmatch %}
+  {% match info.charge_low %}
+  {% when Some with (charge_low) %}
+  <div class="font-bold text-sm">Shutdown threshold <span class="text-error">{{ charge_low }}%</span></div>
+  {% when None %}
+  {% endmatch %}
+</div>
+{% when None %}
+{% endmatch %}
+
+{% match info.input_voltage %}
+{% when Some with (input_v) %}
+<div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+  <div class="font-bold">Input Voltage</div>
+  <p class="text-center text-7xl p-6">
+    <span class="text-primary">{{input_v}}V</span>
+  </p>
+</div>
+{% when None %}
+{% endmatch %}
+
+{% match info.battery_voltage %}
+{% when Some with (batt_v) %}
+<div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+  <div class="font-bold">Battery Voltage</div>
+  <p class="text-center text-7xl p-6">
+    <span class="text-primary">{{batt_v}}V</span>
+  </p>
+</div>
+{% when None %}
+{% endmatch %}

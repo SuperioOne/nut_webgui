@@ -1,0 +1,32 @@
+# v0.2.0 - March 18, 2024
+-----------------------------------
+
+## Added
+
+- Basic JSON API.
+- Health probe endpoint at `/probes/health`.
+- Input and battery voltage details on the individual UPS info page.
+- Gzip/deflate compression support for HTTP responses.
+- Added logo to the UI header.
+- `hx-boost` support at the HTML body level.  
+
+## Changed
+
+- UI will show `ups.realpower` value if UPS is supports this variable; otherwise, power is calculated using the formula (`ups.realpower.nominal` * `ups.load` ) / 100.
+- All dependencies have been updated to their latest stable versions.
+
+# v0.1.1, January 21, 2024
+-----------------------------------
+
+## Added 
+
+- New icon and title names to make browsers tabs more distinguishable.
+
+## Changed
+
+- All dependencies are up-to-date, addressing [RUSTSEC-2024-0003](https://rustsec.org/advisories/RUSTSEC-2024-0003.html)
+
+## Fixed
+
+- Incorrect page sizing on mobile devices.
+- UPS path now routes to 404 page when requested UPS does not exists.

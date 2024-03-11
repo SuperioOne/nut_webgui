@@ -39,7 +39,7 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
           commands,
         };
 
-        store.write().await.create_or_update(entry);
+        store.write().await.put(entry);
       }
     }
 

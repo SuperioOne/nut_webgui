@@ -4,11 +4,11 @@ FROM --platform=${TARGETPLATFORM} docker.io/node:latest as UI_BUILDER
 RUN npm install -g pnpm
 WORKDIR /build_dir
 COPY ./package.json ./pnpm-lock.yaml ./style.css ./tailwind.config.js ./
-COPY ./web_components/package.json ./web_components/pnpm-lock.yaml ./web_components/
+COPY client/package.json ./web_components/pnpm-lock.yaml ./web_components/
 RUN pnpm install -r
 COPY ./server/src ./server/src
-COPY ./web_components/src ./web_components/src
-RUN pnpm run build:release && pnpm run -C ./web_components build:release
+COPY client/src ./web_components/src
+RUN pnpm run build:release && pnpm run -C ./client build:release
 COPY ./icon.svg ./dist/static/icon.svg
 
 # STAGE: Server builder
@@ -29,7 +29,18 @@ RUN mkdir /build_dir/output && \
 
 # STAGE: Main image
 ARG TARGETPLATFORM
+ARG VERSION_TAG
 ARG ALPINE_TAG
+LABEL org.opencontainers.image.authors="Timur Olur <pm@smdd.dev>"
+LABEL org.opencontainers.image.version="${VERSION_TAG}"
+LABEL org.opencontainers.image.source="https://github.com/SuperioOne/nut_webgui"
+LABEL org.opencontainers.image.url="https://github.com/SuperioOne/nut_webgui"
+LABEL org.opencontainers.image.documentation="https://raw.githubusercontent.com/SuperioOne/nut_webgui/master/README.md"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL org.opencontainers.image.title="NUT Web GUI"
+LABEL org.opencontainers.image.description="Light weight web interface for Network UPS Tools."
+LABEL org.opencontainers.image.vendor="Timur Olur"
+LABEL org.opencontainers.image.base.name="docker.io/alpine:${ALPINE_TAG}"
 FROM --platform=${TARGETPLATFORM} docker.io/alpine:${ALPINE_TAG}
 RUN adduser -H -D -g "<nut_web>" nut_webgui
 COPY --chmod=750 --chown=root:nut_webgui ./server_start.sh /opt/nut_webgui/server_start.sh

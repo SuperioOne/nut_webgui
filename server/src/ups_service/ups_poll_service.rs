@@ -46,6 +46,7 @@ pub fn ups_poller_service(config: UpsPollerConfig) -> JoinHandle<()> {
     let mut client = UpsClient::create(&address)
       .await
       .expect("Cannot connect to the UPS daemon service.");
+
     info!(
       message = "Connected to UPS daemon service.",
       address = &address

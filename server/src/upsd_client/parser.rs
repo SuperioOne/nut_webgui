@@ -1,5 +1,5 @@
 use crate::upsd_client::errors::NutClientErrors;
-use crate::upsd_client::protocol::UpsVariable;
+use crate::upsd_client::ups_variables::UpsVariable;
 use crate::upsd_client::{Cmd, Ups, Var};
 
 #[macro_export]
@@ -34,7 +34,7 @@ macro_rules! is_list_end {
 macro_rules! extract_error {
   ($x:expr) => {{
     let line: &str = $x;
-    $crate::upsd_client::protocol::UpsError::from(&line[2..])
+    $crate::upsd_client::ups_variables::UpsError::from(&line[2..])
   }};
 }
 
@@ -43,6 +43,7 @@ macro_rules! check_list_start {
     let value: Option<&str> = $x;
     let list_type: &str = $t;
     let list_start: &str = &format!("BEGIN LIST {}", list_type);
+    
     match value {
       Some(line) if !line.starts_with(list_start) => {
         let message = format!(
@@ -69,8 +70,9 @@ macro_rules! check_list_start {
 
 pub(crate) fn parse_cmd_list(buffer: &str) -> Result<Vec<Cmd>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  check_list_start!(line_iter.next(), "CMD")?;
   let mut commands: Vec<Cmd> = vec![];
+
+  check_list_start!(line_iter.next(), "CMD")?;
 
   while let Some(line) = line_iter.next() {
     if is_list_end!(line, "CMD") {
@@ -88,8 +90,9 @@ pub(crate) fn parse_cmd_list(buffer: &str) -> Result<Vec<Cmd>, NutClientErrors> 
 
 pub(crate) fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  check_list_start!(line_iter.next(), "UPS")?;
   let mut commands: Vec<Ups> = vec![];
+
+  check_list_start!(line_iter.next(), "UPS")?;
 
   while let Some(line) = line_iter.next() {
     if is_list_end!(line, "UPS") {
@@ -107,8 +110,9 @@ pub(crate) fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> 
 
 pub(crate) fn parse_var_list(buffer: &str) -> Result<Vec<Var>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  check_list_start!(line_iter.next(), "VAR")?;
   let mut variables: Vec<Var> = vec![];
+
+  check_list_start!(line_iter.next(), "VAR")?;
 
   while let Some(line) = line_iter.next() {
     if is_list_end!(line, "VAR") {
@@ -178,7 +182,7 @@ mod tests {
   use crate::upsd_client::parser::{
     parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable,
   };
-  use crate::upsd_client::protocol::UpsVariable;
+  use crate::upsd_client::ups_variables::UpsVariable;
   use crate::upsd_client::{Cmd, Ups, Var};
 
   #[test]

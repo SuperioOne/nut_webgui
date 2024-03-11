@@ -1,9 +1,9 @@
-use crate::upsd_client::protocol::UpsVariable;
+use crate::upsd_client::ups_variables::UpsVariable;
 use serde::Serialize;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug)]
 pub struct UpsEntry {
   pub name: Box<str>,
   pub desc: Box<str>,
@@ -46,7 +46,7 @@ impl UpsStore {
     }
   }
 
-  pub fn create_or_update(&mut self, entry: UpsEntry) {
+  pub fn put(&mut self, entry: UpsEntry) {
     let key = entry.name.clone();
     self.ups_list.insert(key, entry);
   }

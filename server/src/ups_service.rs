@@ -1,4 +1,4 @@
-use crate::upsd_client::protocol::UpsVariable;
+use crate::upsd_client::ups_variables::UpsVariable;
 
 pub mod storage_service;
 pub mod ups_poll_service;

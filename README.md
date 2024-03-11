@@ -1,8 +1,8 @@
 # NUT Web GUI
 
-[![version:0.1.1](https://img.shields.io/badge/version-0.1.1-red)](https://github.com/SuperioOne/nut_webgui/releases/tag/v0.1.1)
-[![version:0.1.1](https://img.shields.io/badge/linux/amd64-0.1.1-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
-[![version:0.1.1](https://img.shields.io/badge/linux/arm64-0.1.1-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
+[![version:0.1.1](https://img.shields.io/badge/version-0.2.0-red)](https://github.com/SuperioOne/nut_webgui/releases/tag/v0.2.0)
+[![version:0.1.1](https://img.shields.io/badge/linux/amd64-0.2.0-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
+[![version:0.1.1](https://img.shields.io/badge/linux/arm64-0.2.0-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
 
 Web-based simple interface for [Network UPS Tools](https://networkupstools.org/).
 
@@ -21,13 +21,11 @@ docker run --rm -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass 
 > In order to run `INSTCMD`, make sure the configured user has proper instcmds granted at `upsd.users`. See
 > man([upsd.users](https://networkupstools.org/docs/man/upsd.users.html)).
 
-![DetailImage](docs/images/details.jpg)
+![DetailImage](docs/images/details.webp)
 
+![ListImage](docs/images/list.webp)
 
-![ListImage](docs/images/list.jpg)
-
-
-![INSTCMDImage](docs/images/inst_cmd.jpg)
+![INSTCMDImage](docs/images/inst_cmd.webp)
 
 ## Command-Line Arguments
 
@@ -55,6 +53,16 @@ The following environment variables can be used to configure the application:
 * `LISTEN`: Specify the listen address for the HTTP server. Default is `0.0.0.0`.
 * `PORT`: Specify the port used by the HTTP server. Default is `9000`.
 * `LOG_LEVEL`: Specify the log level for the HTTP server. Default is `info`.
+
+## JSON Data API
+
+A simple JSON-based API is available for integration and automation purposes. For usage details
+see [JSON data API page.](./docs/json_api.md)
+
+## Probes
+
+The server offers a basic health probe at the `/probes/health` endpoint. This can be used as liveness or readiness
+checks in your systems.
 
 ## Examples
 

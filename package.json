@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "daisyui": "^4.6.0",
+    "daisyui": "^4.7.3",
     "tailwindcss": "^3.4.1"
   }
 }

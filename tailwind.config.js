@@ -2,7 +2,7 @@ import daisyui from "daisyui"
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./web_components/**/*.{html,js}", "./server/src/server/templates/**/*.html"],
+  content: ["./client/**/*.{html,js}", "./server/src/http_server/hypermedia/templates/**/*.html"],
   safelist: [
     {
       pattern: /(fill|text|progress|alert)-(success|error|warning|info)/
