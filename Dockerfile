@@ -4,10 +4,10 @@ FROM --platform=${TARGETPLATFORM} docker.io/node:latest as UI_BUILDER
 RUN npm install -g pnpm
 WORKDIR /build_dir
 COPY ./package.json ./pnpm-lock.yaml ./style.css ./tailwind.config.js ./
-COPY client/package.json ./web_components/pnpm-lock.yaml ./web_components/
+COPY client/package.json ./client/pnpm-lock.yaml ./client/
 RUN pnpm install -r
 COPY ./server/src ./server/src
-COPY client/src ./web_components/src
+COPY client/src ./client/src
 RUN pnpm run build:release && pnpm run -C ./client build:release
 COPY ./icon.svg ./dist/static/icon.svg
 
@@ -29,6 +29,8 @@ RUN mkdir /build_dir/output && \
 
 # STAGE: Main image
 ARG TARGETPLATFORM
+ARG ALPINE_TAG
+FROM --platform=${TARGETPLATFORM} docker.io/alpine:${ALPINE_TAG}
 ARG VERSION_TAG
 ARG ALPINE_TAG
 LABEL org.opencontainers.image.authors="Timur Olur <pm@smdd.dev>"
@@ -41,7 +43,6 @@ LABEL org.opencontainers.image.title="NUT Web GUI"
 LABEL org.opencontainers.image.description="Light weight web interface for Network UPS Tools."
 LABEL org.opencontainers.image.vendor="Timur Olur"
 LABEL org.opencontainers.image.base.name="docker.io/alpine:${ALPINE_TAG}"
-FROM --platform=${TARGETPLATFORM} docker.io/alpine:${ALPINE_TAG}
 RUN adduser -H -D -g "<nut_web>" nut_webgui
 COPY --chmod=750 --chown=root:nut_webgui ./server_start.sh /opt/nut_webgui/server_start.sh
 COPY --chmod=750 --chown=root:nut_webgui --from=SERVER_BUILDER ./build_dir/output/nut_webgui /opt/nut_webgui/nut_webgui

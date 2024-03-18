@@ -97,5 +97,16 @@ spec:
               memory: "128Mi"
           ports:
             - containerPort: 9000
+          livenessProbe:
+            httpGet:
+              path: /probes/health
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /probes/health
+              port: 9000
+
 ```
 

@@ -63,6 +63,7 @@ do
   -f Dockerfile \
   --build-arg RUST_TOOLCHAIN="${_TOOLCHAIN}" \
   --build-arg ALPINE_TAG="${ALPINE_TAG}" \
+  --build-arg VERSION_TAG="${VERSION_TAG}" \
   -t "${_IMAGE}"
 
   echo -e "${C_G}Container image '${_IMAGE}' built.${RST}";
