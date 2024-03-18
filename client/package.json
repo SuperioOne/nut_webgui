@@ -12,7 +12,7 @@
   "author": "",
   "devDependencies": {
     "esbuild": "^0.20.2",
-    "vitest": "^1.3.1"
+    "vitest": "^1.4.0"
   },
   "dependencies": {
     "@carbon/charts": "^1.15.3",

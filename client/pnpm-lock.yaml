@@ -9,7 +9,7 @@ dependencies:
     specifier: ^1.15.3
     version: 1.15.3(d3-cloud@1.2.7)(d3-sankey@0.12.3)(d3@7.9.0)
   d3:
-    specifier: ^7.8.5
+    specifier: ^7.9.0
     version: 7.9.0
   d3-cloud:
     specifier: ^1.2.7
@@ -23,10 +23,10 @@ dependencies:
 
 devDependencies:
   esbuild:
-    specifier: ^0.20.1
+    specifier: ^0.20.2
     version: 0.20.2
   vitest:
-    specifier: ^1.3.1
+    specifier: ^1.4.0
     version: 1.4.0
 
 packages:
