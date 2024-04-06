@@ -3,7 +3,7 @@
     <h1 class="font-bold text-xl">
       {{info.name}}
     </h1>
-    <p class="font-light text-sm text-accent py-2">
+    <p class="font-light text-sm text-secondary py-2">
       {{info.desc}}
     </p>
   </div>
@@ -31,18 +31,13 @@
   <div class="font-bold">Load</div>
   <div class="flex flex-row justify-center flex-grow items-center">
     {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load_val, 50, 75) %}
-    <chart-gauge
-        class="fill-{{load_level_class}}"
-        value="{{load_val}}"
-        height="200px"
-        width="100%"
-        theme="g90"
-    >
+    <chart-gauge class="fill-{{load_level_class}}" value="{{load_val}}" height="200px" width="100%" theme="g90">
     </chart-gauge>
   </div>
   {% match Self::get_power(self) %}
   {% when Some with (power) %}
-  <div class="font-bold text-sm">Estimated power <span class="text-primary">{{power}} Watt</span></div>
+  <div class=" font-bold text-sm">Estimated power <span class="text-primary">{{power}} Watt</span>
+  </div>
   {% when None %}
   {% endmatch %}
 </div>
@@ -55,13 +50,7 @@
   <div class="font-bold">Battery</div>
   <div class="flex flex-row justify-center flex-grow items-center">
     {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60, 10) %}
-    <chart-gauge
-        class="fill-{{battery_level_class}}"
-        value="{{charge}}"
-        height="200px"
-        width="100%"
-        theme="g90"
-    >
+    <chart-gauge class="fill-{{battery_level_class}}" value="{{charge}}" height="200px" width="100%" theme="g90">
     </chart-gauge>
   </div>
   {% match info.runtime %}

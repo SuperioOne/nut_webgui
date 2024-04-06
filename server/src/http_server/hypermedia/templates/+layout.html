@@ -1,31 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NUT Web - {{ title }}</title>
-  <link href="/static/style.css" rel="stylesheet">
-  <script src="/static/index.js" defer></script>
-  <link rel="icon" href="/static/icon.svg">
-  {% block head %}{% endblock %}
-</head>
-<body hx-boost="true">
-<header>
-  <div class="navbar bg-base-100">
-    <div class="flex-1">
-      <a class="btn btn-ghost text-xl" href="/">
-        <img width="32" height="32" src="/static/icon.svg" alt="icon">
-        NUT Web Monitor
-      </a>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUT Web - {{ title }}</title>
+    <link href="/static/style.css" rel="stylesheet">
+    <script src="/static/index.js" defer></script>
+    <link rel="icon" href="/static/icon.svg">
+    {% block head %}{% endblock %}
+  </head>
+  <body hx-boost="true">
+    <header>
+      <div class="navbar bg-base-100">
+        <div class="flex-1">
+          <a class="btn btn-ghost text-xl drop-shadow" href="/">
+            <img width="32" height="32" src="/static/icon.svg" alt="icon">
+            <span class="hidden sm:inline-block">
+              NUT Web Monitor
+            </span>
+          </a>
+        </div>
+        <div class="flex-none gap-2">
+          <div class="dropdown dropdown-end">
+            <div tabindex="0" role="button" class="btn m-1">
+              Theme
+              <svg width="12px" height="12px" class="h-2 w-2 fill-current opacity-60 inline-block" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 2048">
+                <path d="M1799 349l242 241-1017 1017L7 590l242-241 775 775 775-775z"></path>
+              </svg>
+            </div>
+            <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
+              <li><theme-selector theme-key="light" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Light">Light</theme-selector></li>
+              <li><theme-selector theme-key="dark" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Dark">Dark</theme-selector></li>
+              <li><div class="divider mb-0.5 mt-0.5"></div></li>
+              <li><theme-selector theme-key="autumn" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Autumn">Autumn</theme-selector></li>
+              <li><theme-selector theme-key="business" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Business">Business</theme-selector></li>
+              <li><theme-selector theme-key="cmyk" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Cmyk">Cmyk</theme-selector></li>
+              <li><theme-selector theme-key="corporate" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Corporate">Corporate</theme-selector></li>
+              <li><theme-selector theme-key="cupcake" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Cupcake">Cupcake</theme-selector></li>
+              <li><theme-selector theme-key="dim" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Dim">Dim</theme-selector></li>
+              <li><theme-selector theme-key="dracula" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Dracula">Dracula</theme-selector></li>
+              <li><theme-selector theme-key="emerald" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Emerald">Emerald</theme-selector></li>
+              <li><theme-selector theme-key="fantasy" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Fantasy">Fantasy</theme-selector></li>
+              <li><theme-selector theme-key="forest" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Forest">Forest</theme-selector></li>
+              <li><theme-selector theme-key="halloween" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Halloween">Halloween</theme-selector></li>
+              <li><theme-selector theme-key="lofi" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Lofi">Lofi</theme-selector></li>
+              <li><theme-selector theme-key="night" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Night">Night</theme-selector></li>
+              <li><theme-selector theme-key="nord" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Nord">Nord</theme-selector></li>
+              <li><theme-selector theme-key="sunset" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Sunset">Sunset</theme-selector></li>
+              <li><theme-selector theme-key="synthwave" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Synthwave">Synthwave</theme-selector></li>
+              <li><theme-selector theme-key="winter" class="btn btn-sm btn-block btn-ghost justify-start" aria-label="Winter">Winter</theme-selector></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div id="notifications" class="toast toast-end toast-bottom z-50 w-[200px] max-w-[200px]">
     </div>
-    <div class="flex-none gap-2">
-    </div>
-  </div>
-</header>
-<div id="notifications" class="toast toast-top z-50 w-[200px] max-w-[200px] pointer-events-none">
-</div>
-{% block content %}
-<p>Body content</p>
-{% endblock %}
-</body>
+    {% block content %}
+    <p>Body content</p>
+    {% endblock %}
+  </body>
 </html>

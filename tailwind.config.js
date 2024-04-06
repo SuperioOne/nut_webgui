@@ -1,18 +1,41 @@
-import daisyui from "daisyui"
+import daisyui from "daisyui";
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./client/**/*.{html,js}", "./server/src/http_server/hypermedia/templates/**/*.html"],
+  content: [
+    "./client/**/*.{html,js}",
+    "./server/src/http_server/hypermedia/templates/**/*.html",
+  ],
   safelist: [
     {
-      pattern: /(fill|text|progress|alert)-(success|error|warning|info)/
-    }
+      pattern: /(fill|text|progress|alert)-(success|error|warning|info)/,
+    },
   ],
   theme: {
     extend: {},
   },
   daisyui: {
-    themes: ["dark"], // false: only light + dark | true: all themes | array: specific themes like this ["light", "dark", "cupcake"]
+    themes: [
+      "light",
+      "dark",
+      "cupcake",
+      "emerald",
+      "corporate",
+      "synthwave",
+      "halloween",
+      "forest",
+      "lofi",
+      "fantasy",
+      "dracula",
+      "cmyk",
+      "autumn",
+      "business",
+      "night",
+      "winter",
+      "dim",
+      "nord",
+      "sunset",
+    ],
     darkTheme: "dark", // name of one of the included themes for dark mode
     base: true, // applies background color and foreground color for root element by default
     styled: true, // include daisyUI colors and design decisions for all components
@@ -22,4 +45,4 @@ export default {
     themeRoot: ":root", // The element that receives theme color CSS variables
   },
   plugins: [daisyui],
-}
+};

@@ -20,12 +20,17 @@ export default class ConfirmationModal extends HTMLElement {
     modal.trigger_confirm();
 
     return new Promise((resolve) => {
-      modal.addEventListener("close", (e) => {
-        resolve(e.detail === "default");
-        setTimeout(() => {
-          modal.remove();
-        });
-      }, {once: true});
+      modal.addEventListener(
+        "close",
+        (e) => {
+          setTimeout(() => {
+            modal.remove();
+          });
+
+          resolve(e.detail === "default");
+        },
+        { once: true },
+      );
     });
   }
 
@@ -38,7 +43,8 @@ export default class ConfirmationModal extends HTMLElement {
 
   connectedCallback() {
     const title = this.getAttribute("title") ?? "Confirmation";
-    const message = this.getAttribute("message") ?? "Are you confirm this action?";
+    const message =
+      this.getAttribute("message") ?? "Are you confirm this action?";
     const confirm_text = this.getAttribute("ok-text") ?? "Confirm";
     const cancel_text = this.getAttribute("cancel-text") ?? "Cancel";
 
@@ -57,11 +63,13 @@ export default class ConfirmationModal extends HTMLElement {
       </div>`;
 
     this.#dialog_element.addEventListener("close", (e) => {
-      this.dispatchEvent(new CustomEvent("close", {
-        composed: true,
-        bubbles: true,
-        detail: this.#dialog_element.returnValue
-      }));
+      this.dispatchEvent(
+        new CustomEvent("close", {
+          composed: true,
+          bubbles: true,
+          detail: this.#dialog_element.returnValue,
+        }),
+      );
     });
 
     this.replaceChildren(this.#dialog_element);
@@ -74,3 +82,4 @@ export default class ConfirmationModal extends HTMLElement {
 
 customElements.define("upsmon-confirm", ConfirmationModal);
 Reflect.set(self, "ConfirmationModal", ConfirmationModal);
+

@@ -1,4 +1,4 @@
-import {GaugeChart, GaugeTypes} from "@carbon/charts";
+import { GaugeChart, GaugeTypes } from "@carbon/charts";
 
 /**
  * @typedef {"value" | "delta"  | "height" | "width" | "theme" | "status" | "color"} AttributeKeys
@@ -6,10 +6,10 @@ import {GaugeChart, GaugeTypes} from "@carbon/charts";
 
 export default class ChartGauge extends HTMLElement {
   /** @type {GaugeChart} */
-  #chart_inst
+  #chart_inst;
 
   /** @type {HTMLDivElement} */
-  #base_div
+  #base_div;
 
   /** @type {AttributeKeys[]} */
   static observedAttributes = [
@@ -19,7 +19,7 @@ export default class ChartGauge extends HTMLElement {
     "width",
     "theme",
     "status",
-    "color"
+    "color",
   ];
 
   constructor() {
@@ -50,12 +50,12 @@ export default class ChartGauge extends HTMLElement {
       data: [
         {
           group: "value",
-          value: value_number
+          value: value_number,
         },
         {
           group: "delta",
-          value: delta_number
-        }
+          value: delta_number,
+        },
       ],
       options: {
         animations: true,
@@ -65,8 +65,8 @@ export default class ChartGauge extends HTMLElement {
         theme: theme,
         color: {
           scale: {
-            value: color
-          }
+            value: color,
+          },
         },
         gauge: {
           type: GaugeTypes.SEMI,
@@ -75,8 +75,8 @@ export default class ChartGauge extends HTMLElement {
         },
         toolbar: {
           enabled: false,
-        }
-      }
+        },
+      },
     });
   }
 
@@ -101,13 +101,13 @@ export default class ChartGauge extends HTMLElement {
 
     switch (name) {
       case "value":
-        const point = data.find(e => e.group === "value");
+        const point = data.find((e) => e.group === "value");
         if (point) {
           point.value = Number(newValue) ?? 0;
         }
         break;
       case "delta":
-        const delta = data.find(e => e.group === "delta");
+        const delta = data.find((e) => e.group === "delta");
         if (delta) {
           delta.value = Number(newValue) ?? 0;
         }
@@ -126,11 +126,11 @@ export default class ChartGauge extends HTMLElement {
           options.gauge.status = newValue;
         }
         break;
-      case "color" :
+      case "color":
         options.color = {
           scale: {
-            value: newValue
-          }
+            value: newValue,
+          },
         };
         break;
     }
@@ -140,3 +140,4 @@ export default class ChartGauge extends HTMLElement {
 }
 
 customElements.define("chart-gauge", ChartGauge);
+

@@ -1,9 +1,10 @@
 <div id="notifications" hx-swap-oob="afterbegin">
-  <upsmon-notification class="!grid-cols-none drop-shadow-lg" id="{{container_id}}" type="{{notification_type}}" ttl="{{ttl}}">
-    <div class="flex flex-col gap-3 px-2 text-gray-100 w-full">
+  <upsmon-notification class="!grid-cols-none drop-shadow-lg" id="{{container_id}}" type="{{notification_type}}"
+    ttl="{{ttl}}">
+    <div class="flex flex-col gap-3 px-2 text-{{notification_type}}-content w-full">
       <div class="flex flex-row justify-between items-center w-full">
         <span class="font-bold uppercase">
-         {{notification_type}}
+          {{notification_type}}
         </span>
         <button onclick="UpsMonNotification.dismiss('{{container_id}}')" class="btn btn-xs btn-ghost btn-circle">x
         </button>
