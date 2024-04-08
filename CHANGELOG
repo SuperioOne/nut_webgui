@@ -1,3 +1,14 @@
+# v0.2.1 - April 08, 2024
+-----------------------------------
+
+## Added
+
+- 18 additional theme options.
+
+## Changed
+
+- Updated all dependecies.
+
 # v0.2.0 - March 18, 2024
 -----------------------------------
 
@@ -8,7 +19,7 @@
 - Input and battery voltage details on the individual UPS info page.
 - Gzip/deflate compression support for HTTP responses.
 - Added logo to the UI header.
-- `hx-boost` support at the HTML body level.  
+- `hx-boost` support at the HTML body level.
 
 ## Changed
 
