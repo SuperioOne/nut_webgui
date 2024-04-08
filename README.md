@@ -1,8 +1,8 @@
 # NUT Web GUI
 
-[![version:0.1.1](https://img.shields.io/badge/version-0.2.0-red)](https://github.com/SuperioOne/nut_webgui/releases/tag/v0.2.0)
-[![version:0.1.1](https://img.shields.io/badge/linux/amd64-0.2.0-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
-[![version:0.1.1](https://img.shields.io/badge/linux/arm64-0.2.0-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
+[![version:0.2.1](https://img.shields.io/badge/version-0.2.1-red)](https://github.com/SuperioOne/nut_webgui/releases/tag/v0.2.1)
+[![version:0.2.1](https://img.shields.io/badge/linux/amd64-0.2.1-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
+[![version:0.2.1](https://img.shields.io/badge/linux/arm64-0.2.1-green)](https://github.com/SuperioOne/nut_webgui/pkgs/container/nut_webgui)
 
 Web-based simple interface for [Network UPS Tools](https://networkupstools.org/).
 
