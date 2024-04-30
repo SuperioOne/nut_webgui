@@ -13,7 +13,7 @@ use std::sync::Arc;
 #[derive(Template)]
 #[template(path = "ups/ups_info.html", ext = "html")]
 struct UpsInfoTemplate {
-  info: UpsInfo,
+  ups_info: UpsInfo,
 }
 
 #[derive(Template)]
@@ -33,7 +33,7 @@ struct UpsPageTemplate<'a> {
 
 impl UpsInfoTemplate {
   fn get_power(&self) -> Option<f64> {
-    match self.info {
+    match self.ups_info {
       UpsInfo {
         power: Some(curr_power),
         ..
@@ -70,7 +70,7 @@ where
 {
   fn from(value: T) -> Self {
     Self {
-      info: UpsInfo::from(value),
+      ups_info: UpsInfo::from(value),
     }
   }
 }

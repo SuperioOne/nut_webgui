@@ -15,6 +15,7 @@ pub struct UpsInfo {
   pub charge_low: Option<u8>,
   pub battery_voltage: Option<f64>,
   pub input_voltage: Option<f64>,
+  pub beeper_status: Option<bool>,
 }
 
 impl UpsInfo {
@@ -31,6 +32,7 @@ impl UpsInfo {
       input_voltage: None,
       power_nominal: None,
       power: None,
+      beeper_status: None,
     };
 
     for variable in &ups.variables {
@@ -61,6 +63,12 @@ impl UpsInfo {
         }
         UpsVariable::InputVoltage(val) => {
           ups_info.input_voltage = Some(*val);
+        }
+        UpsVariable::UpsBeeperStatus(val) => {
+          ups_info.beeper_status = match val.as_str() {
+            "enabled" => Some(true),
+            _ => Some(false),
+          };
         }
         _ => {}
       }

@@ -1,31 +1,54 @@
 <div class="flex flex-row justify-between col-span-full bg-base-200 rounded-lg p-6 items-center">
   <div>
     <h1 class="font-bold text-xl">
-      {{info.name}}
+      {{ups_info.name}}
     </h1>
     <p class="font-light text-sm text-secondary py-2">
-      {{info.desc}}
+      {{ups_info.desc}}
     </p>
   </div>
-  {% match info.status %}
-  {% when Some with (status) %}
-  <div class="font-bold text-xl text-center">
-    <h1>Status</h1>
-    {% let status_text = crate::http_server::hypermedia::utils::get_status_text(status) %}
-    {% match crate::http_server::hypermedia::utils::get_status_class(status) %}
-    {% when Some with (status_class) %}
-    <p>
-      <span class="text-{{status_class}}">{{ status_text }}</span>
-    </p>
+  <div class="flex flex-row gap-6 items-center">
+    {% match ups_info.status %}
+    {% when Some with (status) %}
+    <div class="font-bold text-xl text-center">
+      <h1>UPS Status</h1>
+      {% let status_text = crate::http_server::hypermedia::utils::get_status_text(status) %}
+      {% match crate::http_server::hypermedia::utils::get_status_class(status) %}
+      {% when Some with (status_class) %}
+      <p>
+        <span class="text-{{status_class}}">{{ status_text }}</span>
+      </p>
+      {% when None %}
+      <p class="text-primary">{{ status_text }}</p>
+      {% endmatch %}
+    </div>
     {% when None %}
-    <p class="text-primary">{{ status_text }}</p>
     {% endmatch %}
+
+    {% match ups_info.beeper_status %}
+    {% when Some with (true) %}
+    <div class="tooltip" data-tip="Beeper enabled">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+        class="w-8 h-8 text-success">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+      </svg>
+    </div>
+    {% when Some with (false) %}
+    <div class="tooltip" data-tip="Beeper disabled">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+        class="w-8 h-8 text-warning">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+      </svg>
+    </div>
+    {% when None %}
+    {% endmatch %}
+
   </div>
-  {% when None %}
-  {% endmatch %}
 </div>
 
-{% match info.load %}
+{% match ups_info.load %}
 {% when Some with (load_val) %}
 <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
   <div class="font-bold">Load</div>
@@ -44,7 +67,7 @@
 {% when None %}
 {% endmatch %}
 
-{% match info.charge %}
+{% match ups_info.charge %}
 {% when Some with (charge) %}
 <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
   <div class="font-bold">Battery</div>
@@ -53,12 +76,12 @@
     <chart-gauge class="fill-{{battery_level_class}}" value="{{charge}}" height="200px" width="100%" theme="g90">
     </chart-gauge>
   </div>
-  {% match info.runtime %}
+  {% match ups_info.runtime %}
   {% when Some with (runtime) %}
   <div class="font-bold text-sm">Remaining run time <span class="text-primary">{{ runtime }} seconds</span></div>
   {% when None %}
   {% endmatch %}
-  {% match info.charge_low %}
+  {% match ups_info.charge_low %}
   {% when Some with (charge_low) %}
   <div class="font-bold text-sm">Shutdown threshold <span class="text-error">{{ charge_low }}%</span></div>
   {% when None %}
@@ -67,7 +90,7 @@
 {% when None %}
 {% endmatch %}
 
-{% match info.input_voltage %}
+{% match ups_info.input_voltage %}
 {% when Some with (input_v) %}
 <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
   <div class="font-bold">Input Voltage</div>
@@ -78,7 +101,7 @@
 {% when None %}
 {% endmatch %}
 
-{% match info.battery_voltage %}
+{% match ups_info.battery_voltage %}
 {% when Some with (batt_v) %}
 <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
   <div class="font-bold">Battery Voltage</div>

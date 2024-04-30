@@ -48,7 +48,7 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
     let state = Arc::new(ServerState { store, upsd_config });
 
     let middleware = ServiceBuilder::new()
-      .layer(CompressionLayer::new().gzip(true).deflate(true))
+      .layer(CompressionLayer::new().br(true).gzip(true).deflate(true))
       .layer(TraceLayer::new_for_http())
       .layer(TimeoutLayer::new(Duration::from_secs(10)));
 
