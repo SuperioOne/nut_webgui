@@ -14,14 +14,15 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "esbuild": "^0.20.2",
+    "esbuild": "^0.21.5",
     "vitest": "^1.6.0"
   },
   "dependencies": {
-    "@carbon/charts": "^1.16.1",
+    "@carbon/charts": "^1.16.11",
     "d3": "^7.9.0",
     "d3-cloud": "^1.2.7",
     "d3-sankey": "^0.12.3",
-    "htmx.org": "2.0.0-beta4"
+    "htmx.org": "2.0.0",
+    "idiomorph": "^0.3.0"
   }
 }
