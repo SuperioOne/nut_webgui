@@ -5,23 +5,9 @@
 const LOCAL_STORAGE_KEY = "app_theme";
 const DATA_THEME_KEY = "data-theme";
 
-/** @type{() => void} **/
-export function load_local_theme(fallback) {
-  const os_theme = window.matchMedia("(prefers-color-scheme: dark)")?.matches
-    ? "dark"
-    : "light";
-
-  const theme = localStorage.getItem(LOCAL_STORAGE_KEY) ?? fallback ?? os_theme;
-
-  if (theme) {
-    document.documentElement.setAttribute(DATA_THEME_KEY, theme);
-  }
-}
-
 export class ThemeSelector extends HTMLElement {
   /** @type{ThemeSelectorAttributes[]} **/
   static observedAttributes = ["theme-key"];
-
   /** @type{string | null} **/
   #theme_value;
 
@@ -40,7 +26,12 @@ export class ThemeSelector extends HTMLElement {
     this.removeEventListener("click", this.update_theme);
   }
 
-  /** @type{(this:ThemeSelector, name: ThemeSelectorAttributes, old_value: string | null, new_value: string | null) -> void} **/
+  /**
+   * @param {ThemeSelectorAttributes} name
+   * @param {string | null} old_value
+   * @param {string | null} new_value
+   * @returns {void}
+   */
   attributeChangedCallback(name, old_value, new_value) {
     switch (name) {
       case "theme-key": {
@@ -54,7 +45,6 @@ export class ThemeSelector extends HTMLElement {
     }
   }
 
-  /** @type{(this:ThemeSelector, ev:MouseEvent) => void} **/
   update_theme = () => {
     if (this.#theme_value) {
       localStorage.setItem(LOCAL_STORAGE_KEY, this.#theme_value);

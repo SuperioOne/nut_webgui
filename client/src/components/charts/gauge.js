@@ -7,7 +7,7 @@ import styles from "@carbon/charts/styles.min.css";
  * @typedef {"value" | "height" | "width" | "theme" | "class" } AttributeKeys
  */
 
-export default class ChartGauge extends HTMLElement {
+export default class Gauge extends HTMLElement {
   /** @type {GaugeChart} */
   #chart;
 
@@ -111,4 +111,4 @@ export default class ChartGauge extends HTMLElement {
   }
 }
 
-customElements.define("chart-gauge", ChartGauge);
+customElements.define("nut-gauge", Gauge);

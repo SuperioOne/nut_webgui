@@ -5,9 +5,8 @@
 
 import htmx from "htmx.org/dist/htmx.esm.js";
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js";
-import { load_local_theme } from "./components/theme_selector.js";
 
-export * from "./components/charts/chart-gauge.js";
+export * from "./components/charts/gauge.js";
 export * from "./components/notification.js";
 export * from "./components/confirmation_modal.js";
 export * from "./components/theme_selector.js";
@@ -43,13 +42,3 @@ htmx.defineExtension("morph", {
 //     console.debug(details.detail);
 //   },
 // );
-
-window.addEventListener(
-  "DOMContentLoaded",
-  () => {
-    load_local_theme();
-  },
-  {
-    once: true,
-  },
-);

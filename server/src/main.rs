@@ -3,19 +3,29 @@ pub mod ups_mem_store;
 mod ups_service;
 mod upsd_client;
 
-use crate::http_server::{start_http_server, HttpServerConfig, UpsdConfig};
-use crate::ups_service::storage_service::{ups_storage_service, UpsStorageConfig};
-use crate::ups_service::ups_poll_service::{ups_poller_service, UpsPollerConfig};
-use crate::ups_service::UpsUpdateMessage;
+use crate::{
+  http_server::{start_http_server, HttpServerConfig, UpsdConfig},
+  ups_service::{
+    storage_service::{ups_storage_service, UpsStorageConfig},
+    ups_poll_service::{ups_poller_service, UpsPollerConfig},
+    UpsUpdateMessage,
+  },
+};
 use clap::Parser;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::panic;
-use std::sync::Arc;
-use tokio::signal::unix::SignalKind;
-use tokio::sync::mpsc::{Receiver, Sender};
-use tokio::sync::{mpsc, RwLock};
-use tokio::time::Duration;
-use tokio::{select, signal};
+use std::{
+  net::{IpAddr, Ipv4Addr, SocketAddr},
+  panic,
+  sync::Arc,
+};
+use tokio::{
+  select,
+  signal::{self, unix::SignalKind},
+  sync::{
+    mpsc::{self, Receiver, Sender},
+    RwLock,
+  },
+  time::Duration,
+};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info};
 use tracing_subscriber::fmt;

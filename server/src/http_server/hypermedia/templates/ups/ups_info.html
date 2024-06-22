@@ -49,8 +49,8 @@
     <div class="font-bold">Load</div>
     <div class="flex flex-row justify-center flex-grow items-center">
       {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load_val, 50, 75) %}
-      <chart-gauge class="fill-{{load_level_class}}" value="{{load_val}}" height="200px" width="100%" theme="g90">
-      </chart-gauge>
+      <nut-gauge class="fill-{{load_level_class}}" value="{{load_val}}" height="200px" width="100%" theme="g90">
+      </nut-gauge>
     </div>
     {% match ups_info.power %}
     {% when Some with (power) %}
@@ -68,8 +68,8 @@
     <div class="font-bold">Battery</div>
     <div class="flex flex-row justify-center flex-grow items-center">
       {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60, 10) %}
-      <chart-gauge class="fill-{{battery_level_class}}" value="{{charge}}" height="200px" width="100%" theme="g90">
-      </chart-gauge>
+      <nut-gauge class="fill-{{battery_level_class}}" value="{{charge}}" height="200px" width="100%" theme="g90">
+      </nut-gauge>
     </div>
     {% match ups_info.runtime %}
     {% when Some with (runtime) %}

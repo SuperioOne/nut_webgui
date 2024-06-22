@@ -1,13 +1,22 @@
 {%- import "icons.html" as icons -%}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NUT Web - {{ title }}</title>
+    <link href="/static/style.css" rel="preload" as="style">
+    <link href="/static/index.js" rel="preload" as="script">
     <link href="/static/style.css" rel="stylesheet">
     <link rel="icon" href="/static/icon.svg">
+    <script>
+        "use strict"
+        var o = window.matchMedia("(prefers-color-scheme: dark)");
+        var f = (o && o.matches && "dark") || "light";
+        var t = localStorage.getItem("app_theme") || f;
+        if (t) {document.documentElement.setAttribute("data-theme",t)}
+    </script>
     <script src="/static/index.js" defer></script>
     {% block head %}{% endblock head %}
 </head>
@@ -77,7 +86,7 @@
         </div>
     </header>
     <div id="notifications" class="toast toast-end toast-bottom z-50 w-[200px] max-w-[200px]"> </div>
-    <div id="page_body">
+    <div id="page_content">
         {% block content %}
         <p>Body content</p>
         {% endblock content %}
