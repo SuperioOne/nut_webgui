@@ -9,12 +9,17 @@
   "description": "Bundles all client side web components and dependencies.",
   "scripts": {
     "build:release": "esbuild ./src/index.js --bundle --outdir=../dist/static --target=firefox98,chrome86,safari15 --format=iife --minify",
-    "dev": "esbuild ./src/index.js --bundle --outdir=../server/static --target=firefox98,chrome86,safari15 --format=iife --watch=forever"
+    "dev": "esbuild ./src/index.js --bundle --outdir=../server/static --target=firefox98,chrome86,safari15 --format=iife --watch=forever",
+    "watch": "tailwindcss -i ./src/style.css -o ../server/static/style.css --minify --watch",
+    "build-css:release": "tailwindcss -i ./style.css -o ./dist/static/style.css --minify"
   },
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
+    "daisyui": "^4.12.2",
     "esbuild": "^0.21.5",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.5.2",
     "vitest": "^1.6.0"
   },
   "dependencies": {

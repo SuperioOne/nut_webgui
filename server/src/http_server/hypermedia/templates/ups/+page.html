@@ -1,26 +1,25 @@
 {% extends "../+layout.html" %}
+{%- import "icons.html" as icons -%}
 
-{% block content %}
+  {% block content %}
 <div class="w-full flex flex-row justify-center sm:p-10 md:p-12">
-  <div hx-ext="morph" class="text-base-content w-full max-w-7xl p-3 flex flex-col gap-6">
-    <div
-        hx-get="/ups/{{title}}?section=info"
-        hx-trigger="every 10s"
-        hx-swap="morph:innerHTML"
-        class="grid grid-cols-1 sm:grid-cols-2 gap-2 gap-y-2"
-    >
-      {{ info }}
+  <div class="text-base-content w-full max-w-7xl p-3 flex flex-col gap-6">
+    <div id="indicator" class="text-right w-full htmx-indicator cursor-default" >
+      <span class="loading loading-spinner loading-md cursor-default"></span>
+      <span class="text-sm cursor-default" >Refreshing</span>
     </div>
-    <details class="collapse collapse-arrow bg-base-200">
-      <summary class="collapse-title text-xl font-black">Variables</summary>
-      <div
-          hx-get="/ups/{{title}}?section=var"
-          hx-trigger="every 10s"
-          class="collapse-content p-3"
-      >
-        {{ variables }}
-      </div>
-    </details>
+
+    <div
+      hx-indicator="#indicator"
+      hx-get="/ups/{{title}}?section=info"
+      hx-trigger="every 10s"
+      hx-swap="morph:innerHTML"
+      class="flex flex-col gap-6"
+      hx-ext="morph"
+    >
+      {{ ups_info }}
+    </div>
+
     {% if commands.len() > 0 %}
     <details class="collapse collapse-arrow bg-base-200">
       <summary class="collapse-title text-xl font-black">Commands</summary>
@@ -33,25 +32,25 @@
                 {{ row }}
               </div>
               <button
-                  name="command"
-                  hx-post="/ups/{{title}}/command"
-                  hx-trigger="command-confirmed"
-                  hx-swap="none"
-                  value="{{row}}"
-                  class="btn btn-outline btn-primary"
-                  onClick="ConfirmationModal.create({
-                            cancelText: 'Cancel',
-                            confirmText: 'Run',
-                            message: 'Are you sure about the run the \'' + '{{row}}' + '\' command?',
-                            title: 'Command Confirmation'
-                          })
-                          .then((is_confirmed) => {
-                            if (is_confirmed) { this.dispatchEvent(new CustomEvent('command-confirmed')); }
-                          });"
+                name="command"
+                hx-post="/ups/{{title}}/command"
+                hx-trigger="command-confirmed"
+                hx-swap="none"
+                value="{{row}}"
+                class="btn btn-outline btn-primary"
+                onClick="ConfirmationModal.create({
+                cancelText: 'Cancel',
+                confirmText: 'Run',
+                message: 'Are you sure about the run the \'' + '{{row}}' + '\' command?',
+                title: 'Command Confirmation'
+                })
+                .then((is_confirmed) => {
+                if (is_confirmed) {
+                this.dispatchEvent(new CustomEvent('command-confirmed')); 
+                }
+                });"
               >
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-                </svg>
+                {% call icons::get_svg("play") %}
                 <span>Run</span>
               </button>
             </div>
@@ -63,4 +62,4 @@
     {% endif %}
   </div>
 </div>
-{% endblock %}
+{% endblock content %}

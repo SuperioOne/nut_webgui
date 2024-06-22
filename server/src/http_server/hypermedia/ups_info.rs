@@ -74,6 +74,16 @@ impl UpsInfo {
       }
     }
 
+    if let UpsInfo {
+      power_nominal: Some(pw),
+      load: Some(ld),
+      power: None,
+      ..
+    } = ups_info
+    {
+      ups_info.power = Some((pw * f64::from(ld)) / 100.0_f64);
+    };
+
     ups_info
   }
 }

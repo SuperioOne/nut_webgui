@@ -1,6 +1,8 @@
 import { GaugeChart, GaugeTypes } from "@carbon/charts";
 import styles from "@carbon/charts/styles.min.css";
 
+/** @import { GaugeChartOptions } from "@carbon/charts" **/
+
 /**
  * @typedef {"value" | "height" | "width" | "theme" | "class" } AttributeKeys
  */
@@ -73,7 +75,7 @@ export default class ChartGauge extends HTMLElement {
   attributeChangedCallback(name, old_value, new_value) {
     if (!this.#chart) return;
 
-    /** @type {import('@carbon/charts').GaugeChartOptions} */
+    /** @type{GaugeChartOptions} */
     const options = this.#chart.model.getOptions();
 
     switch (name) {

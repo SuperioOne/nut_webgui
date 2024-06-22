@@ -1,5 +1,4 @@
 use crate::upsd_client::ups_variables::UpsVariable;
-use serde::Serialize;
 use std::collections::hash_map::Iter;
 use std::collections::HashMap;
 

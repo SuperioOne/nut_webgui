@@ -8,6 +8,7 @@ macro_rules! htmx_redirect {
     let code: axum::http::StatusCode = $c;
     let uri: &str = $u;
     let headers = axum::http::HeaderMap::new();
+
     (code, [("HX-Redirect", uri)], headers)
   }};
 }

@@ -4,7 +4,7 @@ use std::num::{ParseFloatError, ParseIntError};
 
 // https://raw.githubusercontent.com/networkupstools/nut/7b225f5291da7fb98003932ffda4e99deb7f23d3/data/cmdvartab
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum UpsVariable {
   BatteryCharge(u8),
   BatteryLow(u8),

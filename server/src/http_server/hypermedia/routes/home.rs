@@ -13,7 +13,7 @@ struct UpsTableTemplate {
 }
 
 #[derive(Deserialize)]
-pub struct HomeQuery {
+pub struct HomeFragmentQuery {
   section: Option<String>,
 }
 
@@ -25,7 +25,7 @@ struct HomeTemplate {
 }
 
 pub async fn get(
-  query: Query<HomeQuery>,
+  query: Query<HomeFragmentQuery>,
   State(state): State<Arc<ServerState>>,
 ) -> impl IntoResponse {
   let ups_list: Vec<UpsInfo> = state

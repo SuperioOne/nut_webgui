@@ -35,6 +35,15 @@ htmx.defineExtension("morph", {
   },
 });
 
+// document.body.addEventListener(
+//   "htmx:sendError",
+//   (
+//     /** @type{CustomEvent<{elt: Element; target: Element; requestConfig: any; xhr: XMLHttpRequest}>} **/ details,
+//   ) => {
+//     console.debug(details.detail);
+//   },
+// );
+
 window.addEventListener(
   "DOMContentLoaded",
   () => {
