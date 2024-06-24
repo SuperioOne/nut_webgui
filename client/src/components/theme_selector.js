@@ -5,7 +5,7 @@
 const LOCAL_STORAGE_KEY = "app_theme";
 const DATA_THEME_KEY = "data-theme";
 
-export class ThemeSelector extends HTMLElement {
+class ThemeSelector extends HTMLElement {
   /** @type{ThemeSelectorAttributes[]} **/
   static observedAttributes = ["theme-key"];
   /** @type{string | null} **/

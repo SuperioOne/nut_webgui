@@ -1,7 +1,6 @@
-import { GaugeChart, GaugeTypes } from "@carbon/charts";
-import styles from "@carbon/charts/styles.min.css";
-
 /** @import { GaugeChartOptions } from "@carbon/charts" **/
+import { GaugeChart, GaugeTypes } from "@carbon/charts";
+import { link_host_styles } from "../../utils.js";
 
 /**
  * @typedef {"value" | "height" | "width" | "theme" | "class" } AttributeKeys
@@ -19,11 +18,10 @@ export default class Gauge extends HTMLElement {
   }
 
   connectedCallback() {
-    const shadow_dom = this.attachShadow({ mode: "closed" });
+    const shadow_root = this.attachShadow({ mode: "closed" });
     const child = document.createElement("div");
-    const style = document.createElement("link");
-    style.rel = "stylesheet";
-    style.href = "/static/index.css";
+    shadow_root.replaceChildren(child);
+    link_host_styles(shadow_root);
 
     const value_text = this.getAttribute("value") ?? "0";
     const height = this.getAttribute("height") ?? undefined;
@@ -58,9 +56,6 @@ export default class Gauge extends HTMLElement {
         },
       },
     });
-
-    shadow_dom.replaceChildren(child);
-    shadow_dom.prepend(style);
   }
 
   disconnectedCallback() {

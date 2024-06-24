@@ -116,10 +116,7 @@ pub async fn post_command(
       } => {
         let mut client = UpsAuthClient::create(addr, username, password).await?;
         client.send_instcmd(&ups_name, &body.cmd).await?;
-        info!(
-          "INSTCMD '{0}' called for UPS '{1}'",
-          &body.cmd, ups_name
-        );
+        info!("INSTCMD '{0}' called for UPS '{1}'", &body.cmd, ups_name);
 
         Ok(StatusCode::ACCEPTED.into_response())
       }

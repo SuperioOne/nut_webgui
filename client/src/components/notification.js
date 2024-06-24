@@ -2,21 +2,21 @@
  * @typedef {"ttl" | "title"  | "closeable" | "type"} AttributeKeys
  */
 
-export default class UpsMonNotification extends HTMLElement {
+export default class NutNotification extends HTMLElement {
   /** @type {number|undefined} */
   #timer;
 
   constructor() {
     super();
-    this.#timer = undefined
+    this.#timer = undefined;
   }
 
   connectedCallback() {
-    const ttl_value = Number(this.getAttribute("ttl"));
+    const ttl_attr = Number(this.getAttribute("ttl"));
     const type = this.getAttribute("type") ?? "info";
-    const ttl = isNaN(ttl_value) || ttl_value < 1 ? 3000 : ttl_value;
-    this.className = `${this.className} alert alert-${type}`;
+    const ttl = isNaN(ttl_attr) || ttl_attr < 1 ? 3000 : ttl_attr;
 
+    this.className = `${this.className} alert alert-${type}`;
     this.#timer = setTimeout(() => {
       this?.remove();
     }, ttl);
@@ -46,5 +46,6 @@ export default class UpsMonNotification extends HTMLElement {
   }
 }
 
-customElements.define("upsmon-notification", UpsMonNotification);
-Reflect.set(window, "UpsMonNotification", UpsMonNotification)
+customElements.define("nut-notification", NutNotification);
+Reflect.set(window, "NutNotification", NutNotification);
+

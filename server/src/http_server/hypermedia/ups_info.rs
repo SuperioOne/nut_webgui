@@ -4,35 +4,35 @@ use std::borrow::Borrow;
 
 #[derive(Debug)]
 pub struct UpsInfo {
-  pub name: String,
-  pub desc: String,
-  pub load: Option<u8>,
-  pub power_nominal: Option<f64>,
-  pub power: Option<f64>,
-  pub status: Option<String>,
-  pub runtime: Option<i32>,
+  pub battery_voltage: Option<f64>,
+  pub beeper_status: Option<bool>,
   pub charge: Option<u8>,
   pub charge_low: Option<u8>,
-  pub battery_voltage: Option<f64>,
+  pub desc: String,
   pub input_voltage: Option<f64>,
-  pub beeper_status: Option<bool>,
+  pub load: Option<u8>,
+  pub name: String,
+  pub power: Option<f64>,
+  pub power_nominal: Option<f64>,
+  pub runtime: Option<i32>,
+  pub status: Option<String>,
 }
 
 impl UpsInfo {
   pub fn from_ups_entry(ups: &UpsEntry) -> UpsInfo {
     let mut ups_info = UpsInfo {
-      name: String::from(ups.name.as_ref()),
-      desc: String::from(ups.desc.as_ref()),
-      status: None,
-      load: None,
-      runtime: None,
-      charge_low: None,
-      charge: None,
       battery_voltage: None,
-      input_voltage: None,
-      power_nominal: None,
-      power: None,
       beeper_status: None,
+      charge: None,
+      charge_low: None,
+      desc: String::from(ups.desc.as_ref()),
+      input_voltage: None,
+      load: None,
+      name: String::from(ups.name.as_ref()),
+      power: None,
+      power_nominal: None,
+      runtime: None,
+      status: None,
     };
 
     for variable in &ups.variables {

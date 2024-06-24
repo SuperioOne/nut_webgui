@@ -1,4 +1,4 @@
-<table class="table">
+<table id="ups_table" class="table">
   <thead>
     <tr>
       <th class="font-black">Name</th>
@@ -9,7 +9,7 @@
       <th class="hidden sm:table-cell font-black"></th>
     </tr>
   </thead>
-  <tbody hx-boost="true">
+  <tbody>
     {% if ups_list.len() < 1 %} <tr>
       <td class="text-center py-6" colspan="6">
         No UPS available.

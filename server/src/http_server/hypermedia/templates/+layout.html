@@ -21,10 +21,10 @@
     {% block head %}{% endblock head %}
 </head>
 
-<body>
+<body hx-boost="true">
     <header>
         <div class="navbar bg-base-100">
-            <div hx-boost="true" class="flex-1">
+            <div class="flex-1">
                 <a class="btn btn-ghost text-xl drop-shadow" href="/">
                     <img width="32" height="32" src="/static/icon.svg" alt="icon">
                     <span class="hidden sm:inline-block">
@@ -33,9 +33,14 @@
                 </a>
             </div>
             <div class="flex-none gap-2">
+                <div id="indicator" class="cursor-default htmx-indicator">
+                    <div class="tooltip tooltip-bottom text-success" data-tip="Updating page">
+                        <span class="text-info loading loading-spinner loading-md cursor-default"></span>
+                     </div>
+                </div>
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn m-1">
-                        {% call icons::get_svg("menu") %}
+                        {% call icons::get_svg("menu", 24) %}
                         <span>Themes</span>
                     </div>
                     <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52">
@@ -88,7 +93,6 @@
     <div id="notifications" class="toast toast-end toast-bottom z-50 w-[200px] max-w-[200px]"> </div>
     <div id="page_content">
         {% block content %}
-        <p>Body content</p>
         {% endblock content %}
     </div>
 </body>
