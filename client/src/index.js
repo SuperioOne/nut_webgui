@@ -1,7 +1,27 @@
 /**
  * Main entry point for client
- * Exports all web components, registers dom load events.
+ * Exports all web components, registers dom and htmx events.
  */
+
+/**
+ * @typedef HtmxSendError
+ * @property {HTMLElement} elt
+ * @property {HTMLElement} target
+ * @property {any} requestConfig
+ * @property {XMLHttpRequest} xhr
+ */
+
+/**
+ * @typedef HtmxAfterRequest
+ * @property {HTMLElement} elt
+ * @property {HTMLElement} target
+ * @property {any} requestConfig
+ * @property {XMLHttpRequest} xhr
+ * @property {boolean} successful
+ */
+
+/** @typedef {CustomEvent<HtmxSendError>} HtmxSendErrorEvent **/
+/** @typedef {CustomEvent<HtmxAfterRequest>} HtmxAfterRequestEvent **/
 
 import htmx from "htmx.org/dist/htmx.esm.js";
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js";
@@ -56,3 +76,58 @@ htmx.defineExtension("morph", {
     }
   },
 });
+
+const ConnectionState = (() => {
+  /** @type{boolean} **/
+  let state = 0;
+
+  return {
+    get is_lost() {
+      return state;
+    },
+    set is_lost(value) {
+      state = value;
+    },
+  };
+})();
+
+document.body.addEventListener(
+  "htmx:sendError",
+  (/** @type{HtmxSendErrorEvent} **/ ev) => {
+    if (!ConnectionState.is_lost) {
+      ConnectionState.is_lost = true;
+
+      const indicators = document.querySelectorAll(
+        ".htmx-send-error-indicator",
+      );
+
+      console.warn(
+        "Poll send request is failed, check your connection.",
+        ev.detail.xhr,
+      );
+
+      for (const element of indicators) {
+        element.className += " htmx-send-error-active";
+      }
+    }
+  },
+);
+
+document.body.addEventListener(
+  "htmx:afterRequest",
+  (/** @type{HtmxAfterRequestEvent} **/ ev) => {
+    if (ConnectionState.is_lost) {
+      const indicators = document.querySelectorAll(
+        ".htmx-send-error-indicator",
+      );
+
+      for (const element of indicators) {
+        element.className = element.className
+          .replace("htmx-send-error-active", "")
+          .trimEnd();
+      }
+
+      ConnectionState.is_lost = false;
+    }
+  },
+);

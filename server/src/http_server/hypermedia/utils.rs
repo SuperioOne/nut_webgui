@@ -14,6 +14,19 @@ macro_rules! htmx_redirect {
   }};
 }
 
+#[derive(Debug)]
+pub struct AppDetails {
+  pub name: &'static str,
+  pub version: &'static str,
+}
+
+pub const fn get_app_info() -> AppDetails {
+  AppDetails {
+    version: env!("CARGO_PKG_VERSION"),
+    name: env!("CARGO_PKG_NAME"),
+  }
+}
+
 pub fn get_range_class(value: &u8, from: u8, to: u8) -> &'static str {
   if from > to {
     if *value >= from {

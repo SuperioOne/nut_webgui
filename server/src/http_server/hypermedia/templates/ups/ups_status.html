@@ -8,7 +8,7 @@
   {% match crate::http_server::hypermedia::utils::get_status_class(status) %}
   {% when Some with (status_class) %}
   <p>
-    <span class="text-{{status_class}}">{{ status_text }}</span>
+  <span class="text-{{status_class}}">{{ status_text }}</span>
   </p>
   {% when None %}
   <p class="text-primary">{{ status_text }}</p>

@@ -4,3 +4,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+
+        .htmx-send-error-indicator {
+                @apply text-error animate-pulse hidden;
+        }
+
+        .htmx-send-error-active {
+                @apply inline-block;
+        }
+}
