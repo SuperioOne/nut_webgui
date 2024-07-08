@@ -1,14 +1,11 @@
 use crate::{
   htmx_redirect,
   http_server::{
-    hypermedia::{
-      notifications::{Notification, NotificationTemplate},
-      ups_info::UpsInfo,
-    },
+    hypermedia::notifications::{Notification, NotificationTemplate},
     ServerState,
   },
   ups_mem_store::UpsEntry,
-  upsd_client::{client::UpsAuthClient, errors::NutClientErrors},
+  upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
 };
 use askama::Template;
 use axum::{
@@ -19,7 +16,7 @@ use axum::{
 };
 use axum_core::response::IntoResponse;
 use serde::Deserialize;
-use std::{borrow::Borrow, sync::Arc};
+use std::sync::Arc;
 use tracing::{error, info};
 
 #[derive(Deserialize)]
@@ -33,10 +30,143 @@ pub struct CommandRequest {
 }
 
 #[derive(Template)]
-#[template(path = "ups/ups_info.html", ext = "html")]
-struct UpsInfoTemplate {
-  ups_info: UpsInfo,
-  variables: Vec<(String, String)>,
+#[template(path = "ups/ups_status.html", ext = "html")]
+struct UpsStatusTemplate {
+  ups_status: Option<String>,
+  beeper_status: Option<bool>,
+}
+
+impl Default for UpsStatusTemplate {
+  fn default() -> Self {
+    Self {
+      beeper_status: None,
+      ups_status: None,
+    }
+  }
+}
+
+impl From<&UpsEntry> for UpsStatusTemplate {
+  fn from(entry: &UpsEntry) -> Self {
+    let mut template = Self::default();
+
+    for variable in entry.variables.iter() {
+      match variable {
+        UpsVariable::UpsBeeperStatus(beeper_status) => {
+          template.beeper_status = match beeper_status.as_str() {
+            "enabled" => Some(true),
+            _ => Some(false),
+          };
+        }
+        UpsVariable::UpsStatus(ups_status) => {
+          template.ups_status = Some(ups_status.to_string());
+        }
+        _ => {}
+      }
+    }
+
+    template
+  }
+}
+
+#[derive(Template)]
+#[template(path = "ups/ups_info.html", ext = "html", escape = "none")]
+struct UpsInfoTemplate<'a> {
+  title: &'a str,
+  battery_voltage: Option<f64>,
+  charge: Option<u8>,
+  charge_low: Option<u8>,
+  desc: &'a str,
+  input_voltage: Option<f64>,
+  load: Option<u8>,
+  name: &'a str,
+  power: Option<f64>,
+  power_nominal: Option<f64>,
+  runtime: Option<i32>,
+  variables: Vec<(&'a str, String)>,
+  ups_status_template: UpsStatusTemplate,
+}
+
+impl<'a> UpsInfoTemplate<'a> {
+  pub fn from_ups_entry(ups: &'a UpsEntry) -> Self {
+    let variables: Vec<(&'a str, String)> = ups
+      .variables
+      .iter()
+      .map(|e| (e.name(), e.value_as_string()))
+      .collect();
+
+    let mut template = Self {
+      title: &ups.name,
+      battery_voltage: None,
+      charge: None,
+      charge_low: None,
+      desc: &ups.desc,
+      input_voltage: None,
+      load: None,
+      name: &ups.name,
+      power: None,
+      power_nominal: None,
+      runtime: None,
+      variables,
+      ups_status_template: UpsStatusTemplate::default(),
+    };
+
+    for variable in ups.variables.iter() {
+      match variable {
+        UpsVariable::UpsLoad(val) => {
+          template.load = Some(*val);
+        }
+        UpsVariable::UpsPowerNominal(val) => {
+          template.power_nominal = Some(*val);
+        }
+        UpsVariable::UpsPower(val) => {
+          template.power = Some(*val);
+        }
+        UpsVariable::BatteryCharge(val) => {
+          template.charge = Some(*val);
+        }
+        UpsVariable::BatteryLow(val) => {
+          template.charge_low = Some(*val);
+        }
+        UpsVariable::BatteryRuntime(val) => {
+          template.runtime = Some(*val);
+        }
+        UpsVariable::UpsStatus(val) => {
+          template.ups_status_template.ups_status = Some(val.to_string());
+        }
+        UpsVariable::BatteryVoltage(val) => {
+          template.battery_voltage = Some(*val);
+        }
+        UpsVariable::InputVoltage(val) => {
+          template.input_voltage = Some(*val);
+        }
+        UpsVariable::UpsBeeperStatus(val) => {
+          template.ups_status_template.beeper_status = match val.as_str() {
+            "enabled" => Some(true),
+            _ => Some(false),
+          };
+        }
+        _ => {}
+      }
+    }
+
+    if let Self {
+      power_nominal: Some(pw),
+      load: Some(ld),
+      power: None,
+      ..
+    } = template
+    {
+      template.power = Some((pw * f64::from(ld)) / 100.0_f64);
+    };
+
+    template
+  }
+}
+
+impl<'a> From<&'a UpsEntry> for UpsInfoTemplate<'a> {
+  fn from(entry: &'a UpsEntry) -> Self {
+    Self::from_ups_entry(entry)
+  }
 }
 
 // TODO: Switch to block fragments when askama v0.13 released
@@ -44,27 +174,8 @@ struct UpsInfoTemplate {
 #[template(path = "ups/+page.html", ext = "html", escape = "none")]
 struct UpsPageTemplate<'a> {
   title: &'a str,
-  ups_info: UpsInfoTemplate,
+  ups_info: UpsInfoTemplate<'a>,
   commands: &'a [Box<str>],
-}
-
-impl<T> From<T> for UpsInfoTemplate
-where
-  T: Borrow<UpsEntry>,
-{
-  fn from(value: T) -> Self {
-    let variables: Vec<(String, String)> = value
-      .borrow()
-      .variables
-      .iter()
-      .map(|e| (e.name(), e.value_as_string()))
-      .collect();
-
-    Self {
-      ups_info: UpsInfo::from(value),
-      variables,
-    }
-  }
 }
 
 async fn page_response(
@@ -99,21 +210,29 @@ async fn partial_ups_info(
   }
 }
 
+async fn partial_ups_status(
+  Path(ups_name): Path<String>,
+  State(state): State<Arc<ServerState>>,
+) -> impl IntoResponse {
+  let ups_name = ups_name.as_str();
+
+  if let Some(ups) = state.store.read().await.get(ups_name) {
+    UpsStatusTemplate::from(ups).into_response()
+  } else {
+    htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
+  }
+}
+
 pub async fn get(
   path: Path<String>,
   query: Query<UpsFragmentQuery>,
   state: State<Arc<ServerState>>,
 ) -> impl IntoResponse {
-  if let Some(section) = query.section.as_deref() {
-    match section {
-      "info" => return partial_ups_info(path, state).await.into_response(),
-      _ => {
-        // ignore invalid section names
-      }
-    };
+  match query.section.as_deref() {
+    Some("info") => partial_ups_info(path, state).await.into_response(),
+    Some("status") => partial_ups_status(path, state).await.into_response(),
+    _ => page_response(path, state).await.into_response(),
   }
-
-  page_response(path, state).await.into_response()
 }
 
 pub async fn post_command(

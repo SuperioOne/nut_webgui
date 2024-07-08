@@ -7,6 +7,8 @@ use tokio::io;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpStream, ToSocketAddrs};
 
+use super::parser::parse_variable;
+
 #[derive(Debug)]
 pub struct UpsClient<A>
 where
@@ -32,6 +34,7 @@ pub trait Client {
   async fn get_ups_list(&mut self) -> Result<Vec<Ups>, NutClientErrors>;
   async fn get_cmd_list(&mut self, ups_name: &str) -> Result<Vec<Cmd>, NutClientErrors>;
   async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<Var>, NutClientErrors>;
+  async fn get_var(&mut self, ups_name: &str, var_name: &str) -> Result<Var, NutClientErrors>;
 }
 
 impl<A> UpsClient<A>
@@ -181,6 +184,30 @@ where
 
     parse_var_list(&message_buffer)
   }
+
+  async fn get_var(&mut self, ups_name: &str, var_name: &str) -> Result<Var, NutClientErrors> {
+    let command = format!("GET VAR {0} {1}\n", ups_name, var_name);
+    let mut reader = self.send(&command).await?;
+    let mut message_buffer = String::new();
+
+    loop {
+      let mut line_buffer = String::new();
+
+      match reader.read_line(&mut line_buffer).await {
+        Ok(0) => {
+          break;
+        }
+        Ok(_) => {
+          message_buffer.add_assign(line_buffer.as_str());
+          break;
+        }
+        Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
+        Err(err) => return Err(err.into()),
+      }
+    }
+
+    parse_variable(&message_buffer)
+  }
 }
 
 impl<A> UpsAuthClient<A>
@@ -272,5 +299,9 @@ where
 
   async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<Var>, NutClientErrors> {
     self.base_client.get_var_list(ups_name).await
+  }
+
+  async fn get_var(&mut self, ups_name: &str, var_name: &str) -> Result<Var, NutClientErrors> {
+    self.base_client.get_var(ups_name, var_name).await
   }
 }

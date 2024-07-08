@@ -7,7 +7,7 @@ use crate::{
   http_server::{start_http_server, HttpServerConfig, UpsdConfig},
   ups_service::{
     storage_service::{ups_storage_service, UpsStorageConfig},
-    ups_poll_service::{ups_poller_service, UpsPollerConfig},
+    ups_poll_service::{ups_polling_service, UpsPollerConfig},
     UpsUpdateMessage,
   },
 };
@@ -27,7 +27,7 @@ use tokio::{
   time::Duration,
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 use tracing_subscriber::fmt;
 use ups_mem_store::UpsStore;
 
@@ -35,8 +35,11 @@ use ups_mem_store::UpsStore;
 #[command(author, version, about, long_about = None)]
 struct ServerArgs {
   /// UPS info update frequency in seconds.
-  #[arg(long, default_value_t = 10)]
+  #[arg(long, default_value_t = 30)]
   poll_freq: u64,
+
+  #[arg(long, default_value_t = 2)]
+  poll_interval: u64,
 
   /// NUT server address
   #[arg(long, default_value_t = String::from("localhost"))]
@@ -83,6 +86,12 @@ async fn main() {
   let store = UpsStore::new();
   let store_arc = Arc::new(RwLock::new(store));
   let upsd_address = format!("{}:{}", args.upsd_addr, args.upsd_port);
+  let (poll_interval, poll_freq) = if args.poll_freq < args.poll_interval {
+    warn!("Poll interval is set greater than or equal to poll frequency. Update scheduler will only use full update");
+    (args.poll_interval, args.poll_interval)
+  } else {
+    (args.poll_interval, args.poll_freq)
+  };
 
   panic::set_hook(Box::new(|info| {
     error!("Panic details: {}", info);
@@ -90,9 +99,10 @@ async fn main() {
   }));
 
   // spawn background services
-  let poll_service_handle = ups_poller_service(UpsPollerConfig {
+  let poll_service_handle = ups_polling_service(UpsPollerConfig {
     address: upsd_address.clone(),
-    poll_freq: Duration::from_secs(args.poll_freq),
+    poll_freq: Duration::from_secs(poll_freq),
+    poll_interval: Duration::from_secs(poll_interval),
     write_channel: tx,
     cancellation: cancellation.clone(),
   });

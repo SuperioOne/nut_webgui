@@ -1,0 +1,38 @@
+{%- import "icons.html" as icons -%}
+
+{% if let Some(status) = ups_status %}
+<div class="font-bold text-xl text-center">
+  <h1>UPS Status</h1>
+  {% let status_text = crate::http_server::hypermedia::utils::get_status_text(status) %}
+
+  {% match crate::http_server::hypermedia::utils::get_status_class(status) %}
+  {% when Some with (status_class) %}
+  <p>
+    <span class="text-{{status_class}}">{{ status_text }}</span>
+  </p>
+  {% when None %}
+  <p class="text-primary">{{ status_text }}</p>
+  {% endmatch %}
+</div>
+
+<div class="mt-2 flex flex-row flex-wrap gap-2 justify-center w-full">
+  {% match beeper_status %}
+  {% when Some with (true) %}
+  <div class="tooltip tooltip-bottom text-success" data-tip="Beeper enabled">
+    {% call icons::get_svg("volume-2",20) %}
+  </div>
+  {% when Some with (false) %}
+  <div class="tooltip tooltip-bottom text-warning" data-tip="Beeper disabled">
+    {% call icons::get_svg("volume-x", 20) %}
+  </div>
+  {% when None %}
+  {% endmatch %}
+
+  {% for status_icon in crate::http_server::hypermedia::utils::get_status_icons(status) %}
+  <div class="tooltip tooltip-bottom text-{{status_icon.class}}" data-tip="{{status_icon.desc}}">
+    {% call icons::get_svg(status_icon.name, 20) %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+

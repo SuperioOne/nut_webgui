@@ -43,7 +43,7 @@ macro_rules! check_list_start {
     let value: Option<&str> = $x;
     let list_type: &str = $t;
     let list_start: &str = &format!("BEGIN LIST {}", list_type);
-    
+
     match value {
       Some(line) if !line.starts_with(list_start) => {
         let message = format!(
@@ -134,8 +134,7 @@ pub(crate) fn parse_variable(line: &str) -> Result<Var, NutClientErrors> {
   match words.as_slice() {
     [op, ups_name, var_name, value_slice] if op == "VAR" => {
       let name = Box::from(ups_name.as_str());
-      let var = UpsVariable::try_from((var_name.as_str(), value_slice.as_str()))
-        .map_err(|_| NutClientErrors::ParseError("Invalid value type.".into()))?;
+      let var = UpsVariable::try_from((var_name.as_str(), value_slice.as_str()))?;
 
       Ok(Var { var, name })
     }

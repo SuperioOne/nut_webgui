@@ -1,12 +1,16 @@
-use crate::ups_mem_store::{UpsEntry, UpsStore};
-use crate::ups_service::UpsUpdateMessage;
+use crate::{
+  ups_mem_store::{UpsEntry, UpsStore},
+  ups_service::UpsUpdateMessage,
+  upsd_client::ups_variables::UpsVariable,
+};
 use std::sync::Arc;
-use tokio::spawn;
-use tokio::sync::mpsc::Receiver;
-use tokio::sync::RwLock;
-use tokio::task::JoinHandle;
+use tokio::{
+  spawn,
+  sync::{mpsc::Receiver, RwLock},
+  task::JoinHandle,
+};
 use tokio_util::sync::CancellationToken;
-use tracing::{info, instrument};
+use tracing::{info, instrument, warn};
 
 #[derive(Debug)]
 pub struct UpsStorageConfig {
@@ -25,22 +29,52 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
     } = config;
 
     while !cancellation.is_cancelled() {
-      if let Some(message) = read_channel.recv().await {
-        let UpsUpdateMessage {
-          name,
-          commands,
-          variables,
-          desc,
-        } = message;
-        let entry = UpsEntry {
-          desc,
-          name,
-          variables,
-          commands,
-        };
+      match read_channel.recv().await {
+        Some(UpsUpdateMessage::PartialUpdate { name, variable }) => {
+          match store.write().await.get_mut(&name) {
+            Some(ups_entry) => {
+              let old_var = {
+                let mut e: Option<&mut UpsVariable> = None;
 
-        store.write().await.put(entry);
-      }
+                for var in ups_entry.variables.iter_mut() {
+                  if *var.name() == *name {
+                    e = Some(var);
+                    break;
+                  }
+                }
+
+                e
+              };
+
+              if let Some(old_var) = old_var {
+                *old_var = variable;
+              } else {
+                ups_entry.variables.push(variable);
+              }
+            }
+            None => warn!(
+              "Partial update ignored. Ups {} does not exists anymore.",
+              name
+            ),
+          }
+        }
+        Some(UpsUpdateMessage::FullUpdate {
+          name,
+          desc,
+          commands,
+          variables,
+        }) => {
+          let entry = UpsEntry {
+            desc,
+            name,
+            variables,
+            commands,
+          };
+
+          store.write().await.put(entry);
+        }
+        None => {}
+      };
     }
 
     info!("Storage service shutdown.");

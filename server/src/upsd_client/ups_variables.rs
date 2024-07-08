@@ -1,8 +1,100 @@
+use super::errors::NutClientErrors;
 use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::num::{ParseFloatError, ParseIntError};
 
 // https://raw.githubusercontent.com/networkupstools/nut/7b225f5291da7fb98003932ffda4e99deb7f23d3/data/cmdvartab
+
+pub(crate) const VAR_BATTERY_CHARGE: &'static str = "battery.charge";
+pub(crate) const VAR_BATTERY_CHARGE_LOW: &'static str = "battery.charge.low";
+pub(crate) const VAR_BATTERY_RUNTIME: &'static str = "battery.runtime";
+pub(crate) const VAR_BATTERY_VOLTAGE: &'static str = "battery.voltage";
+pub(crate) const VAR_BATTERY_VOLTAGE_NOMINAL: &'static str = "battery.voltage.nominal";
+pub(crate) const VAR_BATTERY_TYPE: &'static str = "battery.type";
+pub(crate) const VAR_DEVICE_MFR: &'static str = "device.mfr";
+pub(crate) const VAR_DEVICE_MODEL: &'static str = "device.model";
+pub(crate) const VAR_DEVICE_SERIAL: &'static str = "device.serial";
+pub(crate) const VAR_DEVICE_TYPE: &'static str = "device.type";
+pub(crate) const VAR_DRIVER_NAME: &'static str = "driver.name";
+pub(crate) const VAR_DRIVER_PARAMETER_LOWBATT: &'static str = "driver.parameter.lowbatt";
+pub(crate) const VAR_DRIVER_PARAMETER_OFFDELAY: &'static str = "driver.parameter.offdelay";
+pub(crate) const VAR_DRIVER_PARAMETER_ONDELAY: &'static str = "driver.parameter.ondelay";
+pub(crate) const VAR_DRIVER_PARAMETER_POLLFREQ: &'static str = "driver.parameter.pollfreq";
+pub(crate) const VAR_DRIVER_PARAMETER_POLLINTERVAL: &'static str = "driver.parameter.pollinterval";
+pub(crate) const VAR_DRIVER_PARAMETER_PORT: &'static str = "driver.parameter.port";
+pub(crate) const VAR_DRIVER_PARAMETER_SYNCHRONOUS: &'static str = "driver.parameter.synchronous";
+pub(crate) const VAR_DRIVER_PARAMETER_VENDORID: &'static str = "driver.parameter.vendorid";
+pub(crate) const VAR_DRIVER_VERSION: &'static str = "driver.version";
+pub(crate) const VAR_DRIVER_VERSION_DATA: &'static str = "driver.version.data";
+pub(crate) const VAR_DRIVER_VERSION_INTERNAL: &'static str = "driver.version.internal";
+pub(crate) const VAR_INPUT_TRANSFER_HIGH: &'static str = "input.transfer.high";
+pub(crate) const VAR_INPUT_TRANSFER_LOW: &'static str = "input.transfer.low";
+pub(crate) const VAR_INPUT_VOLTAGE: &'static str = "input.voltage";
+pub(crate) const VAR_INPUT_VOLTAGE_NOMINAL: &'static str = "input.voltage.nominal";
+pub(crate) const VAR_OUTPUT_FREQUENCY_NOMINAL: &'static str = "output.frequency.nominal";
+pub(crate) const VAR_OUTPUT_VOLTAGE: &'static str = "output.voltage";
+pub(crate) const VAR_OUTPUT_VOLTAGE_NOMINAL: &'static str = "output.voltage.nominal";
+pub(crate) const VAR_UPS_BEEPER_STATUS: &'static str = "ups.beeper.status";
+pub(crate) const VAR_UPS_DELAY_SHUTDOWN: &'static str = "ups.delay.shutdown";
+pub(crate) const VAR_UPS_DELAY_START: &'static str = "ups.delay.start";
+pub(crate) const VAR_UPS_FIRMWARE: &'static str = "ups.firmware";
+pub(crate) const VAR_UPS_LOAD: &'static str = "ups.load";
+pub(crate) const VAR_UPS_MFR: &'static str = "ups.mfr";
+pub(crate) const VAR_UPS_MODEL: &'static str = "ups.model";
+pub(crate) const VAR_UPS_REALPOWER: &'static str = "ups.realpower";
+pub(crate) const VAR_UPS_REALPOWER_NOMINAL: &'static str = "ups.realpower.nominal";
+pub(crate) const VAR_UPS_PRODUCTID: &'static str = "ups.productid";
+pub(crate) const VAR_UPS_SERIAL: &'static str = "ups.serial";
+pub(crate) const VAR_UPS_STATUS: &'static str = "ups.status";
+pub(crate) const VAR_UPS_TEMPERATURE: &'static str = "ups.temperature";
+pub(crate) const VAR_UPS_TIMER_SHUTDOWN: &'static str = "ups.timer.shutdown";
+pub(crate) const VAR_UPS_TIMER_START: &'static str = "ups.timer.start";
+pub(crate) const VAR_UPS_VENDORID: &'static str = "ups.vendorid";
+
+pub(crate) const STATUS_ALARM: &'static str = "ALARM";
+pub(crate) const STATUS_BOOST: &'static str = "BOOST";
+pub(crate) const STATUS_BYPASS: &'static str = "BYPASS";
+pub(crate) const STATUS_CAL: &'static str = "CAL";
+pub(crate) const STATUS_CHRG: &'static str = "CHRG";
+pub(crate) const STATUS_COMM: &'static str = "COMM";
+pub(crate) const STATUS_DISCHRG: &'static str = "DISCHRG";
+pub(crate) const STATUS_FSD: &'static str = "FSD";
+pub(crate) const STATUS_LB: &'static str = "LB";
+pub(crate) const STATUS_NOCOMM: &'static str = "NOCOMM";
+pub(crate) const STATUS_OB: &'static str = "OB";
+pub(crate) const STATUS_OFF: &'static str = "OFF";
+pub(crate) const STATUS_OL: &'static str = "OL";
+pub(crate) const STATUS_OVER: &'static str = "OVER";
+pub(crate) const STATUS_RB: &'static str = "RB";
+pub(crate) const STATUS_TEST: &'static str = "TEST";
+pub(crate) const STATUS_TICK: &'static str = "TICK";
+pub(crate) const STATUS_TOCK: &'static str = "TOCK";
+pub(crate) const STATUS_TRIM: &'static str = "TRIM";
+
+pub(crate) const ERR_ACCESS_DENIED: &'static str = "ACCESS-DENIED";
+pub(crate) const ERR_ALREADY_ATTACHED: &'static str = "ALREADY-ATTACHED";
+pub(crate) const ERR_ALREADY_SET_PASSWORD: &'static str = "ALREADY-SET-PASSWORD";
+pub(crate) const ERR_ALREADY_SET_USERNAME: &'static str = "ALREADY-SET-USERNAME";
+pub(crate) const ERR_CMD_NOT_SUPPORTED: &'static str = "CMD-NOT-SUPPORTED";
+pub(crate) const ERR_DATE_STALE: &'static str = "DATA-STALE";
+pub(crate) const ERR_DRIVER_NOT_CONNECTED: &'static str = "DRIVER-NOT-CONNECTED";
+pub(crate) const ERR_FEATURE_NOT_CONFIGURED: &'static str = "FEATURE-NOT-CONFIGURED";
+pub(crate) const ERR_FEATURE_NOT_SUPPORTED: &'static str = "FEATURE-NOT-SUPPORTED";
+pub(crate) const ERR_INSTCMD_FAILED: &'static str = "INSTCMD-FAILED";
+pub(crate) const ERR_INVALID_ARGUMENT: &'static str = "INVALID-ARGUMENT";
+pub(crate) const ERR_INVALID_PASSWORD: &'static str = "INVALID-PASSWORD";
+pub(crate) const ERR_INVALID_USERNAME: &'static str = "INVALID-USERNAME";
+pub(crate) const ERR_INVALID_VALUE: &'static str = "INVALID-VALUE";
+pub(crate) const ERR_PASSWORD_REQUIRED: &'static str = "PASSWORD-REQUIRED";
+pub(crate) const ERR_READONLY: &'static str = "READONLY";
+pub(crate) const ERR_SET_FAILED: &'static str = "SET-FAILED";
+pub(crate) const ERR_TLS_ALREADY_ENABLED: &'static str = "TLS-ALREADY-ENABLED";
+pub(crate) const ERR_TLS_NOT_ENABLED: &'static str = "TLS-NOT-ENABLED";
+pub(crate) const ERR_TOO_LONG: &'static str = "TOO-LONG";
+pub(crate) const ERR_UNKNOWN_COMMAND: &'static str = "UNKNOWN-COMMAND";
+pub(crate) const ERR_UNKNOWN_UPS: &'static str = "UNKNOWN-UPS";
+pub(crate) const ERR_USERNAME_REQUIRED: &'static str = "USERNAME-REQUIRED";
+pub(crate) const ERR_VAR_NOT_SUPPORTED: &'static str = "VAR-NOT-SUPPORTED";
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UpsVariable {
@@ -110,254 +202,55 @@ impl Serialize for UpsVariable {
   }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Serialize)]
-pub enum UpsStatus {
-  Alarm,
-  Boost,
-  Bypass,
-  Calibrating,
-  Charging,
-  COMM,
-  Discharging,
-  ForcedShutdown,
-  LowBattery,
-  NoCOMM,
-  OnBattery,
-  Offline,
-  Online,
-  Overloaded,
-  ReplaceBattery,
-  Test,
-  Tick,
-  Tock,
-  Trim,
-  Unknown(String),
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub(crate) enum UpsError {
-  // ACCESS-DENIED
-  AccessDenied,
-  // ALREADY-ATTACHED
-  AlreadyAttached,
-  // ALREADY-SET-PASSWORD
-  AlreadySetPassword,
-  // ALREADY-SET-USERNAME
-  AlreadySetUsername,
-  // CMD-NOT-SUPPORTED
-  CmdNotSupported,
-  // DATA-STALE
-  DataStale,
-  // DRIVER-NOT-CONNECTED
-  DriverNotConnected,
-  // FEATURE-NOT-CONFIGURED
-  FeatureNotConfigured,
-  // FEATURE-NOT-SUPPORTED
-  FeatureNotSupported,
-  // INSTCMD-FAILED
-  InstCmdFailed,
-  // INVALID-ARGUMENT
-  InvalidArgument,
-  // INVALID-PASSWORD
-  InvalidPassword,
-  // INVALID-USERNAME
-  InvalidUsername,
-  // INVALID-VALUE
-  InvalidValue,
-  // PASSWORD-REQUIRED
-  PasswordRequired,
-  // READONLY
-  READONLY,
-  // SET-FAILED
-  SetFailed,
-  // TLS-ALREADY-ENABLED
-  TlsAlreadyEnabled,
-  // TLS-NOT-ENABLED
-  TlsNotEnabled,
-  // TOO-LONG
-  TooLong,
-  // UNKNOWN-COMMAND
-  UnknownCommand,
-  // UNKNOWN-UPS
-  UnknownUps,
-  // USERNAME-REQUIRED
-  UsernameRequired,
-  // VAR-NOT-SUPPORTED
-  VarNotSupported,
-  Unknown(String),
-}
-
-impl From<&str> for UpsStatus {
-  fn from(value: &str) -> Self {
-    match value {
-      "ALARM" => UpsStatus::Alarm,
-      "BOOST" => UpsStatus::Boost,
-      "BYPASS" => UpsStatus::Bypass,
-      "CAL" => UpsStatus::Calibrating,
-      "CHRG" => UpsStatus::Charging,
-      "COMM" => UpsStatus::COMM,
-      "DISCHRG" => UpsStatus::Discharging,
-      "FSD" => UpsStatus::ForcedShutdown,
-      "LB" => UpsStatus::LowBattery,
-      "NOCOMM" => UpsStatus::NoCOMM,
-      "OB" => UpsStatus::OnBattery,
-      "OFF" => UpsStatus::Offline,
-      "OL" => UpsStatus::Online,
-      "OVER" => UpsStatus::Overloaded,
-      "RB" => UpsStatus::ReplaceBattery,
-      "TEST" => UpsStatus::Test,
-      "TICK" => UpsStatus::Tick,
-      "TOCK" => UpsStatus::Tock,
-      "TRIM" => UpsStatus::Trim,
-      _ => UpsStatus::Unknown(String::from(value)),
-    }
-  }
-}
-
-impl Display for UpsStatus {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    let status_text = match self {
-      UpsStatus::Alarm => "ALARM",
-      UpsStatus::Boost => "BOOST",
-      UpsStatus::Bypass => "BYPASS",
-      UpsStatus::Calibrating => "CAL",
-      UpsStatus::Charging => "CHRG",
-      UpsStatus::COMM => "COMM",
-      UpsStatus::Discharging => "DISCHRG",
-      UpsStatus::ForcedShutdown => "FSD",
-      UpsStatus::LowBattery => "LB",
-      UpsStatus::NoCOMM => "NOCOMM",
-      UpsStatus::OnBattery => "OB",
-      UpsStatus::Offline => "OFF",
-      UpsStatus::Online => "OL",
-      UpsStatus::Overloaded => "OVER",
-      UpsStatus::ReplaceBattery => "RB",
-      UpsStatus::Test => "TEST",
-      UpsStatus::Tick => "TICK",
-      UpsStatus::Tock => "TOCK",
-      UpsStatus::Trim => "TRIM",
-      UpsStatus::Unknown(value) => value,
-    };
-
-    f.write_str(status_text)
-  }
-}
-
-impl Display for UpsError {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    let error_text = match self {
-      UpsError::AccessDenied => "ACCESS-DENIED",
-      UpsError::AlreadyAttached => "ALREADY-ATTACHED",
-      UpsError::AlreadySetPassword => "ALREADY-SET-PASSWORD",
-      UpsError::AlreadySetUsername => "ALREADY-SET-USERNAME",
-      UpsError::CmdNotSupported => "CMD-NOT-SUPPORTED",
-      UpsError::DataStale => "DATA-STALE",
-      UpsError::DriverNotConnected => "DRIVER-NOT-CONNECTED",
-      UpsError::FeatureNotConfigured => "FEATURE-NOT-CONFIGURED",
-      UpsError::FeatureNotSupported => "FEATURE-NOT-SUPPORTED",
-      UpsError::InstCmdFailed => "INSTCMD-FAILED",
-      UpsError::InvalidArgument => "INVALID-ARGUMENT",
-      UpsError::InvalidPassword => "INVALID-PASSWORD",
-      UpsError::InvalidUsername => "INVALID-USERNAME",
-      UpsError::InvalidValue => "INVALID-VALUE",
-      UpsError::PasswordRequired => "PASSWORD-REQUIRED",
-      UpsError::READONLY => "READONLY",
-      UpsError::SetFailed => "SET-FAILED",
-      UpsError::TlsAlreadyEnabled => "TLS-ALREADY-ENABLED",
-      UpsError::TlsNotEnabled => "TLS-NOT-ENABLED",
-      UpsError::TooLong => "TOO-LONG",
-      UpsError::UnknownCommand => "UNKNOWN-COMMAND",
-      UpsError::UnknownUps => "UNKNOWN-UPS",
-      UpsError::UsernameRequired => "USERNAME-REQUIRED",
-      UpsError::VarNotSupported => "VAR-NOT-SUPPORTED",
-      UpsError::Unknown(value) => value.as_str(),
-    };
-
-    f.write_str(error_text)
-  }
-}
-
-impl From<&str> for UpsError {
-  fn from(value: &str) -> Self {
-    match value {
-      "ACCESS-DENIED" => UpsError::AccessDenied,
-      "ALREADY-ATTACHED" => UpsError::AlreadyAttached,
-      "ALREADY-SET-PASSWORD" => UpsError::AlreadySetPassword,
-      "ALREADY-SET-USERNAME" => UpsError::AlreadySetUsername,
-      "CMD-NOT-SUPPORTED" => UpsError::CmdNotSupported,
-      "DATA-STALE" => UpsError::DataStale,
-      "DRIVER-NOT-CONNECTED" => UpsError::DriverNotConnected,
-      "FEATURE-NOT-CONFIGURED" => UpsError::FeatureNotConfigured,
-      "FEATURE-NOT-SUPPORTED" => UpsError::FeatureNotSupported,
-      "INSTCMD-FAILED" => UpsError::InstCmdFailed,
-      "INVALID-ARGUMENT" => UpsError::InvalidArgument,
-      "INVALID-PASSWORD" => UpsError::InvalidPassword,
-      "INVALID-USERNAME" => UpsError::InvalidUsername,
-      "INVALID-VALUE" => UpsError::InvalidValue,
-      "PASSWORD-REQUIRED" => UpsError::PasswordRequired,
-      "READONLY" => UpsError::READONLY,
-      "SET-FAILED" => UpsError::SetFailed,
-      "TLS-ALREADY-ENABLED" => UpsError::TlsAlreadyEnabled,
-      "TLS-NOT-ENABLED" => UpsError::TlsNotEnabled,
-      "TOO-LONG" => UpsError::TooLong,
-      "UNKNOWN-COMMAND" => UpsError::UnknownCommand,
-      "UNKNOWN-UPS" => UpsError::UnknownUps,
-      "USERNAME-REQUIRED" => UpsError::UsernameRequired,
-      "VAR-NOT-SUPPORTED" => UpsError::VarNotSupported,
-      _ => UpsError::Unknown(value.to_owned()),
-    }
-  }
-}
-
 impl UpsVariable {
-  pub fn name(&self) -> String {
+  pub fn name(&self) -> &str {
     match self {
-      UpsVariable::BatteryCharge(_) => String::from("battery.charge"),
-      UpsVariable::BatteryLow(_) => String::from("battery.charge.low"),
-      UpsVariable::BatteryVoltage(_) => String::from("battery.voltage"),
-      UpsVariable::BatteryVoltageNominal(_) => String::from("battery.voltage.nominal"),
-      UpsVariable::BatteryRuntime(_) => String::from("battery.runtime"),
-      UpsVariable::BatteryType(_) => String::from("battery.type"),
-      UpsVariable::DeviceMfr(_) => String::from("device.mfr"),
-      UpsVariable::DeviceModel(_) => String::from("device.model"),
-      UpsVariable::DeviceSerial(_) => String::from("device.serial"),
-      UpsVariable::DeviceType(_) => String::from("device.type"),
-      UpsVariable::DriverName(_) => String::from("driver.name"),
-      UpsVariable::DriverParameterLowBatt(_) => String::from("driver.parameter.lowbatt"),
-      UpsVariable::DriverParameterOffDelay(_) => String::from("driver.parameter.offdelay"),
-      UpsVariable::DriverParameterOnDelay(_) => String::from("driver.parameter.ondelay"),
-      UpsVariable::DriverParameterPollFreq(_) => String::from("driver.parameter.pollfreq"),
-      UpsVariable::DriverParameterPollInterval(_) => String::from("driver.parameter.pollinterval"),
-      UpsVariable::DriverParameterPort(_) => String::from("driver.parameter.port"),
-      UpsVariable::DriverParameterSynchronous(_) => String::from("driver.parameter.synchronous"),
-      UpsVariable::DriverParameterVendorId(_) => String::from("driver.parameter.vendorid"),
-      UpsVariable::DriverVersion(_) => String::from("driver.version"),
-      UpsVariable::DriverVersionData(_) => String::from("driver.version.data"),
-      UpsVariable::DriverVersionInternal(_) => String::from("driver.version.internal"),
-      UpsVariable::InputTransferHigh(_) => String::from("input.transfer.high"),
-      UpsVariable::InputTransferLow(_) => String::from("input.transfer.low"),
-      UpsVariable::InputVoltage(_) => String::from("input.voltage"),
-      UpsVariable::InputVoltageNominal(_) => String::from("input.voltage.nominal"),
-      UpsVariable::OutputFrequencyNominal(_) => String::from("output.frequency.nominal"),
-      UpsVariable::OutputVoltage(_) => String::from("output.voltage"),
-      UpsVariable::OutputVoltageNominal(_) => String::from("output.voltage.nominal"),
-      UpsVariable::UpsBeeperStatus(_) => String::from("ups.beeper.status"),
-      UpsVariable::UpsDelayShutdown(_) => String::from("ups.delay.shutdown"),
-      UpsVariable::UpsDelayStart(_) => String::from("ups.delay.start"),
-      UpsVariable::UpsFirmware(_) => String::from("ups.firmware"),
-      UpsVariable::UpsLoad(_) => String::from("ups.load"),
-      UpsVariable::UpsMfr(_) => String::from("ups.mfr"),
-      UpsVariable::UpsModel(_) => String::from("ups.model"),
-      UpsVariable::UpsPower(_) => String::from("ups.realpower"),
-      UpsVariable::UpsPowerNominal(_) => String::from("ups.realpower.nominal"),
-      UpsVariable::UpsProductId(_) => String::from("ups.productid"),
-      UpsVariable::UpsSerial(_) => String::from("ups.serial"),
-      UpsVariable::UpsStatus(_) => String::from("ups.status"),
-      UpsVariable::UpsTemperature(_) => String::from("ups.temperature"),
-      UpsVariable::UpsTimerShutdown(_) => String::from("ups.timer.shutdown"),
-      UpsVariable::UpsTimerStart(_) => String::from("ups.timer.start"),
-      UpsVariable::UpsVendorId(_) => String::from("ups.vendorid"),
-      UpsVariable::Generic(name, _) => name.clone(),
+      UpsVariable::BatteryCharge(_) => VAR_BATTERY_CHARGE,
+      UpsVariable::BatteryLow(_) => VAR_BATTERY_CHARGE_LOW,
+      UpsVariable::BatteryVoltage(_) => VAR_BATTERY_VOLTAGE,
+      UpsVariable::BatteryVoltageNominal(_) => VAR_BATTERY_VOLTAGE_NOMINAL,
+      UpsVariable::BatteryRuntime(_) => VAR_BATTERY_RUNTIME,
+      UpsVariable::BatteryType(_) => VAR_BATTERY_TYPE,
+      UpsVariable::DeviceMfr(_) => VAR_DEVICE_MFR,
+      UpsVariable::DeviceModel(_) => VAR_DEVICE_MODEL,
+      UpsVariable::DeviceSerial(_) => VAR_DEVICE_SERIAL,
+      UpsVariable::DeviceType(_) => VAR_DEVICE_TYPE,
+      UpsVariable::DriverName(_) => VAR_DRIVER_NAME,
+      UpsVariable::DriverParameterLowBatt(_) => VAR_DRIVER_PARAMETER_LOWBATT,
+      UpsVariable::DriverParameterOffDelay(_) => VAR_DRIVER_PARAMETER_OFFDELAY,
+      UpsVariable::DriverParameterOnDelay(_) => VAR_DRIVER_PARAMETER_ONDELAY,
+      UpsVariable::DriverParameterVendorId(_) => VAR_DRIVER_PARAMETER_VENDORID,
+      UpsVariable::DriverParameterPollFreq(_) => VAR_DRIVER_PARAMETER_POLLFREQ,
+      UpsVariable::DriverParameterPollInterval(_) => VAR_DRIVER_PARAMETER_POLLINTERVAL,
+      UpsVariable::DriverParameterPort(_) => VAR_DRIVER_PARAMETER_PORT,
+      UpsVariable::DriverParameterSynchronous(_) => VAR_DRIVER_PARAMETER_SYNCHRONOUS,
+      UpsVariable::DriverVersion(_) => VAR_DRIVER_VERSION,
+      UpsVariable::DriverVersionData(_) => VAR_DRIVER_VERSION_DATA,
+      UpsVariable::DriverVersionInternal(_) => VAR_DRIVER_VERSION_INTERNAL,
+      UpsVariable::InputTransferHigh(_) => VAR_INPUT_TRANSFER_HIGH,
+      UpsVariable::InputTransferLow(_) => VAR_INPUT_TRANSFER_LOW,
+      UpsVariable::InputVoltage(_) => VAR_INPUT_VOLTAGE,
+      UpsVariable::InputVoltageNominal(_) => VAR_INPUT_VOLTAGE_NOMINAL,
+      UpsVariable::OutputFrequencyNominal(_) => VAR_OUTPUT_FREQUENCY_NOMINAL,
+      UpsVariable::OutputVoltage(_) => VAR_OUTPUT_VOLTAGE,
+      UpsVariable::OutputVoltageNominal(_) => VAR_OUTPUT_VOLTAGE_NOMINAL,
+      UpsVariable::UpsBeeperStatus(_) => VAR_UPS_BEEPER_STATUS,
+      UpsVariable::UpsDelayShutdown(_) => VAR_UPS_DELAY_SHUTDOWN,
+      UpsVariable::UpsDelayStart(_) => VAR_UPS_DELAY_START,
+      UpsVariable::UpsFirmware(_) => VAR_UPS_FIRMWARE,
+      UpsVariable::UpsLoad(_) => VAR_UPS_LOAD,
+      UpsVariable::UpsMfr(_) => VAR_UPS_MFR,
+      UpsVariable::UpsModel(_) => VAR_UPS_MODEL,
+      UpsVariable::UpsPower(_) => VAR_UPS_REALPOWER,
+      UpsVariable::UpsPowerNominal(_) => VAR_UPS_REALPOWER_NOMINAL,
+      UpsVariable::UpsProductId(_) => VAR_UPS_PRODUCTID,
+      UpsVariable::UpsSerial(_) => VAR_UPS_SERIAL,
+      UpsVariable::UpsStatus(_) => VAR_UPS_STATUS,
+      UpsVariable::UpsTemperature(_) => VAR_UPS_TEMPERATURE,
+      UpsVariable::UpsTimerShutdown(_) => VAR_UPS_TIMER_SHUTDOWN,
+      UpsVariable::UpsTimerStart(_) => VAR_UPS_TIMER_START,
+      UpsVariable::UpsVendorId(_) => VAR_UPS_VENDORID,
+      UpsVariable::Generic(name, _) => name,
     }
   }
 
@@ -413,75 +306,256 @@ impl UpsVariable {
   }
 }
 
-pub struct ParseError(String);
-
-impl From<ParseIntError> for ParseError {
+impl From<ParseIntError> for NutClientErrors {
+  #[inline]
   fn from(value: ParseIntError) -> Self {
-    Self(value.to_string())
+    Self::ParseError(value.to_string())
   }
 }
 
-impl From<ParseFloatError> for ParseError {
+impl From<ParseFloatError> for NutClientErrors {
+  #[inline]
   fn from(value: ParseFloatError) -> Self {
-    Self(value.to_string())
+    Self::ParseError(value.to_string())
   }
 }
 
 impl TryFrom<(&str, &str)> for UpsVariable {
-  type Error = ParseError;
+  type Error = NutClientErrors;
   fn try_from(from_value: (&str, &str)) -> Result<Self, Self::Error> {
     let (name, value) = from_value;
     let ups_variable = match name {
-      "battery.charge" => UpsVariable::BatteryCharge(value.parse::<u8>()?),
-      "battery.charge.low" => UpsVariable::BatteryLow(value.parse::<u8>()?),
-      "battery.runtime" => UpsVariable::BatteryRuntime(value.parse::<i32>()?),
-      "battery.voltage" => UpsVariable::BatteryVoltage(value.parse::<f64>()?),
-      "battery.voltage.nominal" => UpsVariable::BatteryVoltageNominal(value.parse::<f64>()?),
-      "battery.type" => UpsVariable::BatteryType(value.into()),
-      "device.mfr" => UpsVariable::DeviceMfr(value.into()),
-      "device.model" => UpsVariable::DeviceModel(value.into()),
-      "device.serial" => UpsVariable::DeviceSerial(value.into()),
-      "device.type" => UpsVariable::DeviceType(value.into()),
-      "driver.name" => UpsVariable::DriverName(value.into()),
-      "driver.parameter.lowbatt" => UpsVariable::DriverParameterLowBatt(value.parse::<i32>()?),
-      "driver.parameter.offdelay" => UpsVariable::DriverParameterOffDelay(value.parse::<i32>()?),
-      "driver.parameter.ondelay" => UpsVariable::DriverParameterOnDelay(value.parse::<i32>()?),
-      "driver.parameter.pollfreq" => UpsVariable::DriverParameterPollFreq(value.parse::<i32>()?),
-      "driver.parameter.pollinterval" => {
+      VAR_BATTERY_CHARGE => UpsVariable::BatteryCharge(value.parse::<u8>()?),
+      VAR_BATTERY_CHARGE_LOW => UpsVariable::BatteryLow(value.parse::<u8>()?),
+      VAR_BATTERY_RUNTIME => UpsVariable::BatteryRuntime(value.parse::<i32>()?),
+      VAR_BATTERY_VOLTAGE => UpsVariable::BatteryVoltage(value.parse::<f64>()?),
+      VAR_BATTERY_VOLTAGE_NOMINAL => UpsVariable::BatteryVoltageNominal(value.parse::<f64>()?),
+      VAR_BATTERY_TYPE => UpsVariable::BatteryType(value.into()),
+      VAR_DEVICE_MFR => UpsVariable::DeviceMfr(value.into()),
+      VAR_DEVICE_MODEL => UpsVariable::DeviceModel(value.into()),
+      VAR_DEVICE_SERIAL => UpsVariable::DeviceSerial(value.into()),
+      VAR_DEVICE_TYPE => UpsVariable::DeviceType(value.into()),
+      VAR_DRIVER_NAME => UpsVariable::DriverName(value.into()),
+      VAR_DRIVER_PARAMETER_LOWBATT => UpsVariable::DriverParameterLowBatt(value.parse::<i32>()?),
+      VAR_DRIVER_PARAMETER_OFFDELAY => UpsVariable::DriverParameterOffDelay(value.parse::<i32>()?),
+      VAR_DRIVER_PARAMETER_ONDELAY => UpsVariable::DriverParameterOnDelay(value.parse::<i32>()?),
+      VAR_DRIVER_PARAMETER_POLLFREQ => UpsVariable::DriverParameterPollFreq(value.parse::<i32>()?),
+      VAR_DRIVER_PARAMETER_POLLINTERVAL => {
         UpsVariable::DriverParameterPollInterval(value.parse::<i32>()?)
       }
-      "driver.parameter.port" => UpsVariable::DriverParameterPort(value.into()),
-      "driver.parameter.synchronous" => UpsVariable::DriverParameterSynchronous(value.into()),
-      "driver.parameter.vendorid" => UpsVariable::DriverParameterVendorId(value.into()),
-      "driver.version" => UpsVariable::DriverVersion(value.into()),
-      "driver.version.data" => UpsVariable::DriverVersionData(value.into()),
-      "driver.version.internal" => UpsVariable::DriverVersionInternal(value.into()),
-      "input.transfer.high" => UpsVariable::InputTransferHigh(value.parse::<i32>()?),
-      "input.transfer.low" => UpsVariable::InputTransferLow(value.parse::<i32>()?),
-      "input.voltage" => UpsVariable::InputVoltage(value.parse::<f64>()?),
-      "input.voltage.nominal" => UpsVariable::InputVoltageNominal(value.parse::<f64>()?),
-      "output.frequency.nominal" => UpsVariable::OutputFrequencyNominal(value.into()),
-      "output.voltage" => UpsVariable::OutputVoltage(value.into()),
-      "output.voltage.nominal" => UpsVariable::OutputVoltageNominal(value.into()),
-      "ups.beeper.status" => UpsVariable::UpsBeeperStatus(value.into()),
-      "ups.delay.shutdown" => UpsVariable::UpsDelayShutdown(value.parse::<i32>()?),
-      "ups.delay.start" => UpsVariable::UpsDelayStart(value.parse::<i32>()?),
-      "ups.firmware" => UpsVariable::UpsFirmware(value.into()),
-      "ups.load" => UpsVariable::UpsLoad(value.parse::<u8>()?),
-      "ups.mfr" => UpsVariable::UpsMfr(value.into()),
-      "ups.model" => UpsVariable::UpsModel(value.into()),
-      "ups.realpower" => UpsVariable::UpsPower(value.parse::<f64>()?),
-      "ups.realpower.nominal" => UpsVariable::UpsPowerNominal(value.parse::<f64>()?),
-      "ups.productid" => UpsVariable::UpsProductId(value.into()),
-      "ups.serial" => UpsVariable::UpsSerial(value.into()),
-      "ups.status" => UpsVariable::UpsStatus(value.into()),
-      "ups.temperature" => UpsVariable::UpsTemperature(value.into()),
-      "ups.timer.shutdown" => UpsVariable::UpsTimerShutdown(value.parse::<i32>()?),
-      "ups.timer.start" => UpsVariable::UpsTimerStart(value.parse::<i32>()?),
-      "ups.vendorid" => UpsVariable::UpsVendorId(value.into()),
-      param => UpsVariable::Generic(param.into(), value.into()),
+      VAR_DRIVER_PARAMETER_PORT => UpsVariable::DriverParameterPort(value.into()),
+      VAR_DRIVER_PARAMETER_SYNCHRONOUS => UpsVariable::DriverParameterSynchronous(value.into()),
+      VAR_DRIVER_PARAMETER_VENDORID => UpsVariable::DriverParameterVendorId(value.into()),
+      VAR_DRIVER_VERSION => UpsVariable::DriverVersion(value.into()),
+      VAR_DRIVER_VERSION_DATA => UpsVariable::DriverVersionData(value.into()),
+      VAR_DRIVER_VERSION_INTERNAL => UpsVariable::DriverVersionInternal(value.into()),
+      VAR_INPUT_TRANSFER_HIGH => UpsVariable::InputTransferHigh(value.parse::<i32>()?),
+      VAR_INPUT_TRANSFER_LOW => UpsVariable::InputTransferLow(value.parse::<i32>()?),
+      VAR_INPUT_VOLTAGE => UpsVariable::InputVoltage(value.parse::<f64>()?),
+      VAR_INPUT_VOLTAGE_NOMINAL => UpsVariable::InputVoltageNominal(value.parse::<f64>()?),
+      VAR_OUTPUT_FREQUENCY_NOMINAL => UpsVariable::OutputFrequencyNominal(value.into()),
+      VAR_OUTPUT_VOLTAGE => UpsVariable::OutputVoltage(value.into()),
+      VAR_OUTPUT_VOLTAGE_NOMINAL => UpsVariable::OutputVoltageNominal(value.into()),
+      VAR_UPS_BEEPER_STATUS => UpsVariable::UpsBeeperStatus(value.into()),
+      VAR_UPS_DELAY_SHUTDOWN => UpsVariable::UpsDelayShutdown(value.parse::<i32>()?),
+      VAR_UPS_DELAY_START => UpsVariable::UpsDelayStart(value.parse::<i32>()?),
+      VAR_UPS_FIRMWARE => UpsVariable::UpsFirmware(value.into()),
+      VAR_UPS_LOAD => UpsVariable::UpsLoad(value.parse::<u8>()?),
+      VAR_UPS_MFR => UpsVariable::UpsMfr(value.into()),
+      VAR_UPS_MODEL => UpsVariable::UpsModel(value.into()),
+      VAR_UPS_REALPOWER => UpsVariable::UpsPower(value.parse::<f64>()?),
+      VAR_UPS_REALPOWER_NOMINAL => UpsVariable::UpsPowerNominal(value.parse::<f64>()?),
+      VAR_UPS_PRODUCTID => UpsVariable::UpsProductId(value.into()),
+      VAR_UPS_SERIAL => UpsVariable::UpsSerial(value.into()),
+      VAR_UPS_STATUS => UpsVariable::UpsStatus(value.into()),
+      VAR_UPS_TEMPERATURE => UpsVariable::UpsTemperature(value.into()),
+      VAR_UPS_TIMER_SHUTDOWN => UpsVariable::UpsTimerShutdown(value.parse::<i32>()?),
+      VAR_UPS_TIMER_START => UpsVariable::UpsTimerStart(value.parse::<i32>()?),
+      VAR_UPS_VENDORID => UpsVariable::UpsVendorId(value.into()),
+      param => UpsVariable::Generic(param.to_owned(), value.to_owned()),
     };
 
     Ok(ups_variable)
+  }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Serialize)]
+pub enum UpsStatus {
+  Alarm,
+  Boost,
+  Bypass,
+  Calibrating,
+  Charging,
+  COMM,
+  Discharging,
+  ForcedShutdown,
+  LowBattery,
+  NoCOMM,
+  OnBattery,
+  Offline,
+  Online,
+  Overloaded,
+  ReplaceBattery,
+  Test,
+  Tick,
+  Tock,
+  Trim,
+  Unknown(String),
+}
+
+impl<T> From<T> for UpsStatus
+where
+  T: AsRef<str>,
+{
+  fn from(value: T) -> Self {
+    match value.as_ref() {
+      STATUS_ALARM => UpsStatus::Alarm,
+      STATUS_BOOST => UpsStatus::Boost,
+      STATUS_BYPASS => UpsStatus::Bypass,
+      STATUS_CAL => UpsStatus::Calibrating,
+      STATUS_CHRG => UpsStatus::Charging,
+      STATUS_COMM => UpsStatus::COMM,
+      STATUS_DISCHRG => UpsStatus::Discharging,
+      STATUS_FSD => UpsStatus::ForcedShutdown,
+      STATUS_LB => UpsStatus::LowBattery,
+      STATUS_NOCOMM => UpsStatus::NoCOMM,
+      STATUS_OB => UpsStatus::OnBattery,
+      STATUS_OFF => UpsStatus::Offline,
+      STATUS_OL => UpsStatus::Online,
+      STATUS_OVER => UpsStatus::Overloaded,
+      STATUS_RB => UpsStatus::ReplaceBattery,
+      STATUS_TEST => UpsStatus::Test,
+      STATUS_TICK => UpsStatus::Tick,
+      STATUS_TOCK => UpsStatus::Tock,
+      STATUS_TRIM => UpsStatus::Trim,
+      unknown => UpsStatus::Unknown(unknown.to_owned()),
+    }
+  }
+}
+
+impl Display for UpsStatus {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    let status_text = match self {
+      UpsStatus::Alarm => STATUS_ALARM,
+      UpsStatus::Boost => STATUS_BOOST,
+      UpsStatus::Bypass => STATUS_BYPASS,
+      UpsStatus::Calibrating => STATUS_CAL,
+      UpsStatus::Charging => STATUS_CHRG,
+      UpsStatus::COMM => STATUS_COMM,
+      UpsStatus::Discharging => STATUS_DISCHRG,
+      UpsStatus::ForcedShutdown => STATUS_FSD,
+      UpsStatus::LowBattery => STATUS_LB,
+      UpsStatus::NoCOMM => STATUS_NOCOMM,
+      UpsStatus::OnBattery => STATUS_OB,
+      UpsStatus::Offline => STATUS_OFF,
+      UpsStatus::Online => STATUS_OL,
+      UpsStatus::Overloaded => STATUS_OVER,
+      UpsStatus::ReplaceBattery => STATUS_RB,
+      UpsStatus::Test => STATUS_TEST,
+      UpsStatus::Tick => STATUS_TICK,
+      UpsStatus::Tock => STATUS_TOCK,
+      UpsStatus::Trim => STATUS_TRIM,
+      UpsStatus::Unknown(value) => value,
+    };
+
+    f.write_str(status_text)
+  }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum UpsError {
+  AccessDenied,
+  AlreadyAttached,
+  AlreadySetPassword,
+  AlreadySetUsername,
+  CmdNotSupported,
+  DataStale,
+  DriverNotConnected,
+  FeatureNotConfigured,
+  FeatureNotSupported,
+  InstCmdFailed,
+  InvalidArgument,
+  InvalidPassword,
+  InvalidUsername,
+  InvalidValue,
+  PasswordRequired,
+  READONLY,
+  SetFailed,
+  TlsAlreadyEnabled,
+  TlsNotEnabled,
+  TooLong,
+  UnknownCommand,
+  UnknownUps,
+  UsernameRequired,
+  VarNotSupported,
+  Unknown(String),
+}
+
+impl Display for UpsError {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    let error_text = match self {
+      UpsError::AccessDenied => ERR_ACCESS_DENIED,
+      UpsError::AlreadyAttached => ERR_ALREADY_ATTACHED,
+      UpsError::AlreadySetPassword => ERR_ALREADY_SET_PASSWORD,
+      UpsError::AlreadySetUsername => ERR_ALREADY_SET_USERNAME,
+      UpsError::CmdNotSupported => ERR_CMD_NOT_SUPPORTED,
+      UpsError::DataStale => ERR_DATE_STALE,
+      UpsError::DriverNotConnected => ERR_DRIVER_NOT_CONNECTED,
+      UpsError::FeatureNotConfigured => ERR_FEATURE_NOT_CONFIGURED,
+      UpsError::FeatureNotSupported => ERR_FEATURE_NOT_SUPPORTED,
+      UpsError::InstCmdFailed => ERR_INSTCMD_FAILED,
+      UpsError::InvalidArgument => ERR_INVALID_ARGUMENT,
+      UpsError::InvalidPassword => ERR_INVALID_PASSWORD,
+      UpsError::InvalidUsername => ERR_INVALID_USERNAME,
+      UpsError::InvalidValue => ERR_INVALID_VALUE,
+      UpsError::PasswordRequired => ERR_PASSWORD_REQUIRED,
+      UpsError::READONLY => ERR_READONLY,
+      UpsError::SetFailed => ERR_SET_FAILED,
+      UpsError::TlsAlreadyEnabled => ERR_TLS_ALREADY_ENABLED,
+      UpsError::TlsNotEnabled => ERR_TLS_NOT_ENABLED,
+      UpsError::TooLong => ERR_TOO_LONG,
+      UpsError::UnknownCommand => ERR_UNKNOWN_COMMAND,
+      UpsError::UnknownUps => ERR_UNKNOWN_UPS,
+      UpsError::UsernameRequired => ERR_USERNAME_REQUIRED,
+      UpsError::VarNotSupported => ERR_VAR_NOT_SUPPORTED,
+      UpsError::Unknown(value) => &value,
+    };
+
+    f.write_str(error_text)
+  }
+}
+
+impl<T> From<T> for UpsError
+where
+  T: AsRef<str>,
+{
+  fn from(value: T) -> Self {
+    match value.as_ref() {
+      ERR_ACCESS_DENIED => UpsError::AccessDenied,
+      ERR_ALREADY_ATTACHED => UpsError::AlreadyAttached,
+      ERR_ALREADY_SET_PASSWORD => UpsError::AlreadySetPassword,
+      ERR_ALREADY_SET_USERNAME => UpsError::AlreadySetUsername,
+      ERR_CMD_NOT_SUPPORTED => UpsError::CmdNotSupported,
+      ERR_DATE_STALE => UpsError::DataStale,
+      ERR_DRIVER_NOT_CONNECTED => UpsError::DriverNotConnected,
+      ERR_FEATURE_NOT_CONFIGURED => UpsError::FeatureNotConfigured,
+      ERR_FEATURE_NOT_SUPPORTED => UpsError::FeatureNotSupported,
+      ERR_INSTCMD_FAILED => UpsError::InstCmdFailed,
+      ERR_INVALID_ARGUMENT => UpsError::InvalidArgument,
+      ERR_INVALID_PASSWORD => UpsError::InvalidPassword,
+      ERR_INVALID_USERNAME => UpsError::InvalidUsername,
+      ERR_INVALID_VALUE => UpsError::InvalidValue,
+      ERR_PASSWORD_REQUIRED => UpsError::PasswordRequired,
+      ERR_READONLY => UpsError::READONLY,
+      ERR_SET_FAILED => UpsError::SetFailed,
+      ERR_TLS_ALREADY_ENABLED => UpsError::TlsAlreadyEnabled,
+      ERR_TLS_NOT_ENABLED => UpsError::TlsNotEnabled,
+      ERR_TOO_LONG => UpsError::TooLong,
+      ERR_UNKNOWN_COMMAND => UpsError::UnknownCommand,
+      ERR_UNKNOWN_UPS => UpsError::UnknownUps,
+      ERR_USERNAME_REQUIRED => UpsError::UsernameRequired,
+      ERR_VAR_NOT_SUPPORTED => UpsError::VarNotSupported,
+      unknown => UpsError::Unknown(unknown.to_owned()),
+    }
   }
 }

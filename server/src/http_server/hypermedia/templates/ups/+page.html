@@ -1,5 +1,6 @@
 {% extends "../+layout.html" %}
 {%- import "icons.html" as icons -%}
+
   {% block content %}
 <div class="w-full flex flex-row justify-center sm:p-10 md:p-12">
   <div class="text-base-content w-full max-w-7xl p-3 flex flex-col gap-6">
@@ -9,7 +10,7 @@
       hx-get="/ups/{{title}}?section=info"
       hx-indicator="#indicator"
       hx-swap="morph:innerHTML"
-      hx-trigger="every 10s"
+      hx-trigger="every 30s"
     >
       {{ ups_info }}
     </div>

@@ -19,14 +19,14 @@ impl Serialize for UpsEntry {
     S: Serializer,
   {
     let mut obj = serializer.serialize_struct("UpsEntry", 4)?;
-    let mut vars: BTreeMap<String, &UpsVariable> = BTreeMap::new();
+    let mut vars: BTreeMap<&str, &UpsVariable> = BTreeMap::new();
 
     for variable in self.variables.iter() {
       vars.insert(variable.name(), variable);
     }
 
-    obj.serialize_field("name", self.name.as_ref())?;
-    obj.serialize_field("desc", self.desc.as_ref())?;
+    obj.serialize_field("name", &self.name)?;
+    obj.serialize_field("desc", &self.desc)?;
     obj.serialize_field("vars", &vars)?;
     obj.serialize_field("cmds", &self.commands)?;
 
