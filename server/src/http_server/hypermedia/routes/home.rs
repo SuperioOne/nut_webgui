@@ -5,7 +5,6 @@ use askama::Template;
 use axum::extract::{Query, State};
 use axum_core::response::IntoResponse;
 use serde::Deserialize;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct UpsTableRow<'a> {
@@ -71,7 +70,7 @@ struct HomeTemplate<'a> {
 
 pub async fn get(
   query: Query<HomeFragmentQuery>,
-  State(state): State<Arc<ServerState>>,
+  State(state): State<ServerState>,
 ) -> impl IntoResponse {
   let rw_lock = &state.store.read().await;
   let ups_list: Vec<UpsTableRow> = rw_lock

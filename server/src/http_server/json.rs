@@ -10,7 +10,7 @@ use axum_core::response::{IntoResponse, Response};
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize, Serializer};
 use std::collections::BTreeMap;
-use std::sync::Arc;
+use std::ops::Deref;
 use tracing::info;
 
 impl Serialize for UpsEntry {
@@ -82,7 +82,7 @@ impl IntoResponse for NutClientErrors {
 }
 
 pub async fn get_ups_by_name(
-  State(state): State<Arc<ServerState>>,
+  State(state): State<ServerState>,
   Path(ups_name): Path<String>,
 ) -> impl IntoResponse {
   let store = state.store.read().await;
@@ -94,21 +94,21 @@ pub async fn get_ups_by_name(
   }
 }
 
-pub async fn get_ups_list(State(state): State<Arc<ServerState>>) -> impl IntoResponse {
+pub async fn get_ups_list(State(state): State<ServerState>) -> impl IntoResponse {
   let store = state.store.read().await;
   let ups_list: Vec<&UpsEntry> = store.into_iter().map(|(_, entry)| entry).collect();
   Json(ups_list).into_response()
 }
 
 pub async fn post_command(
-  State(state): State<Arc<ServerState>>,
+  State(state): State<ServerState>,
   Path(ups_name): Path<String>,
   Json(body): Json<CommandBody>,
 ) -> Result<impl IntoResponse, NutClientErrors> {
   let store = state.store.read().await;
 
   if store.get(&ups_name).is_some() {
-    match &state.upsd_config {
+    match state.upsd_config.deref() {
       UpsdConfig {
         addr,
         pass: Some(password),

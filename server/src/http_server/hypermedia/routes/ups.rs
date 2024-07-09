@@ -2,12 +2,13 @@ use crate::{
   htmx_redirect,
   http_server::{
     hypermedia::notifications::{Notification, NotificationTemplate},
-    ServerState,
+    ServerState, UpsdConfig,
   },
   ups_mem_store::UpsEntry,
   upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
 };
 use askama::Template;
+use askama_axum::Response;
 use axum::{
   extract::{Path, Query, State},
   http::StatusCode,
@@ -16,7 +17,6 @@ use axum::{
 };
 use axum_core::response::IntoResponse;
 use serde::Deserialize;
-use std::sync::Arc;
 use tracing::{error, info};
 
 #[derive(Deserialize)]
@@ -186,19 +186,14 @@ struct UpsPageTemplate<'a> {
   hx_info_interval: u64,
 }
 
-async fn page_response(
-  Path(ups_name): Path<String>,
-  State(state): State<Arc<ServerState>>,
-) -> impl IntoResponse {
-  let ups_name = ups_name.as_str();
-
-  if let Some(ups) = state.store.read().await.get(ups_name) {
+#[inline]
+fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
+  if let Some(ups) = entry {
     let template = UpsPageTemplate {
       commands: &ups.commands,
-      hx_info_interval: state.upsd_config.poll_freq.as_secs(),
-      title: ups_name,
-      ups_info: UpsInfoTemplate::from(ups)
-        .set_status_interval(state.upsd_config.poll_interval.as_secs()),
+      hx_info_interval: upsd_config.poll_freq.as_secs(),
+      title: &ups.name,
+      ups_info: UpsInfoTemplate::from(ups).set_status_interval(upsd_config.poll_interval.as_secs()),
     };
 
     template.into_response()
@@ -207,28 +202,20 @@ async fn page_response(
   }
 }
 
-async fn partial_ups_info(
-  Path(ups_name): Path<String>,
-  State(state): State<Arc<ServerState>>,
-) -> impl IntoResponse {
-  let ups_name = ups_name.as_str();
-
-  if let Some(ups) = state.store.read().await.get(ups_name) {
+#[inline]
+fn partial_ups_info(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
+  if let Some(ups) = entry {
     UpsInfoTemplate::from(ups)
-      .set_status_interval(state.upsd_config.poll_interval.as_secs())
+      .set_status_interval(upsd_config.poll_interval.as_secs())
       .into_response()
   } else {
     htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
   }
 }
 
-async fn partial_ups_status(
-  Path(ups_name): Path<String>,
-  State(state): State<Arc<ServerState>>,
-) -> impl IntoResponse {
-  let ups_name = ups_name.as_str();
-
-  if let Some(ups) = state.store.read().await.get(ups_name) {
+#[inline]
+fn partial_ups_status(entry: Option<&UpsEntry>) -> Response {
+  if let Some(ups) = entry {
     UpsStatusTemplate::from(ups).into_response()
   } else {
     htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
@@ -236,19 +223,22 @@ async fn partial_ups_status(
 }
 
 pub async fn get(
-  path: Path<String>,
+  Path(ups_name): Path<String>,
   query: Query<UpsFragmentQuery>,
-  state: State<Arc<ServerState>>,
-) -> impl IntoResponse {
+  state: State<ServerState>,
+) -> Response {
+  let ups_store = state.store.read().await;
+  let ups_entry = ups_store.get(&ups_name);
+
   match query.section.as_deref() {
-    Some("info") => partial_ups_info(path, state).await.into_response(),
-    Some("status") => partial_ups_status(path, state).await.into_response(),
-    _ => page_response(path, state).await.into_response(),
+    Some("info") => partial_ups_info(ups_entry, &state.upsd_config),
+    Some("status") => partial_ups_status(ups_entry),
+    _ => page_response(ups_entry, &state.upsd_config),
   }
 }
 
 pub async fn post_command(
-  State(state): State<Arc<ServerState>>,
+  State(state): State<ServerState>,
   Path(ups_name): Path<String>,
   Form(request): Form<CommandRequest>,
 ) -> impl IntoResponse {

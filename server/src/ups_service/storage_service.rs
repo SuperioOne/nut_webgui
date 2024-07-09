@@ -37,7 +37,7 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
                 let mut e: Option<&mut UpsVariable> = None;
 
                 for var in ups_entry.variables.iter_mut() {
-                  if *var.name() == *name {
+                  if var.name() == variable.name() {
                     e = Some(var);
                     break;
                   }

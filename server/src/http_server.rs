@@ -33,9 +33,10 @@ pub(crate) struct UpsdConfig {
   pub poll_interval: Duration,
 }
 
+#[derive(Clone)]
 pub(crate) struct ServerState {
   pub store: Arc<RwLock<UpsStore>>,
-  pub upsd_config: UpsdConfig,
+  pub upsd_config: Arc<UpsdConfig>,
 }
 
 pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
@@ -47,7 +48,10 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       static_dir,
     } = config;
 
-    let state = Arc::new(ServerState { store, upsd_config });
+    let state = ServerState {
+      store,
+      upsd_config: Arc::new(upsd_config),
+    };
 
     let middleware = ServiceBuilder::new()
       .layer(CompressionLayer::new().br(true).gzip(true).deflate(true))
