@@ -9,7 +9,7 @@
       hx-get="/ups/{{title}}?section=info"
       hx-indicator="#indicator"
       hx-swap="morph:innerHTML"
-      hx-trigger="every 30s"
+      hx-trigger="every {{hx_info_interval}}s"
     >
       {{ ups_info }}
     </div>

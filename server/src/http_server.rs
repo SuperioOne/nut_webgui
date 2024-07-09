@@ -29,6 +29,8 @@ pub(crate) struct UpsdConfig {
   pub pass: Option<String>,
   pub user: Option<String>,
   pub addr: String,
+  pub poll_freq: Duration,
+  pub poll_interval: Duration,
 }
 
 pub(crate) struct ServerState {

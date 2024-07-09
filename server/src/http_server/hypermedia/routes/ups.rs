@@ -84,9 +84,15 @@ struct UpsInfoTemplate<'a> {
   runtime: Option<i32>,
   variables: Vec<(&'a str, String)>,
   ups_status_template: UpsStatusTemplate,
+  hx_status_interval: u64,
 }
 
 impl<'a> UpsInfoTemplate<'a> {
+  pub fn set_status_interval(mut self, value_secs: u64) -> Self {
+    self.hx_status_interval = value_secs;
+    self
+  }
+
   pub fn from_ups_entry(ups: &'a UpsEntry) -> Self {
     let variables: Vec<(&'a str, String)> = ups
       .variables
@@ -108,6 +114,7 @@ impl<'a> UpsInfoTemplate<'a> {
       runtime: None,
       variables,
       ups_status_template: UpsStatusTemplate::default(),
+      hx_status_interval: 2_u64,
     };
 
     for variable in ups.variables.iter() {
@@ -176,6 +183,7 @@ struct UpsPageTemplate<'a> {
   title: &'a str,
   ups_info: UpsInfoTemplate<'a>,
   commands: &'a [Box<str>],
+  hx_info_interval: u64,
 }
 
 async fn page_response(
@@ -186,9 +194,11 @@ async fn page_response(
 
   if let Some(ups) = state.store.read().await.get(ups_name) {
     let template = UpsPageTemplate {
-      title: ups_name,
-      ups_info: UpsInfoTemplate::from(ups),
       commands: &ups.commands,
+      hx_info_interval: state.upsd_config.poll_freq.as_secs(),
+      title: ups_name,
+      ups_info: UpsInfoTemplate::from(ups)
+        .set_status_interval(state.upsd_config.poll_interval.as_secs()),
     };
 
     template.into_response()
@@ -204,7 +214,9 @@ async fn partial_ups_info(
   let ups_name = ups_name.as_str();
 
   if let Some(ups) = state.store.read().await.get(ups_name) {
-    UpsInfoTemplate::from(ups).into_response()
+    UpsInfoTemplate::from(ups)
+      .set_status_interval(state.upsd_config.poll_interval.as_secs())
+      .into_response()
   } else {
     htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
   }

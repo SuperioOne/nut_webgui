@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e;
+
 (trap 'kill 0' SIGINT; \
 (pnpm run -C ./client dev; echo "Esbuild Stopped";) & \
 (pnpm run -C ./client watch; echo "Tailwind Stopped";) & \

@@ -113,6 +113,7 @@ pub async fn post_command(
         addr,
         pass: Some(password),
         user: Some(username),
+        ..
       } => {
         let mut client = UpsAuthClient::create(addr, username, password).await?;
         client.send_instcmd(&ups_name, &body.cmd).await?;

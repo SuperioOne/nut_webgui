@@ -14,7 +14,7 @@
         hx-get="/ups/{{title}}?section=status"
         hx-indicator="#indicator"
         hx-swap="morph:innerHTML"
-        hx-trigger="every 2s"
+        hx-trigger="every {{hx_status_interval}}s"
         >
         {{ ups_status_template }}
       </div>

@@ -122,6 +122,8 @@ async fn main() {
       addr: upsd_address,
       pass: args.upsd_pass,
       user: args.upsd_user,
+      poll_freq: Duration::from_secs(poll_freq),
+      poll_interval: Duration::from_secs(poll_interval),
     },
   });
 
