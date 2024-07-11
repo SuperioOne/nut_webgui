@@ -1,8 +1,5 @@
-server/target/
 */node_modules/
-/node_modules
-/server/static
 /.idea
 /.vscode
-*/dist
-/dist
+server/target/
+client/dist/
