@@ -3,3 +3,4 @@
 /.vscode
 server/target/
 client/dist/
+bin/

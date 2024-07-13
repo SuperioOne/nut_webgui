@@ -34,10 +34,11 @@ use ups_mem_store::UpsStore;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct ServerArgs {
-  /// UPS info update frequency in seconds.
+  /// Non-critical ups variables update frequency in seconds.
   #[arg(long, default_value_t = 30)]
   poll_freq: u64,
 
+  /// Critical ups variables update interval in seconds.
   #[arg(long, default_value_t = 2)]
   poll_interval: u64,
 
@@ -45,7 +46,7 @@ struct ServerArgs {
   #[arg(long, default_value_t = String::from("localhost"))]
   upsd_addr: String,
 
-  /// NUT server address
+  /// NUT server port
   #[arg(long, default_value_t = 3493)]
   upsd_port: u16,
 
@@ -98,7 +99,7 @@ async fn main() {
     std::process::abort();
   }));
 
-  // spawn background services
+  // Spawns background services
   let poll_service_handle = ups_polling_service(UpsPollerConfig {
     address: upsd_address.clone(),
     poll_freq: Duration::from_secs(poll_freq),
