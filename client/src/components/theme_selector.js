@@ -1,6 +1,10 @@
 /**
  * @typedef {"theme-key"} ThemeSelectorAttributes
- **/
+ */
+
+/**
+ * @typedef {CustomEvent<{theme: string}>} ThemeEvent
+ */
 
 const LOCAL_STORAGE_KEY = "app_theme";
 const DATA_THEME_KEY = "data-theme";
@@ -49,6 +53,12 @@ class ThemeSelector extends HTMLElement {
     if (this.#theme_value) {
       localStorage.setItem(LOCAL_STORAGE_KEY, this.#theme_value);
       document.documentElement.setAttribute(DATA_THEME_KEY, this.#theme_value);
+      document.dispatchEvent(
+        new CustomEvent("theme-change", {
+          detail: { theme: this.#theme_value },
+          cancelable: false,
+        }),
+      );
     } else {
       console.warn("No theme value attached to the theme selector", this);
     }

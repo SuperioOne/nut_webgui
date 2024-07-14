@@ -24,53 +24,53 @@
     {% when Some with (load_val) %}
     <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
       <div class="font-bold">Load</div>
-      <div class="flex flex-row justify-center flex-grow items-center">
+      <div class="flex flex-row justify-center items-center">
         {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load_val, 50, 75) %}
         <nut-gauge
-          class="fill-{{load_level_class}}"
+          class="w-full fill-{{load_level_class}}"
           value="{{load_val}}"
-          height="200px"
-          width="100%"
-          theme="g90"
           >
         </nut-gauge>
       </div>
-      {% match power %} {% when Some with (power) %}
-      <div class="font-bold text-sm">
-        Estimated power <span class="text-primary">{{power}} Watt</span>
+
+      <div class="flex-grow flex flex-col gap-3 justify-end">
+        {% match power %} {% when Some with (power) %}
+        <div class="font-bold text-sm">
+          Estimated power <span class="text-primary">{{power}} Watt</span>
+        </div>
+        {% when None %} {% endmatch %}
       </div>
-      {% when None %} {% endmatch %}
     </div>
-    {% when None %} 
-    {% endmatch %} 
+    {% when None %}
+    {% endmatch %}
+
     {% match charge %} {% when Some with (charge) %}
     <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
       <div class="font-bold">Battery</div>
-      <div class="flex flex-row justify-center flex-grow items-center">
+      <div class="flex flex-row justify-center items-center">
         {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60, 10) %}
         <nut-gauge
-          class="fill-{{battery_level_class}}"
+          class="w-full fill-{{battery_level_class}}"
           value="{{charge}}"
-          height="200px"
-          width="100%"
-          theme="g90"
           >
         </nut-gauge>
       </div>
-      {% match runtime %} {% when Some with (runtime) %}
-      <div class="font-bold text-sm">
-        Remaining run time
-        <span class="text-primary">{{ runtime }} seconds</span>
+      <div class="flex-grow flex flex-col gap-3 justify-end">
+        {% match runtime %} {% when Some with (runtime) %}
+        <div class="font-bold text-sm">
+          Remaining run time
+          <span class="text-primary">{{ runtime }} seconds</span>
+        </div>
+        {% when None %}
+        {% endmatch %}
+        {% match charge_low %}
+        {% when Some with (charge_low) %}
+        <div class="font-bold text-sm">
+          Shutdown threshold <span class="text-error">{{ charge_low }}%</span>
+        </div>
+        {% when None %}
+        {% endmatch %}
       </div>
-      {% when None %}
-      {% endmatch %}
-      {% match charge_low %}
-      {% when Some with (charge_low) %}
-      <div class="font-bold text-sm">
-        Shutdown threshold <span class="text-error">{{ charge_low }}%</span>
-      </div>
-      {% when None %}
-      {% endmatch %}
     </div>
     {% when None %}
     {% endmatch %}

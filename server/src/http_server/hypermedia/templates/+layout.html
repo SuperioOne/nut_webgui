@@ -132,12 +132,6 @@
               </li>
               <li>
                 <theme-selector
-                  theme-key="lofi"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
-                  aria-label="Lofi">Lofi</theme-selector>
-              </li>
-              <li>
-                <theme-selector
                   theme-key="night"
                   class="btn btn-sm btn-block btn-ghost justify-start"
                   aria-label="Night">Night</theme-selector>
@@ -183,7 +177,7 @@
     >
       {% let app_info = crate::http_server::hypermedia::utils::get_app_info() %}
       <a
-        class="link-info"
+        class="link"
         href="https://github.com/SuperioOne/nut_webgui/releases/tag/v{{app_info.version}}"
       >
         <span>Version: {{app_info.version}}</span>

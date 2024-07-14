@@ -23,7 +23,7 @@
 /** @typedef {CustomEvent<HtmxSendError>} HtmxSendErrorEvent **/
 /** @typedef {CustomEvent<HtmxAfterRequest>} HtmxAfterRequestEvent **/
 
-import htmx from "htmx.org/dist/htmx.esm.js";
+import htmx from "htmx.org";
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js";
 
 export * from "./components/charts/gauge.js";

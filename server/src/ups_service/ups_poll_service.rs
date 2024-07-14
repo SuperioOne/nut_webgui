@@ -168,7 +168,7 @@ pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
       error!("NUT Client shutdown failed. {:?}", err);
     }
     drop(write_channel);
-    info!("Poll service service shutdown.");
+    info!("Poll service shutdown.");
   })
 }
 

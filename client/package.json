@@ -21,10 +21,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
-    "@carbon/charts": "^1.19.0",
-    "d3": "^7.9.0",
-    "d3-cloud": "^1.2.7",
-    "d3-sankey": "^0.12.3",
+    "apexcharts": "^3.50.0",
     "htmx.org": "^2.0.1",
     "idiomorph": "^0.3.0"
   }

@@ -24,7 +24,6 @@ export default {
       "synthwave",
       "halloween",
       "forest",
-      "lofi",
       "fantasy",
       "dracula",
       "cmyk",
