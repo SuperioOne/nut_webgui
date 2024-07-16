@@ -1,27 +1,29 @@
-PROJECT_NAME  := nut_webgui
-BIN_DIR       := ./bin
-STATIC_DIR    := ./client/dist
-PROJECT_SRCS  := $(shell find server/src -type f -iname *.rs) \
-                 $(shell find server/src -type f -iname *.html) \
-                 ./server/Cargo.toml \
-                 ./server/Cargo.lock
-STATIC_SRCS   := client/package.json \
-                 client/pnpm-lock.yaml \
-                 client/tailwind.config.js \
-                 client/src/style.css \
-                 $(shell find client/src -type f -iname *.js) \
-                 $(shell find client/static -type f) \
-                 $(shell find server/src -type f -iname *.html)
-STATIC_OBJS   := $(addprefix $(BIN_DIR)/static/,index.js style.css icon.svg)
-DIST_DIR       = $(BIN_DIR)/dist/
-PACK_TARGETS   = x86-64-musl \
-                 x86-64-v3-musl \
-                 x86-64-v4-musl \
-                 aarch64-musl \
-                 aarch64-gnu \
-                 armv6-musleabi \
-                 armv7-musleabi \
-                 riscv64gc-gnu
+PROJECT_NAME   := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".name")
+PROJECT_VER    := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".version")
+BIN_DIR        := ./bin
+STATIC_DIR     := ./client/dist
+PROJECT_SRCS   := $(shell find server/src -type f -iname *.rs) \
+                  $(shell find server/src -type f -iname *.html) \
+                  ./server/Cargo.toml \
+                  ./server/Cargo.lock
+STATIC_SRCS    := client/package.json \
+                  client/pnpm-lock.yaml \
+                  client/tailwind.config.js \
+                  client/src/style.css \
+                  $(shell find client/src -type f -iname *.js) \
+                  $(shell find client/static -type f) \
+                  $(shell find server/src -type f -iname *.html)
+STATIC_OBJS    := $(addprefix $(BIN_DIR)/static/,index.js style.css icon.svg)
+DIST_DIR        = $(BIN_DIR)/dist/
+DOCKER_TEMPLATE = ./containers/Dockerfile.template
+PACK_TARGETS    = x86-64-musl \
+                  x86-64-v3-musl \
+                  x86-64-v4-musl \
+                  aarch64-musl \
+                  aarch64-gnu \
+                  armv6-musleabi \
+                  armv7-musleabi \
+                  riscv64gc-gnu
 
 fn_output_path = $(BIN_DIR)/$(1)/$(PROJECT_NAME)
 fn_target_path = server/target/$(1)/$(PROJECT_NAME)
@@ -41,8 +43,8 @@ fn_target_path = server/target/$(1)/$(PROJECT_NAME)
 # build-client         : Generates front-end static files. Requires node and pnpm.
 # build-all            : Cross compiles everything. Make sure host system has all
 #                        the necessary libs and tools for arm, x86-64 and riscv.
+# generate-dockerfiles : Generates dockerfiles for all supported architectures.
 # pack                 : tar.gz all compiled targets under the bin directory.
-# update-deps          : Updates both server and client dependencies.
 # test                 : Calls available test suites.
 # clean                : Clears all build directories.
 
@@ -169,22 +171,63 @@ pack: $(STATIC_OBJS)
 		if [ -f "$(BIN_DIR)/$${target}/$(PROJECT_NAME)" ]; then \
 			echo "Packing $${target}.tar.gz"; \
 			cp -r "$(BIN_DIR)/static" "$(BIN_DIR)/$${target}"; \
-			tar -czf "$(DIST_DIR)/$${target}.tar.gz" -C "$(BIN_DIR)/" "$${target}"; \
+			tar -czf "$(DIST_DIR)/$(PROJECT_NAME)_$(PROJECT_VER)_$${target}.tar.gz" -C "$(BIN_DIR)/" "$${target}"; \
 		fi; \
 	done;
-
-.PHONY: update-deps
-update-deps:
-	@echo "Updating client dependencies."
-	@pnpm outdated -C ./client/
-	@pnpm update -C ./client/
-	@echo "Updating server dependencies."
-	@cd ./server/ && cargo update
 
 .PHONY: test
 test:
 	@cd ./server && cargo test
 
+.PHONY: generate-dockerfiles
+generate-dockerfiles: 
+	@echo "amd64.Dockerfile"
+	@sed -e 's/{BIN_DIR}/x86-64-musl/g' \
+		-e 's/{PLATFORM}/linux\/amd64/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
+		"$(DOCKER_TEMPLATE)" > ./containers/amd64.Dockerfile
+	@echo "amd64-v3.Dockerfile"
+	@sed -e 's/{BIN_DIR}/x86-64-v3-musl/g' \
+		-e 's/{PLATFORM}/linux\/amd64/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
+		"$(DOCKER_TEMPLATE)" > ./containers/amd64-v3.Dockerfile
+	@echo "amd64-v4.Dockerfile"
+	@sed -e 's/{BIN_DIR}/x86-64-v4-musl/g' \
+		-e 's/{PLATFORM}/linux\/amd64/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
+		"$(DOCKER_TEMPLATE)" > ./containers/amd64-v4.Dockerfile
+	@echo "arm64.Dockerfile"
+	@sed -e 's/{BIN_DIR}/aarch64-musl/g' \
+		-e 's/{PLATFORM}/linux\/arm64\/v8/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
+		"$(DOCKER_TEMPLATE)" > ./containers/arm64.Dockerfile
+	@echo "armv7.Dockerfile"
+	@sed -e 's/{BIN_DIR}/armv7-musleabi/g' \
+		-e 's/{PLATFORM}/linux\/arm\/v7/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
+		"$(DOCKER_TEMPLATE)" > ./containers/armv7.Dockerfile
+	@echo "armv6.Dockerfile"
+	@sed -e 's/{BIN_DIR}/armv6-musleabi/g' \
+		-e 's/{PLATFORM}/linux\/arm\/v6/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
+		"$(DOCKER_TEMPLATE)" > ./containers/armv6.Dockerfile
+	@echo "riscv64.Dockerfile"
+	@sed -e 's/{BIN_DIR}/riscv64gc-gnu/g' \
+		-e 's/{PLATFORM}/linux\/riscv64/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-glibc/g' \
+		"$(DOCKER_TEMPLATE)" > ./containers/riscv64.Dockerfile
+	@echo "Generating annotation.conf"
+	@CARGO_MANIFEST=$$(cargo read-manifest --manifest-path ./server/Cargo.toml); \
+	echo "VERSION=\"$$(jq -r ".version" <<< "$${CARGO_MANIFEST}")\"" > ./containers/annotation.conf; \
+	echo "HOME_URL=\"$$(jq -r ".homepage" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
+	echo "NAME=\"$$(jq -r ".name" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
+	echo "LICENSES=\"$$(jq -r ".license" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
+	echo "AUTHORS=\"$$(jq -r '.authors | join(" ")' <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
+	echo "DOCUMENTATION=\"$$(jq -r ".documentation" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
+	echo "SOURCE=\"$$(jq -r ".repository" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
+	echo "DESCRIPTION=\"$$(jq -r ".description" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
+	echo "REVISION=\"$$(git rev-parse --verify HEAD)\"">> ./containers/annotation.conf;
+	
 .PHONY: clean
 clean:
 	@echo "Cleaning artifacts"
