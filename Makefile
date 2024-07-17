@@ -91,7 +91,7 @@ $(call fn_output_path,x86-64-v4-musl) &: $(PROJECT_SRCS)
 	@install -D $(call fn_target_path,x86_64-unknown-linux-musl/release) \
 		$(call fn_output_path,x86-64-v4-musl)
 
-# ARMv8
+# ARM64v8
 
 .PHONY: build-aarch64-musl
 build-aarch64-musl: $(call fn_output_path,aarch64-musl) build-client
@@ -149,7 +149,7 @@ build-riscv64gc-gnu: $(call fn_output_path,riscv64gc-gnu) build-client
 $(call fn_output_path,riscv64gc-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for riscv64gc-unknown-linux-gnu"
 	@cd ./server && \
-		export RUSTFLAGS="-Clinker=riscv64-linux-gnu-gcc" && \
+		export RUSTFLAGS="-Clinker=riscv64-linux-gnu-gcc -Ctarget-feature=+crt-static" && \
 		cargo build --target=riscv64gc-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,riscv64gc-unknown-linux-gnu/release) \
 		$(call fn_output_path,riscv64gc-gnu)
@@ -214,19 +214,19 @@ generate-dockerfiles:
 	@echo "riscv64.Dockerfile"
 	@sed -e 's/{BIN_DIR}/riscv64gc-gnu/g' \
 		-e 's/{PLATFORM}/linux\/riscv64/g' \
-		-e 's/{BUSYBOX_LABEL}/stable-glibc/g' \
+		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
 		"$(DOCKER_TEMPLATE)" > ./containers/riscv64.Dockerfile
 	@echo "Generating annotation.conf"
 	@CARGO_MANIFEST=$$(cargo read-manifest --manifest-path ./server/Cargo.toml); \
 	echo "VERSION=\"$$(jq -r ".version" <<< "$${CARGO_MANIFEST}")\"" > ./containers/annotation.conf; \
-	echo "HOME_URL=\"$$(jq -r ".homepage" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
-	echo "NAME=\"$$(jq -r ".name" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
-	echo "LICENSES=\"$$(jq -r ".license" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
-	echo "AUTHORS=\"$$(jq -r '.authors | join(" ")' <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
-	echo "DOCUMENTATION=\"$$(jq -r ".documentation" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
-	echo "SOURCE=\"$$(jq -r ".repository" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
-	echo "DESCRIPTION=\"$$(jq -r ".description" <<< "$${CARGO_MANIFEST}")\"">> ./containers/annotation.conf; \
-	echo "REVISION=\"$$(git rev-parse --verify HEAD)\"">> ./containers/annotation.conf;
+	echo "HOME_URL=\"$$(jq -r ".homepage" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "NAME=\"$$(jq -r ".name" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "LICENSES=\"$$(jq -r ".license" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "AUTHORS=\"$$(jq -r '.authors | join(" ")' <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "DOCUMENTATION=\"$$(jq -r ".documentation" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "SOURCE=\"$$(jq -r ".repository" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "DESCRIPTION=\"$$(jq -r ".description" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "REVISION=\"$$(git rev-parse --verify HEAD)\"" >> ./containers/annotation.conf;
 	
 .PHONY: clean
 clean:

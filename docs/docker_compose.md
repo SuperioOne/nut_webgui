@@ -2,7 +2,7 @@
 
 # External Host
 ```
-┌──────┐                                    
+┌──────┐
 │ UPS1 ├──┐                                                  ┌─┐
 └──────┘  │     Server A                   Server B          │C│
           │     ┌─────────────┐            ┌───────────┐     │L│
@@ -26,6 +26,7 @@ services:
       - 80:1234
     environment:
       POLL_FREQ: "60"
+      POLL_INTERVAL: "5"
       UPSD_ADDR: "myhost"
       UPSD_PORT: "1234"
       UPSD_USER: "admin"
@@ -33,7 +34,7 @@ services:
       LISTEN: "0.0.0.0"
       PORT: "1234"
       LOG_LEVEL: "debug"
-      
+
 # Add other services, reverse proxy of your choice etc.
 ```
 
@@ -63,6 +64,7 @@ services:
     network_mode: host         # Share same host
     environment:
       POLL_FREQ: "60"
+      POLL_INTERVAL: "5"
       UPSD_ADDR: "localhost"
       UPSD_PORT: "3493"
       UPSD_USER: "admin"

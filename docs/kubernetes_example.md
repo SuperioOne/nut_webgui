@@ -1,4 +1,4 @@
-### Kubernetes with EndpointSlice
+# Kubernetes with EndpointSlice
 
 Example topology
 

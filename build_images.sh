@@ -115,7 +115,7 @@ for TARGET_FILE in ${DOCKER_FILES}; do
     echo -e "${C_Cy}Dockerfile ${TARGET_FILE}${RST}";
     echo -e "${C_Cy}Building ${_IMAGE_TAG}${RST}";
 
-    test "${DRY_RUN}" = "false" && \
+    test "${DRY_RUN}" != "true" && \
         buildah build \
         --layers \
         --variant "${_ARCH_VARIANT}" \
@@ -169,8 +169,7 @@ for IMAGE in ${CREATED_IMAGES}; do
     echo -e "${C_Y}${IMAGE} added to ${MANIFEST_NAME}${RST}.";
 done;
 
-if [[ "$PUBLISH" == "true" ]];
-then
+if [[ "$PUBLISH" == "true" ]]; then
     test "${DRY_RUN}" != "true" && \
         buildah login --tls-verify="${TLS_VERIFY}" "${REGISTRY}"
 

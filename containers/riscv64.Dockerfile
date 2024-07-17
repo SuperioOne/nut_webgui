@@ -1,4 +1,4 @@
-FROM --platform=linux/riscv64 docker.io/busybox:stable-glibc
+FROM --platform=linux/riscv64 docker.io/busybox:stable-musl
 RUN adduser -H -D -g "<nut_web>" nut_webgui
 COPY --chmod=750 --chown=root:nut_webgui ./containers/server_start.sh /opt/nut_webgui/server_start.sh
 COPY --chmod=750 --chown=root:nut_webgui ./bin/riscv64gc-gnu/nut_webgui /opt/nut_webgui/nut_webgui

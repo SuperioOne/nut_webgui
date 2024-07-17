@@ -1,3 +1,29 @@
+# v0.3.0 - July 17, 2024
+-----------------------------------
+
+## Added
+
+- Brotli compression support.
+- UPS beeper, UPS status and server connectivity indicators.
+- --poll-interval and partial update support to get critical variable updates more often.
+- Support for ARM-v6, ARM-v7, RISC-v64 and x86-64 micro-architecture levels.
+- Self-contained binary releases for non-container environments.
+
+## Changed
+
+- Container base image changed to busybox, image sizes are now ~5MiB smaller than 0.2.1.
+- Security updates for dependencies.
+- Switched to apexcharts.
+
+## Fixed
+
+- Gauge colors change correctly when theme changes.
+- Better theme initialization to prevent flashbang effect when page loaded.
+
+## Deleted
+
+- Lofi theme.
+
 # v0.2.1 - April 08, 2024
 -----------------------------------
 
