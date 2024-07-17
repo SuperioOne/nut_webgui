@@ -40,7 +40,7 @@ make build-all
 # Output dirs ./bin/<target-name> and ./bin/static
 ```
 
-### Developing & Debugging
+### Development
 
 You can start front-end and back-end server via `./start_dev.sh`. It simply calls [`cargo-watch`](https://github.com/watchexec/cargo-watch), esbuild and tailwind.
 
