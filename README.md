@@ -31,6 +31,9 @@ docker run -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass -p 90
 | armv6        | Qemu emulation          |                                                                                          |
 | riscv64      | Qemu emulation          |                                                                                          |
 
+> amd64 v3 and v4 variants require certain CPU feature flags to run. If you are a crackhead min-max enjoyer (like me), you can use `nut_webgui:latest-amd64-v3` and `nut_webgui:latest-amd64-v4` images.
+> See [x86-64 Microarchitecture levels](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels) for more details.
+
 ![DetailImage](docs/images/details.webp)
 
 ![ListImage](docs/images/list.webp)
@@ -61,9 +64,6 @@ docker run -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass -p 90
 * `LISTEN`: Listen address for the HTTP server. Default is `0.0.0.0`.
 * `PORT`: Port used by the HTTP server. Default is `9000`.
 * `LOG_LEVEL`: Log level. Default is `info`.
-
-> amd64 v3 and v4 variants require certain CPU feature flags to run. If you are a crackhead min-max enjoyer (like me), you can use `nut_webgui:latest-amd64-v3` and `nut_webgui:latest-amd64-v4` images.
-> See [x86-64 Microarchitecture levels](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels) for more details.
 
 ## JSON data API
 
