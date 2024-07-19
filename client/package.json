@@ -5,7 +5,7 @@
   },
   "private": true,
   "name": "nut_webgui-client",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Bundles all client side web components and dependencies.",
   "scripts": {
     "dev-js": "esbuild ./src/index.js --bundle --outdir=./dist/debug --target=firefox98,chrome86,safari15 --format=iife --watch=forever",

@@ -56,7 +56,7 @@ export default class Gauge extends HTMLElement {
           startAngle: -90,
           endAngle: 90,
           track: {
-            background: [() => window.getComputedStyle(this).background],
+            background: "#a0a0a0",
             strokeWidth: 90,
             margin: 10,
           },
