@@ -14,7 +14,7 @@ STATIC_SRCS    := client/package.json \
                   $(shell find client/static -type f) \
                   $(shell find server/src -type f -iname *.html)
 STATIC_OBJS    := $(addprefix $(BIN_DIR)/static/,index.js style.css icon.svg)
-DIST_DIR        = $(BIN_DIR)/dist/
+DIST_DIR        = $(BIN_DIR)/dist
 DOCKER_TEMPLATE = ./containers/Dockerfile.template
 PACK_TARGETS    = x86-64-musl \
                   x86-64-v3-musl \
@@ -169,9 +169,12 @@ pack: $(STATIC_OBJS)
 	@install -d $(DIST_DIR)
 	@for target in $(PACK_TARGETS); do \
 		if [ -f "$(BIN_DIR)/$${target}/$(PROJECT_NAME)" ]; then \
-			echo "Packing $${target}.tar.gz"; \
+			OUTPUT_TARGZ="$(DIST_DIR)/$(PROJECT_NAME)_$(PROJECT_VER)_$${target}.tar.gz"; \
 			cp -r "$(BIN_DIR)/static" "$(BIN_DIR)/$${target}"; \
-			tar -czf "$(DIST_DIR)/$(PROJECT_NAME)_$(PROJECT_VER)_$${target}.tar.gz" -C "$(BIN_DIR)/" "$${target}"; \
+			tar -czf "$${OUTPUT_TARGZ}" -C "$(BIN_DIR)/" "$${target}"; \
+			echo "Packed $${target}.tar.gz"; \
+			sha256sum "$${OUTPUT_TARGZ}" > "$${OUTPUT_TARGZ}.sha256"; \
+			echo "Generated $${target}.tar.gz.sha256"; \
 		fi; \
 	done;
 
@@ -218,14 +221,14 @@ generate-dockerfiles:
 		"$(DOCKER_TEMPLATE)" > ./containers/riscv64.Dockerfile
 	@echo "Generating annotation.conf"
 	@CARGO_MANIFEST=$$(cargo read-manifest --manifest-path ./server/Cargo.toml); \
-	echo "VERSION=\"$$(jq -r ".version" <<< "$${CARGO_MANIFEST}")\"" > ./containers/annotation.conf; \
-	echo "HOME_URL=\"$$(jq -r ".homepage" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
-	echo "NAME=\"$$(jq -r ".name" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
-	echo "LICENSES=\"$$(jq -r ".license" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
-	echo "AUTHORS=\"$$(jq -r '.authors | join(" ")' <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
-	echo "DOCUMENTATION=\"$$(jq -r ".documentation" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
-	echo "SOURCE=\"$$(jq -r ".repository" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
-	echo "DESCRIPTION=\"$$(jq -r ".description" <<< "$${CARGO_MANIFEST}")\"" >> ./containers/annotation.conf; \
+	echo "VERSION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".version")\"" > ./containers/annotation.conf; \
+	echo "HOME_URL=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".homepage")\"" >> ./containers/annotation.conf; \
+	echo "NAME=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".name")\"" >> ./containers/annotation.conf; \
+	echo "LICENSES=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".license")\"" >> ./containers/annotation.conf; \
+	echo "AUTHORS=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r '.authors | join(" ")')\"" >> ./containers/annotation.conf; \
+	echo "DOCUMENTATION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".documentation")\"" >> ./containers/annotation.conf; \
+	echo "SOURCE=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".repository")\"" >> ./containers/annotation.conf; \
+	echo "DESCRIPTION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".description")\"" >> ./containers/annotation.conf; \
 	echo "REVISION=\"$$(git rev-parse --verify HEAD)\"" >> ./containers/annotation.conf;
 	
 .PHONY: clean

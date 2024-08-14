@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 set -e;
 
 # ANSI colors
@@ -24,8 +24,8 @@ while getopts "hdtp:a:c:" opt; do
             PUBLISH="true";
             REGISTRY="${OPTARG}";
             if [[ -z "$REGISTRY" ]]; then
-                echo -e "${C_R}Error: Registry argument is empty${RST}"
-                exit 1
+                echo -e "${C_R}Error: Registry argument is empty${RST}";
+                exit 1;
             fi
             ;;
         "t")
@@ -160,7 +160,7 @@ if [[ "${DRY_RUN}" != "true" ]]; then
 fi
 
 for IMAGE in ${CREATED_IMAGES}; do
-    _TAG_ARCH=$(awk "match(\$0,/^${NAME}:${VERSION}-(.*)/, matches) {print matches[1]}" <<< "${IMAGE}");
+    _TAG_ARCH=$(echo -n "${IMAGE}" | awk "match(\$0,/^${NAME}:${VERSION}-(.*)/, matches) {print matches[1]}");
     _ARCH_VARIANT=$(find_arch_variant "${_TAG_ARCH}")
 
     test "${DRY_RUN}" != "true" && \
