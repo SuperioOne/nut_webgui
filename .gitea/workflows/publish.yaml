@@ -12,7 +12,7 @@ jobs:
     runs-on: akashi
     # Using custom ArchLinux based action runner from private registry
     container:
-      image: gitea-service:80/smdd/arch-action-runner:latest
+      image: gitea-service:80/actions/arch-action-runner-full:latest
       options: "--security-opt seccomp=unconfined --security-opt apparmor=unconfined --device /dev/fuse:rw" # container setup for buildah
       credentials:
         username:  ${{secrets.REGISTRY_USERNAME}}
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: http://gitea-service/actions/checkout@v4
         with:
-          fetch-depth: 0
+          show-progress: false
       - name: Setup rustup targets and pnpm
         run: |
           rustup default stable;
@@ -45,7 +45,11 @@ jobs:
           source ./containers/annotation.conf;
           MAJOR_MINOR_TAG=$(echo -n "${VERSION}" | awk -F '.' '{print $1"."$2}');
           ALIAS_TAGS="latest ${MAJOR_MINOR_TAG}";
-          ./build_images.sh -a "${ALIAS_TAGS}" && buildah images;
+          ./build_images.sh -a "${ALIAS_TAGS}" -r "${REGISTRY_URL}" -u "${REGISTRY_USERNAME}" -p "${REGISTRY_PASSWORD}";
+        env: 
+          REGISTRY_URL: ${{secrets.REGISTRY_URL}}
+          REGISTRY_USERNAME: ${{secrets.REGISTRY_USERNAME}}
+          REGISTRY_PASSWORD: ${{secrets.REGISTRY_ACCESS_TOKEN}}
       - name: Generate release body from changelog
         run: >
           source ./containers/annotation.conf;

@@ -8,19 +8,21 @@ C_R='\033[0;31m'   # color red
 C_Y='\033[0;33m'   # color yellow
 C_Cy='\033[0;36m'  # color cyan
 
-REGISTRY=""
-TLS_VERIFY="false"
-ALIAS_TAGS=""
-DRY_RUN="false"
-PUBLISH="false"
-ANNOTATION_CONF="./containers/annotation.conf"
+REGISTRY="";
+TLS_VERIFY="false";
+ALIAS_TAGS="";
+DRY_RUN="false";
+PUBLISH="false";
+ANNOTATION_CONF="./containers/annotation.conf";
+USER_NAME="";
+USER_PASS="";
 
-while getopts "hdtp:a:c:" opt; do
+while getopts "hdtu:p:a:c:r:" opt; do
     case $opt in
         "d")
             DRY_RUN="true";
             ;;
-        "p")
+        "r")
             PUBLISH="true";
             REGISTRY="${OPTARG}";
             if [[ -z "$REGISTRY" ]]; then
@@ -30,6 +32,12 @@ while getopts "hdtp:a:c:" opt; do
             ;;
         "t")
             TLS_VERIFY="true";
+            ;;
+        "u")
+            USER_NAME="${OPTARG}";
+            ;;
+        "p")
+            USER_PASS="${OPTARG}";
             ;;
         "a")
             ALIAS_TAGS="${OPTARG}";
@@ -43,13 +51,15 @@ while getopts "hdtp:a:c:" opt; do
             fi
             ;;
         "h")
-            printf "Usage %s: [-h] [-d] [-p registry] [-t] [-a alias-tags].\n" $0
+            printf "Usage %s: [-h] [-d] [-r registry] [-t] [-a alias-tags] [-l username] [-p password].\n" $0
             echo "Arguments:"
             echo "  -h                 : Help menu."
             echo "  -d                 : Dry-run. Only prints messages."
-            echo "  -p <registry-url>  : Pushes images and manifest to the target registry."
+            echo "  -r <registry-url>  : Pushes images and manifest to the target registry."
             echo "  -t                 : Enable TLS verification. Default is false."
-            echo "  -a <tag1;tag2;...> : Additional alias tags separeted with semicolons (;)"
+            echo "  -a <tag1 tag2 ...> : Additional alias tags separated with spaces"
+            echo "  -u <username>      : Registry username to login"
+            echo "  -p <password>      : User password"
             exit 2;
             ;;
         ?)
@@ -171,7 +181,7 @@ done;
 
 if [[ "$PUBLISH" == "true" ]]; then
     test "${DRY_RUN}" != "true" && \
-        buildah login --tls-verify="${TLS_VERIFY}" "${REGISTRY}"
+        buildah login --tls-verify="${TLS_VERIFY}" -u "${USER_NAME}" -p "${USER_PASS}" "${REGISTRY}";
 
     TAG_LIST=("${VERSION}" ${ALIAS_TAGS[@]});
     for TAG in "${TAG_LIST[@]}";

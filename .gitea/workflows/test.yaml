@@ -1,0 +1,27 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+jobs:
+  publish-binaries:
+    defaults:
+      run:
+        shell: bash
+    runs-on: akashi
+    container:
+      image: gitea-service:80/actions/arch-action-runner-full:latest
+      credentials:
+        username:  ${{secrets.REGISTRY_USERNAME}}
+        password:  ${{secrets.REGISTRY_ACCESS_TOKEN}}
+    steps:
+      - uses: http://gitea-service/actions/checkout@v4
+        with:
+          show-progress: false
+      - name: Setup rustup targets and pnpm
+        run: |
+          rustup default stable;
+          corepack enable pnpm;
+          pnpm --version;
+      - name: Run tests
+        run: make test
