@@ -73,15 +73,15 @@ impl From<&UpsEntry> for UpsStatusTemplate {
 struct UpsInfoTemplate<'a> {
   title: &'a str,
   battery_voltage: Option<f64>,
-  charge: Option<u8>,
-  charge_low: Option<u8>,
+  charge: Option<f64>,
+  charge_low: Option<f64>,
   desc: &'a str,
   input_voltage: Option<f64>,
-  load: Option<u8>,
+  load: Option<f64>,
   name: &'a str,
   power: Option<f64>,
   power_nominal: Option<f64>,
-  runtime: Option<i32>,
+  runtime: Option<f64>,
   variables: Vec<(&'a str, String)>,
   ups_status_template: UpsStatusTemplate,
   hx_status_interval: u64,
@@ -131,7 +131,7 @@ impl<'a> UpsInfoTemplate<'a> {
         UpsVariable::BatteryCharge(val) => {
           template.charge = Some(*val);
         }
-        UpsVariable::BatteryLow(val) => {
+        UpsVariable::BatteryChargeLow(val) => {
           template.charge_low = Some(*val);
         }
         UpsVariable::BatteryRuntime(val) => {

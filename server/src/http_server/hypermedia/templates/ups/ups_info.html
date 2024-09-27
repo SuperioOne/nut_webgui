@@ -25,7 +25,7 @@
     <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
       <div class="font-bold">Load</div>
       <div class="flex flex-row justify-center items-center">
-        {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load_val, 50, 75) %}
+        {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load_val, 50.0, 75.0) %}
         <nut-gauge
           class="w-full fill-{{load_level_class}}"
           value="{{load_val}}"
@@ -48,7 +48,7 @@
     <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
       <div class="font-bold">Battery</div>
       <div class="flex flex-row justify-center items-center">
-        {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60, 10) %}
+        {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
         <nut-gauge
           class="w-full fill-{{battery_level_class}}"
           value="{{charge}}"

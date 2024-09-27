@@ -27,7 +27,7 @@ pub const fn get_app_info() -> AppDetails {
   }
 }
 
-pub fn get_range_class(value: &u8, from: u8, to: u8) -> &'static str {
+pub fn get_range_class(value: &f64, from: f64, to: f64) -> &'static str {
   if from > to {
     if *value >= from {
       SUCCESS_CLASS

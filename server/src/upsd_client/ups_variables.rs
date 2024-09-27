@@ -8,6 +8,7 @@ use std::num::{ParseFloatError, ParseIntError};
 pub(crate) const VAR_BATTERY_CHARGE: &'static str = "battery.charge";
 pub(crate) const VAR_BATTERY_CHARGE_LOW: &'static str = "battery.charge.low";
 pub(crate) const VAR_BATTERY_RUNTIME: &'static str = "battery.runtime";
+pub(crate) const VAR_BATTERY_TEMPERATURE: &'static str = "battery.temperature";
 pub(crate) const VAR_BATTERY_VOLTAGE: &'static str = "battery.voltage";
 pub(crate) const VAR_BATTERY_VOLTAGE_NOMINAL: &'static str = "battery.voltage.nominal";
 pub(crate) const VAR_BATTERY_TYPE: &'static str = "battery.type";
@@ -98,9 +99,10 @@ pub(crate) const ERR_VAR_NOT_SUPPORTED: &'static str = "VAR-NOT-SUPPORTED";
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum UpsVariable {
-  BatteryCharge(u8),
-  BatteryLow(u8),
-  BatteryRuntime(i32),
+  BatteryCharge(f64),
+  BatteryChargeLow(f64),
+  BatteryTemperature(f64),
+  BatteryRuntime(f64),
   BatteryVoltage(f64),
   BatteryVoltageNominal(f64),
   BatteryType(String),
@@ -120,8 +122,8 @@ pub enum UpsVariable {
   DriverVersion(String),
   DriverVersionData(String),
   DriverVersionInternal(String),
-  InputTransferHigh(i32),
-  InputTransferLow(i32),
+  InputTransferHigh(f64),
+  InputTransferLow(f64),
   InputVoltage(f64),
   InputVoltageNominal(f64),
   OutputFrequencyNominal(String),
@@ -131,7 +133,7 @@ pub enum UpsVariable {
   UpsDelayShutdown(i32),
   UpsDelayStart(i32),
   UpsFirmware(String),
-  UpsLoad(u8),
+  UpsLoad(f64),
   UpsMfr(String),
   UpsModel(String),
   UpsPower(f64),
@@ -139,9 +141,9 @@ pub enum UpsVariable {
   UpsProductId(String),
   UpsSerial(String),
   UpsStatus(UpsStatus),
-  UpsTemperature(String),
-  UpsTimerShutdown(i32),
-  UpsTimerStart(i32),
+  UpsTemperature(f64),
+  UpsTimerShutdown(f64),
+  UpsTimerStart(f64),
   UpsVendorId(String),
   Generic(String, String),
 }
@@ -152,12 +154,13 @@ impl Serialize for UpsVariable {
     S: Serializer,
   {
     match self {
-      UpsVariable::BatteryCharge(value) => serializer.serialize_u8(*value),
-      UpsVariable::BatteryLow(value) => serializer.serialize_u8(*value),
-      UpsVariable::BatteryRuntime(value) => serializer.serialize_i32(*value),
+      UpsVariable::BatteryCharge(value) => serializer.serialize_f64(*value),
+      UpsVariable::BatteryChargeLow(value) => serializer.serialize_f64(*value),
+      UpsVariable::BatteryRuntime(value) => serializer.serialize_f64(*value),
+      UpsVariable::BatteryTemperature(value) => serializer.serialize_f64(*value),
+      UpsVariable::BatteryType(value) => serializer.serialize_str(&value),
       UpsVariable::BatteryVoltage(value) => serializer.serialize_f64(*value),
       UpsVariable::BatteryVoltageNominal(value) => serializer.serialize_f64(*value),
-      UpsVariable::BatteryType(value) => serializer.serialize_str(&value),
       UpsVariable::DeviceMfr(value) => serializer.serialize_str(&value),
       UpsVariable::DeviceModel(value) => serializer.serialize_str(&value),
       UpsVariable::DeviceSerial(value) => serializer.serialize_str(&value),
@@ -174,8 +177,9 @@ impl Serialize for UpsVariable {
       UpsVariable::DriverVersion(value) => serializer.serialize_str(&value),
       UpsVariable::DriverVersionData(value) => serializer.serialize_str(&value),
       UpsVariable::DriverVersionInternal(value) => serializer.serialize_str(&value),
-      UpsVariable::InputTransferHigh(value) => serializer.serialize_i32(*value),
-      UpsVariable::InputTransferLow(value) => serializer.serialize_i32(*value),
+      UpsVariable::Generic(_, value) => serializer.serialize_str(&value),
+      UpsVariable::InputTransferHigh(value) => serializer.serialize_f64(*value),
+      UpsVariable::InputTransferLow(value) => serializer.serialize_f64(*value),
       UpsVariable::InputVoltage(value) => serializer.serialize_f64(*value),
       UpsVariable::InputVoltageNominal(value) => serializer.serialize_f64(*value),
       UpsVariable::OutputFrequencyNominal(value) => serializer.serialize_str(&value),
@@ -185,7 +189,7 @@ impl Serialize for UpsVariable {
       UpsVariable::UpsDelayShutdown(value) => serializer.serialize_i32(*value),
       UpsVariable::UpsDelayStart(value) => serializer.serialize_i32(*value),
       UpsVariable::UpsFirmware(value) => serializer.serialize_str(&value),
-      UpsVariable::UpsLoad(value) => serializer.serialize_u8(*value),
+      UpsVariable::UpsLoad(value) => serializer.serialize_f64(*value),
       UpsVariable::UpsMfr(value) => serializer.serialize_str(&value),
       UpsVariable::UpsModel(value) => serializer.serialize_str(&value),
       UpsVariable::UpsPower(value) => serializer.serialize_f64(*value),
@@ -193,11 +197,10 @@ impl Serialize for UpsVariable {
       UpsVariable::UpsProductId(value) => serializer.serialize_str(&value),
       UpsVariable::UpsSerial(value) => serializer.serialize_str(&value),
       UpsVariable::UpsStatus(value) => serializer.serialize_str(&value.to_string()),
-      UpsVariable::UpsTemperature(value) => serializer.serialize_str(&value),
-      UpsVariable::UpsTimerShutdown(value) => serializer.serialize_i32(*value),
-      UpsVariable::UpsTimerStart(value) => serializer.serialize_i32(*value),
+      UpsVariable::UpsTemperature(value) => serializer.serialize_f64(*value),
+      UpsVariable::UpsTimerShutdown(value) => serializer.serialize_f64(*value),
+      UpsVariable::UpsTimerStart(value) => serializer.serialize_f64(*value),
       UpsVariable::UpsVendorId(value) => serializer.serialize_str(&value),
-      UpsVariable::Generic(_, value) => serializer.serialize_str(&value),
     }
   }
 }
@@ -206,11 +209,12 @@ impl UpsVariable {
   pub fn name(&self) -> &str {
     match self {
       UpsVariable::BatteryCharge(_) => VAR_BATTERY_CHARGE,
-      UpsVariable::BatteryLow(_) => VAR_BATTERY_CHARGE_LOW,
+      UpsVariable::BatteryChargeLow(_) => VAR_BATTERY_CHARGE_LOW,
+      UpsVariable::BatteryRuntime(_) => VAR_BATTERY_RUNTIME,
+      UpsVariable::BatteryTemperature(_) => VAR_BATTERY_TEMPERATURE,
+      UpsVariable::BatteryType(_) => VAR_BATTERY_TYPE,
       UpsVariable::BatteryVoltage(_) => VAR_BATTERY_VOLTAGE,
       UpsVariable::BatteryVoltageNominal(_) => VAR_BATTERY_VOLTAGE_NOMINAL,
-      UpsVariable::BatteryRuntime(_) => VAR_BATTERY_RUNTIME,
-      UpsVariable::BatteryType(_) => VAR_BATTERY_TYPE,
       UpsVariable::DeviceMfr(_) => VAR_DEVICE_MFR,
       UpsVariable::DeviceModel(_) => VAR_DEVICE_MODEL,
       UpsVariable::DeviceSerial(_) => VAR_DEVICE_SERIAL,
@@ -219,14 +223,15 @@ impl UpsVariable {
       UpsVariable::DriverParameterLowBatt(_) => VAR_DRIVER_PARAMETER_LOWBATT,
       UpsVariable::DriverParameterOffDelay(_) => VAR_DRIVER_PARAMETER_OFFDELAY,
       UpsVariable::DriverParameterOnDelay(_) => VAR_DRIVER_PARAMETER_ONDELAY,
-      UpsVariable::DriverParameterVendorId(_) => VAR_DRIVER_PARAMETER_VENDORID,
       UpsVariable::DriverParameterPollFreq(_) => VAR_DRIVER_PARAMETER_POLLFREQ,
       UpsVariable::DriverParameterPollInterval(_) => VAR_DRIVER_PARAMETER_POLLINTERVAL,
       UpsVariable::DriverParameterPort(_) => VAR_DRIVER_PARAMETER_PORT,
       UpsVariable::DriverParameterSynchronous(_) => VAR_DRIVER_PARAMETER_SYNCHRONOUS,
+      UpsVariable::DriverParameterVendorId(_) => VAR_DRIVER_PARAMETER_VENDORID,
       UpsVariable::DriverVersion(_) => VAR_DRIVER_VERSION,
       UpsVariable::DriverVersionData(_) => VAR_DRIVER_VERSION_DATA,
       UpsVariable::DriverVersionInternal(_) => VAR_DRIVER_VERSION_INTERNAL,
+      UpsVariable::Generic(name, _) => name,
       UpsVariable::InputTransferHigh(_) => VAR_INPUT_TRANSFER_HIGH,
       UpsVariable::InputTransferLow(_) => VAR_INPUT_TRANSFER_LOW,
       UpsVariable::InputVoltage(_) => VAR_INPUT_VOLTAGE,
@@ -250,14 +255,13 @@ impl UpsVariable {
       UpsVariable::UpsTimerShutdown(_) => VAR_UPS_TIMER_SHUTDOWN,
       UpsVariable::UpsTimerStart(_) => VAR_UPS_TIMER_START,
       UpsVariable::UpsVendorId(_) => VAR_UPS_VENDORID,
-      UpsVariable::Generic(name, _) => name,
     }
   }
 
   pub fn value_as_string(&self) -> String {
     match self {
       UpsVariable::BatteryCharge(val) => val.to_string(),
-      UpsVariable::BatteryLow(val) => val.to_string(),
+      UpsVariable::BatteryChargeLow(val) => val.to_string(),
       UpsVariable::BatteryRuntime(val) => val.to_string(),
       UpsVariable::BatteryVoltage(val) => val.to_string(),
       UpsVariable::BatteryVoltageNominal(val) => val.to_string(),
@@ -302,6 +306,7 @@ impl UpsVariable {
       UpsVariable::UpsTimerStart(val) => val.to_string(),
       UpsVariable::UpsVendorId(val) => val.to_string(),
       UpsVariable::Generic(_, val) => val.to_string(),
+      UpsVariable::BatteryTemperature(val) => val.to_string(),
     }
   }
 }
@@ -325,12 +330,13 @@ impl TryFrom<(&str, &str)> for UpsVariable {
   fn try_from(from_value: (&str, &str)) -> Result<Self, Self::Error> {
     let (name, value) = from_value;
     let ups_variable = match name {
-      VAR_BATTERY_CHARGE => UpsVariable::BatteryCharge(value.parse::<u8>()?),
-      VAR_BATTERY_CHARGE_LOW => UpsVariable::BatteryLow(value.parse::<u8>()?),
-      VAR_BATTERY_RUNTIME => UpsVariable::BatteryRuntime(value.parse::<i32>()?),
+      VAR_BATTERY_CHARGE => UpsVariable::BatteryCharge(value.parse::<f64>()?),
+      VAR_BATTERY_CHARGE_LOW => UpsVariable::BatteryChargeLow(value.parse::<f64>()?),
+      VAR_BATTERY_RUNTIME => UpsVariable::BatteryRuntime(value.parse::<f64>()?),
+      VAR_BATTERY_TEMPERATURE => UpsVariable::BatteryTemperature(value.parse::<f64>()?),
+      VAR_BATTERY_TYPE => UpsVariable::BatteryType(value.into()),
       VAR_BATTERY_VOLTAGE => UpsVariable::BatteryVoltage(value.parse::<f64>()?),
       VAR_BATTERY_VOLTAGE_NOMINAL => UpsVariable::BatteryVoltageNominal(value.parse::<f64>()?),
-      VAR_BATTERY_TYPE => UpsVariable::BatteryType(value.into()),
       VAR_DEVICE_MFR => UpsVariable::DeviceMfr(value.into()),
       VAR_DEVICE_MODEL => UpsVariable::DeviceModel(value.into()),
       VAR_DEVICE_SERIAL => UpsVariable::DeviceSerial(value.into()),
@@ -349,8 +355,8 @@ impl TryFrom<(&str, &str)> for UpsVariable {
       VAR_DRIVER_VERSION => UpsVariable::DriverVersion(value.into()),
       VAR_DRIVER_VERSION_DATA => UpsVariable::DriverVersionData(value.into()),
       VAR_DRIVER_VERSION_INTERNAL => UpsVariable::DriverVersionInternal(value.into()),
-      VAR_INPUT_TRANSFER_HIGH => UpsVariable::InputTransferHigh(value.parse::<i32>()?),
-      VAR_INPUT_TRANSFER_LOW => UpsVariable::InputTransferLow(value.parse::<i32>()?),
+      VAR_INPUT_TRANSFER_HIGH => UpsVariable::InputTransferHigh(value.parse::<f64>()?),
+      VAR_INPUT_TRANSFER_LOW => UpsVariable::InputTransferLow(value.parse::<f64>()?),
       VAR_INPUT_VOLTAGE => UpsVariable::InputVoltage(value.parse::<f64>()?),
       VAR_INPUT_VOLTAGE_NOMINAL => UpsVariable::InputVoltageNominal(value.parse::<f64>()?),
       VAR_OUTPUT_FREQUENCY_NOMINAL => UpsVariable::OutputFrequencyNominal(value.into()),
@@ -360,7 +366,7 @@ impl TryFrom<(&str, &str)> for UpsVariable {
       VAR_UPS_DELAY_SHUTDOWN => UpsVariable::UpsDelayShutdown(value.parse::<i32>()?),
       VAR_UPS_DELAY_START => UpsVariable::UpsDelayStart(value.parse::<i32>()?),
       VAR_UPS_FIRMWARE => UpsVariable::UpsFirmware(value.into()),
-      VAR_UPS_LOAD => UpsVariable::UpsLoad(value.parse::<u8>()?),
+      VAR_UPS_LOAD => UpsVariable::UpsLoad(value.parse::<f64>()?),
       VAR_UPS_MFR => UpsVariable::UpsMfr(value.into()),
       VAR_UPS_MODEL => UpsVariable::UpsModel(value.into()),
       VAR_UPS_REALPOWER => UpsVariable::UpsPower(value.parse::<f64>()?),
@@ -368,9 +374,9 @@ impl TryFrom<(&str, &str)> for UpsVariable {
       VAR_UPS_PRODUCTID => UpsVariable::UpsProductId(value.into()),
       VAR_UPS_SERIAL => UpsVariable::UpsSerial(value.into()),
       VAR_UPS_STATUS => UpsVariable::UpsStatus(value.into()),
-      VAR_UPS_TEMPERATURE => UpsVariable::UpsTemperature(value.into()),
-      VAR_UPS_TIMER_SHUTDOWN => UpsVariable::UpsTimerShutdown(value.parse::<i32>()?),
-      VAR_UPS_TIMER_START => UpsVariable::UpsTimerStart(value.parse::<i32>()?),
+      VAR_UPS_TEMPERATURE => UpsVariable::UpsTemperature(value.parse::<f64>()?),
+      VAR_UPS_TIMER_SHUTDOWN => UpsVariable::UpsTimerShutdown(value.parse::<f64>()?),
+      VAR_UPS_TIMER_START => UpsVariable::UpsTimerStart(value.parse::<f64>()?),
       VAR_UPS_VENDORID => UpsVariable::UpsVendorId(value.into()),
       param => UpsVariable::Generic(param.to_owned(), value.to_owned()),
     };

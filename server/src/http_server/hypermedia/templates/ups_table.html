@@ -44,7 +44,7 @@
         <td>
           {% match row.charge %}
           {% when Some with (charge) %}
-          {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60, 10) %}
+          {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
           <div>
             <progress class="progress progress-{{battery_level_class}} w-full" value="{{charge}}" max="100"></progress>
           </div>
@@ -55,7 +55,7 @@
         <td class="hidden sm:table-cell">
           {% match row.load %}
           {% when Some with (load) %}
-          {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load, 50, 75) %}
+          {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load, 50.0, 75.0) %}
           <div>
             <progress class="progress progress-{{load_level_class}} w-full" value="{{load}}" max="100"></progress>
           </div>

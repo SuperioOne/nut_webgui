@@ -8,9 +8,9 @@ use serde::Deserialize;
 
 #[derive(Debug)]
 pub struct UpsTableRow<'a> {
-  charge: Option<u8>,
+  charge: Option<f64>,
   desc: &'a str,
-  load: Option<u8>,
+  load: Option<f64>,
   name: &'a str,
   status: Option<String>,
 }
