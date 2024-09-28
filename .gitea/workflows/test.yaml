@@ -18,6 +18,7 @@ jobs:
       - uses: http://gitea-service/actions/checkout@v4
         with:
           show-progress: false
+          submodules: true
       - name: Setup rustup targets and pnpm
         run: |
           rustup default stable;
