@@ -1,3 +1,9 @@
+# v0.3.2 - September 29, 2024
+
+## Fixed
+
+- Corrected numeric type handling to prevent `Invalid digit found` errors on certain UPS devices.
+
 # v0.3.1 - July 19, 2024
 
 ## Fixed
