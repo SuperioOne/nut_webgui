@@ -11,18 +11,15 @@
     <link rel="icon" href="/static/icon.svg" />
     <script>
       "use strict";
-      var o = window.matchMedia("(prefers-color-scheme: dark)");
-      var f = (o && o.matches && "dark") || "light";
-      var t = localStorage.getItem("app_theme") || f;
-      if (t) {
-        document.documentElement.setAttribute("data-theme", t);
-      }
+      var o=window.matchMedia("(prefers-color-scheme: dark)");
+      var t=localStorage.getItem("app_theme")||(o&&o.matches&&"dark")||"light";
+      if(t){document.documentElement.setAttribute("data-theme",t)}
     </script>
     <script src="/static/index.js" defer></script>
     {% block head %}{% endblock head %}
   </head>
 
-  <body class="min-h-screen flex flex-col justify-between" hx-boost="true">
+  <body class="min-h-screen flex flex-col justify-between">
     <header>
       <div class="navbar bg-base-100">
         <div class="flex-1">
