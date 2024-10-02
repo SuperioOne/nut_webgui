@@ -5,8 +5,21 @@
       class="flex flex-row justify-between col-span-full bg-base-200 rounded-lg p-6 items-center"
       >
       <div>
-        <h1 class="font-bold text-xl">{{name}}</h1>
-        <p class="font-light text-sm text-secondary py-2">{{desc}}</p>
+        <h1 class="font-bold text-xl text-primary leading-10">{{name}}</h1>
+        <p class="font-light text-secondary leading-8">
+        {% match mfr %}
+        {% when Some with (mfr) %}
+          {{mfr}}
+        {% when None %}
+        {% endmatch %}
+        -
+        {% match model %}
+        {% when Some with (model) %}
+          {{model}}
+        {% when None %}
+        {% endmatch %}
+        </p>
+        <p class="font-light text-xs">{{desc}}</p>
       </div>
       <div
         id="ups_status"
@@ -78,9 +91,11 @@
     {% when Some with (input_v) %}
     <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
       <div class="font-bold">Input Voltage</div>
-      <p class="text-center text-7xl p-6">
-      <span class="text-primary">{{input_v}}V</span>
-      </p>
+        <div class="flex-grow flex flex-row justify-center items-center">
+          <p class="text-center text-7xl p-6">
+            <span class="text-primary">{{input_v}}V</span>
+          </p>
+        </div>
     </div>
     {% when None %}
     {% endmatch %}
@@ -88,9 +103,11 @@
     {% when Some with (batt_v) %}
     <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
       <div class="font-bold">Battery Voltage</div>
-      <p class="text-center text-7xl p-6">
-      <span class="text-primary">{{batt_v}}V</span>
-      </p>
+      <div class="flex-grow flex flex-row justify-center items-center">
+        <p class="text-center text-7xl p-6">
+          <span class="text-primary">{{batt_v}}V</span>
+        </p>
+      </div>
     </div>
     {% when None %}
     {% endmatch %}

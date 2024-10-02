@@ -79,6 +79,8 @@ struct UpsInfoTemplate<'a> {
   input_voltage: Option<f64>,
   load: Option<f64>,
   name: &'a str,
+  model: Option<&'a str>,
+  mfr: Option<&'a str>,
   power: Option<f64>,
   power_nominal: Option<f64>,
   runtime: Option<f64>,
@@ -109,6 +111,8 @@ impl<'a> UpsInfoTemplate<'a> {
       input_voltage: None,
       load: None,
       name: &ups.name,
+      model: None,
+      mfr: None,
       power: None,
       power_nominal: None,
       runtime: None,
@@ -145,6 +149,12 @@ impl<'a> UpsInfoTemplate<'a> {
         }
         UpsVariable::InputVoltage(val) => {
           template.input_voltage = Some(*val);
+        }
+        UpsVariable::UpsMfr(val) => {
+          template.mfr = Some(val);
+        }
+        UpsVariable::UpsModel(val) => {
+          template.model = Some(val);
         }
         UpsVariable::UpsBeeperStatus(val) => {
           template.ups_status_template.beeper_status = match val.as_str() {

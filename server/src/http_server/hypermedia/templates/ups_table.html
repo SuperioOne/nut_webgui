@@ -1,4 +1,4 @@
-<table id="ups_table" class="table table-fixed">
+<table id="ups_table" class="table table-fixed text-base-content">
   <thead>
     <tr>
       <th class="font-black">Name</th>
@@ -18,57 +18,60 @@
       {% else %}
 
       {% for row in ups_list %}
-      <tr>
-        <td>
-          <a class="link font-bold text-primary" href="/ups/{{row.name}}">
-            {{row.name}}
-          </a>
-        </td>
-        <td class="hidden sm:table-cell">
-          <span class="font-light text-base-content">{{row.desc}}</span>
-        </td>
-        <td>
-          {% match row.status %}
-          {% when Some with (status) %}
-
-          {% match crate::http_server::hypermedia::utils::get_status_class(status) %}
-          {% when Some with (status_class) %}
-          <span class="text-{{status_class}} uppercase font-black">{{status}}</span>
-          {% when None %}
-          <span class="uppercase font-black">{{status}}</span>
-          {% endmatch %}
-
-          {% when None %}
-          {% endmatch %}
-        </td>
-        <td>
-          {% match row.charge %}
-          {% when Some with (charge) %}
-          {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
-          <div>
-            <progress class="progress progress-{{battery_level_class}} w-full" value="{{charge}}" max="100"></progress>
-          </div>
-          <div class="text-center w-full text-primary">{{charge}}%</div>
-          {% when None %}
-          {% endmatch %}
-        </td>
-        <td class="hidden sm:table-cell">
-          {% match row.load %}
-          {% when Some with (load) %}
-          {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load, 50.0, 75.0) %}
-          <div>
-            <progress class="progress progress-{{load_level_class}} w-full" value="{{load}}" max="100"></progress>
-          </div>
-          <div class="text-center w-full text-primary">{{load}}%</div>
-          {% when None %}
-          {% endmatch %}
-        </td>
-        <td class="hidden sm:table-cell">
-          <a role="button" href="/ups/{{row.name}}" class="btn btn-sm btn-outline">Details</a>
-        </td>
-      </tr>
+        <tr>
+          <td>
+            <a class="link font-bold text-primary" href="/ups/{{row.name}}">
+              {{row.name}}
+            </a>
+          </td>
+          <td class="hidden sm:table-cell">
+            <span class="font-light text-base-content">{{row.desc}}</span>
+          </td>
+          <td>
+            {% match row.status %}
+              {% when Some with (status) %}
+                {% match crate::http_server::hypermedia::utils::get_status_class(status) %}
+                  {% when Some with (status_class) %}
+                    <span class="text-{{status_class}} uppercase font-black">{{status}}</span>
+                  {% when None %}
+                    <span class="uppercase font-black">{{status}}</span>
+                {% endmatch %}
+              {% when None %}
+            {% endmatch %}
+          </td>
+          <td>
+            {% match row.charge %}
+              {% when Some with (charge) %}
+                {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
+                <div>
+                  <progress class="progress progress-{{battery_level_class}} w-full" value="{{charge}}" max="100"></progress>
+                </div>
+                <div class="text-center w-full text-primary">{{charge}}%</div>
+              {% when None %}
+                <p class="text-center font-bold">
+                  N/A
+                </p>
+            {% endmatch %}
+          </td>
+          <td class="hidden sm:table-cell">
+            {% match row.load %}
+              {% when Some with (load) %}
+                {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load, 50.0, 75.0) %}
+                <div>
+                  <progress class="progress progress-{{load_level_class}} w-full" value="{{load}}" max="100"></progress>
+                </div>
+                <div class="text-center w-full text-primary">{{load}}%</div>
+              {% when None %}
+                <p class="text-center font-bold">
+                  N/A
+                </p>
+            {% endmatch %}
+          </td>
+          <td class="hidden sm:table-cell">
+            <a role="button" href="/ups/{{row.name}}" class="btn btn-sm btn-outline">Details</a>
+          </td>
+        </tr>
       {% endfor %}
-
-      {% endif %}
+    {% endif %}
   </tbody>
 </table>
