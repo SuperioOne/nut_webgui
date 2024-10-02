@@ -6,11 +6,14 @@ export TZ=Etc/UTC
 apt-get update -y
 apt-get upgrade -y
 apt-get install -y nut nut-client nut-server
+apt-get clean
 
 # Binds server port to 0.0.0.0
-cat /etc/nut/upsd.conf | sed 's/127\.0\.0\.1/0.0.0.0/g' > /etc/nut/upsd.conf
+echo "Configuring NUT daemon file..."
+echo "LISTEN 0.0.0.0 3493" > /etc/nut/upsd.conf
+cat /etc/nut/upsd.conf
 
-# Setup default user
+echo "Creating default NUT user..."
 UPSD_USER=$(cat <<EOF
 [admin]
         password = test
@@ -19,7 +22,10 @@ UPSD_USER=$(cat <<EOF
 EOF
 );
 
-echo "${UPSD_USER}" >> /etc/nut/upsd.users
+echo "${UPSD_USER}" > /etc/nut/upsd.users
+cat /etc/nut/upsd.users
 
-# Enable netserver
+echo "Enabling net server..."
 echo "MODE=netserver" > /etc/nut/nut.conf
+cat /etc/nut/nut.conf
+

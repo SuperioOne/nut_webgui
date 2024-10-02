@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e;
 
-trap 'echo "UPSD main process is terminated"; exit' SIGINT SIGABRT SIGTERM SIGQUIT SIGKILL;
+trap 'echo "UPSD main process is terminated"; exit' INT ABRT TERM QUIT KILL;
 
 init-config() {
     DUMMY_DEVICE_DIR="/nut_devices";
@@ -15,7 +15,7 @@ init-config() {
     for device in $(find "${DUMMY_DEVICE_DIR}" -type f -name '*.dev' -o -name '*.seq');
     do
         DEVICE_FILE=$(basename "${device}");
-        DEVICE_NAME=$(basename "${DEVICE_FILE,,}" | awk '{print $1}');
+        DEVICE_NAME=$(basename "${DEVICE_FILE,,}" | awk -F '.' '{print $1}');
 
         CONFIG=$(cat <<EOF
 [${DEVICE_NAME}]
@@ -31,11 +31,14 @@ EOF
 
     install "${TEMP_NUT_CONF_PATH}" "${NUT_CONF_PATH}";
 
-    service nut-server restart;
-    service nut-client restart;
-    upsdrvctl stop;
     upsdrvctl start;
+    service nut-server restart;
 }
 
 init-config;
-sleep infinity;
+
+echo "Server is ready";
+
+while true; do
+    sleep 10;
+done
