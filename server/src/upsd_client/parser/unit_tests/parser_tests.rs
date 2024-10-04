@@ -1,15 +1,14 @@
 use crate::upsd_client::{
   parser::{parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable},
   ups_variables::UpsVariable,
-  Cmd, Ups, Var,
+  Ups,
 };
 
 #[test]
 fn parse_variable_numeric() {
   let expected = UpsVariable::BatteryCharge(87.0);
 
-  if let Ok(Var { name, var }) = parse_variable("VAR bx1600mi battery.charge \"87.0\"") {
-    assert_eq!("bx1600mi", name.as_ref());
+  if let Ok(var) = parse_variable("VAR bx1600mi battery.charge \"87.0\"") {
     assert_eq!(expected, var);
   } else {
     assert!(false);
@@ -19,8 +18,7 @@ fn parse_variable_numeric() {
 #[test]
 fn parse_variable_text() {
   let expected = UpsVariable::DriverName("test value".into());
-  if let Ok(Var { name, var }) = parse_variable("VAR bx1600mi driver.name \"test value\"") {
-    assert_eq!("bx1600mi", name.as_ref());
+  if let Ok(var) = parse_variable("VAR bx1600mi driver.name \"test value\"") {
     assert_eq!(expected, var);
   } else {
     assert!(false);
@@ -29,8 +27,7 @@ fn parse_variable_text() {
 
 #[test]
 fn test_parse_cmd() {
-  if let Ok(Cmd { name, cmd }) = parse_cmd("CMD bx1600mi beeper.disable") {
-    assert_eq!("bx1600mi", name.as_ref());
+  if let Ok(cmd) = parse_cmd("CMD bx1600mi beeper.disable") {
     assert_eq!("beeper.disable", cmd.as_ref());
   } else {
     assert!(false);

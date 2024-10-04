@@ -1,13 +1,16 @@
-use crate::upsd_client::errors::NutClientErrors;
-use crate::upsd_client::parser::{parse_cmd_list, parse_ups_list, parse_var_list};
-use crate::upsd_client::{Cmd, Ups, Var};
-use crate::{extract_error, is_error_response, is_list_end, is_ok_response};
-use std::ops::AddAssign;
-use tokio::io;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::{TcpStream, ToSocketAddrs};
-
-use super::parser::parse_variable;
+use super::{parser::parse_variable, ups_variables::UpsVariable};
+use crate::{
+  extract_error, is_error_response, is_list_end, is_ok_response,
+  upsd_client::{
+    errors::NutClientErrors,
+    parser::{parse_cmd_list, parse_ups_list, parse_var_list},
+    Ups,
+  },
+};
+use tokio::{
+  io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader},
+  net::{TcpStream, ToSocketAddrs},
+};
 
 #[derive(Debug)]
 pub struct UpsClient<A>
@@ -32,9 +35,13 @@ pub trait Client {
   async fn close(&mut self) -> Result<(), NutClientErrors>;
   async fn reconnect(&mut self) -> Result<(), NutClientErrors>;
   async fn get_ups_list(&mut self) -> Result<Vec<Ups>, NutClientErrors>;
-  async fn get_cmd_list(&mut self, ups_name: &str) -> Result<Vec<Cmd>, NutClientErrors>;
-  async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<Var>, NutClientErrors>;
-  async fn get_var(&mut self, ups_name: &str, var_name: &str) -> Result<Var, NutClientErrors>;
+  async fn get_cmd_list(&mut self, ups_name: &str) -> Result<Vec<Box<str>>, NutClientErrors>;
+  async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<UpsVariable>, NutClientErrors>;
+  async fn get_var(
+    &mut self,
+    ups_name: &str,
+    var_name: &str,
+  ) -> Result<UpsVariable, NutClientErrors>;
 }
 
 impl<A> UpsClient<A>
@@ -99,16 +106,15 @@ where
   async fn get_ups_list(&mut self) -> Result<Vec<Ups>, NutClientErrors> {
     let mut reader = self.send("LIST UPS\n").await?;
     let mut message_buffer = String::new();
+    let mut line_buffer = String::new();
 
     loop {
-      let mut line_buffer = String::new();
-
       match reader.read_line(&mut line_buffer).await {
         Ok(0) => {
           break;
         }
         Ok(_) => {
-          message_buffer.add_assign(line_buffer.as_str());
+          message_buffer.push_str(line_buffer.as_str());
 
           if is_error_response!(&line_buffer)
             || is_list_end!(&line_buffer)
@@ -116,6 +122,8 @@ where
           {
             break;
           }
+
+          line_buffer.clear();
         }
         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
         Err(err) => return Err(NutClientErrors::IOError(err.kind())),
@@ -125,20 +133,19 @@ where
     parse_ups_list(&message_buffer)
   }
 
-  async fn get_cmd_list(&mut self, ups_name: &str) -> Result<Vec<Cmd>, NutClientErrors> {
+  async fn get_cmd_list(&mut self, ups_name: &str) -> Result<Vec<Box<str>>, NutClientErrors> {
     let command = format!("LIST CMD {0}\n", &ups_name);
     let mut reader = self.send(&command).await?;
     let mut message_buffer = String::new();
+    let mut line_buffer = String::new();
 
     loop {
-      let mut line_buffer = String::new();
-
       match reader.read_line(&mut line_buffer).await {
         Ok(0) => {
           break;
         }
         Ok(_) => {
-          message_buffer.add_assign(line_buffer.as_str());
+          message_buffer.push_str(line_buffer.as_str());
 
           if is_error_response!(&line_buffer)
             || is_list_end!(&line_buffer)
@@ -146,6 +153,8 @@ where
           {
             break;
           }
+
+          line_buffer.clear();
         }
         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
         Err(err) => return Err(err.into()),
@@ -155,7 +164,7 @@ where
     parse_cmd_list(&message_buffer)
   }
 
-  async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<Var>, NutClientErrors> {
+  async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<UpsVariable>, NutClientErrors> {
     let command = format!("LIST VAR {0}\n", &ups_name);
     let mut reader = self.send(&command).await?;
     let mut message_buffer = String::new();
@@ -168,7 +177,7 @@ where
           break;
         }
         Ok(_) => {
-          message_buffer.add_assign(line_buffer.as_str());
+          message_buffer.push_str(line_buffer.as_str());
 
           if is_error_response!(&line_buffer)
             || is_list_end!(&line_buffer)
@@ -185,20 +194,23 @@ where
     parse_var_list(&message_buffer)
   }
 
-  async fn get_var(&mut self, ups_name: &str, var_name: &str) -> Result<Var, NutClientErrors> {
+  async fn get_var(
+    &mut self,
+    ups_name: &str,
+    var_name: &str,
+  ) -> Result<UpsVariable, NutClientErrors> {
     let command = format!("GET VAR {0} {1}\n", ups_name, var_name);
     let mut reader = self.send(&command).await?;
     let mut message_buffer = String::new();
+    let mut line_buffer = String::new();
 
     loop {
-      let mut line_buffer = String::new();
-
       match reader.read_line(&mut line_buffer).await {
         Ok(0) => {
           break;
         }
         Ok(_) => {
-          message_buffer.add_assign(line_buffer.as_str());
+          message_buffer.push_str(line_buffer.as_str());
           break;
         }
         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
@@ -293,15 +305,19 @@ where
     self.base_client.get_ups_list().await
   }
 
-  async fn get_cmd_list(&mut self, ups_name: &str) -> Result<Vec<Cmd>, NutClientErrors> {
+  async fn get_cmd_list(&mut self, ups_name: &str) -> Result<Vec<Box<str>>, NutClientErrors> {
     self.base_client.get_cmd_list(ups_name).await
   }
 
-  async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<Var>, NutClientErrors> {
+  async fn get_var_list(&mut self, ups_name: &str) -> Result<Vec<UpsVariable>, NutClientErrors> {
     self.base_client.get_var_list(ups_name).await
   }
 
-  async fn get_var(&mut self, ups_name: &str, var_name: &str) -> Result<Var, NutClientErrors> {
+  async fn get_var(
+    &mut self,
+    ups_name: &str,
+    var_name: &str,
+  ) -> Result<UpsVariable, NutClientErrors> {
     self.base_client.get_var(ups_name, var_name).await
   }
 }

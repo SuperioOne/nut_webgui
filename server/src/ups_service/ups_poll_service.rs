@@ -1,10 +1,10 @@
+use super::UpsVarDetail;
 use crate::{
-  ups_service::UpsUpdateMessage,
+  ups_service::{UpsDetails, UpsUpdateMessage},
   upsd_client::{
     client::{Client, UpsClient},
     errors::NutClientErrors,
-    ups_variables::VAR_UPS_STATUS,
-    Cmd, Ups, Var,
+    ups_variables::{UpsVariable, VAR_UPS_STATUS},
   },
 };
 use std::{io::ErrorKind, time::Duration};
@@ -81,10 +81,15 @@ impl UpsPollInterval {
       }
     }
   }
+
+  pub fn schedule_full_sync(&mut self) {
+    // Resets scheduler internal tracker for full sync
+    self.last_full_sync = None;
+  }
 }
 
 #[instrument(name = "ups_poll_service")]
-pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
+pub fn ups_poll_service(config: UpsPollerConfig) -> JoinHandle<()> {
   spawn(async move {
     let UpsPollerConfig {
       address,
@@ -105,7 +110,6 @@ pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
     );
 
     let mut poll_scheduler = UpsPollInterval::new(poll_interval, poll_freq);
-    let mut ups_list: Vec<Ups> = Vec::new();
 
     'MAIN_LOOP: while !cancellation.is_cancelled() {
       // wait for next tick or cancellation (SIGINT)
@@ -119,8 +123,8 @@ pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
       };
 
       let update_result = match poll_type {
-        UpsPollType::Full => poll_ups_full(&mut ups_list, &mut client, &write_channel).await,
-        UpsPollType::Partial => poll_ups_partial(&ups_list, &mut client, &write_channel).await,
+        UpsPollType::Full => poll_ups_full(&mut client, &write_channel).await,
+        UpsPollType::Partial => poll_ups_partial(&mut client, &write_channel).await,
       };
 
       match update_result {
@@ -128,17 +132,22 @@ pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
           ErrorKind::WouldBlock => {}
           ErrorKind::PermissionDenied => {
             error!("TCP connection permission denied.");
-            panic!("Client cannot create TCP stream");
+            panic!("Client cannot create TCP stream.");
           }
           ErrorKind::AddrNotAvailable => {
             error!(
-              "Configured address {0} does not exists or unreachable.",
-              address
+              message = "Configured address does not exists or unreachable.",
+              address = address
             );
-            panic!("Client cannot create TCP stream");
+
+            panic!("Client cannot create TCP stream.");
           }
           error_kind => {
-            warn!("Client connection failed with error kind: {}", error_kind);
+            warn!(
+              message = "Client connection failed with an error.",
+              error_kind = error_kind.to_string()
+            );
+
             should_reconnect = true;
           }
         },
@@ -148,13 +157,34 @@ pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
           );
         }
         Err(err) => {
-          error!("Poll service error occurred: {:?}", err);
+          error!(
+            message = "Poll service error occurred",
+            reason = format!("{:?}", err)
+          );
+
+          // Clear all UPS info stored in memory
+          if let Err(err) = write_channel
+            .send(UpsUpdateMessage::FullUpdate {
+              content: Vec::new(),
+            })
+            .await
+          {
+            error!(
+              message =
+                "Sending updates to memory store channel failed, receiver channel is disconnected.",
+              reason = err.to_string()
+            );
+          }
+
+          poll_scheduler.schedule_full_sync();
         }
         _ => {}
       };
 
       if should_reconnect && !cancellation.is_cancelled() {
         should_reconnect = false;
+        poll_scheduler.schedule_full_sync();
+
         if let Err(err) = client.reconnect().await {
           // Log connection issue without panicking since it might be temporary connection issue.
           error!("UPS daemon re-connection failed: {:?}", err);
@@ -167,6 +197,7 @@ pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
     if let Err(err) = client.close().await {
       error!("NUT Client shutdown failed. {:?}", err);
     }
+
     drop(write_channel);
     info!("Poll service shutdown.");
   })
@@ -174,61 +205,107 @@ pub fn ups_polling_service(config: UpsPollerConfig) -> JoinHandle<()> {
 
 #[inline]
 async fn poll_ups_full<A>(
-  ups_list: &mut Vec<Ups>,
   client: &mut UpsClient<A>,
   channel: &Sender<UpsUpdateMessage>,
 ) -> Result<(), PollServiceError>
 where
   A: ToSocketAddrs,
 {
-  *ups_list = client.get_ups_list().await?;
   debug!("Refreshing the all available Ups devices.");
+  let ups_list = client.get_ups_list().await?;
+  let mut content: Vec<UpsDetails> = Vec::with_capacity(ups_list.len());
 
   for ups in ups_list {
-    let cmd = client.get_cmd_list(&ups.name).await?;
-    let vars = client.get_var_list(&ups.name).await?;
+    let ups_details = get_ups_details(client, &ups.name).await;
 
-    debug!(message = "Ups full update queued.", ups_name = &ups.name);
+    match ups_details {
+      Ok((commands, variables)) => {
+        let details = UpsDetails {
+          commands,
+          desc: ups.desc.clone(),
+          name: ups.name.clone(),
+          variables,
+        };
 
-    let update_message = UpsUpdateMessage::FullUpdate {
-      commands: cmd.into_iter().map(|Cmd { name: _, cmd }| cmd).collect(),
-      name: ups.name.clone(),
-      desc: ups.desc.clone(),
-      variables: vars.into_iter().map(|Var { name: _, var }| var).collect(),
+        content.push(details);
+
+        debug!(message = "UPS info received.", ups_name = &ups.name);
+      }
+      Err(err) => {
+        error!(
+          message = "Unable to get UPS details",
+          ups_name = &ups.name,
+          reason = format!("{:?}", err)
+        );
+      }
     };
-
-    channel
-      .send(update_message)
-      .await
-      .map_err(|_| PollServiceError::ChannelError)?;
   }
+
+  let update_message = UpsUpdateMessage::FullUpdate { content };
+
+  debug!(message = "UPS full update queued.");
+
+  channel
+    .send(update_message)
+    .await
+    .map_err(|_| PollServiceError::ChannelError)?;
 
   Ok(())
 }
 
 #[inline]
 async fn poll_ups_partial<A>(
-  ups_list: &[Ups],
   client: &mut UpsClient<A>,
   channel: &Sender<UpsUpdateMessage>,
 ) -> Result<(), PollServiceError>
 where
   A: ToSocketAddrs,
 {
+  let ups_list = client.get_ups_list().await?;
+  let mut content: Vec<UpsVarDetail> = Vec::with_capacity(ups_list.len());
+
   for ups in ups_list {
-    let ups_status = client.get_var(&ups.name, VAR_UPS_STATUS).await?;
-    let update_message = UpsUpdateMessage::PartialUpdate {
-      name: ups.name.clone(),
-      variable: ups_status.var,
+    match client.get_var(&ups.name, VAR_UPS_STATUS).await {
+      Ok(ups_status) => {
+        let detail = UpsVarDetail {
+          name: ups.name.clone(),
+          variable: ups_status,
+        };
+
+        content.push(detail);
+
+        debug!(message = "Ups status update queued.", ups_name = &ups.name);
+      }
+      Err(err) => {
+        error!(
+          message = "Unable to get UPS status info",
+          ups_name = &ups.name,
+          reason = format!("{:?}", err)
+        );
+      }
     };
-
-    debug!(message = "Ups partial update queued.", ups_name = &ups.name);
-
-    channel
-      .send(update_message)
-      .await
-      .map_err(|_| PollServiceError::ChannelError)?;
   }
 
+  let update_message = UpsUpdateMessage::PartialUpdate { content };
+
+  channel
+    .send(update_message)
+    .await
+    .map_err(|_| PollServiceError::ChannelError)?;
+
   Ok(())
+}
+
+#[inline]
+async fn get_ups_details<A>(
+  client: &mut UpsClient<A>,
+  ups_name: &str,
+) -> Result<(Vec<Box<str>>, Vec<UpsVariable>), NutClientErrors>
+where
+  A: ToSocketAddrs,
+{
+  let commands = client.get_cmd_list(ups_name).await?;
+  let variables = client.get_var_list(ups_name).await?;
+
+  Ok((commands, variables))
 }

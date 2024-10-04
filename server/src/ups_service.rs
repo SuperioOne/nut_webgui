@@ -4,18 +4,24 @@ pub mod storage_service;
 pub mod ups_poll_service;
 
 #[derive(Debug)]
+pub struct UpsDetails {
+  pub name: Box<str>,
+  pub desc: Box<str>,
+  pub commands: Vec<Box<str>>,
+  pub variables: Vec<UpsVariable>,
+}
+
+#[derive(Debug)]
+pub struct UpsVarDetail {
+  pub name: Box<str>,
+  pub variable: UpsVariable,
+}
+
+#[derive(Debug)]
 pub enum UpsUpdateMessage {
   /// Updates all variables.
-  FullUpdate {
-    name: Box<str>,
-    desc: Box<str>,
-    commands: Vec<Box<str>>,
-    variables: Vec<UpsVariable>,
-  },
+  FullUpdate { content: Vec<UpsDetails> },
 
   /// Updates a single variable.
-  PartialUpdate {
-    name: Box<str>,
-    variable: UpsVariable,
-  },
+  PartialUpdate { content: Vec<UpsVarDetail> },
 }

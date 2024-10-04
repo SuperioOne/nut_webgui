@@ -1,4 +1,4 @@
-use crate::upsd_client::{errors::NutClientErrors, ups_variables::UpsVariable, Cmd, Ups, Var};
+use crate::upsd_client::{errors::NutClientErrors, ups_variables::UpsVariable, Ups};
 
 #[cfg(test)]
 mod unit_tests;
@@ -69,9 +69,9 @@ macro_rules! check_list_start {
   }};
 }
 
-pub fn parse_cmd_list(buffer: &str) -> Result<Vec<Cmd>, NutClientErrors> {
+pub fn parse_cmd_list(buffer: &str) -> Result<Vec<Box<str>>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  let mut commands: Vec<Cmd> = vec![];
+  let mut commands: Vec<Box<str>> = vec![];
 
   check_list_start!(line_iter.next(), "CMD")?;
 
@@ -109,9 +109,9 @@ pub fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> {
   ))
 }
 
-pub fn parse_var_list(buffer: &str) -> Result<Vec<Var>, NutClientErrors> {
+pub fn parse_var_list(buffer: &str) -> Result<Vec<UpsVariable>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  let mut variables: Vec<Var> = vec![];
+  let mut variables: Vec<UpsVariable> = vec![];
 
   check_list_start!(line_iter.next(), "VAR")?;
 
@@ -129,15 +129,14 @@ pub fn parse_var_list(buffer: &str) -> Result<Vec<Var>, NutClientErrors> {
   ))
 }
 
-pub fn parse_variable(line: &str) -> Result<Var, NutClientErrors> {
+pub fn parse_variable(line: &str) -> Result<UpsVariable, NutClientErrors> {
   let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
 
   match words.as_slice() {
-    [op, ups_name, var_name, value_slice] if op == "VAR" => {
-      let name = Box::from(ups_name.as_str());
+    [op, _ups_name, var_name, value_slice] if op == "VAR" => {
       let var = UpsVariable::try_from((var_name.as_str(), value_slice.as_str()))?;
 
-      Ok(Var { var, name })
+      Ok(var)
     }
     _ => Err(NutClientErrors::ParseError(
       "Unexpected variable format".into(),
@@ -145,15 +144,14 @@ pub fn parse_variable(line: &str) -> Result<Var, NutClientErrors> {
   }
 }
 
-pub fn parse_cmd(line: &str) -> Result<Cmd, NutClientErrors> {
+pub fn parse_cmd(line: &str) -> Result<Box<str>, NutClientErrors> {
   let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
 
   match words.as_slice() {
-    [op, ups_name, cmd_name] if op == "CMD" => {
-      let name = Box::from(ups_name.as_str());
+    [op, _ups_name, cmd_name] if op == "CMD" => {
       let cmd = Box::from(cmd_name.as_str());
 
-      Ok(Cmd { name, cmd })
+      Ok(cmd)
     }
     _ => Err(NutClientErrors::ParseError(
       "Unexpected command format".into(),

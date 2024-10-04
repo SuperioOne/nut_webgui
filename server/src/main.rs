@@ -7,7 +7,7 @@ use crate::{
   http_server::{start_http_server, HttpServerConfig, UpsdConfig},
   ups_service::{
     storage_service::{ups_storage_service, UpsStorageConfig},
-    ups_poll_service::{ups_polling_service, UpsPollerConfig},
+    ups_poll_service::{ups_poll_service, UpsPollerConfig},
     UpsUpdateMessage,
   },
 };
@@ -80,7 +80,19 @@ async fn main() {
   let args = ServerArgs::parse();
 
   fmt().with_max_level(args.log_level).init();
-  debug!("Server initialized with {:?}", &args);
+  debug!(
+    message = "Server initialized with",
+    poll_interval = &args.poll_interval,
+    poll_freq = &args.poll_freq,
+    upsd_addr = &args.upsd_addr,
+    upsd_port = &args.upsd_port,
+    upsd_user = &args.upsd_user,
+    upsd_pass = args.upsd_pass.as_deref().map(|_| "[REDACTED]"),
+    listen = &args.listen.to_string(),
+    port = &args.port,
+    log_level = args.log_level.as_str(),
+    static_dir = &args.static_dir
+  );
 
   let cancellation = CancellationToken::new();
   let (tx, rx): (Sender<UpsUpdateMessage>, Receiver<UpsUpdateMessage>) = mpsc::channel(4096);
@@ -100,7 +112,7 @@ async fn main() {
   }));
 
   // Spawns background services
-  let poll_service_handle = ups_polling_service(UpsPollerConfig {
+  let poll_service_handle = ups_poll_service(UpsPollerConfig {
     address: upsd_address.clone(),
     poll_freq: Duration::from_secs(poll_freq),
     poll_interval: Duration::from_secs(poll_interval),

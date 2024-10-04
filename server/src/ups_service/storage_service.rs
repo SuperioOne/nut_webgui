@@ -30,48 +30,57 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
 
     while !cancellation.is_cancelled() {
       match read_channel.recv().await {
-        Some(UpsUpdateMessage::PartialUpdate { name, variable }) => {
-          match store.write().await.get_mut(&name) {
-            Some(ups_entry) => {
-              let old_var = {
-                let mut e: Option<&mut UpsVariable> = None;
+        Some(UpsUpdateMessage::PartialUpdate { content }) => {
+          let mut store_handle = store.write().await;
 
-                for var in ups_entry.variables.iter_mut() {
-                  if var.name() == variable.name() {
-                    e = Some(var);
-                    break;
+          for item in content.into_iter() {
+            match store_handle.get_mut(&item.name) {
+              Some(ups_entry) => {
+                let old_var = {
+                  let mut e: Option<&mut UpsVariable> = None;
+
+                  for var in ups_entry.variables.iter_mut() {
+                    // TODO: Check UpsVariable enum marker byte instead of whole name
+                    if var.name() == item.variable.name() {
+                      e = Some(var);
+                      break;
+                    }
                   }
+
+                  e
+                };
+
+                if let Some(old_var) = old_var {
+                  *old_var = item.variable;
+                } else {
+                  ups_entry.variables.push(item.variable);
                 }
-
-                e
-              };
-
-              if let Some(old_var) = old_var {
-                *old_var = variable;
-              } else {
-                ups_entry.variables.push(variable);
               }
+              None => warn!(
+                "Partial update ignored. Ups {} does not exists anymore.",
+                item.name
+              ),
             }
-            None => warn!(
-              "Partial update ignored. Ups {} does not exists anymore.",
-              name
-            ),
           }
         }
-        Some(UpsUpdateMessage::FullUpdate {
-          name,
-          desc,
-          commands,
-          variables,
-        }) => {
-          let entry = UpsEntry {
-            desc,
-            name,
-            variables,
-            commands,
-          };
+        Some(UpsUpdateMessage::FullUpdate { content }) => {
+          let mut new_store = UpsStore::new();
 
-          store.write().await.put(entry);
+          for item in content.into_iter() {
+            let entry = UpsEntry {
+              commands: item.commands,
+              variables: item.variables,
+              name: item.name,
+              desc: item.desc,
+            };
+
+            new_store.put(entry);
+          }
+
+          let mut store_ptr = store.write().await;
+
+          // Swap old memory with the fresh one
+          *store_ptr = new_store;
         }
         None => {}
       };
