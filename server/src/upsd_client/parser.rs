@@ -75,7 +75,7 @@ pub fn parse_cmd_list(buffer: &str) -> Result<Vec<Box<str>>, NutClientErrors> {
 
   check_list_start!(line_iter.next(), "CMD")?;
 
-  while let Some(line) = line_iter.next() {
+  for line in line_iter {
     if is_list_end!(line, "CMD") {
       return Ok(commands);
     } else {
@@ -95,7 +95,7 @@ pub fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> {
 
   check_list_start!(line_iter.next(), "UPS")?;
 
-  while let Some(line) = line_iter.next() {
+  for line in line_iter {
     if is_list_end!(line, "UPS") {
       return Ok(commands);
     } else {
@@ -115,7 +115,7 @@ pub fn parse_var_list(buffer: &str) -> Result<Vec<UpsVariable>, NutClientErrors>
 
   check_list_start!(line_iter.next(), "VAR")?;
 
-  while let Some(line) = line_iter.next() {
+  for line in line_iter {
     if is_list_end!(line, "VAR") {
       return Ok(variables);
     } else {

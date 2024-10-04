@@ -173,7 +173,7 @@ impl<'a> UpsInfoTemplate<'a> {
       ..
     } = template
     {
-      template.power = Some((pw * f64::from(ld)) / 100.0_f64);
+      template.power = Some((pw * ld) / 100.0_f64);
     };
 
     template

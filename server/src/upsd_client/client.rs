@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::{parser::parse_variable, ups_variables::UpsVariable};
 use crate::{
   extract_error, is_error_response, is_list_end, is_ok_response,

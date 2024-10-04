@@ -1,6 +1,10 @@
+#![allow(dead_code)]
+
 use askama::Template;
-use std::fmt::{Display, Formatter};
-use std::time::Duration;
+use std::{
+  fmt::{Display, Formatter},
+  time::Duration,
+};
 use uuid::Uuid;
 
 #[derive(Debug)]

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 const ERROR_CLASS: &str = "error";
 const SUCCESS_CLASS: &str = "success";
 const WARNING_CLASS: &str = "warning";
@@ -16,14 +18,12 @@ macro_rules! htmx_redirect {
 
 #[derive(Debug)]
 pub struct AppDetails {
-  pub name: &'static str,
   pub version: &'static str,
 }
 
 pub const fn get_app_info() -> AppDetails {
   AppDetails {
     version: env!("CARGO_PKG_VERSION"),
-    name: env!("CARGO_PKG_NAME"),
   }
 }
 
@@ -55,7 +55,6 @@ pub struct StatusIcon {
 pub fn get_status_icons(value: &str) -> Vec<StatusIcon> {
   value
     .split_ascii_whitespace()
-    .into_iter()
     .flat_map(|e| match e {
       "OL" => Some(StatusIcon {
         name: "activity",
