@@ -81,6 +81,8 @@ struct UpsInfoTemplate<'a> {
   name: &'a str,
   model: Option<&'a str>,
   mfr: Option<&'a str>,
+  realpower: Option<f64>,
+  realpower_nominal: Option<f64>,
   power: Option<f64>,
   power_nominal: Option<f64>,
   runtime: Option<f64>,
@@ -113,6 +115,8 @@ impl<'a> UpsInfoTemplate<'a> {
       name: &ups.name,
       model: None,
       mfr: None,
+      realpower: None,
+      realpower_nominal: None,
       power: None,
       power_nominal: None,
       runtime: None,
@@ -126,11 +130,17 @@ impl<'a> UpsInfoTemplate<'a> {
         UpsVariable::UpsLoad(val) => {
           template.load = Some(*val);
         }
-        UpsVariable::UpsPowerNominal(val) => {
-          template.power_nominal = Some(*val);
+        UpsVariable::UpsRealPowerNominal(val) => {
+          template.realpower_nominal = Some(*val);
+        }
+        UpsVariable::UpsRealPower(val) => {
+          template.realpower = Some(*val);
         }
         UpsVariable::UpsPower(val) => {
           template.power = Some(*val);
+        }
+        UpsVariable::UpsPowerNominal(val) => {
+          template.power_nominal = Some(*val);
         }
         UpsVariable::BatteryCharge(val) => {
           template.charge = Some(*val);
@@ -166,6 +176,7 @@ impl<'a> UpsInfoTemplate<'a> {
       }
     }
 
+    // If power is none, calculate power by using power_nominal and load values.
     if let Self {
       power_nominal: Some(pw),
       load: Some(ld),
@@ -174,6 +185,16 @@ impl<'a> UpsInfoTemplate<'a> {
     } = template
     {
       template.power = Some((pw * ld) / 100.0_f64);
+    };
+
+    if let Self {
+      realpower_nominal: Some(pw),
+      load: Some(ld),
+      realpower: None,
+      ..
+    } = template
+    {
+      template.realpower = Some((pw * ld) / 100.0_f64);
     };
 
     template

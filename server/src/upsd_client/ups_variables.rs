@@ -1,17 +1,55 @@
+#![allow(dead_code)]
+
 use super::errors::NutClientErrors;
 use serde::{Serialize, Serializer};
-use std::fmt::{Display, Formatter};
-use std::num::{ParseFloatError, ParseIntError};
+use std::{
+  fmt::{Display, Formatter},
+  num::{ParseFloatError, ParseIntError},
+};
 
-// https://raw.githubusercontent.com/networkupstools/nut/7b225f5291da7fb98003932ffda4e99deb7f23d3/data/cmdvartab
-
+pub(crate) const VAR_AMBIENT_HUMIDITY: &str = "ambient.humidity";
+pub(crate) const VAR_AMBIENT_HUMIDITY_ALARM: &str = "ambient.humidity.alarm";
+pub(crate) const VAR_AMBIENT_HUMIDITY_ALARM_ENABLE: &str = "ambient.humidity.alarm.enable";
+pub(crate) const VAR_AMBIENT_HUMIDITY_ALARM_MAXIMUM: &str = "ambient.humidity.alarm.maximum";
+pub(crate) const VAR_AMBIENT_HUMIDITY_ALARM_MINIMUM: &str = "ambient.humidity.alarm.minimum";
+pub(crate) const VAR_AMBIENT_HUMIDITY_HIGH: &str = "ambient.humidity.high";
+pub(crate) const VAR_AMBIENT_HUMIDITY_HIGH_CRITICAL: &str = "ambient.humidity.high.critical";
+pub(crate) const VAR_AMBIENT_HUMIDITY_HIGH_WARNING: &str = "ambient.humidity.high.warning";
+pub(crate) const VAR_AMBIENT_HUMIDITY_LOW: &str = "ambient.humidity.low";
+pub(crate) const VAR_AMBIENT_HUMIDITY_LOW_CRITICAL: &str = "ambient.humidity.low.critical";
+pub(crate) const VAR_AMBIENT_HUMIDITY_LOW_WARNING: &str = "ambient.humidity.low.warning";
+pub(crate) const VAR_AMBIENT_HUMIDITY_STATUS: &str = "ambient.humidity.status";
+pub(crate) const VAR_AMBIENT_PRESENT: &str = "ambient.present";
+pub(crate) const VAR_AMBIENT_TEMPERATURE: &str = "ambient.temperature";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_ALARM: &str = "ambient.temperature.alarm";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_ALARM_ENABLE: &str = "ambient.temperature.alarm.enable";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_ALARM_MAXIMUM: &str = "ambient.temperature.alarm.maximum";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_ALARM_MINIMUM: &str = "ambient.temperature.alarm.minimum";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_HIGH: &str = "ambient.temperature.high";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_HIGH_CRITICAL: &str = "ambient.temperature.high.critical";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_HIGH_WARNING: &str = "ambient.temperature.high.warning";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_LOW: &str = "ambient.temperature.low";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_LOW_CRITICAL: &str = "ambient.temperature.low.critical";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_LOW_WARNING: &str = "ambient.temperature.low.warning";
+pub(crate) const VAR_AMBIENT_TEMPERATURE_STATUS: &str = "ambient.temperature.status";
+pub(crate) const VAR_BATTERY_CAPACITY: &str = "battery.capacity";
 pub(crate) const VAR_BATTERY_CHARGE: &str = "battery.charge";
+pub(crate) const VAR_BATTERY_CHARGE_APPROX: &str = "battery.charge.approx";
 pub(crate) const VAR_BATTERY_CHARGE_LOW: &str = "battery.charge.low";
+pub(crate) const VAR_BATTERY_CHARGE_RESTART: &str = "battery.charge.restart";
+pub(crate) const VAR_BATTERY_CHARGE_WARNING: &str = "battery.charge.warning";
+pub(crate) const VAR_BATTERY_CURRENT: &str = "battery.current";
+pub(crate) const VAR_BATTERY_ENERGYSAVE: &str = "battery.energysave";
+pub(crate) const VAR_BATTERY_ENERGYSAVE_DELAY: &str = "battery.energysave.delay";
+pub(crate) const VAR_BATTERY_ENERGYSAVE_LOAD: &str = "battery.energysave.load";
+pub(crate) const VAR_BATTERY_ENERGYSAVE_REALPOWER: &str = "battery.energysave.realpower";
+pub(crate) const VAR_BATTERY_PROTECTION: &str = "battery.protection";
 pub(crate) const VAR_BATTERY_RUNTIME: &str = "battery.runtime";
+pub(crate) const VAR_BATTERY_RUNTIME_LOW: &str = "battery.runtime.low";
 pub(crate) const VAR_BATTERY_TEMPERATURE: &str = "battery.temperature";
+pub(crate) const VAR_BATTERY_TYPE: &str = "battery.type";
 pub(crate) const VAR_BATTERY_VOLTAGE: &str = "battery.voltage";
 pub(crate) const VAR_BATTERY_VOLTAGE_NOMINAL: &str = "battery.voltage.nominal";
-pub(crate) const VAR_BATTERY_TYPE: &str = "battery.type";
 pub(crate) const VAR_DEVICE_MFR: &str = "device.mfr";
 pub(crate) const VAR_DEVICE_MODEL: &str = "device.model";
 pub(crate) const VAR_DEVICE_SERIAL: &str = "device.serial";
@@ -28,29 +66,60 @@ pub(crate) const VAR_DRIVER_PARAMETER_VENDORID: &str = "driver.parameter.vendori
 pub(crate) const VAR_DRIVER_VERSION: &str = "driver.version";
 pub(crate) const VAR_DRIVER_VERSION_DATA: &str = "driver.version.data";
 pub(crate) const VAR_DRIVER_VERSION_INTERNAL: &str = "driver.version.internal";
+pub(crate) const VAR_INPUT_CURRENT: &str = "input.current";
+pub(crate) const VAR_INPUT_CURRENT_NOMINAL: &str = "input.current.nominal";
+pub(crate) const VAR_INPUT_CURRENT_STATUS: &str = "input.current.status";
+pub(crate) const VAR_INPUT_FREQUENCY: &str = "input.frequency";
+pub(crate) const VAR_INPUT_FREQUENCY_EXTENDED: &str = "input.frequency.extended";
+pub(crate) const VAR_INPUT_FREQUENCY_HIGH: &str = "input.frequency.high";
+pub(crate) const VAR_INPUT_FREQUENCY_LOW: &str = "input.frequency.low";
+pub(crate) const VAR_INPUT_FREQUENCY_NOMINAL: &str = "input.frequency.nominal";
+pub(crate) const VAR_INPUT_FREQUENCY_STATUS: &str = "input.frequency.status";
+pub(crate) const VAR_INPUT_LOAD: &str = "input.load";
+pub(crate) const VAR_INPUT_POWER: &str = "input.power";
+pub(crate) const VAR_INPUT_QUALITY: &str = "input.quality";
+pub(crate) const VAR_INPUT_REALPOWER: &str = "input.realpower";
+pub(crate) const VAR_INPUT_SENSITIVITY: &str = "input.sensitivity";
+pub(crate) const VAR_INPUT_SOURCE: &str = "input.source";
+pub(crate) const VAR_INPUT_SOURCE_PREFERRED: &str = "input.source.preferred";
+pub(crate) const VAR_INPUT_TRANSFER_BOOST_HIGH: &str = "input.transfer.boost.high";
+pub(crate) const VAR_INPUT_TRANSFER_BOOST_LOW: &str = "input.transfer.boost.low";
+pub(crate) const VAR_INPUT_TRANSFER_DELAY: &str = "input.transfer.delay";
 pub(crate) const VAR_INPUT_TRANSFER_HIGH: &str = "input.transfer.high";
 pub(crate) const VAR_INPUT_TRANSFER_LOW: &str = "input.transfer.low";
+pub(crate) const VAR_INPUT_TRANSFER_TRIM_HIGH: &str = "input.transfer.trim.high";
+pub(crate) const VAR_INPUT_TRANSFER_TRIM_LOW: &str = "input.transfer.trim.low";
 pub(crate) const VAR_INPUT_VOLTAGE: &str = "input.voltage";
 pub(crate) const VAR_INPUT_VOLTAGE_NOMINAL: &str = "input.voltage.nominal";
+pub(crate) const VAR_OUTPUT_CURRENT: &str = "output.current";
+pub(crate) const VAR_OUTPUT_CURRENT_NOMINAL: &str = "output.current.nominal";
+pub(crate) const VAR_OUTPUT_FREQUENCY: &str = "output.frequency";
 pub(crate) const VAR_OUTPUT_FREQUENCY_NOMINAL: &str = "output.frequency.nominal";
 pub(crate) const VAR_OUTPUT_VOLTAGE: &str = "output.voltage";
 pub(crate) const VAR_OUTPUT_VOLTAGE_NOMINAL: &str = "output.voltage.nominal";
 pub(crate) const VAR_UPS_BEEPER_STATUS: &str = "ups.beeper.status";
+pub(crate) const VAR_UPS_CONTACTS: &str = "ups.contacts";
 pub(crate) const VAR_UPS_DELAY_SHUTDOWN: &str = "ups.delay.shutdown";
 pub(crate) const VAR_UPS_DELAY_START: &str = "ups.delay.start";
 pub(crate) const VAR_UPS_FIRMWARE: &str = "ups.firmware";
 pub(crate) const VAR_UPS_LOAD: &str = "ups.load";
 pub(crate) const VAR_UPS_MFR: &str = "ups.mfr";
 pub(crate) const VAR_UPS_MODEL: &str = "ups.model";
+pub(crate) const VAR_UPS_POWER: &str = "ups.power";
+pub(crate) const VAR_UPS_POWER_NOMINAL: &str = "ups.power.nominal";
+pub(crate) const VAR_UPS_PRODUCTID: &str = "ups.productid";
 pub(crate) const VAR_UPS_REALPOWER: &str = "ups.realpower";
 pub(crate) const VAR_UPS_REALPOWER_NOMINAL: &str = "ups.realpower.nominal";
-pub(crate) const VAR_UPS_PRODUCTID: &str = "ups.productid";
 pub(crate) const VAR_UPS_SERIAL: &str = "ups.serial";
 pub(crate) const VAR_UPS_STATUS: &str = "ups.status";
 pub(crate) const VAR_UPS_TEMPERATURE: &str = "ups.temperature";
+pub(crate) const VAR_UPS_TEST_INTERVAL: &str = "ups.test.interval";
+pub(crate) const VAR_UPS_TEST_RESULT: &str = "ups.test.result";
 pub(crate) const VAR_UPS_TIMER_SHUTDOWN: &str = "ups.timer.shutdown";
 pub(crate) const VAR_UPS_TIMER_START: &str = "ups.timer.start";
 pub(crate) const VAR_UPS_VENDORID: &str = "ups.vendorid";
+
+// https://raw.githubusercontent.com/networkupstools/nut/7b225f5291da7fb98003932ffda4e99deb7f23d3/data/cmdvartab
 
 pub(crate) const STATUS_ALARM: &str = "ALARM";
 pub(crate) const STATUS_BOOST: &str = "BOOST";
@@ -101,11 +170,11 @@ pub(crate) const ERR_VAR_NOT_SUPPORTED: &str = "VAR-NOT-SUPPORTED";
 pub enum UpsVariable {
   BatteryCharge(f64),
   BatteryChargeLow(f64),
-  BatteryTemperature(f64),
   BatteryRuntime(f64),
+  BatteryTemperature(f64),
+  BatteryType(String),
   BatteryVoltage(f64),
   BatteryVoltageNominal(f64),
-  BatteryType(String),
   DeviceMfr(String),
   DeviceModel(String),
   DeviceSerial(String),
@@ -122,6 +191,7 @@ pub enum UpsVariable {
   DriverVersion(String),
   DriverVersionData(String),
   DriverVersionInternal(String),
+  Generic(String, String),
   InputTransferHigh(f64),
   InputTransferLow(f64),
   InputVoltage(f64),
@@ -139,13 +209,14 @@ pub enum UpsVariable {
   UpsPower(f64),
   UpsPowerNominal(f64),
   UpsProductId(String),
+  UpsRealPower(f64),
+  UpsRealPowerNominal(f64),
   UpsSerial(String),
   UpsStatus(UpsStatus),
   UpsTemperature(f64),
   UpsTimerShutdown(f64),
   UpsTimerStart(f64),
   UpsVendorId(String),
-  Generic(String, String),
 }
 
 impl Serialize for UpsVariable {
@@ -195,6 +266,8 @@ impl Serialize for UpsVariable {
       UpsVariable::UpsPower(value) => serializer.serialize_f64(*value),
       UpsVariable::UpsPowerNominal(value) => serializer.serialize_f64(*value),
       UpsVariable::UpsProductId(value) => serializer.serialize_str(value),
+      UpsVariable::UpsRealPower(value) => serializer.serialize_f64(*value),
+      UpsVariable::UpsRealPowerNominal(value) => serializer.serialize_f64(*value),
       UpsVariable::UpsSerial(value) => serializer.serialize_str(value),
       UpsVariable::UpsStatus(value) => serializer.serialize_str(value.as_str()),
       UpsVariable::UpsTemperature(value) => serializer.serialize_f64(*value),
@@ -246,9 +319,11 @@ impl UpsVariable {
       UpsVariable::UpsLoad(_) => VAR_UPS_LOAD,
       UpsVariable::UpsMfr(_) => VAR_UPS_MFR,
       UpsVariable::UpsModel(_) => VAR_UPS_MODEL,
-      UpsVariable::UpsPower(_) => VAR_UPS_REALPOWER,
-      UpsVariable::UpsPowerNominal(_) => VAR_UPS_REALPOWER_NOMINAL,
+      UpsVariable::UpsPower(_) => VAR_UPS_POWER,
+      UpsVariable::UpsPowerNominal(_) => VAR_UPS_POWER_NOMINAL,
       UpsVariable::UpsProductId(_) => VAR_UPS_PRODUCTID,
+      UpsVariable::UpsRealPower(_) => VAR_UPS_REALPOWER,
+      UpsVariable::UpsRealPowerNominal(_) => VAR_UPS_REALPOWER_NOMINAL,
       UpsVariable::UpsSerial(_) => VAR_UPS_SERIAL,
       UpsVariable::UpsStatus(_) => VAR_UPS_STATUS,
       UpsVariable::UpsTemperature(_) => VAR_UPS_TEMPERATURE,
@@ -263,9 +338,10 @@ impl UpsVariable {
       UpsVariable::BatteryCharge(val) => val.to_string(),
       UpsVariable::BatteryChargeLow(val) => val.to_string(),
       UpsVariable::BatteryRuntime(val) => val.to_string(),
+      UpsVariable::BatteryTemperature(val) => val.to_string(),
+      UpsVariable::BatteryType(val) => val.to_string(),
       UpsVariable::BatteryVoltage(val) => val.to_string(),
       UpsVariable::BatteryVoltageNominal(val) => val.to_string(),
-      UpsVariable::BatteryType(val) => val.to_string(),
       UpsVariable::DeviceMfr(val) => val.to_string(),
       UpsVariable::DeviceModel(val) => val.to_string(),
       UpsVariable::DeviceSerial(val) => val.to_string(),
@@ -282,6 +358,7 @@ impl UpsVariable {
       UpsVariable::DriverVersion(val) => val.to_string(),
       UpsVariable::DriverVersionData(val) => val.to_string(),
       UpsVariable::DriverVersionInternal(val) => val.to_string(),
+      UpsVariable::Generic(_, val) => val.to_string(),
       UpsVariable::InputTransferHigh(val) => val.to_string(),
       UpsVariable::InputTransferLow(val) => val.to_string(),
       UpsVariable::InputVoltage(val) => val.to_string(),
@@ -299,14 +376,14 @@ impl UpsVariable {
       UpsVariable::UpsPower(val) => val.to_string(),
       UpsVariable::UpsPowerNominal(val) => val.to_string(),
       UpsVariable::UpsProductId(val) => val.to_string(),
+      UpsVariable::UpsRealPower(val) => val.to_string(),
+      UpsVariable::UpsRealPowerNominal(val) => val.to_string(),
       UpsVariable::UpsSerial(val) => val.to_string(),
       UpsVariable::UpsStatus(val) => val.to_string(),
       UpsVariable::UpsTemperature(val) => val.to_string(),
       UpsVariable::UpsTimerShutdown(val) => val.to_string(),
       UpsVariable::UpsTimerStart(val) => val.to_string(),
       UpsVariable::UpsVendorId(val) => val.to_string(),
-      UpsVariable::Generic(_, val) => val.to_string(),
-      UpsVariable::BatteryTemperature(val) => val.to_string(),
     }
   }
 }
@@ -369,8 +446,10 @@ impl TryFrom<(&str, &str)> for UpsVariable {
       VAR_UPS_LOAD => UpsVariable::UpsLoad(value.parse::<f64>()?),
       VAR_UPS_MFR => UpsVariable::UpsMfr(value.into()),
       VAR_UPS_MODEL => UpsVariable::UpsModel(value.into()),
-      VAR_UPS_REALPOWER => UpsVariable::UpsPower(value.parse::<f64>()?),
-      VAR_UPS_REALPOWER_NOMINAL => UpsVariable::UpsPowerNominal(value.parse::<f64>()?),
+      VAR_UPS_POWER => UpsVariable::UpsPower(value.parse::<f64>()?),
+      VAR_UPS_POWER_NOMINAL => UpsVariable::UpsPowerNominal(value.parse::<f64>()?),
+      VAR_UPS_REALPOWER => UpsVariable::UpsRealPower(value.parse::<f64>()?),
+      VAR_UPS_REALPOWER_NOMINAL => UpsVariable::UpsRealPowerNominal(value.parse::<f64>()?),
       VAR_UPS_PRODUCTID => UpsVariable::UpsProductId(value.into()),
       VAR_UPS_SERIAL => UpsVariable::UpsSerial(value.into()),
       VAR_UPS_STATUS => UpsVariable::UpsStatus(value.into()),

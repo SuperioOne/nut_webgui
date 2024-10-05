@@ -34,7 +34,7 @@ export default class NutNotification extends HTMLElement {
     this.remove();
   }
 
-  /** @type {string} */
+  /** @param {string} id */
   static dismiss(id) {
     /** @type {UpsMonNotification} */
     const element = document.getElementById(id);
@@ -48,4 +48,3 @@ export default class NutNotification extends HTMLElement {
 
 customElements.define("nut-notification", NutNotification);
 Reflect.set(window, "NutNotification", NutNotification);
-

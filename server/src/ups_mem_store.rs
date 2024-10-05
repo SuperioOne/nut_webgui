@@ -27,17 +27,6 @@ impl<'a> Iterator for UpsStoreIterator<'a> {
   }
 }
 
-impl<'a> IntoIterator for &'a UpsStore {
-  type Item = (&'a Box<str>, &'a UpsEntry);
-  type IntoIter = UpsStoreIterator<'a>;
-
-  fn into_iter(self) -> Self::IntoIter {
-    UpsStoreIterator {
-      iterator: self.ups_list.iter(),
-    }
-  }
-}
-
 impl UpsStore {
   pub fn new() -> UpsStore {
     UpsStore {
@@ -56,5 +45,11 @@ impl UpsStore {
 
   pub fn get_mut(&mut self, ups_name: &str) -> Option<&mut UpsEntry> {
     self.ups_list.get_mut(ups_name)
+  }
+
+  pub fn iter(&self) -> UpsStoreIterator<'_> {
+    UpsStoreIterator {
+      iterator: self.ups_list.iter(),
+    }
   }
 }

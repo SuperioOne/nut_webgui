@@ -1,16 +1,16 @@
-use crate::http_server::{ServerState, UpsdConfig};
-use crate::ups_mem_store::UpsEntry;
-use crate::upsd_client::client::UpsAuthClient;
-use crate::upsd_client::errors::NutClientErrors;
-use crate::upsd_client::ups_variables::UpsVariable;
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::Json;
+use crate::{
+  http_server::{ServerState, UpsdConfig},
+  ups_mem_store::UpsEntry,
+  upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
+};
+use axum::{
+  extract::{Path, State},
+  http::StatusCode,
+  Json,
+};
 use axum_core::response::{IntoResponse, Response};
-use serde::ser::SerializeStruct;
-use serde::{Deserialize, Serialize, Serializer};
-use std::collections::BTreeMap;
-use std::ops::Deref;
+use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
+use std::{collections::BTreeMap, ops::Deref};
 use tracing::info;
 
 impl Serialize for UpsEntry {
@@ -96,7 +96,7 @@ pub async fn get_ups_by_name(
 
 pub async fn get_ups_list(State(state): State<ServerState>) -> impl IntoResponse {
   let store = state.store.read().await;
-  let ups_list: Vec<&UpsEntry> = store.into_iter().map(|(_, entry)| entry).collect();
+  let ups_list: Vec<&UpsEntry> = store.iter().map(|(_, entry)| entry).collect();
   Json(ups_list).into_response()
 }
 

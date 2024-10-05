@@ -1,25 +1,21 @@
 {%- import "icons.html" as icons -%}
+
 <div id="ups_info" class="flex flex-col gap-6">
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 gap-y-2">
     <div
-      class="flex flex-row justify-between col-span-full bg-base-200 rounded-lg p-6 items-center"
+      class="flex flex-row flex-wrap gap-5 justify-between col-span-full bg-base-200 rounded-lg p-6"
       >
       <div>
-        <h1 class="font-bold text-xl text-primary leading-10">{{name}}</h1>
-        <p class="font-light text-secondary leading-8">
-        {% match mfr %}
-        {% when Some with (mfr) %}
-          {{mfr}}
-        {% when None %}
-        {% endmatch %}
-        -
-        {% match model %}
-        {% when Some with (model) %}
-          {{model}}
-        {% when None %}
-        {% endmatch %}
+        <h1 class="font-bold text-xl text-primary leading-8">{{name}}</h1>
+        <p class="font-light text-secondary leading-6">
+          {% if let Some(mfr) = mfr %}
+              {{mfr}}
+          {% endif %}
+          {% if let Some(model) = model %}
+             - {{model}}
+          {% endif %}
         </p>
-        <p class="font-light text-xs">{{desc}}</p>
+        <p class="font-light text-xs mt-2">{{desc}}</p>
       </div>
       <div
         id="ups_status"
@@ -29,105 +25,111 @@
         hx-swap="morph:innerHTML"
         hx-trigger="every {{hx_status_interval}}s"
         >
-        {{ ups_status_template }}
+          {{ups_status_template}}
       </div>
     </div>
 
-    {% match load %} 
-    {% when Some with (load_val) %}
-    <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
-      <div class="font-bold">Load</div>
-      <div class="flex flex-row justify-center items-center">
-        {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load_val, 50.0, 75.0) %}
-        <nut-gauge
-          class="w-full fill-{{load_level_class}}"
-          value="{{load_val}}"
-          >
-        </nut-gauge>
-      </div>
+    {% if let Some(load) = load %}
+      <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+        <div class="font-bold">Load</div>
+        <div class="flex flex-row justify-center items-center">
+          {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load, 50.0, 75.0) %}
+          <nut-gauge class="w-full fill-{{load_level_class}}" value="{{load}}"></nut-gauge>
+        </div>
 
-      <div class="flex-grow flex flex-col gap-3 justify-end">
-        {% match power %} {% when Some with (power) %}
-        <div class="font-bold text-sm">
-          Estimated power <span class="text-primary">{{power}} Watt</span>
-        </div>
-        {% when None %} {% endmatch %}
-      </div>
-    </div>
-    {% when None %}
-    {% endmatch %}
+        <div class="flex-grow flex flex-col gap-3 justify-end">
+          {% if let Some(realpower) = realpower %}
+            <div class="font-bold text-sm">
+              Estimated real power 
+              <span class="text-primary">{{realpower}} Watt</span>
+            </div>
+          {% endif %}
 
-    {% match charge %} {% when Some with (charge) %}
-    <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
-      <div class="font-bold">Battery</div>
-      <div class="flex flex-row justify-center items-center">
-        {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
-        <nut-gauge
-          class="w-full fill-{{battery_level_class}}"
-          value="{{charge}}"
-          >
-        </nut-gauge>
+          {% if let Some(realpower_nominal) = realpower_nominal %}
+            <div class="font-bold text-sm">
+              Nominal real power 
+              <span class="text-primary">{{realpower_nominal}} Watt</span>
+            </div>
+          {% endif %}
+
+          {% if let Some(power) = power %}
+            <div class="font-bold text-sm">
+              Estimated power 
+              <span class="text-primary">{{power}} VA</span>
+            </div>
+          {% endif %}
+
+          {% if let Some(power_nominal) = power_nominal %}
+            <div class="font-bold text-sm">
+              Nominal power 
+              <span class="text-primary">
+                {{power_nominal}} VA 
+              </span>
+            </div>
+          {% endif %}
+
+       </div>
       </div>
-      <div class="flex-grow flex flex-col gap-3 justify-end">
-        {% match runtime %} {% when Some with (runtime) %}
-        <div class="font-bold text-sm">
-          Remaining run time
-          <span class="text-primary">{{ runtime }} seconds</span>
+    {% endif %}
+
+    {% if let Some(charge) = charge %}
+      <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+        <div class="font-bold">Battery</div>
+        <div class="flex flex-row justify-center items-center">
+          {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
+          <nut-gauge class="w-full fill-{{battery_level_class}}" value="{{charge}}"></nut-gauge>
         </div>
-        {% when None %}
-        {% endmatch %}
-        {% match charge_low %}
-        {% when Some with (charge_low) %}
-        <div class="font-bold text-sm">
-          Shutdown threshold <span class="text-error">{{ charge_low }}%</span>
+        <div class="flex-grow flex flex-col gap-3 justify-end">
+          {% if let Some(runtime) = runtime %}
+            <div class="font-bold text-sm">
+              Remaining run time 
+              <div class="tooltip tooltip-bottom" data-tip="{{runtime}} seconds">
+                <nut-time-display class="text-primary" value="{{runtime}}"></nut-time-display>
+              </div>
+            </div>
+          {% endif %}
+          {% if let Some(charge_low) = charge_low %}
+            <div class="font-bold text-sm">
+              Shutdown threshold <span class="text-error">{{charge_low}}%</span>
+            </div>
+          {% endif %}
         </div>
-        {% when None %}
-        {% endmatch %}
       </div>
-    </div>
-    {% when None %}
-    {% endmatch %}
-    {% match input_voltage %}
-    {% when Some with (input_v) %}
-    <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
-      <div class="font-bold">Input Voltage</div>
+    {% endif %}
+
+    {% if let Some(input_voltage) = input_voltage %}
+      <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+        <div class="font-bold">Input Voltage</div>
         <div class="flex-grow flex flex-row justify-center items-center">
           <p class="text-center text-7xl p-6">
-            <span class="text-primary">{{input_v}}V</span>
+            <span class="text-primary">{{input_voltage}}V</span>
           </p>
         </div>
-    </div>
-    {% when None %}
-    {% endmatch %}
-    {% match battery_voltage %}
-    {% when Some with (batt_v) %}
-    <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
-      <div class="font-bold">Battery Voltage</div>
-      <div class="flex-grow flex flex-row justify-center items-center">
-        <p class="text-center text-7xl p-6">
-          <span class="text-primary">{{batt_v}}V</span>
-        </p>
       </div>
-    </div>
-    {% when None %}
-    {% endmatch %}
+    {% endif %}
+
+    {% if let Some(battery_voltage) = battery_voltage %}
+      <div class="flex flex-col gap-3 shadow bg-base-200 rounded-lg p-6">
+        <div class="font-bold">Battery Voltage</div>
+        <div class="flex-grow flex flex-row justify-center items-center">
+          <p class="text-center text-7xl p-6">
+            <span class="text-primary">{{battery_voltage}}V</span>
+          </p>
+        </div>
+      </div>
+    {% endif %}
   </div>
 
-  <details
-    morph-preserve-attr="open"
-    class="collapse collapse-arrow bg-base-200"
-    >
+  <details morph-preserve-attr="open" class="collapse collapse-arrow bg-base-200">
     <summary class="collapse-title text-xl font-black">UPS Variables</summary>
     <div class="collapse-content p-3">
       <table class="table">
-        <tbody
-          class="[&>tr]:border-b-2 [&>tr]:border-neutral-content/10 [&>tr:hover]:bg-base-100 last:border-none"
-          >
+        <tbody class="[&>tr]:border-b-2 [&>tr]:border-neutral-content/10 [&>tr:hover]:bg-base-100 last:border-none break-all">
           {% for row in variables %}
-          <tr>
-            <td>{{ row.0 }}</td>
-            <td class="text-primary">{{ row.1 }}</td>
-          </tr>
+            <tr>
+              <td>{{row.0}}</td>
+              <td class="text-primary">{{row.1}}</td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>

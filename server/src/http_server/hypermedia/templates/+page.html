@@ -1,17 +1,17 @@
 {% extends "+layout.html" %}
-  {% block content %}
-<div class="w-full flex flex-row justify-center p-1 sm:p-10 md:p-16">
-  <div  class="card bg-base-200 text-neutral-content w-full max-w-7xl p-3">
-    <div
-      hx-ext="morph"
-      hx-get="/?section=ups_table"
-      hx-trigger="every 15s"
-      hx-swap="morph:innerHTML"
-      hx-indicator="#indicator"
-      class="overflow-x-auto"
-    >
-      {{ ups_table }}
+{% block content %}
+  <div class="w-full flex flex-row justify-center p-1 sm:p-10 md:p-16">
+    <div  class="card bg-base-200 text-neutral-content w-full max-w-7xl p-3">
+      <div
+        hx-ext="morph"
+        hx-get="/?section=ups_table"
+        hx-trigger="every 15s"
+        hx-swap="morph:innerHTML"
+        hx-indicator="#indicator"
+        class="overflow-x-auto"
+      >
+        {{ups_table}}
+      </div>
     </div>
   </div>
-</div>
 {% endblock content %}

@@ -30,6 +30,7 @@ export * from "./components/charts/gauge.js";
 export * from "./components/notification.js";
 export * from "./components/confirmation_modal.js";
 export * from "./components/theme_selector.js";
+export * from "./components/time_display.js";
 
 /**
  * @param {string} attr_name

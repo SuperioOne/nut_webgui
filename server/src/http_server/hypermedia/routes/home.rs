@@ -73,10 +73,12 @@ pub async fn get(
   State(state): State<ServerState>,
 ) -> impl IntoResponse {
   let rw_lock = &state.store.read().await;
-  let ups_list: Vec<UpsTableRow> = rw_lock
-    .into_iter()
+  let mut ups_list: Vec<UpsTableRow> = rw_lock
+    .iter()
     .map(|(_, ups)| UpsTableRow::from(ups))
     .collect();
+
+  ups_list.sort_by_key(|v| v.name);
 
   let table_template = UpsTableTemplate { ups_list };
 

@@ -1,59 +1,57 @@
 {% extends "../+layout.html" %}
 {%- import "icons.html" as icons -%}
-  {% block content %}
-<div class="w-full flex flex-row justify-center sm:p-10 md:p-12">
-  <div class="text-base-content w-full max-w-7xl p-3 flex flex-col gap-6">
-    <div
-      class="flex flex-col gap-6"
-      hx-ext="morph"
-      hx-get="/ups/{{title}}?section=info"
-      hx-indicator="#indicator"
-      hx-swap="morph:innerHTML"
-      hx-trigger="every {{hx_info_interval}}s"
-    >
-      {{ ups_info }}
-    </div>
 
-    {% if commands.len() > 0 %}
-    <details class="collapse collapse-arrow bg-base-200">
-      <summary class="collapse-title text-xl font-black">UPS Commands</summary>
-      <div class="collapse-content p-3">
-        <ul class="flex flex-col [&>li]:border-b-2 [&>li]:border-neutral-content/10 [&>li]:p-3 last:border-none">
-          {% for row in commands %}
-          <li class="last:border-none hover:bg-base-100 box-border">
-            <div class="flex flex-row justify-between">
-              <div>
-                {{ row }}
-              </div>
-              <button
-                class="btn btn-outline btn-primary"
-                hx-post="/ups/{{title}}/command"
-                hx-swap="none"
-                hx-trigger="command-confirmed"
-                name="command"
-                value="{{row}}"
-                onClick="ConfirmationModal.create({
-                  cancelText: 'Cancel',
-                  confirmText: 'Run',
-                  message: 'Are you sure about the run the \'' + '{{row}}' + '\' command?',
-                  title: 'Command Confirmation'
-                })
-                .then((is_confirmed) => {
-                  if (is_confirmed) {
-                    this.dispatchEvent(new CustomEvent('command-confirmed')); 
-                  }
-                });"
-              >
-                {% call icons::get_svg("play", 24) %}
-                <span>Run</span>
-              </button>
-            </div>
-          </li>
-          {% endfor %}
-        </ul>
+{% block content %}
+  <div class="w-full flex flex-row justify-center sm:p-10 md:p-12">
+    <div class="text-base-content w-full max-w-7xl p-3 flex flex-col gap-6">
+      <div
+        class="flex flex-col gap-6"
+        hx-ext="morph"
+        hx-get="/ups/{{title}}?section=info"
+        hx-indicator="#indicator"
+        hx-swap="morph:innerHTML"
+        hx-trigger="every {{hx_info_interval}}s"
+      >
+        {{ups_info}}
       </div>
-    </details>
-    {% endif %}
+
+      {% if commands.len() > 0 %}
+        <details class="collapse collapse-arrow bg-base-200">
+          <summary class="collapse-title text-xl font-black">UPS Commands</summary>
+          <div class="collapse-content p-3">
+            <ul class="flex flex-col [&>li]:border-b-2 [&>li]:border-neutral-content/10 [&>li]:p-3 last:border-none">
+              {% for row in commands %}
+                <li class="last:border-none hover:bg-base-100 box-border">
+                  <div class="flex flex-row justify-between">
+                    <div class="break-all">
+                      {{row}}
+                    </div>
+                    <button
+                      class="btn btn-outline btn-primary"
+                      hx-post="/ups/{{title}}/command"
+                      hx-swap="none"
+                      hx-trigger="command-confirmed"
+                      name="command"
+                      value="{{row}}"
+                      onClick="ConfirmationModal.create({
+                        cancelText: 'Cancel',
+                        confirmText: 'Run',
+                        message: 'Are you sure about the run the \'' + '{{row}}' + '\' command?',
+                        title: 'Command Confirmation'
+                      }).then((is_confirmed) => {
+                        if (is_confirmed) {this.dispatchEvent(new CustomEvent('command-confirmed'));}
+                      });"
+                    >
+                      {% call icons::get_svg("play", 24) %}
+                      <span>Run</span>
+                    </button>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </details>
+      {% endif %}
+    </div>
   </div>
-</div>
 {% endblock content %}
