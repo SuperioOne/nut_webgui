@@ -1,26 +1,24 @@
-use crate::ups_mem_store::UpsStore;
-use axum::http::StatusCode;
-use axum::routing::{get, post};
-use axum::Router;
-use std::net::SocketAddr;
-use std::sync::Arc;
-use std::time::Duration;
-use tokio::spawn;
-use tokio::sync::RwLock;
-use tokio::task::JoinHandle;
+use crate::ups_daemon_state::UpsDaemonState;
+use axum::{
+  http::StatusCode,
+  routing::{get, post},
+  Router,
+};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
+use tokio::{spawn, sync::RwLock, task::JoinHandle};
 use tower::ServiceBuilder;
-use tower_http::compression::CompressionLayer;
-use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
-use tower_http::timeout::TimeoutLayer;
-use tower_http::trace::TraceLayer;
+use tower_http::{
+  compression::CompressionLayer, cors::CorsLayer, services::ServeDir, timeout::TimeoutLayer,
+  trace::TraceLayer,
+};
 
 mod hypermedia;
 mod json;
+mod probes;
 
 pub struct HttpServerConfig {
   pub listen: SocketAddr,
-  pub store: Arc<RwLock<UpsStore>>,
+  pub upsd_state: Arc<RwLock<UpsDaemonState>>,
   pub upsd_config: UpsdConfig,
   pub static_dir: String,
 }
@@ -35,21 +33,21 @@ pub(crate) struct UpsdConfig {
 
 #[derive(Clone)]
 pub(crate) struct ServerState {
-  pub store: Arc<RwLock<UpsStore>>,
+  pub upsd_state: Arc<RwLock<UpsDaemonState>>,
   pub upsd_config: Arc<UpsdConfig>,
 }
 
 pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
   spawn(async move {
     let HttpServerConfig {
-      store,
+      upsd_state,
       listen,
       upsd_config,
       static_dir,
     } = config;
 
     let state = ServerState {
-      store,
+      upsd_state,
       upsd_config: Arc::new(upsd_config),
     };
 
@@ -59,7 +57,8 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       .layer(TimeoutLayer::new(Duration::from_secs(10)));
 
     let probes = Router::new()
-      .route("/health", get(|| async { StatusCode::OK }))
+      .route("/health", get(probes::get_health))
+      .route("/readiness", get(probes::get_readiness))
       .fallback(|| async { StatusCode::NOT_FOUND });
 
     let data_api = Router::new()

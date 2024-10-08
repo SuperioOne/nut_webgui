@@ -4,7 +4,7 @@ use crate::{
     hypermedia::notifications::{Notification, NotificationTemplate},
     ServerState, UpsdConfig,
   },
-  ups_mem_store::UpsEntry,
+  ups_daemon_state::UpsEntry,
   upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
 };
 use askama::Template;
@@ -258,8 +258,8 @@ pub async fn get(
   query: Query<UpsFragmentQuery>,
   state: State<ServerState>,
 ) -> Response {
-  let ups_store = state.store.read().await;
-  let ups_entry = ups_store.get(&ups_name);
+  let upsd_state = state.upsd_state.read().await;
+  let ups_entry = upsd_state.get_ups(&ups_name);
 
   match query.section.as_deref() {
     Some("info") => partial_ups_info(ups_entry, &state.upsd_config),
@@ -299,6 +299,7 @@ pub async fn post_command(
         ),
         Err(err) => {
           error!("INSTCMD call failed for '{0}'. {1:?}", ups_name, err);
+
           NotificationTemplate::new(
             format!("INSTCMD call failed, {:?}", err),
             Notification::Error,

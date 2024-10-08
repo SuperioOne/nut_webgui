@@ -1,6 +1,6 @@
 use crate::{
   http_server::{ServerState, UpsdConfig},
-  ups_mem_store::UpsEntry,
+  ups_daemon_state::UpsEntry,
   upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
 };
 use axum::{
@@ -65,14 +65,14 @@ impl IntoResponse for NutClientErrors {
       NutClientErrors::ParseError(error) => (
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(ErrorMessage {
-          message: String::from("UPS Daemon response is empty"),
+          message: String::from("UPS Daemon response is invalid"),
           reason: Some(error),
         }),
       ),
       NutClientErrors::ProtocolError(error) => (
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(ErrorMessage {
-          message: String::from("UPS Daemon response is empty"),
+          message: String::from("UPS Daemon failed."),
           reason: Some(error.to_string()),
         }),
       ),
@@ -85,9 +85,9 @@ pub async fn get_ups_by_name(
   State(state): State<ServerState>,
   Path(ups_name): Path<String>,
 ) -> impl IntoResponse {
-  let store = state.store.read().await;
+  let upsd_state = state.upsd_state.read().await;
 
-  if let Some(ups) = store.get(&ups_name) {
+  if let Some(ups) = upsd_state.get_ups(&ups_name) {
     Json(ups).into_response()
   } else {
     StatusCode::NOT_FOUND.into_response()
@@ -95,8 +95,10 @@ pub async fn get_ups_by_name(
 }
 
 pub async fn get_ups_list(State(state): State<ServerState>) -> impl IntoResponse {
-  let store = state.store.read().await;
-  let ups_list: Vec<&UpsEntry> = store.iter().map(|(_, entry)| entry).collect();
+  let upsd_state = state.upsd_state.read().await;
+  let mut ups_list: Vec<&UpsEntry> = upsd_state.iter().map(|(_, entry)| entry).collect();
+  ups_list.sort_unstable_by_key(|v| &v.name);
+
   Json(ups_list).into_response()
 }
 
@@ -105,9 +107,9 @@ pub async fn post_command(
   Path(ups_name): Path<String>,
   Json(body): Json<CommandBody>,
 ) -> Result<impl IntoResponse, NutClientErrors> {
-  let store = state.store.read().await;
+  let upsd_state = state.upsd_state.read().await;
 
-  if store.get(&ups_name).is_some() {
+  if upsd_state.get_ups(&ups_name).is_some() {
     match state.upsd_config.deref() {
       UpsdConfig {
         addr,

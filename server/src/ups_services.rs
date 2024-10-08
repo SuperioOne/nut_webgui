@@ -1,7 +1,10 @@
 use crate::upsd_client::ups_variables::UpsVariable;
 
-pub mod storage_service;
-pub mod ups_poll_service;
+mod upsd_poll_service;
+mod upsd_state_service;
+
+pub use upsd_poll_service::*;
+pub use upsd_state_service::*;
 
 #[derive(Debug)]
 pub struct UpsDetails {
@@ -20,8 +23,14 @@ pub struct UpsVarDetail {
 #[derive(Debug)]
 pub enum UpsUpdateMessage {
   /// Updates all variables.
-  FullUpdate { content: Vec<UpsDetails> },
+  FullUpdate {
+    content: Vec<UpsDetails>,
+  },
 
   /// Updates a single variable.
-  PartialUpdate { content: Vec<UpsVarDetail> },
+  PartialUpdate {
+    content: Vec<UpsVarDetail>,
+  },
+
+  MarkAsDead,
 }

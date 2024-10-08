@@ -1,14 +1,12 @@
 mod http_server;
-pub mod ups_mem_store;
-mod ups_service;
+pub mod ups_daemon_state;
+mod ups_services;
 mod upsd_client;
 
 use crate::{
   http_server::{start_http_server, HttpServerConfig, UpsdConfig},
-  ups_service::{
-    storage_service::{ups_storage_service, UpsStorageConfig},
-    ups_poll_service::{ups_poll_service, UpsPollerConfig},
-    UpsUpdateMessage,
+  ups_services::{
+    upsd_poll_service, upsd_state_service, UpsPollerConfig, UpsStorageConfig, UpsUpdateMessage,
   },
 };
 use clap::Parser;
@@ -29,7 +27,7 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::fmt;
-use ups_mem_store::UpsStore;
+use ups_daemon_state::UpsDaemonState;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -95,15 +93,16 @@ async fn main() {
   );
 
   let cancellation = CancellationToken::new();
-  let (tx, rx): (Sender<UpsUpdateMessage>, Receiver<UpsUpdateMessage>) = mpsc::channel(4096);
-  let store = UpsStore::new();
-  let store_arc = Arc::new(RwLock::new(store));
+  let (tx, rx): (Sender<UpsUpdateMessage>, Receiver<UpsUpdateMessage>) = mpsc::channel(256);
+  let state_arc = Arc::new(RwLock::new(UpsDaemonState::new()));
   let upsd_address = format!("{}:{}", args.upsd_addr, args.upsd_port);
-  let (poll_interval, poll_freq) = if args.poll_freq < args.poll_interval {
-    warn!("Poll interval is set greater than or equal to poll frequency. Update scheduler will only use full update");
-    (args.poll_interval, args.poll_interval)
-  } else {
-    (args.poll_interval, args.poll_freq)
+  let (poll_interval, poll_freq) = {
+    if args.poll_freq < args.poll_interval {
+      warn!("Poll interval is set greater than or equal to poll frequency.");
+      (args.poll_interval, args.poll_interval)
+    } else {
+      (args.poll_interval, args.poll_freq)
+    }
   };
 
   panic::set_hook(Box::new(|info| {
@@ -112,7 +111,7 @@ async fn main() {
   }));
 
   // Spawns background services
-  let poll_service_handle = ups_poll_service(UpsPollerConfig {
+  let poll_srv_handle = upsd_poll_service(UpsPollerConfig {
     address: upsd_address.clone(),
     poll_freq: Duration::from_secs(poll_freq),
     poll_interval: Duration::from_secs(poll_interval),
@@ -120,15 +119,15 @@ async fn main() {
     cancellation: cancellation.clone(),
   });
 
-  let store_service_handle = ups_storage_service(UpsStorageConfig {
+  let state_srv_handle = upsd_state_service(UpsStorageConfig {
     read_channel: rx,
     cancellation: cancellation.clone(),
-    store: store_arc.clone(),
+    upsd_state: state_arc.clone(),
   });
 
   // http server
   let server_handle = start_http_server(HttpServerConfig {
-    store: store_arc,
+    upsd_state: state_arc,
     listen: SocketAddr::new(args.listen, args.port),
     static_dir: args.static_dir,
     upsd_config: UpsdConfig {
@@ -153,8 +152,8 @@ async fn main() {
   cancellation.cancel();
 
   info!("Shutting down services");
-  _ = poll_service_handle.await;
-  _ = store_service_handle.await;
+  _ = poll_srv_handle.await;
+  _ = state_srv_handle.await;
   info!("Shutting http server");
   server_handle.abort();
 }

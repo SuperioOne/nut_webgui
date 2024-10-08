@@ -1,5 +1,5 @@
 use crate::{
-  http_server::ServerState, ups_mem_store::UpsEntry, upsd_client::ups_variables::UpsVariable,
+  http_server::ServerState, ups_daemon_state::UpsEntry, upsd_client::ups_variables::UpsVariable,
 };
 use askama::Template;
 use axum::extract::{Query, State};
@@ -72,13 +72,13 @@ pub async fn get(
   query: Query<HomeFragmentQuery>,
   State(state): State<ServerState>,
 ) -> impl IntoResponse {
-  let rw_lock = &state.store.read().await;
-  let mut ups_list: Vec<UpsTableRow> = rw_lock
+  let upsd_state = &state.upsd_state.read().await;
+  let mut ups_list: Vec<UpsTableRow> = upsd_state
     .iter()
     .map(|(_, ups)| UpsTableRow::from(ups))
     .collect();
 
-  ups_list.sort_by_key(|v| v.name);
+  ups_list.sort_unstable_by_key(|v| v.name);
 
   let table_template = UpsTableTemplate { ups_list };
 

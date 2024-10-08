@@ -1,6 +1,6 @@
 use super::UpsVarDetail;
 use crate::{
-  ups_service::{UpsDetails, UpsUpdateMessage},
+  ups_services::{UpsDetails, UpsUpdateMessage},
   upsd_client::{
     client::{Client, UpsClient},
     errors::NutClientErrors,
@@ -82,14 +82,14 @@ impl UpsPollInterval {
     }
   }
 
+  /// Resets internal tracker for full sync
   pub fn schedule_full_sync(&mut self) {
-    // Resets scheduler internal tracker for full sync
     self.last_full_sync = None;
   }
 }
 
-#[instrument(name = "ups_poll_service")]
-pub fn ups_poll_service(config: UpsPollerConfig) -> JoinHandle<()> {
+#[instrument(name = "upsd_poll_service")]
+pub fn upsd_poll_service(config: UpsPollerConfig) -> JoinHandle<()> {
   spawn(async move {
     let UpsPollerConfig {
       address,
@@ -148,13 +148,13 @@ pub fn ups_poll_service(config: UpsPollerConfig) -> JoinHandle<()> {
               error_kind = error_kind.to_string()
             );
 
+            mark_as_dead(&write_channel).await;
             should_reconnect = true;
+            poll_scheduler.schedule_full_sync();
           }
         },
         Err(PollServiceError::ChannelError) => {
-          info!(
-            "Sending updates to memory store channel failed, receiver channel is disconnected."
-          );
+          info!("Sending updates to channel failed, receiver channel is disconnected.");
         }
         Err(err) => {
           error!(
@@ -162,23 +162,12 @@ pub fn ups_poll_service(config: UpsPollerConfig) -> JoinHandle<()> {
             reason = format!("{:?}", err)
           );
 
-          // Clear all UPS info stored in memory
-          if let Err(err) = write_channel
-            .send(UpsUpdateMessage::FullUpdate {
-              content: Vec::new(),
-            })
-            .await
-          {
-            error!(
-              message =
-                "Sending updates to memory store channel failed, receiver channel is disconnected.",
-              reason = err.to_string()
-            );
-          }
-
+          mark_as_dead(&write_channel).await;
           poll_scheduler.schedule_full_sync();
         }
-        _ => {}
+        Ok(()) => {
+          debug!("Poll interval completed without issue.")
+        }
       };
 
       if should_reconnect && !cancellation.is_cancelled() {
@@ -199,7 +188,7 @@ pub fn ups_poll_service(config: UpsPollerConfig) -> JoinHandle<()> {
     }
 
     drop(write_channel);
-    info!("Poll service shutdown.");
+    info!("Upsd poll service shutdown.");
   })
 }
 
@@ -294,6 +283,13 @@ where
     .map_err(|_| PollServiceError::ChannelError)?;
 
   Ok(())
+}
+
+#[inline]
+async fn mark_as_dead(channel: &Sender<UpsUpdateMessage>) {
+  if let Err(_) = channel.send(UpsUpdateMessage::MarkAsDead).await {
+    warn!("Unable to mark daemon state as dead. Message channel is closed.");
+  }
 }
 
 #[inline]

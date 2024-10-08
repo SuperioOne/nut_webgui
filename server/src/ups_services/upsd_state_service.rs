@@ -1,9 +1,10 @@
 use crate::{
-  ups_mem_store::{UpsEntry, UpsStore},
-  ups_service::UpsUpdateMessage,
+  ups_daemon_state::{DaemonStatus, UpsDaemonState, UpsEntry},
+  ups_services::UpsUpdateMessage,
   upsd_client::ups_variables::UpsVariable,
 };
-use std::sync::Arc;
+use chrono::Utc;
+use std::{collections::HashMap, sync::Arc};
 use tokio::{
   spawn,
   sync::{mpsc::Receiver, RwLock},
@@ -16,14 +17,14 @@ use tracing::{info, instrument, warn};
 pub struct UpsStorageConfig {
   pub read_channel: Receiver<UpsUpdateMessage>,
   pub cancellation: CancellationToken,
-  pub store: Arc<RwLock<UpsStore>>,
+  pub upsd_state: Arc<RwLock<UpsDaemonState>>,
 }
 
-#[instrument(name = "ups_storage_service")]
-pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
+#[instrument(name = "upsd_state_service")]
+pub fn upsd_state_service(config: UpsStorageConfig) -> JoinHandle<()> {
   spawn(async move {
     let UpsStorageConfig {
-      store,
+      upsd_state,
       mut read_channel,
       cancellation,
     } = config;
@@ -31,10 +32,10 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
     while !cancellation.is_cancelled() {
       match read_channel.recv().await {
         Some(UpsUpdateMessage::PartialUpdate { content }) => {
-          let mut store_handle = store.write().await;
+          let mut state = upsd_state.write().await;
 
           for item in content.into_iter() {
-            match store_handle.get_mut(&item.name) {
+            match state.get_ups_mut(&item.name) {
               Some(ups_entry) => {
                 let old_var = {
                   let mut e: Option<&mut UpsVariable> = None;
@@ -55,6 +56,8 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
                 } else {
                   ups_entry.variables.push(item.variable);
                 }
+
+                state.last_modified = Some(Utc::now());
               }
               None => warn!(
                 "Partial update ignored. Ups {} does not exists anymore.",
@@ -64,9 +67,10 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
           }
         }
         Some(UpsUpdateMessage::FullUpdate { content }) => {
-          let mut new_store = UpsStore::new();
+          let mut new_map: HashMap<Box<str>, UpsEntry> = HashMap::new();
 
           for item in content.into_iter() {
+            let key = item.name.clone();
             let entry = UpsEntry {
               commands: item.commands,
               variables: item.variables,
@@ -74,18 +78,25 @@ pub fn ups_storage_service(config: UpsStorageConfig) -> JoinHandle<()> {
               desc: item.desc,
             };
 
-            new_store.put(entry);
+            new_map.insert(key, entry);
           }
 
-          let mut store_ptr = store.write().await;
+          let mut state = upsd_state.write().await;
+          let now = Utc::now();
 
-          // Swap old memory with the fresh one
-          *store_ptr = new_store;
+          state.ups_list = new_map;
+          state.last_full_sync = Some(now);
+          state.last_modified = Some(now);
+          state.status = DaemonStatus::Online;
+        }
+        Some(UpsUpdateMessage::MarkAsDead) => {
+          let mut state = upsd_state.write().await;
+          state.reset_with_status(DaemonStatus::Dead);
         }
         None => {}
       };
     }
 
-    info!("Storage service shutdown.");
+    info!("Upsd state service is shutdown.");
   })
 }

@@ -31,3 +31,4 @@ shell-words = "1.1.0"
 serde = { version = "1.0.197", features = ["default", "serde_derive"] }
 uuid = { version = "1.8.0", features = ["v4"] }
 clap = { version = "4.5.4", features = ["derive", "default"] }
+chrono = { version = "0.4.38", default-features = false ,features = ["now", "serde", "iana-time-zone"]}
