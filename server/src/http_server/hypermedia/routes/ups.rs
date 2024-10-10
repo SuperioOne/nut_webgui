@@ -272,7 +272,7 @@ pub async fn post_command(
   State(state): State<ServerState>,
   Path(ups_name): Path<String>,
   Form(request): Form<CommandRequest>,
-) -> impl IntoResponse {
+) -> Response {
   let template: NotificationTemplate = {
     if let (Some(user), Some(pass)) = (&state.upsd_config.user, &state.upsd_config.pass) {
       match {
@@ -298,7 +298,7 @@ pub async fn post_command(
           None,
         ),
         Err(err) => {
-          error!("INSTCMD call failed for '{0}'. {1:?}", ups_name, err);
+          error!(message = "INSTCMD call failed.", ups_name = ups_name, reason = %err);
 
           NotificationTemplate::new(
             format!("INSTCMD call failed, {:?}", err),
@@ -316,5 +316,5 @@ pub async fn post_command(
     }
   };
 
-  template
+  template.into_response()
 }

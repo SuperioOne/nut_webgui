@@ -2,7 +2,10 @@ use crate::{
   http_server::ServerState, ups_daemon_state::UpsEntry, upsd_client::ups_variables::UpsVariable,
 };
 use askama::Template;
-use axum::extract::{Query, State};
+use axum::{
+  extract::{Query, State},
+  response::Response,
+};
 use axum_core::response::IntoResponse;
 use serde::Deserialize;
 
@@ -68,10 +71,7 @@ struct HomeTemplate<'a> {
   ups_table: UpsTableTemplate<'a>,
 }
 
-pub async fn get(
-  query: Query<HomeFragmentQuery>,
-  State(state): State<ServerState>,
-) -> impl IntoResponse {
+pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerState>) -> Response {
   let upsd_state = &state.upsd_state.read().await;
   let mut ups_list: Vec<UpsTableRow> = upsd_state
     .iter()

@@ -2,10 +2,7 @@
 
 use super::errors::NutClientErrors;
 use serde::{Serialize, Serializer};
-use std::{
-  fmt::{Display, Formatter},
-  num::{ParseFloatError, ParseIntError},
-};
+use std::fmt::{Display, Formatter};
 
 pub(crate) const VAR_AMBIENT_HUMIDITY: &str = "ambient.humidity";
 pub(crate) const VAR_AMBIENT_HUMIDITY_ALARM: &str = "ambient.humidity.alarm";
@@ -388,20 +385,6 @@ impl UpsVariable {
   }
 }
 
-impl From<ParseIntError> for NutClientErrors {
-  #[inline]
-  fn from(value: ParseIntError) -> Self {
-    Self::ParseError(value.to_string())
-  }
-}
-
-impl From<ParseFloatError> for NutClientErrors {
-  #[inline]
-  fn from(value: ParseFloatError) -> Self {
-    Self::ParseError(value.to_string())
-  }
-}
-
 impl TryFrom<(&str, &str)> for UpsVariable {
   type Error = NutClientErrors;
   fn try_from(from_value: (&str, &str)) -> Result<Self, Self::Error> {
@@ -607,7 +590,7 @@ impl Display for UpsError {
       UpsError::UnknownUps => ERR_UNKNOWN_UPS,
       UpsError::UsernameRequired => ERR_USERNAME_REQUIRED,
       UpsError::VarNotSupported => ERR_VAR_NOT_SUPPORTED,
-      UpsError::Unknown(value) => value,
+      UpsError::Unknown(value) => value.as_str(),
     };
 
     f.write_str(error_text)

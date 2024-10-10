@@ -1,6 +1,7 @@
 use crate::upsd_client::{
+  errors::{NutClientErrors, ParseErrorKind},
   parser::{parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable},
-  ups_variables::UpsVariable,
+  ups_variables::{UpsError, UpsVariable},
   Ups,
 };
 
@@ -39,6 +40,13 @@ fn test_parse_ups() {
   if let Ok(Ups { name, desc }) = parse_ups("UPS bx1600mi \"APC Back-UPS BX1600MI\"") {
     assert_eq!("bx1600mi", name.as_ref());
     assert_eq!("APC Back-UPS BX1600MI", desc.as_ref());
+  } else {
+    assert!(false);
+  }
+
+  if let Ok(Ups { name, desc }) = parse_ups("UPS bx1600mi \"\"") {
+    assert_eq!("bx1600mi", name.as_ref());
+    assert_eq!("", desc.as_ref());
   } else {
     assert!(false);
   }
@@ -135,3 +143,162 @@ END LIST VAR bx1600mi";
     assert!(false);
   }
 }
+
+#[test]
+fn parse_invalid_variable_type() {
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidVarFloatFormat { inner: _ },
+  }) = parse_variable("VAR bx1600mi battery.charge invalid-value")
+  {
+    assert!(true);
+  } else {
+    assert!(false, "Parser must fail when variable type is incorrect.");
+  }
+}
+
+#[test]
+fn parse_invalid_variable_format() {
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidVarFormat,
+  }) = parse_variable("NOVAR bx1600mi battery.charge")
+  {
+    assert!(true);
+  } else {
+    assert!(false, "Parser must fail when variable format is malformed.");
+  }
+}
+
+#[test]
+fn parse_invalid_ups_format() {
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidUpsFormat,
+  }) = parse_ups("VAR bx1600mi")
+  {
+    assert!(true);
+  } else {
+    assert!(false, "Parser must fail when ups format is malformed.");
+  }
+}
+
+#[test]
+fn parse_invalid_cmd_format() {
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidCmdFormat,
+  }) = parse_cmd("cmd lowercaseonly")
+  {
+    assert!(true);
+  } else {
+    assert!(false, "Parser must fail when cmd format is malformed.");
+  }
+}
+
+#[test]
+fn parse_invalid_var_list() {
+  let input_start = "BROKEN START
+VAR bx1600mi battery.charge \"100\"
+VAR bx1600mi battery.charge.low \"10\"
+VAR bx1600mi battery.mfr.date \"2001/01/01\"
+END LIST VAR bx1600mi";
+
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidListStart,
+  }) = parse_var_list(input_start)
+  {
+    assert!(true);
+  } else {
+    assert!(false);
+  }
+
+  let input_end = "BEGIN LIST VAR bx1600mi
+VAR bx1600mi battery.charge \"100\"
+VAR bx1600mi battery.charge.low \"10\"
+VAR bx1600mi battery.mfr.date \"2001/01/01\"";
+
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidListEnd,
+  }) = parse_var_list(input_end)
+  {
+    assert!(true);
+  } else {
+    assert!(false);
+  }
+}
+
+#[test]
+fn parse_invalid_ups_list() {
+  let input_start = "BROKEN START
+UPS bx1600mi \"APC Back-UPS BX1600MI\"
+END LIST UPS";
+
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidListStart,
+  }) = parse_ups_list(input_start)
+  {
+    assert!(true);
+  } else {
+    assert!(false);
+  }
+
+  let input_end = "BEGIN LIST UPS
+UPS bx1600mi \"APC Back-UPS BX1600MI\"";
+
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidListEnd,
+  }) = parse_ups_list(input_end)
+  {
+    assert!(true);
+  } else {
+    assert!(false);
+  }
+}
+
+#[test]
+fn parse_invalid_cmd_list() {
+  let input_start = "BROKEN START
+CMD bx1600mi beeper.enable
+END LIST CMD bx1600mi";
+
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidListStart,
+  }) = parse_cmd_list(input_start)
+  {
+    assert!(true);
+  } else {
+    assert!(false);
+  }
+
+  let input_end = "BEGIN LIST CMD bx1600mi
+CMD bx1600mi beeper.enable";
+
+  if let Err(NutClientErrors::ParseError {
+    kind: ParseErrorKind::InvalidListEnd,
+  }) = parse_cmd_list(input_end)
+  {
+    assert!(true);
+  } else {
+    assert!(false);
+  }
+}
+
+macro_rules! gen_protocol_error_test {
+  ($test_name:ident, $parser_fn:ident) => {
+    #[test]
+    fn $test_name() {
+      let input = "ERR DRIVER-NOT-CONNECTED";
+      println!("{:?}", $parser_fn(input));
+
+      if let Err(NutClientErrors::ProtocolError {
+        kind: UpsError::DriverNotConnected,
+      }) = $parser_fn(input)
+      {
+        assert!(true);
+      } else {
+        assert!(false);
+      }
+    }
+  };
+}
+
+gen_protocol_error_test!(parse_protocol_err_cmd_list, parse_cmd_list);
+gen_protocol_error_test!(parse_protocol_err_var_list, parse_var_list);
+gen_protocol_error_test!(parse_protocol_err_ups_list, parse_ups_list);

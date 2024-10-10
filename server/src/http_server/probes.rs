@@ -1,6 +1,11 @@
 use super::ServerState;
 use crate::ups_daemon_state::DaemonStatus;
-use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use axum::{
+  extract::State,
+  http::StatusCode,
+  response::{IntoResponse, Response},
+  Json,
+};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
@@ -11,7 +16,7 @@ pub struct HealthResponse<'a> {
   upsd_server: &'a str,
 }
 
-pub async fn get_health(State(state): State<ServerState>) -> impl IntoResponse {
+pub async fn get_health(State(state): State<ServerState>) -> Response {
   let upsd_state = state.upsd_state.read().await;
 
   let response = Json(HealthResponse {
@@ -27,12 +32,12 @@ pub async fn get_health(State(state): State<ServerState>) -> impl IntoResponse {
   }
 }
 
-pub async fn get_readiness(State(state): State<ServerState>) -> impl IntoResponse {
+pub async fn get_readiness(State(state): State<ServerState>) -> Response {
   let upsd_state = state.upsd_state.read().await;
 
   if upsd_state.status == DaemonStatus::Online {
-    StatusCode::OK
+    (StatusCode::OK, "READY").into_response()
   } else {
-    StatusCode::INTERNAL_SERVER_ERROR
+    (StatusCode::SERVICE_UNAVAILABLE, "NOT READY").into_response()
   }
 }

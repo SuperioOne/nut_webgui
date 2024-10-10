@@ -79,7 +79,7 @@ async fn main() {
 
   fmt().with_max_level(args.log_level).init();
   debug!(
-    message = "Server initialized with",
+    message = "Server initialized.",
     poll_interval = &args.poll_interval,
     poll_freq = &args.poll_freq,
     upsd_addr = &args.upsd_addr,
@@ -106,7 +106,7 @@ async fn main() {
   };
 
   panic::set_hook(Box::new(|info| {
-    error!("Panic details: {}", info);
+    error!(message = "App thread panicked. Aborting process.", details = %info);
     std::process::abort();
   }));
 

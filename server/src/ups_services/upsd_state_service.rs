@@ -31,10 +31,10 @@ pub fn upsd_state_service(config: UpsStorageConfig) -> JoinHandle<()> {
 
     while !cancellation.is_cancelled() {
       match read_channel.recv().await {
-        Some(UpsUpdateMessage::PartialUpdate { content }) => {
+        Some(UpsUpdateMessage::PartialUpdate { data }) => {
           let mut state = upsd_state.write().await;
 
-          for item in content.into_iter() {
+          for item in data.into_iter() {
             match state.get_ups_mut(&item.name) {
               Some(ups_entry) => {
                 let old_var = {
@@ -66,10 +66,10 @@ pub fn upsd_state_service(config: UpsStorageConfig) -> JoinHandle<()> {
             }
           }
         }
-        Some(UpsUpdateMessage::FullUpdate { content }) => {
+        Some(UpsUpdateMessage::FullUpdate { data }) => {
           let mut new_map: HashMap<Box<str>, UpsEntry> = HashMap::new();
 
-          for item in content.into_iter() {
+          for item in data.into_iter() {
             let key = item.name.clone();
             let entry = UpsEntry {
               commands: item.commands,
@@ -93,6 +93,7 @@ pub fn upsd_state_service(config: UpsStorageConfig) -> JoinHandle<()> {
           let mut state = upsd_state.write().await;
           state.reset_with_status(DaemonStatus::Dead);
         }
+
         None => {}
       };
     }

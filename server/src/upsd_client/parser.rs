@@ -1,4 +1,6 @@
+use super::errors::ParseErrorKind;
 use crate::upsd_client::{errors::NutClientErrors, ups_variables::UpsVariable, Ups};
+use tracing::error;
 
 #[cfg(test)]
 mod unit_tests;
@@ -7,7 +9,7 @@ mod unit_tests;
 macro_rules! is_error_response {
   ( $x:expr ) => {{
     let value: &str = $x;
-    value.starts_with("ERR")
+    value.starts_with("ERR ")
   }};
 }
 
@@ -24,10 +26,9 @@ macro_rules! is_list_end {
     let line: &str = $x;
     line.starts_with("END LIST")
   }};
-  ( $x:expr, $t:expr ) => {{
+  ( $x:expr, $t:literal ) => {{
     let line: &str = $x;
-    let end = format!("END LIST {}", $t);
-    line.starts_with(&end)
+    line.starts_with(concat!("END LIST ", $t))
   }};
 }
 
@@ -35,35 +36,21 @@ macro_rules! is_list_end {
 macro_rules! extract_error {
   ($x:expr) => {{
     let line: &str = $x;
-    $crate::upsd_client::ups_variables::UpsError::from(&line[2..])
+    $crate::upsd_client::ups_variables::UpsError::from(&line[4..])
   }};
 }
 
 macro_rules! check_list_start {
-  ( $x:expr, $t:expr ) => {{
-    let value: Option<&str> = $x;
-    let list_type: &str = $t;
-    let list_start: &str = &format!("BEGIN LIST {}", list_type);
-
-    match value {
-      Some(line) if !line.starts_with(list_start) => {
-        let message = format!(
-          "{0} list does not start with correct line. Unexpected line received '{1}'.",
-          list_type, line
-        );
-        Err(NutClientErrors::ParseError(message))
-      }
+  ( $x:expr, $t:literal) => {{
+    match $x {
       Some(line) if is_error_response!(line) => {
         let error = extract_error!(&line);
-        Err(NutClientErrors::ProtocolError(error))
+        Err(NutClientErrors::from(error))
       }
-      None => {
-        let message = format!(
-          "{0} list does not start with correct line. Line is empty.",
-          list_type
-        );
-        Err(NutClientErrors::ParseError(message))
+      Some(line) if !line.starts_with(concat!("BEGIN LIST ", $t)) => {
+        Err(NutClientErrors::from(ParseErrorKind::InvalidListStart))
       }
+      None => Err(NutClientErrors::EmptyResponse),
       _ => Ok(()),
     }
   }};
@@ -71,7 +58,7 @@ macro_rules! check_list_start {
 
 pub fn parse_cmd_list(buffer: &str) -> Result<Vec<Box<str>>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  let mut commands: Vec<Box<str>> = vec![];
+  let mut commands: Vec<Box<str>> = Vec::new();
 
   check_list_start!(line_iter.next(), "CMD")?;
 
@@ -84,14 +71,12 @@ pub fn parse_cmd_list(buffer: &str) -> Result<Vec<Box<str>>, NutClientErrors> {
     }
   }
 
-  Err(NutClientErrors::ParseError(
-    "Invalid command list structure. END LIST is missing.".into(),
-  ))
+  Err(NutClientErrors::from(ParseErrorKind::InvalidListEnd))
 }
 
 pub fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  let mut commands: Vec<Ups> = vec![];
+  let mut commands: Vec<Ups> = Vec::new();
 
   check_list_start!(line_iter.next(), "UPS")?;
 
@@ -104,14 +89,12 @@ pub fn parse_ups_list(buffer: &str) -> Result<Vec<Ups>, NutClientErrors> {
     }
   }
 
-  Err(NutClientErrors::ParseError(
-    "Invalid command list structure. END LIST is missing.".into(),
-  ))
+  Err(NutClientErrors::from(ParseErrorKind::InvalidListEnd))
 }
 
 pub fn parse_var_list(buffer: &str) -> Result<Vec<UpsVariable>, NutClientErrors> {
   let mut line_iter = buffer.lines();
-  let mut variables: Vec<UpsVariable> = vec![];
+  let mut variables: Vec<UpsVariable> = Vec::new();
 
   check_list_start!(line_iter.next(), "VAR")?;
 
@@ -124,13 +107,14 @@ pub fn parse_var_list(buffer: &str) -> Result<Vec<UpsVariable>, NutClientErrors>
     }
   }
 
-  Err(NutClientErrors::ParseError(
-    "Invalid command list structure. END LIST is missing.".into(),
-  ))
+  Err(NutClientErrors::from(ParseErrorKind::InvalidListEnd))
 }
 
 pub fn parse_variable(line: &str) -> Result<UpsVariable, NutClientErrors> {
-  let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
+  let words = shell_words::split(line).map_err(|err| {
+    error!(message = "Unable to split variable line.", reason = %err);
+    NutClientErrors::from(ParseErrorKind::InvalidVarFormat)
+  })?;
 
   match words.as_slice() {
     [op, _ups_name, var_name, value_slice] if op == "VAR" => {
@@ -138,14 +122,15 @@ pub fn parse_variable(line: &str) -> Result<UpsVariable, NutClientErrors> {
 
       Ok(var)
     }
-    _ => Err(NutClientErrors::ParseError(
-      "Unexpected variable format".into(),
-    )),
+    _ => Err(NutClientErrors::from(ParseErrorKind::InvalidVarFormat)),
   }
 }
 
 pub fn parse_cmd(line: &str) -> Result<Box<str>, NutClientErrors> {
-  let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
+  let words = shell_words::split(line).map_err(|err| {
+    error!(message = "Unable to split cmd line.", reason = %err);
+    NutClientErrors::from(ParseErrorKind::InvalidCmdFormat)
+  })?;
 
   match words.as_slice() {
     [op, _ups_name, cmd_name] if op == "CMD" => {
@@ -153,14 +138,15 @@ pub fn parse_cmd(line: &str) -> Result<Box<str>, NutClientErrors> {
 
       Ok(cmd)
     }
-    _ => Err(NutClientErrors::ParseError(
-      "Unexpected command format".into(),
-    )),
+    _ => Err(NutClientErrors::from(ParseErrorKind::InvalidCmdFormat)),
   }
 }
 
 pub fn parse_ups(line: &str) -> Result<Ups, NutClientErrors> {
-  let words = shell_words::split(line).map_err(|e| NutClientErrors::ParseError(e.to_string()))?;
+  let words = shell_words::split(line).map_err(|err| {
+    error!(message = "Unable to split ups line.", reason = %err);
+    NutClientErrors::from(ParseErrorKind::InvalidUpsFormat)
+  })?;
 
   match words.as_slice() {
     [op, ups_name, ups_desc] if op == "UPS" => {
@@ -169,8 +155,6 @@ pub fn parse_ups(line: &str) -> Result<Ups, NutClientErrors> {
 
       Ok(Ups { name, desc })
     }
-    _ => Err(NutClientErrors::ParseError(
-      "Unexpected UPS info format".into(),
-    )),
+    _ => Err(NutClientErrors::from(ParseErrorKind::InvalidUpsFormat)),
   }
 }

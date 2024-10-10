@@ -15,10 +15,10 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "daisyui": "^4.12.12",
+    "daisyui": "^4.12.13",
     "esbuild": "^0.24.0",
     "tailwindcss": "^3.4.13",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.3"
   },
   "dependencies": {
     "apexcharts": "3.53.0",

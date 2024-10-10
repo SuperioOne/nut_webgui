@@ -2,6 +2,7 @@ use crate::upsd_client::ups_variables::UpsVariable;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use std::collections::{hash_map::Iter, HashMap};
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
 pub enum DaemonStatus {
@@ -35,6 +36,16 @@ impl<'a> Iterator for UpsDaemonIterator<'a> {
 
   fn next(&mut self) -> Option<Self::Item> {
     self.iterator.next()
+  }
+}
+
+impl Display for DaemonStatus {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      DaemonStatus::Dead => f.write_str("Dead"),
+      DaemonStatus::Online => f.write_str("Online"),
+      DaemonStatus::NotReady => f.write_str("Not Ready"),
+    }
   }
 }
 

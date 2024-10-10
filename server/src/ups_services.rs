@@ -23,14 +23,11 @@ pub struct UpsVarDetail {
 #[derive(Debug)]
 pub enum UpsUpdateMessage {
   /// Updates all variables.
-  FullUpdate {
-    content: Vec<UpsDetails>,
-  },
+  FullUpdate { data: Vec<UpsDetails> },
 
   /// Updates a single variable.
-  PartialUpdate {
-    content: Vec<UpsVarDetail>,
-  },
+  PartialUpdate { data: Vec<UpsVarDetail> },
 
+  /// Marks daemon as dead
   MarkAsDead,
 }

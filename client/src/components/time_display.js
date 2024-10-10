@@ -5,8 +5,8 @@ import { link_host_styles } from "../utils.js";
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const MONTH = 30 * DAY; // Approx.
-const YEAR = 12 * MONTH;
+const MONTH = 30 * DAY;
+const YEAR = 365 * DAY;
 
 /**
  * @param {number} divisor

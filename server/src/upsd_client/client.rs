@@ -13,6 +13,7 @@ use tokio::{
   io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader},
   net::{TcpStream, ToSocketAddrs},
 };
+use tracing::trace;
 
 #[derive(Debug)]
 pub struct UpsClient<A>
@@ -128,10 +129,11 @@ where
           line_buffer.clear();
         }
         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
-        Err(err) => return Err(NutClientErrors::IOError(err.kind())),
+        Err(err) => return Err(NutClientErrors::IOError { kind: err.kind() }),
       }
     }
 
+    trace!(message = "UPS list received.", content = &message_buffer);
     parse_ups_list(&message_buffer)
   }
 
@@ -163,6 +165,12 @@ where
       }
     }
 
+    trace!(
+      message = "CMD list received.",
+      content = &message_buffer,
+      ups = &ups_name
+    );
+
     parse_cmd_list(&message_buffer)
   }
 
@@ -193,6 +201,12 @@ where
       }
     }
 
+    trace!(
+      message = "UPS VAR list received.",
+      content = &message_buffer,
+      ups = &ups_name
+    );
+
     parse_var_list(&message_buffer)
   }
 
@@ -220,7 +234,19 @@ where
       }
     }
 
-    parse_variable(&message_buffer)
+    if is_error_response!(&message_buffer) {
+      let error = extract_error!(&message_buffer);
+      Err(NutClientErrors::ProtocolError { kind: error })
+    } else {
+      trace!(
+        message = "UPS var received.",
+        content = &message_buffer,
+        ups = &ups_name,
+        var_name = &var_name
+      );
+
+      parse_variable(&message_buffer)
+    }
   }
 }
 
@@ -278,7 +304,7 @@ where
 
     if is_error_response!(&line) {
       let error = extract_error!(&line);
-      Err(NutClientErrors::ProtocolError(error))
+      Err(NutClientErrors::ProtocolError { kind: error })
     } else if is_ok_response!(&line) {
       Ok(())
     } else {

@@ -12,8 +12,12 @@ use tower_http::{
   trace::TraceLayer,
 };
 
+use self::middlewares::DaemonStateLayer;
+
+mod common;
 mod hypermedia;
 mod json;
+mod middlewares;
 mod probes;
 
 pub struct HttpServerConfig {
@@ -46,11 +50,6 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       static_dir,
     } = config;
 
-    let state = ServerState {
-      upsd_state,
-      upsd_config: Arc::new(upsd_config),
-    };
-
     let middleware = ServiceBuilder::new()
       .layer(CompressionLayer::new().br(true).gzip(true).deflate(true))
       .layer(TraceLayer::new_for_http())
@@ -66,6 +65,7 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       .route("/ups", get(json::get_ups_list))
       .route("/ups/:ups_name/command", post(json::post_command))
       .fallback(|| async { StatusCode::NOT_FOUND })
+      .layer(DaemonStateLayer::new(upsd_state.clone()))
       .layer(CorsLayer::permissive());
 
     let hypermedia_api = Router::new()
@@ -78,6 +78,11 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       .route("/", get(hypermedia::routes::home::get))
       .route("/not-found", get(hypermedia::routes::not_found::get))
       .fallback(hypermedia::routes::not_found::get);
+
+    let state = ServerState {
+      upsd_state,
+      upsd_config: Arc::new(upsd_config),
+    };
 
     let app = Router::new()
       .nest("/api", data_api)

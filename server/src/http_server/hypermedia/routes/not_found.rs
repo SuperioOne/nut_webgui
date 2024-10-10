@@ -1,4 +1,5 @@
 use askama::Template;
+use axum::response::Response;
 use axum_core::response::IntoResponse;
 
 #[derive(Template)]
@@ -7,8 +8,7 @@ struct NotFound<'a> {
   title: &'a str,
 }
 
-pub async fn get() -> impl IntoResponse {
+pub async fn get() -> Response {
   let template = NotFound { title: "Not Found" };
   template.into_response()
 }
-

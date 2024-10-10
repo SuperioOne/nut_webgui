@@ -19,7 +19,7 @@ lto = true
 [dependencies]
 askama = { version = "0.12.1", default-features = false, features = ["with-axum", "mime", "mime_guess"] }
 askama_axum = { version = "0.4.0" }
-axum = { version = "0.7.5" }
+axum = { version = "0.7.5", features = ["original-uri"] }
 axum-core = "0.4.3"
 tokio = { version = "1.37.0", features = ["default", "net", "macros", "rt-multi-thread", "signal"] }
 tokio-util = { version = "0.7.10", features = ["default"] }
