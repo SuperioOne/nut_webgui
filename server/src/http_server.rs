@@ -58,7 +58,8 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
     let probes = Router::new()
       .route("/health", get(probes::get_health))
       .route("/readiness", get(probes::get_readiness))
-      .fallback(|| async { StatusCode::NOT_FOUND });
+      .fallback(|| async { StatusCode::NOT_FOUND })
+      .layer(CorsLayer::permissive());
 
     let data_api = Router::new()
       .route("/ups/:ups_name", get(json::get_ups_by_name))

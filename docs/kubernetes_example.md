@@ -92,21 +92,31 @@ spec:
               value: "20"
           resources:
             limits:
-              memory: "128Mi"
+              memory: "64Mi"
             requests:
-              memory: "128Mi"
+              memory: "32Mi" # You can go low as 4Mi. As example, single pod uses 2Mi memory for a user with 12 UPS devices.
           ports:
             - containerPort: 9000
+          startupProbe:
+            httpGet:
+              path: /probes/readiness
+              port: 9000
+            initialDelaySeconds: 5
+            failureThreshold: 15
+            periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /probes/health
               port: 9000
             initialDelaySeconds: 5
+            failureThreshold: 3
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /probes/health
+              path: /probes/readiness
               port: 9000
-
+            initialDelaySeconds: 5
+            failureThreshold: 3
+            periodSeconds: 30
 ```
 

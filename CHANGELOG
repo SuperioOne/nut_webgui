@@ -1,3 +1,37 @@
+# v0.4.0 - October 12, 2024
+
+## Changed
+
+- Bump `apexcharts` version from `3.50.0` to `3.53.0`.
+- Bump `htmx` version from `2.0.1` to `2.0.3`.
+- Bump server crate versions to latest.
+- Generalized HTTP error responses based on RFC9457/RFC7807.
+- JSON API returns HTTP 5xx error codes with problem details when daemon connection is lost.
+- Logger redacts `upsd_pass` config when server starts with `LOG_LEVEL=DEBUG`
+- Logging style is improved in general. No more `{:?}` dumps.
+- Remaining battery runtime shown in yMdhms date-time format instead of raw seconds.
+- UPS table elements are sorted by UPS name.
+- Voltage texts are vertically centered on the UI.
+- `health` probe returns HTTP 500 status code when daemon connection is lost.
+- `health` probe returns application/json response. Response contains basic info like last sync time, daemon status, and daemon host.
+
+## Added
+
+- Display UPS manufacturer and model information on UPS page.
+- `readiness` probe for Kubernetes deployments.
+- upsd_client logs upsd protocol messages when `LOG_LEVEL` is set to `TRACE`.
+- OpenAPI specification is added to docs.
+
+## Fixed
+
+- A single failing UPS driver distrupts other UPS devices' states.
+- Probe endpoints don't support CORS.
+- Server doesn't delete failing/disconnected UPS devices from both HTML and JSON responses.
+- Texts get overlap in table elements when screen size is too small.
+- UPS info page displays incorrect power unit for the apparent power values (ups.power).
+- On certain light themes, text colors blend with background and becomes unreadable.
+- upsd_client uses wrong error types when list commands fail.
+
 # v0.3.2 - September 29, 2024
 
 ## Fixed

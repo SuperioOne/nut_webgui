@@ -1,0 +1,488 @@
+openapi: "3.1.0"
+
+info:
+  title: "nut_webgui JSON API"
+  version: "0.4.0"
+  summary: "Simple JSON API for interfacing with nut_webgui."
+  license:
+    name: "Apache 2.0"
+    url: "https://raw.githubusercontent.com/SuperioOne/nut_webgui/refs/heads/master/LICENSE"
+  contact:
+    url: "https://github.com/SuperioOne/nut_webgui/issues"
+    email: "pm@smdd.dev"
+
+servers:
+- url: "{protocol}://{host}:{port}"
+  description: "nut_webgui server"
+  variables:
+    host:
+      default: localhost
+    port:
+      default: '9000'
+    protocol:
+      default: 'http'
+      enum:
+        - http
+        - https
+paths:
+  /api/ups:
+    description: "Returns collection of all available UPS devices."
+    get:
+      tags:
+        - ups
+      operationId: "api_ups_collection_get"
+      responses:
+        "200":
+          description: "Collection of UPS devices."
+          content:
+            application/json:
+              examples:
+                ups_list:
+                  $ref: "#/components/examples/ups_list_response"
+                empty_list:
+                  $ref: "#/components/examples/empty_ups_list_response"
+              schema:
+                $ref: "#/components/schemas/UpsList"
+        "500":
+          description: "Server or daemon errors."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "503":
+          description: "Server is not ready to serve."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  /api/ups/{ups_name}:
+    description: "Returns a UPS devices."
+    get:
+      parameters:
+        - name: ups_name
+          in: path
+          description: "UPS name"
+          required: true
+          allowEmptyValue: false
+          schema:
+            type: string
+      tags:
+        - ups
+      operationId: "api_ups_get"
+      responses:
+        "200":
+          description: "UPS device response."
+          content:
+            application/json:
+              examples:
+                ups:
+                  $ref: "#/components/examples/ups_response"
+              schema:
+                $ref: "#/components/schemas/Ups"
+        "404":
+          description: "Ups does not exists."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "500":
+          description: "Server or daemon errors."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "503":
+          description: "Server is not ready to serve."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+
+  /api/ups/{ups_name}/command:
+    description: "Instantiate a UPS command."
+    post:
+      requestBody:
+        description: "Command request body."
+        required: true
+        content:
+          application/json:
+            schema:
+                $ref: "#/components/schemas/CommandRequest"
+      parameters:
+        - name: ups_name
+          in: path
+          description: "UPS name"
+          required: true
+          allowEmptyValue: false
+          schema:
+            type: string
+      tags:
+        - ups
+      operationId: "api_ups_instcmd"
+      responses:
+        "202":
+          description: "Command is accepted."
+        "401":
+          description: "Upsd user and password configs are not set."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "404":
+          description: "Ups does not exists."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "500":
+          description: "Server or daemon errors."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "503":
+          description: "Server is not ready to serve."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+  /probes/health:
+    description: "Server health check"
+    get:
+      tags:
+        - probes
+      operationId: "probes_health"
+      responses:
+        "200":
+          description: "Command is accepted"
+          content:
+            application/json:
+              examples:
+                default:
+                  $ref: "#/components/examples/health_200"
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "500":
+          description: "Upsd daemon failure"
+          content:
+            application/json:
+              examples:
+                default:
+                  $ref: "#/components/examples/health_500"
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: "Server is not ready to serve"
+          content:
+            application/json:
+              examples:
+                default:
+                  $ref: "#/components/examples/health_503"
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /probes/readiness:
+    description: "Server readiness probe mainly intented for Kubernetes."
+    get:
+      tags:
+        - probes
+      operationId: "probes_readiness"
+      responses:
+        "200":
+          description: "Server is ready to response."
+          content:
+            text/plain:
+              schema:
+                enum:
+                  - "READY"
+        "503":
+          description: "Server is not ready to response."
+          content:
+            text/plain:
+              schema:
+                enum:
+                  - "NOT READY"
+components:
+  schemas:
+    Ups:
+      type: object
+      required:
+        - name
+        - desc
+        - vars
+        - cmds
+      properties:
+        name:
+          type: string
+        desc:
+          type: string
+        vars:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: "number"
+              - type: "string"
+        cmds:
+          type: "array"
+          items:
+            type: "string"
+    UpsList:
+      type: array
+      items:
+        "$ref": "#/components/schemas/Ups"
+    ProblemDetails:
+      type: object
+      required:
+        - title
+        - status
+      properties:
+        title:
+          type: string
+        details:
+          type: string
+        status:
+          type: number
+          minimum: 100
+          exclusiveMaximum: 1000
+        instance:
+          type: string
+          format: uri
+    CommandRequest:
+      type: object
+      required: 
+        - cmd
+      properties:
+        cmd:
+         type: string
+    HealthResponse:
+      type: object
+      required:
+        - upsd_status
+        - upsd_server
+      properties:
+        last_updated:
+          type: string
+          format: date-time
+        upsd_server:
+          type: string
+          format: hostname
+        upsd_status:
+          type: string
+          enum:
+            - "Online"
+            - "Dead"
+            - "NotReady"
+  examples:
+    health_200:
+      summary: "Server Online"
+      value: |
+        {
+          "upsd_status": "Online",
+          "last_modified": "2024-10-12T00:11:21.746872446Z",
+          "upsd_server": "localhost:3493"
+        }
+    health_500:
+      summary: "Server Dead"
+      value: |
+        {
+          "upsd_status": "Dead",
+          "last_modified": null,
+          "upsd_server": "localhost:3493"
+        }
+    health_503:
+      summary: "Server NotReady"
+      value: |
+        {
+          "upsd_status": "NotReady",
+          "last_modified": null,
+          "upsd_server": "localhost:3493"
+        }
+    ups_response:
+      summary: "UPS device"
+      value: |
+        {
+          "name": "apc_back-ups_cs_650",
+          "desc": "dummy-ups apc_back-ups_cs_650",
+          "vars": {
+            "battery.charge": 100,
+            "battery.charge.low": 10,
+            "battery.charge.warning": "50",
+            "battery.date": "2005/09/28",
+            "battery.mfr.date": "2005/09/28",
+            "battery.runtime": 1312,
+            "battery.runtime.low": "120",
+            "battery.temperature": 29.2,
+            "battery.type": "PbAc",
+            "battery.voltage": 13.6,
+            "battery.voltage.nominal": 12,
+            "device.mfr": "American Power Conversion",
+            "device.model": "Back-UPS CS 650",
+            "device.serial": "000000000000",
+            "device.type": "ups",
+            "driver.debug": "0",
+            "driver.flag.allow_killpower": "0",
+            "driver.name": "dummy-ups",
+            "driver.parameter.mode": "dummy-once",
+            "driver.parameter.pollinterval": 2,
+            "driver.parameter.port": "APC_Back-UPS_CS_650.dev",
+            "driver.parameter.synchronous": "auto",
+            "driver.state": "updateinfo",
+            "driver.version": "2.8.1",
+            "driver.version.internal": "0.18",
+            "input.sensitivity": "high",
+            "input.transfer.high": 256,
+            "input.transfer.low": 196,
+            "input.voltage": 228,
+            "input.voltage.nominal": 230,
+            "output.frequency": "50.0",
+            "output.voltage": "230.0",
+            "output.voltage.nominal": "230.0",
+            "ups.beeper.status": "disabled",
+            "ups.delay.shutdown": 20,
+            "ups.delay.start": 30,
+            "ups.firmware": "817.v2.I",
+            "ups.firmware.aux": "v2",
+            "ups.load": 27,
+            "ups.mfr": "American Power Conversion",
+            "ups.mfr.date": "2005/09/28",
+            "ups.model": "Back-UPS CS 650",
+            "ups.productid": "0002",
+            "ups.realpower.nominal": 400,
+            "ups.serial": "000000000000",
+            "ups.status": "OL",
+            "ups.test.result": "No test initiated",
+            "ups.timer.reboot": "0",
+            "ups.timer.shutdown": -1,
+            "ups.timer.start": 0,
+            "ups.vendorid": "051d"
+          },
+          "cmds": [
+            "driver.killpower",
+            "driver.reload",
+            "driver.reload-or-error",
+            "driver.reload-or-exit",
+            "load.off"
+          ]
+        }
+    empty_ups_list_response:
+      summary: "Empty UPS list"
+      value: "[]"
+    ups_list_response:
+      summary: "Populated UPS list"
+      value: |
+        [{
+          "name": "apc_back-ups_cs_650",
+          "desc": "dummy-ups apc_back-ups_cs_650",
+          "vars": {
+            "battery.charge": 100,
+            "battery.charge.low": 10,
+            "battery.charge.warning": "50",
+            "battery.date": "2005/09/28",
+            "battery.mfr.date": "2005/09/28",
+            "battery.runtime": 1312,
+            "battery.runtime.low": "120",
+            "battery.temperature": 29.2,
+            "battery.type": "PbAc",
+            "battery.voltage": 13.6,
+            "battery.voltage.nominal": 12,
+            "device.mfr": "American Power Conversion",
+            "device.model": "Back-UPS CS 650",
+            "device.serial": "000000000000",
+            "device.type": "ups",
+            "driver.debug": "0",
+            "driver.flag.allow_killpower": "0",
+            "driver.name": "dummy-ups",
+            "driver.parameter.mode": "dummy-once",
+            "driver.parameter.pollinterval": 2,
+            "driver.parameter.port": "APC_Back-UPS_CS_650.dev",
+            "driver.parameter.synchronous": "auto",
+            "driver.state": "updateinfo",
+            "driver.version": "2.8.1",
+            "driver.version.internal": "0.18",
+            "input.sensitivity": "high",
+            "input.transfer.high": 256,
+            "input.transfer.low": 196,
+            "input.voltage": 228,
+            "input.voltage.nominal": 230,
+            "output.frequency": "50.0",
+            "output.voltage": "230.0",
+            "output.voltage.nominal": "230.0",
+            "ups.beeper.status": "disabled",
+            "ups.delay.shutdown": 20,
+            "ups.delay.start": 30,
+            "ups.firmware": "817.v2.I",
+            "ups.firmware.aux": "v2",
+            "ups.load": 27,
+            "ups.mfr": "American Power Conversion",
+            "ups.mfr.date": "2005/09/28",
+            "ups.model": "Back-UPS CS 650",
+            "ups.productid": "0002",
+            "ups.realpower.nominal": 400,
+            "ups.serial": "000000000000",
+            "ups.status": "OL",
+            "ups.test.result": "No test initiated",
+            "ups.timer.reboot": "0",
+            "ups.timer.shutdown": -1,
+            "ups.timer.start": 0,
+            "ups.vendorid": "051d"
+          },
+          "cmds": [
+            "driver.killpower",
+            "driver.reload",
+            "driver.reload-or-error",
+            "driver.reload-or-exit",
+            "load.off"
+          ]
+        },
+        {
+          "name": "apc_smart-ups_c1500",
+          "desc": "dummy-ups apc_smart-ups_c1500",
+          "vars": {
+            "battery.charge": 100,
+            "battery.charge.low": 10,
+            "battery.charge.warning": "50",
+            "battery.runtime": 17820,
+            "battery.runtime.low": "120",
+            "battery.type": "PbAc",
+            "battery.voltage": 27.3,
+            "battery.voltage.nominal": 24,
+            "device.mfr": "American Power Conversion",
+            "device.model": "Smart-UPS C 1500",
+            "device.serial": "000000000000",
+            "device.type": "ups",
+            "driver.debug": "0",
+            "driver.flag.allow_killpower": "0",
+            "driver.name": "dummy-ups",
+            "driver.parameter.mode": "dummy-once",
+            "driver.parameter.pollinterval": 2,
+            "driver.parameter.port": "APC_Smart-UPS_C1500.dev",
+            "driver.parameter.synchronous": "auto",
+            "driver.state": "quiet",
+            "driver.version": "2.8.1",
+            "driver.version.internal": "0.18",
+            "ups.beeper.status": "disabled",
+            "ups.delay.shutdown": 20,
+            "ups.firmware": "UPS 10.0 / ID = 1005",
+            "ups.mfr": "American Power Conversion",
+            "ups.mfr.date": "2016/08/17",
+            "ups.model": "Smart-UPS C 1500",
+            "ups.productid": "0003",
+            "ups.serial": "000000000000",
+            "ups.status": "OL",
+            "ups.timer.reboot": "-1",
+            "ups.timer.shutdown": -1,
+            "ups.vendorid": "051d"
+          },
+          "cmds": [
+            "driver.killpower",
+            "driver.reload",
+            "driver.reload-or-error",
+            "driver.reload-or-exit",
+            "load.off"
+          ]}
+        ]
+tags:
+  - name: ups
+    description: "UPS endpoints"
+  - name: probes
+    description: "Server health check endpoints"
