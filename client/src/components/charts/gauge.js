@@ -1,6 +1,8 @@
 import { link_host_styles } from "../../utils.js";
 import ApexCharts from "apexcharts";
 
+/** @import {ApexOptions} from "apexcharts" */
+
 /**
  * @typedef {"value" | "height" | "width" | "theme" | "class" } AttributeKeys
  */
@@ -11,8 +13,23 @@ export default class Gauge extends HTMLElement {
   /** @type {() => void} **/
   #theme_listener = () => {
     if (this.#chart) {
-      // Re-renders chart to update svg fill colors when theme updated.
-      this.#chart.updateOptions({}, false, false).catch(console.error);
+      /** @type {ApexOptions} **/
+      const new_options = {
+        plotOptions: {
+          radialBar: {
+            dataLabels: {
+              value: {
+                color: [window.getComputedStyle(this).color],
+              },
+            },
+          },
+        },
+        fill: {
+          colors: [window.getComputedStyle(this).fill],
+        },
+      };
+
+      this.#chart.updateOptions(new_options, false, false).catch(console.error);
     }
   };
 
@@ -36,6 +53,7 @@ export default class Gauge extends HTMLElement {
     let value_number = Number(value_text);
     value_number = isNaN(value_number) ? 0 : value_number;
 
+    /** @type {ApexOptions} **/
     const options = {
       series: [value_number],
       chart: {
@@ -67,14 +85,14 @@ export default class Gauge extends HTMLElement {
             value: {
               offsetY: -2,
               fontSize: "2.5rem",
-              color: [() => window.getComputedStyle(this).color],
+              color: [window.getComputedStyle(this).color],
             },
           },
         },
       },
       fill: {
         type: "solid",
-        colors: [() => window.getComputedStyle(this).fill],
+        colors: [window.getComputedStyle(this).fill],
         opacity: 0.5,
       },
     };
@@ -94,7 +112,7 @@ export default class Gauge extends HTMLElement {
    * @param {string} old_value
    * @param {string} new_value
    */
-  attributeChangedCallback(name, old_value, new_value) {
+  attributeChangedCallback(name, _old_value, new_value) {
     if (!this.#chart) return;
 
     switch (name) {

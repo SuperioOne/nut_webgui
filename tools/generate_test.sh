@@ -14,9 +14,9 @@ do
 
     cat <<EOF
     ups_validation_test!(
-      ${TEST_NAME,,},
-      ".${dump_file}",
-      "${UPS_NAME}"
+      test_name = ${TEST_NAME,,},
+      dump_file = ".${dump_file}",
+      ups_name = "${UPS_NAME}"
   );
 EOF
 

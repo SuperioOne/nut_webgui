@@ -17,18 +17,17 @@ strip = "debuginfo"
 lto = true
 
 [dependencies]
+algorithms_random = { git = "https://github.com/SuperioOne/algorithms.git" }
 askama = { version = "0.12.1", default-features = false, features = ["with-axum", "mime", "mime_guess"] }
 askama_axum = { version = "0.4.0" }
 axum = { version = "0.7.5", features = ["original-uri"] }
 axum-core = "0.4.3"
+chrono = { version = "0.4.38", default-features = false ,features = ["now", "serde", "iana-time-zone"]}
+clap = { version = "4.5.4", features = ["derive", "default"] }
+serde = { version = "1.0.197", features = ["default", "serde_derive"] }
 tokio = { version = "1.37.0", features = ["default", "net", "macros", "rt-multi-thread", "signal"] }
 tokio-util = { version = "0.7.10", features = ["default"] }
 tower = { version = "0.4.13" }
 tower-http = { version = "0.5.2", features = ["default", "fs", "trace", "timeout", "cors", "tower", "util", "compression-gzip", "compression-deflate", "compression-br"] }
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
-shell-words = "1.1.0"
-serde = { version = "1.0.197", features = ["default", "serde_derive"] }
-uuid = { version = "1.8.0", features = ["v4"] }
-clap = { version = "4.5.4", features = ["derive", "default"] }
-chrono = { version = "0.4.38", default-features = false ,features = ["now", "serde", "iana-time-zone"]}

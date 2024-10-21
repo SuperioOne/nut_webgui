@@ -5,7 +5,6 @@ use std::{
   fmt::{Display, Formatter},
   time::Duration,
 };
-use uuid::Uuid;
 
 #[derive(Debug)]
 pub enum Notification {
@@ -32,7 +31,6 @@ pub struct NotificationTemplate {
   message: String,
   ttl: u128,
   notification_type: Notification,
-  container_id: String,
 }
 
 const DEFAULT_DURATION: Duration = Duration::from_millis(3000);
@@ -51,14 +49,10 @@ impl NotificationTemplate {
     notification_type: Notification,
     ttl: Option<Duration>,
   ) -> NotificationTemplate {
-    let id = format!("notification_{}", Uuid::new_v4());
-    let duration = ttl.unwrap_or(DEFAULT_DURATION);
-
     NotificationTemplate {
       message,
       notification_type,
-      ttl: duration.as_millis(),
-      container_id: id,
+      ttl: ttl.unwrap_or(DEFAULT_DURATION).as_millis(),
     }
   }
 }

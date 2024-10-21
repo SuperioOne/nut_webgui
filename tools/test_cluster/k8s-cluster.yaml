@@ -1,0 +1,738 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nut-test
+
+#
+# UPSD daemon configurations
+#
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ups-dump-files
+  namespace: nut-test
+  labels:
+    app.kubernetes.io/part-of: nut-test
+data:
+  APC-Back-UPS-CS-650.dev: |
+    battery.charge: 100
+    battery.charge.low: 10
+    battery.charge.warning: 50
+    battery.date: 2005/09/28
+    battery.mfr.date: 2005/09/28
+    battery.runtime: 1312
+    battery.runtime.low: 120
+    battery.temperature: 29.2
+    battery.type: PbAc
+    battery.voltage: 13.6
+    battery.voltage.nominal: 12.0
+    device.mfr: American Power Conversion
+    device.model: Back-UPS CS 650
+    device.serial: QB0540131574
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.version: 2.7.2
+    driver.version.data: APC HID 0.95
+    driver.version.internal: 0.38
+    input.sensitivity: high
+    input.transfer.high: 256
+    input.transfer.low: 196
+    input.voltage: 228.0
+    input.voltage.nominal: 230
+    output.frequency: 50.0
+    output.voltage: 230.0
+    output.voltage.nominal: 230.0
+    ups.beeper.status: disabled
+    ups.delay.shutdown: 20
+    ups.delay.start: 30
+    ups.firmware: 817.v2.I
+    ups.firmware.aux: v2
+    ups.load: 27.0
+    ups.mfr: American Power Conversion
+    ups.mfr.date: 2005/09/28
+    ups.model: Back-UPS CS 650
+    ups.productid: 0002
+    ups.realpower.nominal: 400
+    ups.serial: QB0540131574
+    ups.status: OL
+    ups.test.result: No test initiated
+    ups.timer.reboot: 0
+    ups.timer.shutdown: -1
+    ups.timer.start: 0
+    ups.vendorid: 051d
+
+  APC-Smart-UPS-C1500.dev: |
+    battery.charge: 100
+    battery.charge.low: 10
+    battery.charge.warning: 50
+    battery.runtime: 17820
+    battery.runtime.low: 120
+    battery.type: PbAc
+    battery.voltage: 27.3
+    battery.voltage.nominal: 24.0
+    device.mfr: American Power Conversion
+    device.model: Smart-UPS C 1500
+    device.serial: 3S1632X07908
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.parameter.synchronous: no
+    driver.version: 2.7.4-177-g7427a32
+    driver.version.data: APC HID 0.96
+    driver.version.internal: 0.42
+    ups.beeper.status: disabled
+    ups.delay.shutdown: 20
+    ups.firmware: UPS 10.0 / ID=1005
+    ups.mfr: American Power Conversion
+    ups.mfr.date: 2016/08/17
+    ups.model: Smart-UPS C 1500
+    ups.productid: 0003
+    ups.serial: 3S1632X07908
+    ups.status: OL
+    ups.timer.reboot: -1
+    ups.timer.shutdown: -1
+    ups.vendorid: 051d
+
+  APC-SMC2200BI-BR.dev: |
+    battery.charge: 56
+    battery.charge.low: 10
+    battery.charge.warning: 50
+    battery.runtime: 2100
+    battery.runtime.low: 120
+    battery.type: PbAc
+    battery.voltage: 25.9
+    battery.voltage.nominal: 24.0
+    device.mfr: American Power Conversion
+    device.model: Smart-UPS 2200 BI
+    device.serial: 6369960019
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.parameter.synchronous: no
+    driver.version: 2.7.4
+    driver.version.data: APC HID 0.96
+    driver.version.internal: 0.41
+    ups.beeper.status: disabled
+    ups.delay.shutdown: 20
+    ups.firmware: UPS 11.0 / ID=1007
+    ups.mfr: American Power Conversion
+    ups.mfr.date: 2018/04/24
+    ups.model: Smart-UPS 2200 BI
+    ups.productid: 0003
+    ups.serial: 6369960019
+    ups.status: OL CHRG
+    ups.timer.reboot: -1
+    ups.timer.shutdown: -1
+    ups.vendorid: 051d
+
+  Cyber-Power-BR1000ELCD.dev: |
+    battery.charge: 100
+    battery.charge.low: 10
+    battery.charge.warning: 20
+    battery.mfr.date: CPS
+    battery.runtime: 7200
+    battery.runtime.low: 300
+    battery.type: PbAcid
+    battery.voltage: 12.9
+    battery.voltage.nominal: 12
+    device.mfr: CPS
+    device.model: BR1000ELCD
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.bus: 001
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.parameter.product: BR1000ELCD
+    driver.parameter.productid: 0501
+    driver.parameter.synchronous: no
+    driver.parameter.vendor: CPS
+    driver.parameter.vendorid: 0764
+    driver.version: 2.7.4
+    driver.version.data: CyberPower HID 0.4
+    driver.version.internal: 0.41
+    input.transfer.high: 0
+    input.transfer.low: 0
+    input.voltage: 238.0
+    input.voltage.nominal: 230
+    output.voltage: 239.0
+    ups.beeper.status: enabled
+    ups.delay.shutdown: 20
+    ups.delay.start: 30
+    ups.load: 20
+    ups.mfr: CPS
+    ups.model: BR1000ELCD
+    ups.productid: 0501
+    ups.realpower.nominal: 600
+    ups.status: OL
+    ups.test.result: No test initiated
+    ups.timer.shutdown: -60
+    ups.timer.start: -60
+    ups.vendorid: 0764
+
+  Cyber-Power-CP1000AVRLCD.dev: |
+    battery.charge: 100
+    battery.charge.low: 10
+    battery.charge.warning: 20
+    battery.mfr.date: CPS
+    battery.runtime: 1050
+    battery.runtime.low: 300
+    battery.type: PbAcid
+    battery.voltage: 13.5
+    battery.voltage.nominal: 12
+    device.mfr: CPS
+    device.model: UPS CP1000AVRLCD
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: /dev/hiddev0
+    driver.version: 2.7.1-signed-9-g6fb35b3
+    driver.version.data: CyberPower HID 0.3
+    driver.version.internal: 0.38
+    input.transfer.high: 140
+    input.transfer.low: 90
+    input.voltage: 121.0
+    input.voltage.nominal: 120
+    output.voltage: 120.0
+    ups.beeper.status: enabled
+    ups.delay.shutdown: 20
+    ups.delay.start: 30
+    ups.load: 26
+    ups.mfr: CPS
+    ups.model: UPS CP1000AVRLCD
+    ups.productid: 0501
+    ups.realpower.nominal: 88
+    ups.status: OL
+    ups.test.result: Done and passed
+    ups.timer.shutdown: -60
+    ups.timer.start: 0
+    ups.vendorid: 0764
+
+  Cyber-Power-CP1500PFCLCD.dev: |
+    battery.charge: 58
+    battery.charge.low: 10
+    battery.charge.warning: 20
+    battery.mfr.date: CPS
+    battery.runtime: 4944
+    battery.runtime.low: 300
+    battery.type: PbAcid
+    battery.voltage: 24.0
+    battery.voltage.nominal: 24
+    device.mfr: CPS
+    device.model: CP1500PFCLCD
+    device.serial: 000000000000
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 15
+    driver.parameter.port: auto
+    driver.parameter.synchronous: no
+    driver.version: 2.7.4
+    driver.version.data: CyberPower HID 0.4
+    driver.version.internal: 0.41
+    input.transfer.high: 139
+    input.transfer.low: 88
+    input.voltage: 120.0
+    input.voltage.nominal: 120
+    output.voltage: 136.0
+    ups.beeper.status: disabled
+    ups.delay.shutdown: 20
+    ups.delay.start: 30
+    ups.load: 0
+    ups.mfr: CPS
+    ups.model: CP1500PFCLCD
+    ups.productid: 0501
+    ups.realpower.nominal: 900
+    ups.serial: 000000000000
+    ups.status: OL CHRG
+    ups.test.result: No test initiated
+    ups.timer.shutdown: -60
+    ups.timer.start: -60
+    ups.vendorid: 0764
+
+  Cyber-Power-VP1200ELCD.dev: |
+    battery.charge: 100
+    battery.charge.low: 10
+    battery.charge.warning: 20
+    battery.mfr.date: CPS
+    battery.runtime: 14100
+    battery.runtime.low: 300
+    battery.type: PbAcid
+    battery.voltage: 28.2
+    battery.voltage.nominal: 24
+    device.mfr: CPS
+    device.model: ValueII-1200E
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.parameter.synchronous: no
+    driver.version: 2.7.4
+    driver.version.data: CyberPower HID 0.4
+    driver.version.internal: 0.41
+    input.transfer.high: 295
+    input.transfer.low: 167
+    input.voltage: 247.0
+    input.voltage.nominal: 230
+    output.voltage: 247.0
+    ups.beeper.status: enabled
+    ups.delay.shutdown: 20
+    ups.delay.start: 30
+    ups.load: 8
+    ups.mfr: CPS
+    ups.model: ValueII-1200E
+    ups.productid: 0501
+    ups.realpower.nominal: 720
+    ups.status: OL
+    ups.test.result: No test initiated
+    ups.timer.shutdown: -60
+    ups.timer.start: -60
+    ups.vendorid: 0764
+
+  Eaton-5E2200USB-LA.dev: |
+    battery.voltage: 26.30
+    device.type: ups
+    driver.name: nutdrv-qx
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.parameter.productid: 0003
+    driver.parameter.synchronous: no
+    driver.parameter.vendorid: 06da
+    driver.version: 2.7.4-151-g9209e18
+    driver.version.data: Q1 0.07
+    driver.version.internal: 0.28
+    input.frequency: 59.9
+    input.voltage: 120.3
+    input.voltage.fault: 120.3
+    output.voltage: 120.0
+    ups.beeper.status: enabled
+    ups.delay.shutdown: 30
+    ups.delay.start: 180
+    ups.load: 29
+    ups.productid: 0003
+    ups.status: OL CAL
+    ups.type: offline / line interactive
+    ups.vendorid: 06da
+
+  Eaton-5E650iUSB-AU.dev: |
+    battery.charge: 100
+    battery.runtime: 2520
+    battery.type: PbAc
+    device.mfr: EATON
+    device.model: 5E 650i
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.version: 2.7.1
+    driver.version.data: MGE HID 1.32
+    driver.version.internal: 0.38
+    input.voltage: 247.0
+    outlet.1.status: on
+    outlet.desc: Main Outlet
+    outlet.id: 1
+    outlet.switchable: no
+    output.frequency: 49.8
+    output.frequency.nominal: 50
+    output.voltage: 244.0
+    output.voltage.nominal: 230
+    ups.beeper.status: enabled
+    ups.delay.shutdown: 20
+    ups.firmware: 01.04.0016
+    ups.load: 14
+    ups.mfr: EATON
+    ups.model: 5E 650i
+    ups.power.nominal: 650
+    ups.productid: ffff
+    ups.start.battery: yes
+    ups.status: OL CHRG
+    ups.timer.shutdown: -1
+    ups.vendorid: 0463
+
+  Eaton-PW9130-1000VA-R-1000i.dev: |
+    ambient.temperature: 24
+    ambient.temperature.high: 40
+    battery.charge: 100
+    battery.charger.status: Resting
+    battery.packs: 3
+    battery.runtime: 10385
+    battery.runtime.low: 3
+    battery.voltage:  39.4
+    device.mfr: Eaton
+    device.model: PW9130 1000VA-R                  1000i
+    device.part: 103006455-6591  
+    device.serial: GH451A0630      
+    device.type: ups
+    driver.name: bcmxcp
+    driver.parameter.baud-rate: 9600
+    driver.parameter.pollinterval: 1
+    driver.parameter.port: /dev/ttyS0
+    driver.version: 2.7.2.5
+    driver.version.internal: 0.29
+    input.bypass.frequency: 50.0
+    input.bypass.voltage: 226.7
+    input.frequency: 50.0
+    input.frequency.high: 53
+    input.frequency.low: 47
+    input.frequency.nominal: 50
+    input.quality: 15
+    input.transfer.boost.high: 195
+    input.transfer.delay: 1
+    input.transfer.high: 276
+    input.transfer.low: 120
+    input.transfer.trim.low: 253
+    input.voltage: 226.7
+    input.voltage.nominal: 230
+    outlet.1.delay.shutdown: -1
+    outlet.1.delay.start: 3
+    outlet.1.id: 1
+    outlet.1.status: On/Closed
+    outlet.2.delay.shutdown: -1
+    outlet.2.delay.start: 5
+    outlet.2.id: 2
+    outlet.2.status: On/Closed
+    output.current:  1.0
+    output.current.nominal:  4.3
+    output.frequency: 50.0
+    output.frequency.nominal: 50
+    output.phases: 1
+    output.voltage: 230.0
+    output.voltage.nominal: 230
+    ups.beeper.status: enabled
+    ups.date: 10/03/2015
+    ups.description: On-Line UPS, Single Phase
+    ups.firmware: Cont:00.13 Inve:01.29
+    ups.load: 22
+    ups.mfr: Eaton
+    ups.model: PW9130 1000VA-R                  1000i
+    ups.power: 226
+    ups.power.nominal: 1000
+    ups.realpower: 158
+    ups.serial: GH451A0630      
+    ups.status: OL
+    ups.temperature: 27
+    ups.test.result: Done and passed
+    ups.time: 18:56:25.06
+
+  Liebert-PSA.dev: |
+    battery.charge: 100
+    battery.charge.low: 38
+    battery.charge.warning: 38
+    battery.type: PbAc
+    battery.voltage: 0.0
+    battery.voltage.nominal: 0.0
+    device.mfr: Emerson Network Power
+    device.model: LiebertPSA
+    device.serial:          
+    device.type: ups
+    driver.name: usbhid-ups
+    driver.parameter.bus: 001
+    driver.parameter.pollfreq: 30
+    driver.parameter.pollinterval: 15
+    driver.parameter.port: auto
+    driver.parameter.productid: 0001
+    driver.parameter.synchronous: auto
+    driver.parameter.vendorid: 10AF
+    driver.version: 2.8.0
+    driver.version.data: Belkin/Liebert HID 0.18
+    driver.version.internal: 0.47
+    driver.version.usb: libusb-1.0.26 (API: 0x1000109)
+    input.frequency: 49.9
+    input.voltage: 120.0
+    output.voltage: 120.0
+    ups.load: 9
+    ups.mfr: Emerson Network Power
+    ups.model: LiebertPSA
+    ups.productid: 0001
+    ups.serial: NA
+    ups.status: OL CHRG
+    ups.vendorid: 10af
+
+  Tuncmatik-DG1200VA.dev: |
+    battery.charge: 100
+    battery.voltage: 27.00
+    battery.voltage.high: 25.46
+    battery.voltage.low: 20.37
+    battery.voltage.nominal: 23.5
+    device.mfr: TUNCMATIK
+    device.model: DG1200VA
+    device.type: ups
+    driver.name: blazer-usb
+    driver.parameter.pollinterval: 2
+    driver.parameter.port: auto
+    driver.version: 2.6.4
+    driver.version.internal: 0.08
+    input.current.nominal: 8.0
+    input.frequency: 50.0
+    input.frequency.nominal: 50
+    input.voltage: 212.0
+    input.voltage.fault: 165.0
+    input.voltage.nominal: 220
+    output.voltage: 212.0
+    ups.alarm: Shutdown imminent!
+    ups.beeper.status: disabled
+    ups.delay.shutdown: 30
+    ups.delay.start: 180
+    ups.firmware: VER1.01C
+    ups.load: 5
+    ups.mfr: TUNCMATIK
+    ups.model: DG1200VA
+    ups.productid: 0000
+    ups.status: ALARM OL FSD
+    ups.temperature: 0.0
+    ups.type: offline / line interactive
+    ups.vendorid: 0001
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nut-upsd-deployment
+  namespace: nut-test
+  labels:
+    app.kubernetes.io/name: nut-upsd
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/part-of: nut-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nut-upsd
+      app.kubernetes.io/version: "0.1.0"
+      app.kubernetes.io/component: daemon
+      app.kubernetes.io/part-of: nut-test
+  template:
+      metadata:
+        name: nut-upsd-server
+        labels:
+          app.kubernetes.io/name: nut-upsd
+          app.kubernetes.io/version: "0.1.0"
+          app.kubernetes.io/component: daemon
+          app.kubernetes.io/part-of: nut-test
+      spec:
+        volumes:
+          - name: dummy-ups-devices
+            configMap:
+              name: ups-dump-files
+        containers:
+          - name: nut-upsd
+            image: gitea.local/smdd/nut_dummy_server:latest
+            resources:
+              limits:
+                memory: "1Gi"
+              requests:
+                memory: "128Mi"
+            volumeMounts:
+              - name: dummy-ups-devices
+                mountPath: /nut_devices
+            ports:
+              - containerPort: 3493
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nut-dummy-service
+  namespace: nut-test
+  labels:
+    app.kubernetes.io/part-of: nut-test
+spec:
+  selector:
+    app.kubernetes.io/name: nut-upsd
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/part-of: nut-test
+  ports:
+  - port: 3493
+    targetPort: 3493
+
+#
+# Application Configurations
+#
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nut-deployment-amd64-v3
+  namespace: nut-test
+  labels:
+    app.kubernetes.io/name: nut-webgui
+    app.kubernetes.io/part-of: nut-test
+    app.kubernetes.io/version: "latest-amd64-v3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nut-webgui
+      app.kubernetes.io/part-of: nut-test
+      app.kubernetes.io/version: "latest-amd64-v3"
+  template:
+    metadata:
+      name: nut-webgui
+      labels:
+        app.kubernetes.io/component: application
+        app.kubernetes.io/name: nut-webgui
+        app.kubernetes.io/part-of: nut-test
+        app.kubernetes.io/version: "latest-amd64-v3"
+    spec:
+      containers:
+        - name: nut-webgui
+          image: ghcr.io/superioone/nut_webgui:latest-amd64-v3
+          env:
+            - name: UPSD_ADDR
+              value: nut-dummy-service
+            - name: POLL_FREQ
+              value: "10"
+            - name: LOG_LEVEL
+              value: DEBUG
+          resources:
+            limits:
+              memory: "48Mi"
+            requests:
+              memory: "32Mi"
+          ports:
+            - containerPort: 9000
+          livenessProbe:
+            httpGet:
+              path: /probes/health
+              port: 9000
+            initialDelaySeconds: 5
+            failureThreshold: 3
+            periodSeconds: 30
+          startupProbe:
+            httpGet:
+              path: /probes/readiness
+              port: 9000
+            initialDelaySeconds: 5
+            failureThreshold: 30
+            periodSeconds: 10
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nut-deployment-amd64
+  namespace: nut-test
+  labels:
+    app.kubernetes.io/name: nut-webgui
+    app.kubernetes.io/version: "0.4.0-amd64"
+    app.kubernetes.io/part-of: nut-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nut-webgui
+      app.kubernetes.io/version: "0.4.0-amd64"
+      app.kubernetes.io/part-of: nut-test
+  template:
+    metadata:
+      name: nut-webgui
+      labels:
+        app.kubernetes.io/component: application
+        app.kubernetes.io/name: nut-webgui
+        app.kubernetes.io/part-of: nut-test
+        app.kubernetes.io/version: "0.4.0-amd64"
+    spec:
+      containers:
+        - name: nut-webgui
+          image: ghcr.io/superioone/nut_webgui:0.4.0-amd64
+          env:
+            - name: UPSD_ADDR
+              value: nut-dummy-service
+            - name: POLL_FREQ
+              value: "10"
+            - name: LOG_LEVEL
+              value: DEBUG
+          resources:
+            limits:
+              memory: "48Mi"
+            requests:
+              memory: "32Mi"
+          ports:
+            - containerPort: 9000
+          livenessProbe:
+            httpGet:
+              path: /probes/health
+              port: 9000
+            initialDelaySeconds: 5
+            failureThreshold: 3
+            periodSeconds: 30
+          startupProbe:
+            httpGet:
+              path: /probes/readiness
+              port: 9000
+            initialDelaySeconds: 5
+            failureThreshold: 30
+            periodSeconds: 10
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nut-deployment-next
+  namespace: nut-test
+  labels:
+    app.kubernetes.io/name: nut-webgui
+    app.kubernetes.io/version: "0.4.0-amd64"
+    app.kubernetes.io/part-of: next-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nut-webgui
+      app.kubernetes.io/version: "next-dev"
+      app.kubernetes.io/part-of: nut-test
+  template:
+    metadata:
+      name: nut-webgui
+      labels:
+        app.kubernetes.io/component: application
+        app.kubernetes.io/name: nut-webgui
+        app.kubernetes.io/part-of: nut-test
+        app.kubernetes.io/version: "next-dev"
+    spec:
+      containers:
+        - name: nut-webgui
+          image: gitea.local/smdd/nut_webgui_test:latest
+          env:
+            - name: UPSD_ADDR
+              value: nut-dummy-service
+            - name: POLL_FREQ
+              value: "10"
+            - name: LOG_LEVEL
+              value: DEBUG
+          resources:
+            limits:
+              memory: "48Mi"
+            requests:
+              memory: "32Mi"
+          ports:
+            - containerPort: 9000
+          livenessProbe:
+            httpGet:
+              path: /probes/health
+              port: 9000
+            initialDelaySeconds: 5
+            failureThreshold: 3
+            periodSeconds: 30
+          startupProbe:
+            httpGet:
+              path: /probes/readiness
+              port: 9000
+            initialDelaySeconds: 5
+            failureThreshold: 30
+            periodSeconds: 10
+

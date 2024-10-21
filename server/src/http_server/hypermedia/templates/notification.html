@@ -1,12 +1,15 @@
 <div id="notifications" hx-swap-oob="afterbegin">
-  <nut-notification class="!grid-cols-none drop-shadow-lg" id="{{container_id}}" type="{{notification_type}}" ttl="{{ttl}}">
+  <nut-notification class="!grid-cols-none drop-shadow-lg" type="{{notification_type}}" ttl="{{ttl}}">
     <div class="flex flex-col gap-3 px-2 text-{{notification_type}}-content w-full">
       <div class="flex flex-row justify-between items-center w-full">
         <span class="font-bold uppercase">
           {{notification_type}}
         </span>
-        <button onclick="NutNotification.dismiss('{{container_id}}')" class="btn btn-xs btn-ghost btn-circle">x
-        </button>
+        <div class="nut-notification-trigger">
+          <button class="btn btn-xs btn-ghost btn-circle">
+            x
+          </button>
+        </div>
       </div>
       <div class="w-full">
         {{message}}

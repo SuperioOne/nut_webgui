@@ -8,20 +8,20 @@
   "version": "0.4.0",
   "description": "Bundles all client side web components and dependencies.",
   "scripts": {
-    "dev-js": "esbuild ./src/index.js --bundle --outdir=./dist/debug --target=firefox98,chrome86,safari15 --format=iife --watch=forever",
+    "dev-js": "esbuild ./src/index.js --bundle --outdir=./dist/debug --target=firefox109,chrome108,safari15 --format=iife --watch=forever",
     "dev-css": "tailwindcss -i ./src/style.css -o ./dist/debug/style.css --minify --watch",
     "build": "node ./scripts/build.js --outdir=./dist/release"
   },
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "daisyui": "^4.12.13",
+    "daisyui": "^4.12.14",
     "esbuild": "^0.24.0",
-    "tailwindcss": "^3.4.13",
-    "typescript": "^5.6.3"
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.7.2"
   },
   "dependencies": {
-    "apexcharts": "3.53.0",
+    "apexcharts": "3.54.1",
     "htmx.org": "^2.0.3",
     "idiomorph": "^0.3.0"
   }

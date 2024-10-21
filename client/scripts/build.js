@@ -134,7 +134,7 @@ async function build(config) {
     entryPoints: ["./src/index.js"],
     format: "iife",
     minify: config.minify,
-    target: ["firefox98", "chrome86", "safari15"],
+    target: ["firefox109", "chrome108", "safari15"],
     treeShaking: true,
     outdir: config.outdir,
   });

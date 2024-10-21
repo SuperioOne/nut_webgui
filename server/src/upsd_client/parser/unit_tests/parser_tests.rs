@@ -1,9 +1,88 @@
 use crate::upsd_client::{
   errors::{NutClientErrors, ParseErrorKind},
-  parser::{parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable},
+  parser::{
+    parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable,
+    AsciiWords,
+  },
   ups_variables::{UpsError, UpsVariable},
   Ups,
 };
+
+macro_rules! split_test {
+  (test_name = $test_name:ident, input = $input:expr, expected = $expected:expr) => {
+    #[test]
+    fn $test_name() {
+      let input: &str = $input;
+      let expected: &[&str] = &$expected;
+      let words = AsciiWords::split(input);
+
+      assert_eq!(words.as_slice().len(), expected.len());
+
+      for (word, expected) in AsciiWords::split(input).as_slice().iter().zip(expected) {
+        assert_eq!(expected, word);
+      }
+    }
+  };
+}
+
+split_test!(
+  test_name = split_str_multi_word,
+  input = "example split \\w\\\"ith complex\\ words",
+  expected = ["example", "split", "w\"ith", "complex words"]
+);
+
+split_test!(
+  test_name = split_str_single_word,
+  input = "single_word",
+  expected = ["single_word"]
+);
+
+split_test!(
+  test_name = split_str_variable_spaces,
+  input = "    example     split with           spaces          ",
+  expected = ["example", "split", "with", "spaces"]
+);
+
+split_test!(
+  test_name = split_str_quoted_words,
+  input = "\"left example words\" \"centered test words\" \"right word with trailing space \"",
+  expected = [
+    "left example words",
+    "centered test words",
+    "right word with trailing space "
+  ]
+);
+
+split_test!(test_name = split_str_empty, input = "", expected = []);
+
+split_test!(
+  test_name = split_str_whitespace,
+  input = "         ",
+  expected = []
+);
+
+split_test!(
+  test_name = split_str_empty_quoted,
+  input = "\"\"",
+  expected = [""]
+);
+
+split_test!(
+  test_name = split_str_escaped_chars,
+  input =
+    "\"double quoted \\\"text\\\" is here.\" escaped\\ space\\ and\\ reverse\\ slash\\ (\\\\) \\\\\\\\\\\\\\\\",
+  expected = [
+    "double quoted \"text\" is here.",
+    "escaped space and reverse slash (\\)",
+    "\\\\\\\\"
+  ]
+);
+
+split_test!(
+  test_name = split_str_ascii_whitespaces,
+  input = "\tnew\tline\ttest\n",
+  expected = ["new", "line", "test"]
+);
 
 #[test]
 fn parse_variable_numeric() {
