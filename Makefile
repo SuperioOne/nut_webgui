@@ -1,32 +1,33 @@
-PROJECT_NAME   := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".name")
-PROJECT_VER    := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".version")
-BIN_DIR        := ./bin
-STATIC_DIR     := ./client/dist
-PROJECT_SRCS   := $(shell find server/src -type f -iname *.rs) \
-                  $(shell find server/src -type f -iname *.html) \
-                  ./server/Cargo.toml \
-                  ./server/Cargo.lock
-STATIC_SRCS    := client/package.json \
-                  client/pnpm-lock.yaml \
-                  client/tailwind.config.js \
-                  client/src/style.css \
-                  $(shell find client/src -type f -iname *.js) \
-                  $(shell find client/static -type f) \
-                  $(shell find server/src -type f -iname *.html)
-STATIC_OBJS    := $(addprefix $(BIN_DIR)/static/,index.js style.css icon.svg)
-DIST_DIR        = $(BIN_DIR)/dist
-DOCKER_TEMPLATE = ./containers/Dockerfile.template
-PACK_TARGETS    = x86-64-musl \
-                  x86-64-v3-musl \
-                  x86-64-v4-musl \
-                  aarch64-musl \
-                  aarch64-gnu \
-                  armv6-musleabi \
-                  armv7-musleabi \
-                  riscv64gc-gnu
+PROJECT_NAME     := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".name")
+PROJECT_VER      := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".version")
+BIN_DIR          := ./bin
+STATIC_DIR       := ./client/dist
+NODE_MODULES_DIR := ./client/node_modules
+PROJECT_SRCS     := $(shell find server/src -type f -iname *.rs) \
+		    $(shell find server/src -type f -iname *.html) \
+		    ./server/Cargo.toml \
+		    ./server/Cargo.lock
+STATIC_SRCS      := client/package.json \
+		    client/pnpm-lock.yaml \
+		    client/tailwind.config.js \
+		    client/src/style.css \
+		    $(shell find client/src -type f -iname *.js) \
+		    $(shell find client/static -type f) \
+		    $(shell find server/src -type f -iname *.html)
+STATIC_OBJS      := $(addprefix $(BIN_DIR)/static/,index.js style.css icon.svg)
+DIST_DIR          = $(BIN_DIR)/dist
+DOCKER_TEMPLATE   = ./containers/Dockerfile.template
+PACK_TARGETS      = x86-64-musl \
+		    x86-64-v3-musl \
+		    x86-64-v4-musl \
+		    aarch64-musl \
+		    aarch64-gnu \
+		    armv6-musleabi \
+		    armv7-musleabi \
+		    riscv64gc-gnu
 
-fn_output_path = $(BIN_DIR)/$(1)/$(PROJECT_NAME)
-fn_target_path = server/target/$(1)/$(PROJECT_NAME)
+fn_output_path    = $(BIN_DIR)/$(1)/$(PROJECT_NAME)
+fn_target_path    = server/target/$(1)/$(PROJECT_NAME)
 
 # RECIPIES:
 # ==============================================================================
@@ -235,6 +236,7 @@ generate-dockerfiles:
 clean:
 	@echo "Cleaning artifacts"
 	@cd server && cargo clean
-	@test -d $(BIN_DIR) && rm -r $(BIN_DIR)
-	@test -d $(STATIC_DIR) && rm -r $(STATIC_DIR)
+	@if [ -d "$(BIN_DIR)" ]; then rm -r "$(BIN_DIR)"; fi;
+	@if [ -d "$(STATIC_DIR)" ]; then rm -r "$(STATIC_DIR)"; fi;
+	@if [ -d "$(NODE_MODULES_DIR)" ]; then rm -r "$(NODE_MODULES_DIR)"; fi;
 	@echo "Clean completed"

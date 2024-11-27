@@ -3,6 +3,9 @@ set -e;
 
 install -D "./client/static/icon.svg" "./client/dist/debug/icon.svg"
 
+# Makes sures node_modules folder is initializes.
+pnpm install -C ./client/
+
 trap 'echo "Shutting down dev server"; exit;' INT KILL ABRT;
 
 (pnpm run -C ./client dev-js; echo "Esbuild Stopped";) \
