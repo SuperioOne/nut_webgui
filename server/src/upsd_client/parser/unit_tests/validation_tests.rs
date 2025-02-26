@@ -1783,6 +1783,11 @@ ups_validation_test!(
   ups_name = "Grafenthal_PR-3000-HS"
 );
 ups_validation_test!(
+  test_name = greencell_powerproof_2000_nutdrv_qx_2_8_0_01_dev,
+  dump_file = "../nut-ddl/Greencell/Greencell__PowerProof_2000__nutdrv_qx__2.8.0__01.dev",
+  ups_name = "Greencell_PowerProof_2000"
+);
+ups_validation_test!(
   test_name = greencell_micropower_600_blazer_usb_2_7_4_v01_dev,
   dump_file = "../nut-ddl/Greencell/Greencell__Micropower_600__blazer_usb__2.7.4__01.dev",
   ups_name = "Greencell_Micropower_600"
