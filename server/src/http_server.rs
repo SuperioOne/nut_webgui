@@ -2,14 +2,14 @@ use crate::ups_daemon_state::UpsDaemonState;
 use axum::{
   http::StatusCode,
   routing::{get, post},
-  Router,
+  Router, ServiceExt,
 };
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{spawn, sync::RwLock, task::JoinHandle};
-use tower::ServiceBuilder;
+use tower::{Layer, ServiceBuilder};
 use tower_http::{
-  compression::CompressionLayer, cors::CorsLayer, services::ServeDir, timeout::TimeoutLayer,
-  trace::TraceLayer,
+  compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
+  services::ServeDir, timeout::TimeoutLayer, trace::TraceLayer,
 };
 
 use self::middlewares::DaemonStateLayer;
@@ -85,14 +85,19 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       upsd_config: Arc::new(upsd_config),
     };
 
-    let app = Router::new()
+    let router = Router::new()
       .nest("/api", data_api)
       .nest("/probes", probes)
       .merge(hypermedia_api)
       .layer(middleware)
-      .with_state(state);
+      .with_state(state)
+      .into_service();
 
+    let app = NormalizePathLayer::trim_trailing_slash().layer(router);
     let listener = tokio::net::TcpListener::bind(listen).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+
+    axum::serve(listener, app.into_make_service())
+      .await
+      .unwrap();
   })
 }
