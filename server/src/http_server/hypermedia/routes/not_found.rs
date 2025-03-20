@@ -1,6 +1,5 @@
 use askama::Template;
-use axum::response::Response;
-use axum_core::response::IntoResponse;
+use axum::response::{Html, IntoResponse, Response};
 
 #[derive(Template)]
 #[template(path = "not_found/+page.html")]
@@ -10,5 +9,5 @@ struct NotFound<'a> {
 
 pub async fn get() -> Response {
   let template = NotFound { title: "Not Found" };
-  template.into_response()
+  Html(template.render().unwrap()).into_response()
 }

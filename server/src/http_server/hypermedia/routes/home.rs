@@ -4,9 +4,8 @@ use crate::{
 use askama::Template;
 use axum::{
   extract::{Query, State},
-  response::Response,
+  response::{Html, IntoResponse, Response},
 };
-use axum_core::response::IntoResponse;
 use serde::Deserialize;
 
 #[derive(Debug)]
@@ -53,7 +52,7 @@ impl<'a> From<&'a UpsEntry> for UpsTableRow<'a> {
   }
 }
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "ups_table.html", ext = "html")]
 struct UpsTableTemplate<'a> {
   ups_list: Vec<UpsTableRow<'a>>,
@@ -83,11 +82,15 @@ pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerStat
   let table_template = UpsTableTemplate { ups_list };
 
   match query.section.as_deref() {
-    Some("ups_table") => table_template.into_response(),
-    _ => HomeTemplate {
-      title: "Home",
-      ups_table: table_template,
-    }
+    Some("ups_table") => Html(table_template.render().unwrap()).into_response(),
+    _ => Html(
+      HomeTemplate {
+        title: "Home",
+        ups_table: table_template,
+      }
+      .render()
+      .unwrap(),
+    )
     .into_response(),
   }
 }

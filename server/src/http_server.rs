@@ -1,8 +1,8 @@
 use crate::ups_daemon_state::UpsDaemonState;
 use axum::{
-  http::{header::CACHE_CONTROL, HeaderValue, StatusCode},
-  routing::{get, post},
   Router, ServiceExt,
+  http::{HeaderValue, StatusCode, header::CACHE_CONTROL},
+  routing::{get, post},
 };
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{spawn, sync::RwLock, task::JoinHandle};

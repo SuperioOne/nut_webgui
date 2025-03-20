@@ -3,6 +3,40 @@
 const TRIGGER_QUERY =
   ".nut-notification-trigger button, .nut-notification-trigger a, .nut-notification-trigger [role=button]";
 
+/**
+ * @param {Element} element
+ * @param {"info" | "success" | "error" | "warning"} alert_type
+ * @returns { void }
+ */
+function set_alert_classes(element, alert_type) {
+  /** @type {"alert-success" | "alert-error" | "alert-warning" | "alert-info"} */
+  let type_class;
+
+  switch (alert_type) {
+    case "success":
+      type_class = "alert-success";
+      break;
+    case "error":
+      type_class = "alert-error";
+      break;
+    case "warning":
+      type_class = "alert-warning";
+      break;
+    case "info":
+    default:
+      type_class = "alert-info";
+      break;
+  }
+
+  element.classList.add(
+    "alert",
+    "alert-soft",
+    "alert-vertical",
+    "sm:alert-horizontal",
+    type_class,
+  );
+}
+
 export default class NutNotification extends HTMLElement {
   /** @type {number|undefined} */
   #timer;
@@ -22,7 +56,8 @@ export default class NutNotification extends HTMLElement {
       element.addEventListener("click", () => this?.remove());
     }
 
-    this.className = `${this.className} alert alert-${type}`;
+    set_alert_classes(this, type);
+    this.role = "alert";
     this.#timer = setTimeout(() => {
       this?.remove();
     }, ttl);

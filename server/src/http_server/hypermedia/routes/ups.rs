@@ -1,21 +1,19 @@
 use crate::{
   htmx_redirect,
   http_server::{
-    hypermedia::notifications::{Notification, NotificationTemplate},
     ServerState, UpsdConfig,
+    hypermedia::notifications::{Notification, NotificationTemplate},
   },
   ups_daemon_state::UpsEntry,
   upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
 };
 use askama::Template;
-use askama_axum::Response;
 use axum::{
+  Form,
   extract::{Path, Query, State},
   http::StatusCode,
-  response::Redirect,
-  Form,
+  response::{Html, IntoResponse, Redirect, Response},
 };
-use axum_core::response::IntoResponse;
 use serde::Deserialize;
 use tracing::{error, info};
 
@@ -227,7 +225,7 @@ fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response
       ups_info: UpsInfoTemplate::from(ups).set_status_interval(upsd_config.poll_interval.as_secs()),
     };
 
-    template.into_response()
+    Html(template.render().unwrap()).into_response()
   } else {
     Redirect::permanent("/not-found").into_response()
   }
@@ -236,9 +234,13 @@ fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response
 #[inline]
 fn partial_ups_info(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
   if let Some(ups) = entry {
-    UpsInfoTemplate::from(ups)
-      .set_status_interval(upsd_config.poll_interval.as_secs())
-      .into_response()
+    Html(
+      UpsInfoTemplate::from(ups)
+        .set_status_interval(upsd_config.poll_interval.as_secs())
+        .render()
+        .unwrap(),
+    )
+    .into_response()
   } else {
     htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
   }
@@ -247,7 +249,7 @@ fn partial_ups_info(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Respo
 #[inline]
 fn partial_ups_status(entry: Option<&UpsEntry>) -> Response {
   if let Some(ups) = entry {
-    UpsStatusTemplate::from(ups).into_response()
+    Html(UpsStatusTemplate::from(ups).render().unwrap()).into_response()
   } else {
     htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
   }
@@ -316,5 +318,5 @@ pub async fn post_command(
     }
   };
 
-  template.into_response()
+  Html(template.render().unwrap()).into_response()
 }
