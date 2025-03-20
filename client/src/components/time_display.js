@@ -5,8 +5,6 @@ import { link_host_styles } from "../utils.js";
 const MINUTE = 60;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
-const MONTH = 30 * DAY;
-const YEAR = 365 * DAY;
 
 /**
  * @param {number} divisor
@@ -29,18 +27,6 @@ function get_time_str(input) {
   /** @type{string[]} **/
   let sections = [];
   let remaining_time = input;
-
-  if (remaining_time > YEAR) {
-    let [years, remaining] = div_with_remainder(remaining_time, YEAR);
-    remaining_time = remaining;
-    sections.push(`${years}y`);
-  }
-
-  if (remaining_time > MONTH) {
-    let [months, remaining] = div_with_remainder(remaining_time, MONTH);
-    remaining_time = remaining;
-    sections.push(`${months}M`);
-  }
 
   if (remaining_time > DAY) {
     let [days, remaining] = div_with_remainder(remaining_time, DAY);

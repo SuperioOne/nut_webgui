@@ -1,16 +1,20 @@
 /* Register all required css files here*/
+@import "tailwindcss";
+@source "./src/**/*.{html,js}";
+@source "../../server/src/http_server/hypermedia/**/*.{rs,html}";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@plugin "daisyui" {
+        themes: light --default, dark --prefersdark, cupcake, emerald, corporate, synthwave, halloween, forest, fantasy, dracula, cmyk, autumn, business, night, winter, dim, nord, sunset;
+}
 
 @layer components {
-
         .htmx-send-error-indicator {
-                @apply text-error animate-pulse hidden;
+                display: none;
         }
 
-        .htmx-send-error-active {
-                @apply inline-block;
+        .htmx-send-error-indicator.htmx-send-error-active {
+                display: inline-block;
+                color: var(--color-error);
+                animation: var(--animate-pulse);
         }
 }

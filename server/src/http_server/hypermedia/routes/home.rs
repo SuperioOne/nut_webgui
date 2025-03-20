@@ -4,9 +4,8 @@ use crate::{
 use askama::Template;
 use axum::{
   extract::{Query, State},
-  response::Response,
+  response::{Html, IntoResponse, Response},
 };
-use axum_core::response::IntoResponse;
 use serde::Deserialize;
 
 #[derive(Debug)]
@@ -18,8 +17,8 @@ pub struct UpsTableRow<'a> {
   status: Option<String>,
 }
 
-impl UpsTableRow<'_> {
-  pub fn from_ups_entry(ups: &UpsEntry) -> UpsTableRow {
+impl<'a> UpsTableRow<'a> {
+  pub fn from_ups_entry(ups: &'a UpsEntry) -> UpsTableRow {
     let mut row = UpsTableRow {
       charge: None,
       desc: &ups.desc,
@@ -53,11 +52,10 @@ impl<'a> From<&'a UpsEntry> for UpsTableRow<'a> {
   }
 }
 
-#[derive(Template)]
+#[derive(Debug, Template)]
 #[template(path = "ups_table.html", ext = "html")]
 struct UpsTableTemplate<'a> {
   ups_list: Vec<UpsTableRow<'a>>,
-  base_path: &'a str,
 }
 
 #[derive(Deserialize)]
@@ -70,7 +68,6 @@ pub struct HomeFragmentQuery {
 struct HomeTemplate<'a> {
   title: &'a str,
   ups_table: UpsTableTemplate<'a>,
-  base_path: &'a str,
 }
 
 pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerState>) -> Response {
@@ -82,18 +79,18 @@ pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerStat
 
   ups_list.sort_unstable_by_key(|v| v.name);
 
-  let table_template = UpsTableTemplate {
-    ups_list,
-    base_path: &state.configs.base_path,
-  };
+  let table_template = UpsTableTemplate { ups_list };
 
   match query.section.as_deref() {
-    Some("ups_table") => table_template.into_response(),
-    _ => HomeTemplate {
-      title: "Home",
-      base_path: &state.configs.base_path,
-      ups_table: table_template,
-    }
+    Some("ups_table") => Html(table_template.render().unwrap()).into_response(),
+    _ => Html(
+      HomeTemplate {
+        title: "Home",
+        ups_table: table_template,
+      }
+      .render()
+      .unwrap(),
+    )
     .into_response(),
   }
 }

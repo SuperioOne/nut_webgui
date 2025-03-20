@@ -5,38 +5,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NUT Web - {{ title }}</title>
-    <link href="{{base_path}}/static/style.css" rel="preload" as="style" />
-    <link href="{{base_path}}/static/index.js" rel="preload" as="script" />
-    <link href="{{base_path}}/static/style.css" rel="stylesheet" />
-    <link rel="icon" href="{{base_path}}/static/icon.svg" />
+    <link href="/static/style.css" rel="preload" as="style" />
+    <link href="/static/index.js" rel="preload" as="script" />
+    <link href="/static/style.css" rel="stylesheet" />
+    <link rel="icon" href="/static/icon.svg" />
     <script>
       "use strict";
       var o=window.matchMedia("(prefers-color-scheme: dark)");
       var t=localStorage.getItem("app_theme")||(o&&o.matches&&"dark")||"light";
       if(t){document.documentElement.setAttribute("data-theme",t)}
     </script>
-  <script src="{{base_path}}/static/index.js" defer></script>
+    <script src="/static/index.js" defer></script>
     {% block head %}{% endblock head %}
   </head>
 
-  <body class="min-h-screen flex flex-col justify-between">
+  <body class="flex flex-col justify-between min-h-screen">
     <header>
-      <div class="navbar bg-base-100">
-        <div class="flex-1">
-          <a class="btn btn-ghost text-xl drop-shadow" href="{{base_path}}/">
-            <img width="32" height="32" src="{{base_path}}/static/icon.svg" alt="icon" />
+      <div class="bg-base-200 navbar shadow-sm">
+        <div class="navbar-start">
+          <a class="btn btn-ghost text-xl" href="/">
+            <img width="32" height="32" src="/static/icon.svg" alt="icon" />
             <span class="hidden sm:inline-block"> NUT Web Monitor </span>
           </a>
         </div>
-        <div class="flex-none gap-2">
+        <div class="navbar-end">
           <div id="indicator" class="cursor-default htmx-indicator">
             <div
-              class="tooltip tooltip-bottom text-success"
+              class="text-success tooltip tooltip-bottom"
               data-tip="Updating page"
             >
               <span
-                class="text-info loading loading-spinner loading-md cursor-default"
-              ></span>
+                class="cursor-default loading loading-md loading-spinner text-info"
+              >
+              </span>
             </div>
           </div>
           <div class="dropdown dropdown-end">
@@ -46,115 +47,115 @@
             </div>
             <ul
               tabindex="0"
-              class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52"
+              class="bg-base-300 dropdown-content p-2 rounded-box shadow-2xl w-52 z-[1]"
             >
               <li>
                 <theme-selector
                   theme-key="light"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Light">Light</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="dark"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Dark">Dark</theme-selector>
               </li>
               <li><div class="divider mb-0.5 mt-0.5"></div></li>
               <li>
                 <theme-selector
                   theme-key="autumn"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Autumn">Autumn</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="business"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Business">Business</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="cmyk"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Cmyk">Cmyk</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="corporate"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Corporate">Corporate</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="cupcake"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Cupcake">Cupcake</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="dim"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Dim">Dim</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="dracula"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Dracula">Dracula</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="emerald"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Emerald">Emerald</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="fantasy"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Fantasy">Fantasy</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="forest"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Forest">Forest</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="halloween"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Halloween">Halloween</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="night"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Night">Night</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="nord"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Nord">Nord</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="sunset"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Sunset">Sunset</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="synthwave"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Synthwave">Synthwave</theme-selector>
               </li>
               <li>
                 <theme-selector
                   theme-key="winter"
-                  class="btn btn-sm btn-block btn-ghost justify-start"
+                  class="btn btn-block btn-ghost btn-sm justify-start"
                   aria-label="Winter">Winter</theme-selector>
               </li>
             </ul>
@@ -164,21 +165,25 @@
     </header>
     <div
       id="notifications"
-      class="toast toast-end toast-bottom z-50 w-[200px] max-w-[200px]"
+      class="md:w-xs toast w-full z-50"
     ></div>
-    <div id="page_content" class="flex-grow">
-      {% block content %} {% endblock content %}
+    <div class="flex flex-row grow justify-center lg:p-16 md:p-14 p-3 w-full">
+      <div id="page_content" class="max-w-384 w-full">
+        {% block content %} {% endblock content %}
+      </div>
     </div>
     <footer
-      class="flex flex-row justify-between footer footer-center bg-base-300 text-base-content p-3 text-xs font-light"
+      class="bg-base-200 flex flex-row font-light footer footer-center justify-between md:footer-horizontal p-3 text-base-content text-xs"
     >
-      {% let app_info = crate::http_server::hypermedia::utils::get_app_info() %}
-      <a
-        class="link"
-        href="https://github.com/SuperioOne/nut_webgui/releases/tag/v{{app_info.version}}"
-      >
-        <span>Version: {{app_info.version}}</span>
-      </a>
+      <aside>
+        {% let app_info = crate::http_server::hypermedia::utils::get_app_info() %}
+        <a
+          class="link"
+          href="https://github.com/SuperioOne/nut_webgui/releases/tag/v{{app_info.version}}"
+        >
+          <span>Version: {{app_info.version}}</span>
+        </a>
+      </aside>
       <div>
       <div class="htmx-send-error-indicator">
         <p class="flex flex-row gap-2">

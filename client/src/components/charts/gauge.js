@@ -4,7 +4,7 @@ import ApexCharts from "apexcharts";
 /** @import {ApexOptions} from "apexcharts" */
 
 /**
- * @typedef {"value" | "height" | "width" | "theme" | "class" } AttributeKeys
+ * @typedef {"value" | "height" | "width" | "class" } AttributeKeys
  */
 
 export default class Gauge extends HTMLElement {

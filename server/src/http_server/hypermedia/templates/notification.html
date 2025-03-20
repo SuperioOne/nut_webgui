@@ -1,19 +1,15 @@
 <div id="notifications" hx-swap-oob="afterbegin">
-  <nut-notification class="!grid-cols-none drop-shadow-lg" type="{{notification_type}}" ttl="{{ttl}}">
-    <div class="flex flex-col gap-3 px-2 text-{{notification_type}}-content w-full">
-      <div class="flex flex-row justify-between items-center w-full">
-        <span class="font-bold uppercase">
-          {{notification_type}}
-        </span>
-        <div class="nut-notification-trigger">
-          <button class="btn btn-xs btn-ghost btn-circle">
-            x
-          </button>
-        </div>
-      </div>
-      <div class="w-full">
-        {{message}}
-      </div>
+  <nut-notification
+    class="break-words drop-shadow-lg"
+    type="{{notification_type}}"
+    ttl="{{ttl}}"
+  >
+    <div>
+      <h3 class="font-bold uppercase">{{notification_type}}</h3>
+      <div>{{message}}</div>
+    </div>
+    <div class="nut-notification-trigger">
+      <button class="btn btn-circle btn-ghost">x</button>
     </div>
   </nut-notification>
 </div>

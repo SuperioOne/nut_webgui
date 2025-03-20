@@ -1,3 +1,18 @@
+// TODO: get rid of this safelist
+
+// fill-error
+// fill-warning
+// fill-success
+// fill-info
+// text-error
+// text-warning
+// text-success
+// text-info
+// progress-error
+// progress-warning
+// progress-success
+// progress-info
+
 /**
  * Main entry point for client
  * Exports all web components, registers dom and htmx events.
@@ -92,15 +107,16 @@ const ConnectionState = (() => {
   };
 })();
 
+const HTMX_INDICATOR_QUERY = ".htmx-send-error-indicator";
+const HTMX_INDICATOR_CLASSNAME = "htmx-send-error-active";
+
 document.body.addEventListener(
   "htmx:sendError",
   (/** @type{HtmxSendErrorEvent} **/ ev) => {
     if (!ConnectionState.is_lost) {
       ConnectionState.is_lost = true;
 
-      const indicators = document.querySelectorAll(
-        ".htmx-send-error-indicator",
-      );
+      const indicators = document.querySelectorAll(HTMX_INDICATOR_QUERY);
 
       console.warn(
         "Poll send request is failed, check your connection.",
@@ -108,7 +124,7 @@ document.body.addEventListener(
       );
 
       for (const element of indicators) {
-        element.className += " htmx-send-error-active";
+        element.classList.add(HTMX_INDICATOR_CLASSNAME);
       }
     }
   },
@@ -118,14 +134,10 @@ document.body.addEventListener(
   "htmx:afterRequest",
   (/** @type{HtmxAfterRequestEvent} **/ ev) => {
     if (ConnectionState.is_lost) {
-      const indicators = document.querySelectorAll(
-        ".htmx-send-error-indicator",
-      );
+      const indicators = document.querySelectorAll(HTMX_INDICATOR_QUERY);
 
       for (const element of indicators) {
-        element.className = element.className
-          .replace("htmx-send-error-active", "")
-          .trimEnd();
+        element.classList.remove(HTMX_INDICATOR_CLASSNAME);
       }
 
       ConnectionState.is_lost = false;
