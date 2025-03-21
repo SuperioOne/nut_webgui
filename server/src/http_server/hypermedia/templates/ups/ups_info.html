@@ -8,15 +8,25 @@
       <div>
         <h1 class="font-bold leading-8 text-primary text-xl">{{name}}</h1>
         <p class="font-light leading-6 text-secondary">
-          {% if let Some(mfr) = mfr %} {{mfr}} {% endif %} {% if let Some(model)
-          = model %} - {{model}} {% endif %}
+          {% if let Some(mfr) = mfr %}
+            {{mfr}}
+          {% endif %}
+          {% if let Some(model) = model %}
+            - {{model}}
+          {% endif %}
         </p>
         <p class="font-light mt-2 text-xs">{{desc}}</p>
       </div>
       <div
         id="ups_status"
         hx-ext="morph"
+<<<<<<< HEAD
         hx-get="{{base_path}}/ups/{{title}}?section=status"
+||||||| parent of ed63739 (Theme panel, layout updates, askama block renderer)
+        hx-get="/ups/{{title}}?section=status"
+=======
+        hx-get="/ups/{{name}}?section=status"
+>>>>>>> ed63739 (Theme panel, layout updates, askama block renderer)
         hx-indicator="#indicator"
         hx-swap="morph:innerHTML"
         hx-trigger="every {{hx_status_interval}}s"
@@ -62,7 +72,9 @@
         {% endif %}
       </div>
     </div>
-    {% endif %} {% if let Some(charge) = charge %}
+    {% endif %}
+
+    {% if let Some(charge) = charge %}
     <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
       <div class="font-bold">Battery</div>
       <div class="flex flex-row items-center justify-center">

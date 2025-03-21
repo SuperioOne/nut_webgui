@@ -69,7 +69,6 @@ impl From<&UpsEntry> for UpsStatusTemplate {
 #[derive(Template)]
 #[template(path = "ups/ups_info.html", ext = "html", escape = "none")]
 struct UpsInfoTemplate<'a> {
-  title: &'a str,
   battery_voltage: Option<f64>,
   charge: Option<f64>,
   charge_low: Option<f64>,
@@ -103,7 +102,6 @@ impl<'a> UpsInfoTemplate<'a> {
       .collect();
 
     let mut template = Self {
-      title: &ups.name,
       battery_voltage: None,
       charge: None,
       charge_low: None,
@@ -209,7 +207,7 @@ impl<'a> From<&'a UpsEntry> for UpsInfoTemplate<'a> {
 #[derive(Template)]
 #[template(path = "ups/+page.html", ext = "html", escape = "none")]
 struct UpsPageTemplate<'a> {
-  title: &'a str,
+  name: &'a str,
   ups_info: UpsInfoTemplate<'a>,
   commands: &'a [Box<str>],
   hx_info_interval: u64,
@@ -219,9 +217,9 @@ struct UpsPageTemplate<'a> {
 fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
   if let Some(ups) = entry {
     let template = UpsPageTemplate {
+      name: &ups.name,
       commands: &ups.commands,
       hx_info_interval: upsd_config.poll_freq.as_secs(),
-      title: &ups.name,
       ups_info: UpsInfoTemplate::from(ups).set_status_interval(upsd_config.poll_interval.as_secs()),
     };
 

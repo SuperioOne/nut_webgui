@@ -1,12 +1,16 @@
 {% extends "../+layout.html" %}
 {%- import "icons.html" as icons -%}
 
+{% block page_title %}
+  NUT Web - {{name}}
+{% endblock page_title %}
+
 {% block content %}
   <div class="flex flex-col gap-6">
     <div
       class="flex flex-col gap-6"
       hx-ext="morph"
-      hx-get="/ups/{{title}}?section=info"
+      hx-get="/ups/{{name}}?section=info"
       hx-indicator="#indicator"
       hx-swap="morph:innerHTML"
       hx-trigger="every {{hx_info_interval}}s"
@@ -27,7 +31,7 @@
                   </div>
                   <button
                     class="btn btn-outline btn-primary"
-                    hx-post="/ups/{{title}}/command"
+                    hx-post="/ups/{{name}}/command"
                     hx-swap="none"
                     hx-trigger="command-confirmed"
                     name="command"
