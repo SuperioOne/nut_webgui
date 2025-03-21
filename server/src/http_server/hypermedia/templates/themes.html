@@ -1,0 +1,49 @@
+{% macro theme_selector(theme_key) %}
+  <theme-selector
+    data-theme="{{theme_key}}"
+    theme-key="{{theme_key}}"
+    class="bg-base-200 border-4 card card-border cursor-pointer hover:bg-base-300 hover:border-primary shadow-sm"
+    aria-label="{{theme_key}}"
+  >
+    <div class="card-body items-center p-2 text-center">
+      <div class="flex flex-row gap-1 justify-between">
+        <div class="bg-primary h-6 rounded w-2"></div>
+        <div class="bg-secondary h-6 rounded w-2"></div>
+        <div class="bg-accent h-6 rounded w-2"></div>
+      </div>
+      <div class="flex flex-row gap-1 justify-between">
+        <div class="bg-success h-2 rounded w-2"></div>
+        <div class="bg-error h-2 rounded w-2"></div>
+        <div class="bg-warning h-2 rounded w-2"></div>
+        <div class="bg-info h-2 rounded w-2"></div>
+      </div>
+      <p class="font-bold text-xs uppercase">{{theme_key}}</p>
+    </div>
+  </theme-selector>
+{% endmacro %}
+
+<div class="flex flex-col gap-3 w-full">
+  <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 w-full">
+     {% call theme_selector("light") %}
+     {% call theme_selector("dark") %}
+  </div>
+
+  <div class="col-span-full divider mb-0.5 mt-0.5">Alternatives</div>
+
+  <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 w-full">
+     {% call theme_selector("abyss") %}
+     {% call theme_selector("autumn") %}
+     {% call theme_selector("business") %}
+     {% call theme_selector("corporate") %}
+     {% call theme_selector("dim") %}
+     {% call theme_selector("dracula") %}
+     {% call theme_selector("forest") %}
+     {% call theme_selector("kanagawa-dragon") %}
+     {% call theme_selector("night") %}
+     {% call theme_selector("nord") %}
+     {% call theme_selector("sunset") %}
+     {% call theme_selector("synthwave") %}
+     {% call theme_selector("tokyo-night") %}
+     {% call theme_selector("winter") %}
+  </div>
+</div>
