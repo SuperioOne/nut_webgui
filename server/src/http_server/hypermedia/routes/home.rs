@@ -14,11 +14,11 @@ pub struct UpsTableRow<'a> {
   desc: &'a str,
   load: Option<f64>,
   name: &'a str,
-  status: Option<String>,
+  status: Option<&'a str>,
 }
 
 impl<'a> UpsTableRow<'a> {
-  pub fn from_ups_entry(ups: &'a UpsEntry) -> UpsTableRow {
+  pub fn from_ups_entry(ups: &UpsEntry) -> UpsTableRow {
     let mut row = UpsTableRow {
       charge: None,
       desc: &ups.desc,
@@ -36,7 +36,7 @@ impl<'a> UpsTableRow<'a> {
           row.charge = Some(*val);
         }
         UpsVariable::UpsStatus(val) => {
-          row.status = Some(val.to_string());
+          row.status = Some(val.as_str());
         }
         _ => {}
       }
@@ -52,22 +52,15 @@ impl<'a> From<&'a UpsEntry> for UpsTableRow<'a> {
   }
 }
 
-#[derive(Debug, Template)]
-#[template(path = "ups_table.html", ext = "html")]
-struct UpsTableTemplate<'a> {
-  ups_list: Vec<UpsTableRow<'a>>,
-}
-
 #[derive(Deserialize)]
 pub struct HomeFragmentQuery {
   section: Option<String>,
 }
 
 #[derive(Template)]
-#[template(path = "+page.html", escape = "none", ext = "html")]
+#[template(path = "+page.html", blocks = ["ups_table"])]
 struct HomeTemplate<'a> {
-  title: &'a str,
-  ups_table: UpsTableTemplate<'a>,
+  ups_list: Vec<UpsTableRow<'a>>,
 }
 
 pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerState>) -> Response {
@@ -79,18 +72,10 @@ pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerStat
 
   ups_list.sort_unstable_by_key(|v| v.name);
 
-  let table_template = UpsTableTemplate { ups_list };
+  let template = HomeTemplate { ups_list };
 
   match query.section.as_deref() {
-    Some("ups_table") => Html(table_template.render().unwrap()).into_response(),
-    _ => Html(
-      HomeTemplate {
-        title: "Home",
-        ups_table: table_template,
-      }
-      .render()
-      .unwrap(),
-    )
-    .into_response(),
+    Some("ups_table") => Html(template.as_ups_table().render().unwrap()).into_response(),
+    _ => Html(template.render().unwrap()).into_response(),
   }
 }

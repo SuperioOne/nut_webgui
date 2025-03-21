@@ -30,7 +30,6 @@ function set_alert_classes(element, alert_type) {
 
   element.classList.add(
     "alert",
-    "alert-soft",
     "alert-vertical",
     "sm:alert-horizontal",
     type_class,

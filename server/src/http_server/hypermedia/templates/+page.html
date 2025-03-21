@@ -1,5 +1,9 @@
 {% extends "+layout.html" %}
 
+{% block page_title %}
+  NUT Web - Home
+{% endblock page_title %}
+
 {% block content %}
   <div
     hx-ext="morph"
@@ -8,6 +12,77 @@
     hx-swap="morph:innerHTML"
     hx-indicator="#indicator"
   >
-    {{ups_table}}
+    {% block ups_table %}
+      <div id="ups_table" class="bg-base-200 overflow-x-auto rounded-box">
+        <table class="table table-fixed">
+          <thead>
+            <tr>
+              <th class="font-black">UPS Name</th>
+              <th class="font-black hidden sm:table-cell">Description</th>
+              <th class="font-black sm:w-36 w-auto">Status</th>
+              <th class="font-black">Battery</th>
+              <th class="font-black hidden sm:table-cell">Load</th>
+              <th class="font-black hidden sm:table-cell w-32"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if ups_list.len() < 1 %}
+              <tr>
+                <td class="py-6 text-center" colspan="6">
+                  No UPS available.
+                </td>
+              </tr>
+            {% else %}
+              {% for row in ups_list %}
+                <tr class="break-all">
+                  <td>
+                    <a class="font-bold link text-primary" href="/ups/{{row.name}}">
+                      {{row.name}}
+                    </a>
+                  </td>
+                  <td class="hidden sm:table-cell">
+                    <span class="font-light text-base-content">{{row.desc}}</span>
+                  </td>
+                  <td class="sm:w-36 w-auto">
+                    {% if let Some(status) = row.status %}
+                      {% if let Some(status_class) = crate::http_server::hypermedia::utils::get_status_class(status) %}
+                        <span class="font-black text-{{status_class}} uppercase">{{status}}</span>
+                      {% else %}
+                        <span class="font-black uppercase">{{status}}</span>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if let Some(charge) = row.charge %}
+                      {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
+                      <progress class="progress progress-{{battery_level_class}} w-full" value="{{charge}}" max="100"></progress>
+                      <div class="text-center text-primary w-full">{{charge}}%</div>
+                    {% else %}
+                      <p class="font-bold text-center">
+                        N/A
+                      </p>
+                    {% endif %}
+                  </td>
+                  <td class="hidden sm:table-cell">
+                    {% if let Some(load) = row.load %}
+                      {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load, 50.0, 75.0) %}
+                      <progress class="progress progress-{{load_level_class}} w-full" value="{{load}}" max="100"></progress>
+                      <div class="text-center text-primary w-full">{{load}}%</div>
+                    {% else %}
+                      <p class="font-bold text-center">
+                        N/A
+                      </p>
+                    {% endif %}
+                  </td>
+                  <td class="hidden sm:table-cell w-32">
+                    <a role="button" href="/ups/{{row.name}}" class="btn btn-outline btn-sm">Details</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    {% endblock ups_table %}
   </div>
 {% endblock content %}

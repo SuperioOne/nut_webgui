@@ -10,6 +10,7 @@ import ApexCharts from "apexcharts";
 export default class Gauge extends HTMLElement {
   /** @type {ApexCharts} */
   #chart;
+
   /** @type {() => void} **/
   #theme_listener = () => {
     if (this.#chart) {
@@ -32,6 +33,9 @@ export default class Gauge extends HTMLElement {
       this.#chart.updateOptions(new_options, false, false).catch(console.error);
     }
   };
+
+  /** @type {AbortController} **/
+  #abort_controller;
 
   /** @type {AttributeKeys[]} */
   static observedAttributes = ["value", "height", "width", "class"];
@@ -97,14 +101,18 @@ export default class Gauge extends HTMLElement {
       },
     };
 
+    this.abort_controller = new AbortController();
     this.#chart = new ApexCharts(child, options);
     this.#chart.render().catch(console.error);
-    document.addEventListener("theme-change", this.#theme_listener);
+
+    document.addEventListener("theme-change", this.#theme_listener, {
+      signal: this.abort_controller.signal,
+    });
   }
 
   disconnectedCallback() {
     this.#chart?.destroy();
-    document.removeEventListener("theme-change", this.#theme_listener);
+    this.#abort_controller?.abort();
   }
 
   /**
