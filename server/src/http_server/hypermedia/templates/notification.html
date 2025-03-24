@@ -1,3 +1,4 @@
+{%- import "icons.html" as icons -%}
 <div id="notifications" hx-swap-oob="afterbegin">
   <nut-notification
     class="break-words drop-shadow-lg"
@@ -9,7 +10,9 @@
       <div>{{message}}</div>
     </div>
     <div class="nut-notification-trigger">
-      <button class="btn btn-circle btn-ghost">x</button>
+      <button class="btn btn-circle btn-ghost btn-sm">
+        {%- call icons::get_svg("x", 16) -%}
+      </button>
     </div>
   </nut-notification>
 </div>

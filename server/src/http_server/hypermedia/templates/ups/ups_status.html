@@ -1,36 +1,36 @@
 {%- import "icons.html" as icons -%}
 
-{% if let Some(status) = ups_status %}
+{%- if let Some(status) = ups_status -%}
   <div class="font-bold text-center text-xl">
     <h1 class="leading-8">UPS Status</h1>
-    {% let status_text = crate::http_server::hypermedia::utils::get_status_text(status) %}
+    {%- let status_text = crate::http_server::hypermedia::ups_status::get_status_text(status) -%}
 
-    {% if let Some(status_class) = crate::http_server::hypermedia::utils::get_status_class(status) %}
+    {%- if let Some(status_class) = crate::http_server::hypermedia::ups_status::get_status_class(status) -%}
       <p>
-        <span class="text-{{status_class}}">{{status_text}}</span>
+        <span class="{{status_class}}">{{status_text}}</span>
       </p>
-    {% else %}
+    {%- else -%}
       <p class="leading-6 text-primary">{{status_text}}</p>
-    {% endif %}
+    {%- endif -%}
   </div>
 
   <div class="flex flex-row flex-wrap gap-2 justify-center mt-2 w-full">
-    {% match beeper_status %}
-      {% when Some with (true) %}
+    {%- match beeper_status -%}
+      {%- when Some with (true) -%}
         <div class="text-success tooltip tooltip-bottom" data-tip="Beeper enabled">
-          {% call icons::get_svg("volume-2",20) %}
+          {%- call icons::get_svg("volume-2", 20) -%}
         </div>
-      {% when Some with (false) %}
+      {%- when Some with (false) -%}
         <div class="text-warning tooltip tooltip-bottom" data-tip="Beeper disabled">
-          {% call icons::get_svg("volume-x", 20) %}
+          {%- call icons::get_svg("volume-x", 20) -%}
         </div>
-      {% when None %}
-    {% endmatch %}
+      {%- when None -%}
+    {%- endmatch -%}
 
-    {% for status_icon in crate::http_server::hypermedia::utils::get_status_icons(status) %}
-      <div class="text-{{status_icon.class}} tooltip tooltip-bottom" data-tip="{{status_icon.desc}}">
-        {% call icons::get_svg(status_icon.name, 20) %}
+    {%- for status_icon in crate::http_server::hypermedia::ups_status::StatusIconIter::new(status) -%}
+      <div class="tooltip tooltip-bottom {{status_icon.class}}" data-tip="{{status_icon.desc}}">
+        {%- call icons::get_svg(status_icon.name, 20) -%}
       </div>
-    {% endfor %}
+    {%- endfor -%}
   </div>
-{% endif %}
+{%- endif -%}

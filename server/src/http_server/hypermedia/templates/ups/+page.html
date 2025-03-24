@@ -1,11 +1,11 @@
-{% extends "../+layout.html" %}
+{%- extends "../+layout.html" -%}
 {%- import "icons.html" as icons -%}
 
-{% block page_title %}
+{%- block page_title -%}
   NUT Web - {{name}}
-{% endblock page_title %}
+{%- endblock page_title -%}
 
-{% block content %}
+{%- block content -%}
   <div class="flex flex-col gap-6">
     <div
       class="flex flex-col gap-6"
@@ -17,43 +17,40 @@
     >
       {{ups_info}}
     </div>
-
-    {% if commands.len() > 0 %}
+    {%- if commands.len() > 0 -%}
       <details class="bg-base-200 collapse collapse-arrow">
         <summary class="collapse-title font-black text-xl">UPS Commands</summary>
         <div class="collapse-content p-3">
           <ul class="[&>li]:border-b-2 [&>li]:border-neutral-content/10 [&>li]:p-3 flex flex-col last:border-none">
-            {% for row in commands %}
+            {%- for row in commands -%}
               <li class="box-border hover:bg-base-100 last:border-none">
                 <div class="flex flex-row justify-between">
                   <div class="break-all">
                     {{row}}
                   </div>
                   <button
-                    class="btn btn-outline btn-primary"
+                    is="nut-confirm-button"
                     hx-post="/ups/{{name}}/command"
                     hx-swap="none"
                     hx-trigger="command-confirmed"
+                    cancel-text="Cancel"
+                    class="btn btn-outline btn-primary"
+                    confirm-text="Run"
+                    message="Are you sure about the run '{{row}}' command?"
                     name="command"
+                    target-event="command-confirmed"
+                    title="Command Confirmation"
                     value="{{row}}"
-                    onClick="ConfirmationModal.create({
-                      cancelText: 'Cancel',
-                      confirmText: 'Run',
-                      message: 'Are you sure about the run the \'' + '{{row}}' + '\' command?',
-                      title: 'Command Confirmation'
-                    }).then((is_confirmed) => {
-                      if (is_confirmed) {this.dispatchEvent(new CustomEvent('command-confirmed'));}
-                    });"
                   >
-                    {% call icons::get_svg("play", 24) %}
+                    {%- call icons::get_svg("play", 24) -%}
                     <span>Run</span>
                   </button>
                 </div>
               </li>
-            {% endfor %}
+            {%- endfor -%}
           </ul>
         </div>
       </details>
-    {% endif %}
+    {%- endif -%}
   </div>
-{% endblock content %}
+{%- endblock content -%}

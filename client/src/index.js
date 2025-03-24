@@ -1,18 +1,3 @@
-// TODO: get rid of this safelist
-
-// fill-error
-// fill-warning
-// fill-success
-// fill-info
-// text-error
-// text-warning
-// text-success
-// text-info
-// progress-error
-// progress-warning
-// progress-success
-// progress-info
-
 /**
  * Main entry point for client
  * Exports all web components, registers dom and htmx events.
@@ -44,6 +29,7 @@ import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js";
 export * from "./components/charts/gauge.js";
 export * from "./components/notification.js";
 export * from "./components/confirmation_modal.js";
+export * from "./components/confirmation_button.js";
 export * from "./components/theme_selector.js";
 export * from "./components/time_display.js";
 

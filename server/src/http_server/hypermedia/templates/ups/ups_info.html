@@ -1,19 +1,16 @@
 {%- import "icons.html" as icons -%}
-
 <div id="ups_info" class="flex flex-col gap-6">
   <div class="gap-2 gap-y-2 grid grid-cols-1 sm:grid-cols-2">
-    <div
-      class="bg-base-200 col-span-full flex flex-row flex-wrap gap-5 justify-between p-6 rounded-lg"
-    >
+    <div class="bg-base-200 col-span-full flex flex-row flex-wrap gap-5 justify-between p-6 rounded-lg">
       <div>
         <h1 class="font-bold leading-8 text-primary text-xl">{{name}}</h1>
         <p class="font-light leading-6 text-secondary">
-          {% if let Some(mfr) = mfr %}
+          {%- if let Some(mfr) = mfr -%}
             {{mfr}}
-          {% endif %}
-          {% if let Some(model) = model %}
+          {%- endif -%}
+          {%- if let Some(model) = model -%}
             - {{model}}
-          {% endif %}
+          {%- endif -%}
         </p>
         <p class="font-light mt-2 text-xs">{{desc}}</p>
       </div>
@@ -35,76 +32,68 @@
       </div>
     </div>
 
-    {% if let Some(load) = load %}
+    {%- if let Some(load) = load -%}
     <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
       <div class="font-bold">Load</div>
       <div class="flex flex-row items-center justify-center">
-        {% let load_level_class =
-        crate::http_server::hypermedia::utils::get_range_class(load, 50.0, 75.0)
-        %}
-        <nut-gauge
-          class="fill-{{load_level_class}} w-full"
-          value="{{load}}"
-        ></nut-gauge>
+        {%- let load_level_class = crate::http_server::hypermedia::semantic_classes::get_fill_class(**load, 50.0, 75.0) -%}
+        <nut-gauge class="w-full {{load_level_class}}" value="{{load}}"></nut-gauge>
       </div>
 
       <div class="flex flex-col gap-3 grow justify-end">
-        {% if let Some(realpower) = realpower %}
+        {%- if let Some(realpower) = realpower -%}
         <div class="font-bold text-sm">
           Estimated real power
           <span class="text-primary">{{realpower}} Watt</span>
         </div>
-        {% endif %} {% if let Some(realpower_nominal) = realpower_nominal %}
+        {%- endif -%} 
+        {%- if let Some(realpower_nominal) = realpower_nominal -%}
         <div class="font-bold text-sm">
           Nominal real power
           <span class="text-primary">{{realpower_nominal}} Watt</span>
         </div>
-        {% endif %} {% if let Some(power) = power %}
+        {%- endif -%} 
+        {%- if let Some(power) = power -%}
         <div class="font-bold text-sm">
           Estimated power
           <span class="text-primary">{{power}} VA</span>
         </div>
-        {% endif %} {% if let Some(power_nominal) = power_nominal %}
+        {%- endif -%} 
+        {%- if let Some(power_nominal) = power_nominal -%}
         <div class="font-bold text-sm">
           Nominal power
           <span class="text-primary"> {{power_nominal}} VA </span>
         </div>
-        {% endif %}
+        {%- endif -%}
       </div>
     </div>
-    {% endif %}
+    {%- endif -%}
 
-    {% if let Some(charge) = charge %}
+    {%- if let Some(charge) = charge -%}
     <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
       <div class="font-bold">Battery</div>
       <div class="flex flex-row items-center justify-center">
-        {% let battery_level_class =
-        crate::http_server::hypermedia::utils::get_range_class(charge, 60.0,
-        10.0) %}
-        <nut-gauge
-          class="fill-{{battery_level_class}} w-full"
-          value="{{charge}}"
-        ></nut-gauge>
+        {%- let battery_level_class = crate::http_server::hypermedia::semantic_classes::get_fill_class(**charge, 60.0, 10.0) -%}
+        <nut-gauge class="w-full {{battery_level_class}}" value="{{charge}}"></nut-gauge>
       </div>
       <div class="flex flex-col gap-3 grow justify-end">
-        {% if let Some(runtime) = runtime %}
+        {%- if let Some(runtime) = runtime -%}
         <div class="font-bold text-sm">
           Remaining run time
           <div class="tooltip tooltip-bottom" data-tip="{{runtime}} seconds">
-            <nut-time-display
-              class="text-primary"
-              value="{{runtime}}"
-            ></nut-time-display>
+            <nut-time-display class="text-primary" value="{{runtime}}"></nut-time-display>
           </div>
         </div>
-        {% endif %} {% if let Some(charge_low) = charge_low %}
+        {%- endif -%}
+        {%- if let Some(charge_low) = charge_low -%}
         <div class="font-bold text-sm">
           Shutdown threshold <span class="text-error">{{charge_low}}%</span>
         </div>
-        {% endif %}
+        {%- endif -%}
       </div>
     </div>
-    {% endif %} {% if let Some(input_voltage) = input_voltage %}
+    {%- endif -%}
+    {%- if let Some(input_voltage) = input_voltage -%}
     <div class="bg-base-200 card p-6 rounded-lg shadow">
       <div class="font-bold">Input Voltage</div>
       <div class="flex flex-row grow items-center justify-center">
@@ -113,7 +102,8 @@
         </p>
       </div>
     </div>
-    {% endif %} {% if let Some(battery_voltage) = battery_voltage %}
+    {%- endif -%}
+    {%- if let Some(battery_voltage) = battery_voltage -%}
     <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
       <div class="font-bold">Battery Voltage</div>
       <div class="flex flex-row grow items-center justify-center">
@@ -122,25 +112,22 @@
         </p>
       </div>
     </div>
-    {% endif %}
+    {%- endif -%}
   </div>
 
-  <details
-    morph-preserve-attr="open"
-    class="bg-base-200 collapse collapse-arrow"
-  >
+  <details morph-preserve-attr="open" class="bg-base-200 collapse collapse-arrow">
     <summary class="collapse-title font-black text-xl">UPS Variables</summary>
     <div class="collapse-content p-3">
       <table class="table">
         <tbody
           class="[&>tr:hover]:bg-base-100 [&>tr]:border-b-2 [&>tr]:border-neutral-content/10 break-all last:border-none"
         >
-          {% for row in variables %}
-          <tr>
-            <td>{{row.0}}</td>
-            <td class="text-primary">{{row.1}}</td>
-          </tr>
-          {% endfor %}
+          {%- for row in variables -%}
+            <tr>
+              <td>{{row.0}}</td>
+              <td class="text-primary">{{row.1}}</td>
+            </tr>
+          {%- endfor -%}
         </tbody>
       </table>
     </div>

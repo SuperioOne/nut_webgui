@@ -101,12 +101,12 @@ export default class Gauge extends HTMLElement {
       },
     };
 
-    this.abort_controller = new AbortController();
+    this.#abort_controller = new AbortController();
     this.#chart = new ApexCharts(child, options);
     this.#chart.render().catch(console.error);
 
     document.addEventListener("theme-change", this.#theme_listener, {
-      signal: this.abort_controller.signal,
+      signal: this.#abort_controller.signal,
     });
   }
 
