@@ -1,4 +1,4 @@
-{% macro theme_selector(theme_key) %}
+{%- macro theme_selector(theme_key) -%}
   <theme-selector
     data-theme="{{theme_key}}"
     theme-key="{{theme_key}}"
@@ -20,30 +20,28 @@
       <p class="font-bold text-xs uppercase">{{theme_key}}</p>
     </div>
   </theme-selector>
-{% endmacro %}
+{%- endmacro -%}
 
 <div class="flex flex-col gap-3 w-full">
   <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 w-full">
-     {% call theme_selector("light") %}
-     {% call theme_selector("dark") %}
+     {%- call theme_selector("light") -%}
+     {%- call theme_selector("dark") -%}
   </div>
-
   <div class="col-span-full divider mb-0.5 mt-0.5">Alternatives</div>
-
   <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 w-full">
-     {% call theme_selector("abyss") %}
-     {% call theme_selector("autumn") %}
-     {% call theme_selector("business") %}
-     {% call theme_selector("corporate") %}
-     {% call theme_selector("dim") %}
-     {% call theme_selector("dracula") %}
-     {% call theme_selector("forest") %}
-     {% call theme_selector("kanagawa-dragon") %}
-     {% call theme_selector("night") %}
-     {% call theme_selector("nord") %}
-     {% call theme_selector("sunset") %}
-     {% call theme_selector("synthwave") %}
-     {% call theme_selector("tokyo-night") %}
-     {% call theme_selector("winter") %}
+     {%- call theme_selector("abyss") -%}
+     {%- call theme_selector("autumn") -%}
+     {%- call theme_selector("business") -%}
+     {%- call theme_selector("corporate") -%}
+     {%- call theme_selector("dim") -%}
+     {%- call theme_selector("dracula") -%}
+     {%- call theme_selector("forest") -%}
+     {%- call theme_selector("kanagawa-dragon") -%}
+     {%- call theme_selector("night") -%}
+     {%- call theme_selector("nord") -%}
+     {%- call theme_selector("sunset") -%}
+     {%- call theme_selector("synthwave") -%}
+     {%- call theme_selector("tokyo-night") -%}
+     {%- call theme_selector("winter") -%}
   </div>
 </div>

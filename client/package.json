@@ -15,10 +15,10 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.0.14",
-    "daisyui": "^5.0.6",
+    "@tailwindcss/cli": "^4.0.15",
+    "daisyui": "^5.0.9",
     "esbuild": "^0.25.1",
-    "tailwindcss": "^4.0.14",
+    "tailwindcss": "^4.0.15",
     "typescript": "^5.8.2"
   },
   "dependencies": {

@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-      {% block page_title %}{% endblock page_title %}
+      {%- block page_title -%}{%- endblock page_title -%}
     </title>
     <link href="/static/style.css" rel="preload" as="style" />
     <link href="/static/index.js" rel="preload" as="script" />
@@ -18,9 +18,8 @@
       if(t){document.documentElement.setAttribute("data-theme",t)}
     </script>
     <script src="/static/index.js" defer></script>
-    {% block page_head %}{% endblock page_head %}
+    {%- block page_head -%}{%- endblock page_head -%}
   </head>
-
   <body>
     <div id="notifications" class="md:w-xs toast w-full z-50"></div>
     <div class="drawer drawer-end">
@@ -35,52 +34,50 @@
               </a>
             </div>
             <div class="navbar-end">
+              <div class="htmx-send-error-indicator">
+                <div class="text-error tooltip tooltip-bottom" data-tip="Network connection lost">
+                  {%- call icons::get_svg("wifi-off", 18) -%}
+                </div>
+              </div>
               <div id="indicator" class="cursor-default htmx-indicator">
                 <div
                   class="text-success tooltip tooltip-bottom"
                   data-tip="Updating page"
                 >
-                  <span
-                    class="cursor-default loading loading-md loading-spinner text-info"
-                  >
+                  <span class="cursor-default loading loading-md loading-spinner text-info">
                   </span>
                 </div>
               </div>
-              <label for="menu-toggle" class="btn btn-circle btn-ghost drawer-button">
-                  {% call icons::get_svg("sliders", 18) %}
+              <label
+                class="btn btn-circle btn-ghost drawer-button"
+                for="menu-toggle"
+                hx-get="/_layout/themes"
+                hx-target="#themes-panel"
+                hx-trigger="click once, pointerenter once"
+              >
+                {%- call icons::get_svg("sliders", 18) -%}
               </label>
             </div>
           </div>
         </header>
-
         <div  class="flex flex-row grow justify-center lg:p-16 md:p-14 p-3 w-full">
           <div id="page_content" class="max-w-384 w-full">
-            {% block content %} {% endblock content %}
+            {%- block content -%} {%- endblock content -%}
           </div>
         </div>
-
-        <footer
-          class="bg-base-200 flex flex-row font-light footer footer-center justify-between md:footer-horizontal p-3 text-base-content text-xs"
-        >
+        <footer class="bg-base-200 flex flex-row footer p-3">
           <aside>
-            {% let app_info = crate::http_server::hypermedia::utils::get_app_info() %}
+            {%- let app_info = crate::http_server::hypermedia::utils::get_app_info() -%}
             <a
-              class="link"
+              class="font-light link text-xs"
               href="https://github.com/SuperioOne/nut_webgui/releases/tag/v{{app_info.version}}"
             >
               <span>Version: {{app_info.version}}</span>
             </a>
           </aside>
           <div>
-          <div class="htmx-send-error-indicator">
-            <p class="flex flex-row gap-2">
-              <span> {% call icons::get_svg("wifi-off", 16) %}</span>
-              <span> Server connection lost </span>
-            </p>
-          </div>
         </footer>
       </div>
-
       <div class="drawer-side">
         <label for="menu-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
         <div class="bg-base-200 min-h-full p-4 sm:w-80 w-full">
@@ -89,10 +86,16 @@
               Themes
             </h3>
             <label for="menu-toggle" class="btn btn-circle btn-ghost btn-sm drawer-button">
-              {% call icons::get_svg("x", 16) %}
+              {%- call icons::get_svg("x", 16) -%}
             </label>
           </div>
-          {% include "themes.html" %}
+          <div id="themes-panel">
+            <div class="flex flex-col gap-4 w-full">
+              <div class="h-32 skeleton w-full"></div>
+              <div class="h-32 skeleton w-full"></div>
+              <div class="h-32 skeleton w-full"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

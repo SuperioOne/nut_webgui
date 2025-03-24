@@ -1,10 +1,10 @@
-{% extends "+layout.html" %}
+{%- extends "+layout.html" -%}
 
-{% block page_title %}
+{%- block page_title -%}
   NUT Web - Home
-{% endblock page_title %}
+{%- endblock page_title -%}
 
-{% block content %}
+{%- block content -%}
   <div
     hx-ext="morph"
     hx-get="/?section=ups_table"
@@ -12,7 +12,7 @@
     hx-swap="morph:innerHTML"
     hx-indicator="#indicator"
   >
-    {% block ups_table %}
+    {%- block ups_table -%}
       <div id="ups_table" class="bg-base-200 overflow-x-auto rounded-box">
         <table class="table table-fixed">
           <thead>
@@ -26,14 +26,14 @@
             </tr>
           </thead>
           <tbody>
-            {% if ups_list.len() < 1 %}
+            {%- if ups_list.len() < 1 -%}
               <tr>
                 <td class="py-6 text-center" colspan="6">
                   No UPS available.
                 </td>
               </tr>
-            {% else %}
-              {% for row in ups_list %}
+            {%- else -%}
+              {%- for row in ups_list -%}
                 <tr class="break-all">
                   <td>
                     <a class="font-bold link text-primary" href="/ups/{{row.name}}">
@@ -44,45 +44,43 @@
                     <span class="font-light text-base-content">{{row.desc}}</span>
                   </td>
                   <td class="sm:w-36 w-auto">
-                    {% if let Some(status) = row.status %}
-                      {% if let Some(status_class) = crate::http_server::hypermedia::utils::get_status_class(status) %}
-                        <span class="font-black text-{{status_class}} uppercase">{{status}}</span>
-                      {% else %}
+                    {%- if let Some(status) = row.status -%}
+                      {%- if let Some(status_class) = crate::http_server::hypermedia::ups_status::get_status_class(status) -%}
+                        <span class="font-black uppercase {{status_class}}">{{status}}</span>
+                      {%- else -%}
                         <span class="font-black uppercase">{{status}}</span>
-                      {% endif %}
-                    {% endif %}
+                      {%- endif -%}
+                    {%- endif -%}
                   </td>
                   <td>
-                    {% if let Some(charge) = row.charge %}
-                      {% let battery_level_class = crate::http_server::hypermedia::utils::get_range_class(charge, 60.0, 10.0) %}
-                      <progress class="progress progress-{{battery_level_class}} w-full" value="{{charge}}" max="100"></progress>
+                    {%- if let Some(charge) = row.charge -%}
+                      {%- let battery_level_class = crate::http_server::hypermedia::semantic_classes::get_progress_class(**charge, 60.0, 10.0) -%}
+                      <progress class="progress w-full {{battery_level_class}}" value="{{charge}}" max="100"></progress>
                       <div class="text-center text-primary w-full">{{charge}}%</div>
-                    {% else %}
+                    {%- else -%}
                       <p class="font-bold text-center">
                         N/A
                       </p>
-                    {% endif %}
+                    {%- endif -%}
                   </td>
                   <td class="hidden sm:table-cell">
-                    {% if let Some(load) = row.load %}
-                      {% let load_level_class = crate::http_server::hypermedia::utils::get_range_class(load, 50.0, 75.0) %}
-                      <progress class="progress progress-{{load_level_class}} w-full" value="{{load}}" max="100"></progress>
+                    {%- if let Some(load) = row.load -%}
+                      {%- let load_level_class = crate::http_server::hypermedia::semantic_classes::get_progress_class(**load, 50.0, 75.0) -%}
+                      <progress class="progress w-full {{load_level_class}}" value="{{load}}" max="100"></progress>
                       <div class="text-center text-primary w-full">{{load}}%</div>
-                    {% else %}
-                      <p class="font-bold text-center">
-                        N/A
-                      </p>
-                    {% endif %}
+                    {%- else -%}
+                      <p class="font-bold text-center">N/A</p>
+                    {%- endif -%}
                   </td>
                   <td class="hidden sm:table-cell w-32">
                     <a role="button" href="/ups/{{row.name}}" class="btn btn-outline btn-sm">Details</a>
                   </td>
                 </tr>
-              {% endfor %}
-            {% endif %}
+              {%- endfor -%}
+            {%- endif -%}
           </tbody>
         </table>
       </div>
-    {% endblock ups_table %}
+    {%- endblock ups_table -%}
   </div>
-{% endblock content %}
+{%- endblock content -%}
