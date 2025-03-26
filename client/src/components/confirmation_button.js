@@ -1,45 +1,57 @@
 import ConfirmationModal from "./confirmation_modal.js";
 
-/** @typedef {"cancel-text" | "confirm-text" | "message" | "target-event" | "title" } AttributeKeys */
+/** @typedef {"cancel-text" | "confirm-text" | "message" | "target-event" | "title" | "value" | "name" } ConfirmationButtonAttributes */
 
-export default class ConfirmationButton extends HTMLButtonElement {
-  /** @type {AbortController} */
+export default class ConfirmationButton extends HTMLElement {
+  /** @type {AbortController | undefined} */
   #abort_controller;
 
-  /** @type {string | null} */
+  /** @type {string | null | undefined} */
   #title;
 
-  /** @type {string | null} */
+  /** @type {string | null | undefined} */
   #cancel_text;
 
-  /** @type {string | null} */
+  /** @type {string | null | undefined} */
   #confirm_text;
 
-  /** @type {string | null} */
+  /** @type {string | null | undefined} */
   #target_event;
 
-  /** @type {string | null} */
+  /** @type {string | null | undefined} */
   #message;
 
-  /** @type {AttributeKeys[]} */
+  /** @type {ElementInternals} */
+  #internals;
+
+  /** @type {ConfirmationButtonAttributes[]} */
   static observedAttributes = [
     "cancel-text",
     "confirm-text",
     "message",
     "target-event",
     "title",
+    "value",
+    "name",
   ];
+
+  static formAssociated = true;
 
   constructor() {
     super();
+    this.#internals = this.attachInternals();
+    this.#internals.role = "button";
   }
 
   disconnectedCallback() {
+    this.#internals.setFormValue(null);
     this.#abort_controller?.abort();
     this.remove();
   }
 
   connectedCallback() {
+    const val = this.getAttribute("value");
+    this.#internals.setFormValue(val);
     this.#abort_controller = new AbortController();
     this.#cancel_text = this.getAttribute("cancel-text");
     this.#confirm_text = this.getAttribute("confirm-text");
@@ -73,7 +85,8 @@ export default class ConfirmationButton extends HTMLButtonElement {
   }
 
   /**
-   * @param {AttributeKeys} name
+   * @param {ConfirmationButtonAttributes} name
+   * @param {string | null} _
    * @param {string | null} new_value
    */
   attributeChangedCallback(name, _, new_value) {
@@ -93,12 +106,15 @@ export default class ConfirmationButton extends HTMLButtonElement {
       case "title":
         this.#title = new_value;
         break;
+      case "value":
+      case "name":
+        const val = this.getAttribute("value");
+        this.#internals.setFormValue(val);
+        break;
       default:
         break;
     }
   }
 }
 
-customElements.define("nut-confirm-button", ConfirmationButton, {
-  extends: "button",
-});
+customElements.define("nut-confirm-button", ConfirmationButton);

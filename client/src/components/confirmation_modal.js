@@ -24,7 +24,7 @@ TEMPLATE.innerHTML = `
 </dialog>`;
 
 export default class ConfirmationModal extends HTMLElement {
-  /** @type{HTMLDialogElement} **/
+  /** @type{HTMLDialogElement | undefined | null} **/
   #dialog;
 
   constructor() {
@@ -33,7 +33,7 @@ export default class ConfirmationModal extends HTMLElement {
 
   /**
    * Create a confirmation modal programmatically
-   * @param {{message?: string, title?:string, confirmText?:string, cancelText?:string}} options
+   * @param {{message?: string | null, title?:string | null, confirmText?:string | null, cancelText?:string | null}} options
    * @return {Promise<boolean>}
    */
   static create(options) {
@@ -43,18 +43,18 @@ export default class ConfirmationModal extends HTMLElement {
 
     const title = document.createElement("span");
     title.slot = "title";
-    title.textContent = options.title;
+    title.textContent = options.title ?? null;
 
     const confirm = document.createElement("span");
     confirm.slot = "confirm_text";
-    confirm.textContent = options.confirmText;
+    confirm.textContent = options.confirmText ?? null;
 
     const cancel = document.createElement("span");
     cancel.slot = "cancel_text";
-    cancel.textContent = options.cancelText;
+    cancel.textContent = options.cancelText ?? null;
 
     const message = document.createElement("span");
-    message.textContent = options.message;
+    message.textContent = options.message ?? null;
 
     modal.append(title, confirm, cancel, message);
     modal.showModal();
@@ -62,12 +62,15 @@ export default class ConfirmationModal extends HTMLElement {
     return new Promise((resolve) => {
       modal.addEventListener(
         "close",
-        (/** @type{CustomEvent<"default" | "cancel">} **/ ev) => {
+        (ev) => {
           setTimeout(() => {
             modal.remove();
           });
 
-          resolve(ev.detail === "default");
+          resolve(
+            /** @type{CustomEvent<"default" | "cancel">} **/ (ev).detail ===
+              "default",
+          );
         },
         { once: true },
       );
@@ -83,20 +86,23 @@ export default class ConfirmationModal extends HTMLElement {
     link_host_styles(shadow_root);
     shadow_root.appendChild(TEMPLATE.content.cloneNode(true));
 
-    this.#dialog = this.shadowRoot.querySelector("dialog");
-    this.#dialog.addEventListener("close", () => {
-      this.dispatchEvent(
-        new CustomEvent("close", {
-          detail: this.#dialog.returnValue,
-          bubbles: true,
-          composed: true,
-        }),
-      );
-    });
+    this.#dialog = this.shadowRoot?.querySelector("dialog");
+
+    if (this.#dialog) {
+      this.#dialog.addEventListener("close", () => {
+        this.dispatchEvent(
+          new CustomEvent("close", {
+            detail: this.#dialog?.returnValue,
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      });
+    }
   }
 
   showModal() {
-    this.#dialog.showModal();
+    this.#dialog?.showModal();
   }
 }
 

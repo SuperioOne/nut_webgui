@@ -26,10 +26,11 @@
 import htmx from "htmx.org";
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js";
 
-export * from "./components/charts/gauge.js";
-export * from "./components/notification.js";
-export * from "./components/confirmation_modal.js";
 export * from "./components/confirmation_button.js";
+export * from "./components/confirmation_modal.js";
+export * from "./components/search_list.js";
+export * from "./components/gauge.js";
+export * from "./components/notification.js";
 export * from "./components/theme_selector.js";
 export * from "./components/time_display.js";
 
@@ -81,7 +82,7 @@ htmx.defineExtension("morph", {
 
 const ConnectionState = (() => {
   /** @type{boolean} **/
-  let state = 0;
+  let state = false;
 
   return {
     get is_lost() {

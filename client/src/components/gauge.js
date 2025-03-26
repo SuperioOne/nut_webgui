@@ -1,14 +1,14 @@
-import { link_host_styles } from "../../utils.js";
+import { link_host_styles } from "../utils.js";
 import ApexCharts from "apexcharts";
 
 /** @import {ApexOptions} from "apexcharts" */
 
 /**
- * @typedef {"value" | "height" | "width" | "class" } AttributeKeys
+ * @typedef {"value" | "height" | "width" | "class" } GaugeAtrributes
  */
 
 export default class Gauge extends HTMLElement {
-  /** @type {ApexCharts} */
+  /** @type {ApexCharts | undefined} */
   #chart;
 
   /** @type {() => void} **/
@@ -20,7 +20,7 @@ export default class Gauge extends HTMLElement {
           radialBar: {
             dataLabels: {
               value: {
-                color: [window.getComputedStyle(this).color],
+                color: window.getComputedStyle(this).color,
               },
             },
           },
@@ -34,10 +34,10 @@ export default class Gauge extends HTMLElement {
     }
   };
 
-  /** @type {AbortController} **/
+  /** @type {AbortController | undefined} **/
   #abort_controller;
 
-  /** @type {AttributeKeys[]} */
+  /** @type {GaugeAtrributes[]} */
   static observedAttributes = ["value", "height", "width", "class"];
 
   constructor() {
@@ -72,14 +72,14 @@ export default class Gauge extends HTMLElement {
       plotOptions: {
         radialBar: {
           hollow: {
-            size: 70,
+            size: "70",
             margin: 10,
           },
           startAngle: -90,
           endAngle: 90,
           track: {
             background: "#a0a0a0",
-            strokeWidth: 90,
+            strokeWidth: "90",
             margin: 10,
           },
           dataLabels: {
@@ -89,7 +89,7 @@ export default class Gauge extends HTMLElement {
             value: {
               offsetY: -2,
               fontSize: "2.5rem",
-              color: [window.getComputedStyle(this).color],
+              color: window.getComputedStyle(this).color,
             },
           },
         },
@@ -116,8 +116,8 @@ export default class Gauge extends HTMLElement {
   }
 
   /**
-   * @param {AttributeKeys} name
-   * @param {string} old_value
+   * @param {GaugeAtrributes} name
+   * @param {string} _old_value
    * @param {string} new_value
    */
   attributeChangedCallback(name, _old_value, new_value) {

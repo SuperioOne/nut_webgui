@@ -5,7 +5,7 @@ use crate::{
     hypermedia::notifications::{Notification, NotificationTemplate},
   },
   ups_daemon_state::UpsEntry,
-  upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
+  upsd_client::{client::UpsAuthClient, errors::NutClientErrors},
 };
 use askama::Template;
 use axum::{
@@ -20,6 +20,7 @@ use tracing::{error, info};
 #[derive(Deserialize)]
 pub struct UpsFragmentQuery {
   section: Option<String>,
+  tab: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -27,200 +28,111 @@ pub struct CommandRequest {
   command: String,
 }
 
-#[derive(Template)]
-#[template(path = "ups/ups_status.html", ext = "html")]
-struct UpsStatusTemplate {
-  ups_status: Option<String>,
-  beeper_status: Option<bool>,
-}
-
-impl Default for UpsStatusTemplate {
-  fn default() -> Self {
-    Self {
-      beeper_status: None,
-      ups_status: None,
-    }
-  }
-}
-
-impl From<&UpsEntry> for UpsStatusTemplate {
-  fn from(entry: &UpsEntry) -> Self {
-    let mut template = Self::default();
-
-    for variable in entry.variables.iter() {
-      match variable {
-        UpsVariable::UpsBeeperStatus(beeper_status) => {
-          template.beeper_status = match beeper_status.as_str() {
-            "enabled" => Some(true),
-            _ => Some(false),
-          };
-        }
-        UpsVariable::UpsStatus(ups_status) => {
-          template.ups_status = Some(ups_status.to_string());
-        }
-        _ => {}
-      }
-    }
-
-    template
-  }
-}
+// If power is none, calculate power by using power_nominal and load values.
+// if let Self {
+//   power_nominal: Some(pw),
+//   load: Some(ld),
+//   power: None,
+//   ..
+// } = template
+// {
+//   template.power = Some((pw * ld) / 100.0_f64);
+// };
+//
+// if let Self {
+//   realpower_nominal: Some(pw),
+//   load: Some(ld),
+//   realpower: None,
+//   ..
+// } = template
+// {
+//   template.realpower = Some((pw * ld) / 100.0_f64);
+// };
+//
 
 #[derive(Template)]
-#[template(path = "ups/ups_info.html", ext = "html", escape = "none")]
-struct UpsInfoTemplate<'a> {
-  battery_voltage: Option<f64>,
-  charge: Option<f64>,
-  charge_low: Option<f64>,
-  desc: &'a str,
-  input_voltage: Option<f64>,
-  load: Option<f64>,
+#[template(path = "ups/+page.html", ext = "html", escape = "none", blocks = ["ups_status", "tab_content"])]
+struct UpsPageTemplate<'a> {
+  tab_template: UpsPageTabTemplate<'a>,
+
   name: &'a str,
+  desc: &'a str,
   model: Option<&'a str>,
   mfr: Option<&'a str>,
-  realpower: Option<f64>,
-  realpower_nominal: Option<f64>,
-  power: Option<f64>,
-  power_nominal: Option<f64>,
-  runtime: Option<f64>,
-  variables: Vec<(&'a str, String)>,
-  ups_status_template: UpsStatusTemplate,
-  hx_status_interval: u64,
+  ups_status: Option<String>,
+  beeper_status: Option<bool>,
+
+  poll_interval: u64,
 }
 
-impl<'a> UpsInfoTemplate<'a> {
-  pub fn set_status_interval(mut self, value_secs: u64) -> Self {
-    self.hx_status_interval = value_secs;
-    self
-  }
-
-  pub fn from_ups_entry(ups: &'a UpsEntry) -> Self {
-    let variables: Vec<(&'a str, String)> = ups
-      .variables
-      .iter()
-      .map(|e| (e.name(), e.value_as_string()))
-      .collect();
-
-    let mut template = Self {
-      battery_voltage: None,
-      charge: None,
-      charge_low: None,
-      desc: &ups.desc,
-      input_voltage: None,
-      load: None,
-      name: &ups.name,
-      model: None,
-      mfr: None,
-      realpower: None,
-      realpower_nominal: None,
-      power: None,
-      power_nominal: None,
-      runtime: None,
-      variables,
-      ups_status_template: UpsStatusTemplate::default(),
-      hx_status_interval: 2_u64,
-    };
-
-    for variable in ups.variables.iter() {
-      match variable {
-        UpsVariable::UpsLoad(val) => {
-          template.load = Some(*val);
-        }
-        UpsVariable::UpsRealPowerNominal(val) => {
-          template.realpower_nominal = Some(*val);
-        }
-        UpsVariable::UpsRealPower(val) => {
-          template.realpower = Some(*val);
-        }
-        UpsVariable::UpsPower(val) => {
-          template.power = Some(*val);
-        }
-        UpsVariable::UpsPowerNominal(val) => {
-          template.power_nominal = Some(*val);
-        }
-        UpsVariable::BatteryCharge(val) => {
-          template.charge = Some(*val);
-        }
-        UpsVariable::BatteryChargeLow(val) => {
-          template.charge_low = Some(*val);
-        }
-        UpsVariable::BatteryRuntime(val) => {
-          template.runtime = Some(*val);
-        }
-        UpsVariable::UpsStatus(val) => {
-          template.ups_status_template.ups_status = Some(val.to_string());
-        }
-        UpsVariable::BatteryVoltage(val) => {
-          template.battery_voltage = Some(*val);
-        }
-        UpsVariable::InputVoltage(val) => {
-          template.input_voltage = Some(*val);
-        }
-        UpsVariable::UpsMfr(val) => {
-          template.mfr = Some(val);
-        }
-        UpsVariable::UpsModel(val) => {
-          template.model = Some(val);
-        }
-        UpsVariable::UpsBeeperStatus(val) => {
-          template.ups_status_template.beeper_status = match val.as_str() {
-            "enabled" => Some(true),
-            _ => Some(false),
-          };
-        }
-        _ => {}
-      }
-    }
-
-    // If power is none, calculate power by using power_nominal and load values.
-    if let Self {
-      power_nominal: Some(pw),
-      load: Some(ld),
-      power: None,
-      ..
-    } = template
-    {
-      template.power = Some((pw * ld) / 100.0_f64);
-    };
-
-    if let Self {
-      realpower_nominal: Some(pw),
-      load: Some(ld),
-      realpower: None,
-      ..
-    } = template
-    {
-      template.realpower = Some((pw * ld) / 100.0_f64);
-    };
-
-    template
-  }
-}
-
-impl<'a> From<&'a UpsEntry> for UpsInfoTemplate<'a> {
-  fn from(entry: &'a UpsEntry) -> Self {
-    Self::from_ups_entry(entry)
-  }
-}
-
-// TODO: Switch to block fragments when askama v0.13 released
 #[derive(Template)]
-#[template(path = "ups/+page.html", ext = "html", escape = "none")]
-struct UpsPageTemplate<'a> {
-  name: &'a str,
-  ups_info: UpsInfoTemplate<'a>,
-  commands: &'a [Box<str>],
-  hx_info_interval: u64,
+#[template(path = "ups/ups_tabs.html")]
+enum UpsPageTabTemplate<'a> {
+  #[template(block = "none")]
+  None,
+
+  #[template(block = "commands")]
+  Commands { ups: &'a UpsEntry },
+
+  #[template(block = "variables")]
+  Variables { ups: &'a UpsEntry },
+
+  #[template(block = "grid")]
+  Grid {
+    battery_voltage: Option<f64>,
+    charge: Option<f64>,
+    charge_low: Option<f64>,
+    input_voltage: Option<f64>,
+    load: Option<f64>,
+    power: Option<f64>,
+    power_nominal: Option<f64>,
+    realpower: Option<f64>,
+    realpower_nominal: Option<f64>,
+    runtime: Option<f64>,
+    name: &'a str,
+  },
 }
 
 #[inline]
-fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
-  if let Some(ups) = entry {
-    let template = UpsPageTemplate {
+fn get_tab_template<'a>(ups: &'a UpsEntry, tab_name: Option<&str>) -> UpsPageTabTemplate<'a> {
+  match tab_name {
+    Some("variables") => UpsPageTabTemplate::Variables { ups },
+    Some("commands") => UpsPageTabTemplate::Commands { ups },
+    _ => UpsPageTabTemplate::Grid {
+      battery_voltage: None,
+      charge: None,
+      charge_low: None,
+      input_voltage: None,
+      load: None,
+      power: None,
+      power_nominal: None,
+      realpower: None,
+      realpower_nominal: None,
+      runtime: None,
       name: &ups.name,
-      commands: &ups.commands,
-      hx_info_interval: upsd_config.poll_freq.as_secs(),
-      ups_info: UpsInfoTemplate::from(ups).set_status_interval(upsd_config.poll_interval.as_secs()),
+    },
+  }
+}
+
+#[inline]
+fn full_page_response(
+  entry: Option<&UpsEntry>,
+  tab_name: Option<&str>,
+  upsd_config: &UpsdConfig,
+) -> Response {
+  if let Some(ups) = entry {
+    let tab_template = get_tab_template(ups, tab_name);
+
+    let template = UpsPageTemplate {
+      beeper_status: Some(false),
+      desc: &ups.desc,
+      mfr: None,
+      model: None,
+      name: &ups.name,
+      poll_interval: upsd_config.poll_interval.as_secs(),
+      ups_status: Some("OL".to_owned()),
+
+      tab_template,
     };
 
     Html(template.render().unwrap()).into_response()
@@ -230,15 +142,23 @@ fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response
 }
 
 #[inline]
-fn partial_ups_info(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
+fn partial_tab_content(entry: Option<&UpsEntry>, tab_name: Option<&str>) -> Response {
   if let Some(ups) = entry {
-    Html(
-      UpsInfoTemplate::from(ups)
-        .set_status_interval(upsd_config.poll_interval.as_secs())
-        .render()
-        .unwrap(),
-    )
-    .into_response()
+    let tab_template = get_tab_template(ups, tab_name);
+
+    let template = UpsPageTemplate {
+      beeper_status: None,
+      desc: &ups.desc,
+      mfr: None,
+      model: None,
+      name: &ups.name,
+      poll_interval: 0,
+      ups_status: None,
+
+      tab_template,
+    };
+
+    Html(template.as_tab_content().render().unwrap()).into_response()
   } else {
     htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
   }
@@ -247,7 +167,19 @@ fn partial_ups_info(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Respo
 #[inline]
 fn partial_ups_status(entry: Option<&UpsEntry>) -> Response {
   if let Some(ups) = entry {
-    Html(UpsStatusTemplate::from(ups).render().unwrap()).into_response()
+    let template = UpsPageTemplate {
+      name: &ups.name,
+      desc: &ups.desc,
+      ups_status: Some("OL".to_owned()),
+      beeper_status: Some(false),
+
+      tab_template: UpsPageTabTemplate::None,
+      mfr: None,
+      model: None,
+      poll_interval: 0,
+    };
+
+    Html(template.as_ups_status().render().unwrap()).into_response()
   } else {
     htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
   }
@@ -262,9 +194,9 @@ pub async fn get(
   let ups_entry = upsd_state.get_ups(&ups_name);
 
   match query.section.as_deref() {
-    Some("info") => partial_ups_info(ups_entry, &state.upsd_config),
     Some("status") => partial_ups_status(ups_entry),
-    _ => page_response(ups_entry, &state.upsd_config),
+    Some("tabcontent") => partial_tab_content(ups_entry, query.tab.as_deref()),
+    _ => full_page_response(ups_entry, query.tab.as_deref(), &state.upsd_config),
   }
 }
 
