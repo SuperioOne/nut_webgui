@@ -57,7 +57,7 @@ export default class TimeDisplay extends HTMLElement {
   /** @type{TimeDisplayAttrTypes[]} **/
   static observedAttributes = ["value"];
 
-  /** @type{ShadowRoot} **/
+  /** @type{ShadowRoot | undefined} **/
   #root;
 
   constructor() {
@@ -69,17 +69,16 @@ export default class TimeDisplay extends HTMLElement {
   }
 
   connectedCallback() {
-    this.innerHTML = null;
-
-    const value = Number(this.getAttribute("value"));
+    this.innerHTML = "";
     this.#root = this.attachShadow({ mode: "open" });
     link_host_styles(this.#root);
 
-    this.generate_display(value);
+    const value = Number(this.getAttribute("value"));
+    this.#generate_display(value);
   }
 
   /** @param {number} value  **/
-  generate_display(value) {
+  #generate_display(value) {
     if (this.#root) {
       if (isNaN(value)) {
         this.#root.innerHTML = "[ERR! NaN value]";
@@ -96,8 +95,12 @@ export default class TimeDisplay extends HTMLElement {
    * @param {null | undefined | string} new_value
    */
   attributeChangedCallback(name, _old_value, new_value) {
-    if (name === "value") {
-      this.generate_display(Number(new_value));
+    switch (name) {
+      case "value":
+        this.#generate_display(Number(new_value));
+        break;
+      default:
+        break;
     }
   }
 }

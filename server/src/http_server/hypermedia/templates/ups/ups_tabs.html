@@ -1,6 +1,55 @@
 {%- import "icons.html" as icons -%}
-<div id="ups_info" class="flex flex-col gap-6">
-  <div class="gap-2 gap-y-2 grid grid-cols-1 sm:grid-cols-2">
+
+{%- block none -%}
+{%- endblock none -%}
+
+{%- block commands -%}
+  <div class="content-card flex flex-col gap-4">
+    <h2 class="opacity-60 text-lg tracking-wide">Commands</h2>
+    <label class="input input-ghost input-sm opacity-60 tracking-wide">
+      {%- call icons::get_svg("search", 16) -%}
+      <input type="search" placeholder="Filter" name="command-filter" maxlength="64" autocomplete="off" />
+    </label>
+    <nut-search-list for="command-filter" class="list">
+      {%- for row in ups.commands -%}
+        <li class="list-row" search-value="{{row}}">
+          <div></div>
+          <p class="break-all font-bold text-primary">
+            {{row}}
+          </p>
+          <form>
+            <nut-confirm-button
+              hx-post="/ups/{{ups.name}}/command"
+              hx-swap="none"
+              hx-trigger="command-confirmed"
+              cancel-text="Cancel"
+              class="btn btn-ghost btn-primary"
+              confirm-text="Run"
+              message="Are you sure about the run '{{row}}' command?"
+              name="command"
+              target-event="command-confirmed"
+              title="Command Confirmation"
+              value="{{row}}"
+            >
+              {%- call icons::get_svg("play", 24) -%}
+            </nut-confirm-button>
+          </form>
+        </li>
+      {%- endfor -%}
+    </nut-search-list>
+  </div>
+{%- endblock commands -%}
+
+{%- block grid -%}
+  <div
+    class="flex flex-col gap-6"
+    hx-get="/ups/{{name}}?tab=grid&section=tabcontent"
+    hx-indicator="#indicator"
+    hx-swap="morph:innerHTML"
+    hx-trigger="every 5s"
+    hx-target="#tab-content"
+  >
+   <div class="gap-2 gap-y-2 grid grid-cols-1 sm:grid-cols-2">
     {%- if let Some(load) = load -%}
     <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
       <div class="font-bold">Load</div>
@@ -54,6 +103,7 @@
           </div>
         </div>
         {%- endif -%}
+
         {%- if let Some(charge_low) = charge_low -%}
         <div class="font-bold text-sm">
           Shutdown threshold <span class="text-error">{{charge_low}}%</span>
@@ -62,6 +112,7 @@
       </div>
     </div>
     {%- endif -%}
+
     {%- if let Some(input_voltage) = input_voltage -%}
     <div class="bg-base-200 card p-6 rounded-lg shadow">
       <div class="font-bold">Input Voltage</div>
@@ -72,6 +123,7 @@
       </div>
     </div>
     {%- endif -%}
+
     {%- if let Some(battery_voltage) = battery_voltage -%}
     <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
       <div class="font-bold">Battery Voltage</div>
@@ -82,28 +134,32 @@
       </div>
     </div>
     {%- endif -%}
-  </div>
 
-  <div class="content-card flex flex-col gap-4">
+  </div>
+  </div>
+{%- endblock grid -%}
+
+{%- block variables -%}
+  <div class="content-card flex flex-col gap-4" >
     <h2 class="opacity-60 text-lg tracking-wide">Variables</h2>
     <label class="input input-ghost input-sm opacity-60 tracking-wide">
       {%- call icons::get_svg("search", 16) -%}
-      <input type="search" placeholder="Filter" name="variable-filter" maxlength="64" autocomplete="off" />
+      <input id="variable-filter-input" type="search" placeholder="Filter" name="variable-filter" maxlength="64" autocomplete="off" hx-preserve />
     </label>
     <nut-search-list for="variable-filter" class="list">
-      {%- for row in variables -%}
-        <li class="list-row" search-value="{{row.0}}">
+      {%- for row in ups.variables -%}
+        <li class="list-row" search-value="{{row.name()}}">
           <div></div>
-          <div class="list-col-grow grid grid-cols-2">
+          <div class="grid grid-cols-2 list-col-grow">
             <p class="break-all font-bold text-primary">
-              {{row.0}}
+              {{row.name()}}
             </p>
             <p>
-              {{row.1}}
+              {{row.value_as_string()}}
             </p>
           </div>
         </li>
       {%- endfor -%}
     </nut-search-list>
   </div>
-</div>
+{%- endblock variables -%}

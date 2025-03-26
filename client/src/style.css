@@ -87,6 +87,10 @@
                 color: var(--color-error);
                 animation: var(--animate-pulse);
         }
+
+        .content-card {
+                @apply bg-base-200 rounded-box shadow-md text-base-content p-6;
+        }
 }
 
 @view-transition {

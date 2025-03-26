@@ -9,10 +9,10 @@
 const LOCAL_STORAGE_KEY = "app_theme";
 const DATA_THEME_KEY = "data-theme";
 
-class ThemeSelector extends HTMLElement {
+export class ThemeSelector extends HTMLElement {
   /** @type{ThemeSelectorAttributes[]} **/
   static observedAttributes = ["theme-key"];
-  /** @type{string | null} **/
+  /** @type{string | undefined | null} **/
   #theme_value;
 
   constructor() {

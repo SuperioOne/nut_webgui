@@ -1,11 +1,11 @@
-/** @typedef {"ttl" | "title"  | "closeable" | "type"} AttributeKeys */
+/** @typedef {"ttl" | "title"  | "closeable" | "type"} NotificationAttributes */
 
 const TRIGGER_QUERY =
   ".nut-notification-trigger button, .nut-notification-trigger a, .nut-notification-trigger [role=button]";
 
 /**
  * @param {Element} element
- * @param {"info" | "success" | "error" | "warning"} alert_type
+ * @param {string} alert_type
  * @returns { void }
  */
 function set_alert_classes(element, alert_type) {
@@ -76,8 +76,10 @@ export default class NutNotification extends HTMLElement {
 
   /** @param {string} id */
   static dismiss(id) {
-    /** @type {UpsMonNotification} */
-    const element = document.getElementById(id);
+    const element = /** @type {NutNotification | null} */ (
+      document.getElementById(id)
+    );
+
     if (element) {
       element?.dismiss();
     } else {

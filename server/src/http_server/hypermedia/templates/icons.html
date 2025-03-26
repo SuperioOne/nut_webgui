@@ -2,16 +2,14 @@
 {%- macro get_svg(name, size) -%}
 
 {%- if name == "menu" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}"viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}"viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <line x1="3" y1="12" x2="21" y2="12"></line>
   <line x1="3" y1="6" x2="21" y2="6"></line>
   <line x1="3" y1="18" x2="21" y2="18"></line>
 </svg>
 
 {%- else if name == "alert-circle" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <circle cx="12" cy="12" r="10">
   </circle>
   <line x1="12" y1="8" x2="12" y2="12">
@@ -27,8 +25,7 @@
 </svg>
 
 {%- else if name == "battery-charging" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path>
   <line x1="23" y1="13" x2="23" y2="11"></line>
   <polyline points="11 6 7 12 13 12 9 18"></polyline>
@@ -41,23 +38,29 @@
 </svg>
 
 {%- else if name == "check-circle" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
   <polyline points="22 4 12 14.01 9 11.01"></polyline>
 </svg>
 
+
+{%- else if name == "grid" -%}
+<svg viewBox="0 0 24 24" width="{{size}}" height="{{size}}" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1">
+  <rect x="3" y="3" width="7" height="7"></rect>
+  <rect x="14" y="3" width="7" height="7"></rect>
+  <rect x="14" y="14" width="7" height="7"></rect>
+  <rect x="3" y="14" width="7" height="7"></rect>
+</svg>
+
 {%- else if name == "info" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <circle cx="12" cy="12" r="10"></circle>
   <line x1="12" y1="16" x2="12" y2="12"></line>
   <line x1="12" y1="8" x2="12.01" y2="8"></line>
 </svg>
 
 {%- else if name == "loader" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <line x1="12" y1="2" x2="12" y2="6"></line>
   <line x1="12" y1="18" x2="12" y2="22"></line>
   <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
@@ -69,8 +72,7 @@
 </svg>
 
 {%- else if name == "minimize-2" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <polyline points="4 14 10 14 10 20"></polyline>
   <polyline points="20 10 14 10 14 4"></polyline>
   <line x1="14" y1="10" x2="21" y2="3"></line>
@@ -78,8 +80,7 @@
 </svg>
 
 {%- else if name == "maximize-2" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <polyline points="15 3 21 3 21 9"></polyline>
   <polyline points="9 21 3 21 3 15"></polyline>
   <line x1="21" y1="3" x2="14" y2="10"></line>
@@ -87,21 +88,23 @@
 </svg>
 
 {%- else if name == "play" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <polygon points="5 3 19 12 5 21 5 3"></polygon>
 </svg>
 
+{%- else if name == "table" -%}
+<svg viewBox="0 0 24 24" width="{{size}}" height="{{size}}" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1">
+  <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"></path>
+</svg>
+
 {%- else if name == "volume-2" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
   <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
 </svg>
 
 {%- else if name == "volume-x" -%}
-<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
+<svg xmlns="http://www.w3.org/2000/svg" width="{{size}}" height="{{size}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" >
   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
   <line x1="23" y1="9" x2="17" y2="15"></line>
   <line x1="17" y1="9" x2="23" y2="15"></line>
@@ -111,6 +114,13 @@
 <svg viewBox="0 0 24 24" width="{{size}}" height="{{size}}" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" >
   <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
   <line x1="12" y1="2" x2="12" y2="12"></line>
+</svg>
+
+{%- else if name == "search" -%}
+<svg viewBox="0 0 24 24" width="{{size}}" height="{{size}}" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1">
+  <circle cx="11" cy="11" r="8">
+  </circle>
+  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
 </svg>
 
 {%- else if name == "sliders" -%}
