@@ -1,0 +1,24 @@
+{%- import "icons.html" as icons -%}
+
+<div class="content-card flex flex-col gap-4" >
+  <h2 class="opacity-60 text-lg tracking-wide">Variables</h2>
+  <label class="input input-ghost input-sm opacity-60 tracking-wide">
+    {%- call icons::get_svg("search", 16) -%}
+    <input id="variable-filter-input" type="search" placeholder="Filter" name="variable-filter" maxlength="64" autocomplete="off" hx-preserve />
+  </label>
+  <nut-search-list for="variable-filter" class="list">
+    {%- for row in ups.variables -%}
+      <li class="list-row" search-value="{{row.name()}}">
+        <div></div>
+        <div class="grid grid-cols-2 list-col-grow">
+          <p class="break-all font-bold text-primary">
+            {{row.name()}}
+          </p>
+          <p>
+            {{row.value_as_string()}}
+          </p>
+        </div>
+      </li>
+    {%- endfor -%}
+  </nut-search-list>
+</div>

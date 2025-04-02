@@ -1,6 +1,3 @@
-*/node_modules/
-/.idea
-/.vscode
-server/target/
-client/dist/
+**/.idea
+**/.vscode
 bin/

@@ -1,0 +1,133 @@
+{%- extends "../+layout.html" -%}
+{%- import "icons.html" as icons -%}
+
+{%- block page_title -%}
+  NUT Web - {{name}}
+{%- endblock page_title -%}
+
+{%- block content -%}
+  <div class="flex flex-col gap-6">
+    <div class="content-card flex flex-row flex-wrap gap-4 justify-between">
+      <div>
+        <h1 class="font-bold leading-8 text-primary text-xl">{{name}}</h1>
+        <p class="font-light leading-6 text-secondary">
+          {%- if let Some(mfr) = mfr -%}
+            {{mfr}}
+          {%- endif -%}
+          {%- if let Some(model) = model -%}
+            - {{model}}
+          {%- endif -%}
+        </p>
+        <p class="font-light mt-2 text-xs">{{desc}}</p>
+      </div>
+      <div
+        id="ups_status"
+        hx-ext="morph"
+        hx-get="/ups/{{name}}?section=status"
+        hx-indicator="#indicator"
+        hx-swap="morph:innerHTML"
+        hx-trigger="every {{poll_interval}}s"
+      >
+        {%- block ups_status -%}
+          {%- if let Some(status) = ups_status -%}
+            <div class="font-bold text-center text-xl">
+              <h1 class="leading-8">UPS Status</h1>
+              {%- let status_text = crate::http_server::hypermedia::ups_status::get_status_text(status) -%}
+
+              {%- if let Some(status_class) = crate::http_server::hypermedia::ups_status::get_status_class(status) -%}
+                <p>
+                  <span class="{{status_class}}">{{status_text}}</span>
+                </p>
+              {%- else -%}
+                <p class="leading-6 text-primary">{{status_text}}</p>
+              {%- endif -%}
+            </div>
+            <div class="flex flex-row flex-wrap gap-2 justify-center mt-2 w-full">
+              {%- match beeper_status -%}
+                {%- when Some with (true) -%}
+                  <div class="text-success tooltip tooltip-bottom" data-tip="Beeper enabled">
+                    {%- call icons::get_svg("volume-2", 20) -%}
+                  </div>
+                {%- when Some with (false) -%}
+                  <div class="text-warning tooltip tooltip-bottom" data-tip="Beeper disabled">
+                    {%- call icons::get_svg("volume-x", 20) -%}
+                  </div>
+                {%- when None -%}
+              {%- endmatch -%}
+
+              {%- for status_icon in crate::http_server::hypermedia::ups_status::StatusIconIter::new(status) -%}
+                <div class="tooltip tooltip-bottom {{status_icon.class}}" data-tip="{{status_icon.desc}}">
+                  {%- call icons::get_svg(status_icon.name, 20) -%}
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+        {%- endblock ups_status -%}
+      </div>
+    </div>
+
+    <div id="tab-content" class="flex flex-col gap-6" hx-ext="morph">
+      {%- block tab_content -%}
+        <div id="tab-control" class="flex flex-row justify-center">
+          <div role="tablist" class="md:w-fit tabs tabs-box w-full">
+            <a
+            {% if let crate::http_server::hypermedia::routes::ups::UpsPageTabTemplate::Grid { .. } = tab_template  %}
+              class="tab tab-active"
+              hx-disable
+            {% else %}
+              class="tab"
+            {% endif %}
+              hx-get="/ups/{{name}}?tab=grid&section=tabcontent"
+              hx-indicator="#indicator"
+              hx-target="#tab-content"
+              hx-swap="innerHTML"
+              hx-trigger="click"
+              hx-push-url="/ups/{{name}}?tab=grid"
+            >
+              {%- call icons::get_svg("grid", 14) -%}
+              <span class="mx-2">Grid View</span>
+            </a>
+            <a
+            {% if let crate::http_server::hypermedia::routes::ups::UpsPageTabTemplate::Variables { .. } = tab_template  %}
+              class="tab tab-active"
+              hx-disable
+            {% else %}
+              class="tab"
+            {% endif %}
+              hx-get="/ups/{{name}}?tab=variables&section=tabcontent"
+              hx-indicator="#indicator"
+              hx-target="#tab-content"
+              hx-swap="innerHTML"
+              hx-trigger="click"
+              hx-push-url="/ups/{{name}}?tab=variables"
+            >
+              {%- call icons::get_svg("table", 14) -%}
+              <span class="mx-2">Variables</span>
+            </a>
+            <a
+            {% if let crate::http_server::hypermedia::routes::ups::UpsPageTabTemplate::Commands { .. } = tab_template  %}
+              class="tab tab-active"
+              hx-disable
+            {% else %}
+              class="tab"
+            {% endif %}
+              hx-get="/ups/{{name}}?tab=commands&section=tabcontent"
+              hx-indicator="#indicator"
+              hx-target="#tab-content"
+              hx-swap="innerHTML"
+              hx-trigger="click"
+              hx-push-url="/ups/{{name}}?tab=commands"
+            >
+              {%- call icons::get_svg("play", 14) -%}
+              <span class="mx-2">Commands</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="tab-body">
+          {{tab_template}}
+        </div>
+      {%- endblock tab_content -%}
+    </div>
+  </div>
+{%- endblock content -%}

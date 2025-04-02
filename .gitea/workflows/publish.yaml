@@ -43,7 +43,7 @@ jobs:
       - name: Build container images
         run: >
           make generate-dockerfiles;
-          source ./containers/annotation.conf;
+          source ./bin/annotation.conf;
           MAJOR_MINOR_TAG=$(echo -n "${VERSION}" | awk -F '.' '{print $1"."$2}');
           ALIAS_TAGS="latest ${MAJOR_MINOR_TAG}";
           ./build_images.sh -a "${ALIAS_TAGS}" -r "${REGISTRY_URL}" -u "${REGISTRY_USERNAME}" -p "${REGISTRY_PASSWORD}";
@@ -53,7 +53,7 @@ jobs:
           REGISTRY_PASSWORD: ${{secrets.REGISTRY_ACCESS_TOKEN}}
       - name: Generate release body from changelog
         run: >
-          source ./containers/annotation.conf;
+          source ./bin/annotation.conf;
           cat ./CHANGELOG | awk -v version="^# v${VERSION}" '$0 ~ version {start=1;next}/^# v.*$/{start=0}start' > release_body.txt;
           cat ./release_body.txt;
       - name: Crete draft release with binaries

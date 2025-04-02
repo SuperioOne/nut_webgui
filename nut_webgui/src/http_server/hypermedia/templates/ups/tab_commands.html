@@ -1,0 +1,36 @@
+{%- import "icons.html" as icons -%}
+
+<div class="content-card flex flex-col gap-4">
+  <h2 class="opacity-60 text-lg tracking-wide">Commands</h2>
+  <label class="input input-ghost input-sm opacity-60 tracking-wide">
+    {%- call icons::get_svg("search", 16) -%}
+    <input type="search" placeholder="Filter" name="command-filter" maxlength="64" autocomplete="off" />
+  </label>
+  <nut-search-list for="command-filter" class="list">
+    {%- for row in ups.commands -%}
+      <li class="list-row" search-value="{{row}}">
+        <div></div>
+        <p class="break-all font-bold text-primary">
+          {{row}}
+        </p>
+        <form>
+          <nut-confirm-button
+            hx-post="/ups/{{ups.name}}/command"
+            hx-swap="none"
+            hx-trigger="command-confirmed"
+            cancel-text="Cancel"
+            class="btn btn-ghost btn-primary"
+            confirm-text="Run"
+            message="Are you sure about the run '{{row}}' command?"
+            name="command"
+            target-event="command-confirmed"
+            title="Command Confirmation"
+            value="{{row}}"
+          >
+            {%- call icons::get_svg("play", 24) -%}
+          </nut-confirm-button>
+        </form>
+      </li>
+    {%- endfor -%}
+  </nut-search-list>
+</div>

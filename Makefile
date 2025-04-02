@@ -1,19 +1,18 @@
-PROJECT_NAME     := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".name")
-PROJECT_VER      := $(shell cargo read-manifest --manifest-path ./server/Cargo.toml | jq -r ".version")
+PROJECT_NAME     := $(shell cargo read-manifest --manifest-path ./nut_webgui/Cargo.toml | jq -r ".name")
+PROJECT_VER      := $(shell cargo read-manifest --manifest-path ./nut_webgui/Cargo.toml | jq -r ".version")
 BIN_DIR          := ./bin
-STATIC_DIR       := ./client/dist
-NODE_MODULES_DIR := ./client/node_modules
-PROJECT_SRCS     := $(shell find server/src -type f -iname *.rs) \
-		    $(shell find server/src -type f -iname *.html) \
-		    ./server/Cargo.toml \
-		    ./server/Cargo.lock
-STATIC_SRCS      := client/package.json \
-		    client/pnpm-lock.yaml \
-		    client/tailwind.config.js \
-		    client/src/style.css \
-		    $(shell find client/src -type f -iname *.js) \
-		    $(shell find client/static -type f) \
-		    $(shell find server/src -type f -iname *.html)
+STATIC_DIR       := ./nut_webgui_client/dist
+NODE_MODULES_DIR := ./nut_webgui_client/node_modules
+PROJECT_SRCS     := $(shell find nut_webgui/src -type f -iname *.rs) \
+		    $(shell find nut_webgui/src -type f -iname *.html) \
+		    ./nut_webgui/Cargo.toml \
+		    ./nut_webgui/Cargo.lock
+STATIC_SRCS      := nut_webgui_client/package.json \
+		    nut_webgui_client/pnpm-lock.yaml \
+		    nut_webgui_client/src/style.css \
+		    $(shell find nut_webgui_client/src -type f -iname *.js) \
+		    $(shell find nut_webgui_client/static -type f) \
+		    $(shell find nut_webgui/src -type f -iname *.html)
 STATIC_OBJS      := $(addprefix $(BIN_DIR)/static/,index.js style.css icon.svg)
 DIST_DIR          = $(BIN_DIR)/dist
 DOCKER_TEMPLATE   = ./containers/Dockerfile.template
@@ -27,7 +26,7 @@ PACK_TARGETS      = x86-64-musl \
 		    riscv64gc-gnu
 
 fn_output_path    = $(BIN_DIR)/$(1)/$(PROJECT_NAME)
-fn_target_path    = server/target/$(1)/$(PROJECT_NAME)
+fn_target_path    = nut_webgui/target/$(1)/$(PROJECT_NAME)
 
 # RECIPIES:
 # ==============================================================================
@@ -54,7 +53,7 @@ build: $(call fn_output_path,release) build-client
 
 $(call fn_output_path,release) &: $(PROJECT_SRCS)
 	@echo "Building binaries for the current system's architecture."
-	@cd ./server && cargo build --release
+	@cd nut_webgui && cargo build --release
 	@install -D $(call fn_target_path,release) $(call fn_output_path,release)
 
 # x86-64 with different micro-architecture levels
@@ -64,7 +63,7 @@ build-x86-64-musl: $(call fn_output_path,x86-64-musl) build-client
 
 $(call fn_output_path,x86-64-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-unknown-linux-musl"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
 		cargo build --target=x86_64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-musl/release) \
@@ -75,7 +74,7 @@ build-x86-64-v3-musl: $(call fn_output_path,x86-64-v3-musl) build-client
 
 $(call fn_output_path,x86-64-v3-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v3-unknown-linux-musl"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v3 -Clinker=rust-lld" && \
 		cargo build --target=x86_64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-musl/release) \
@@ -86,7 +85,7 @@ build-x86-64-v4-musl: $(call fn_output_path,x86-64-v4-musl) build-client
 
 $(call fn_output_path,x86-64-v4-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v4-unknown-linux-musl"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v4 -Clinker=rust-lld" && \
 		cargo build --target=x86_64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-musl/release) \
@@ -99,7 +98,7 @@ build-aarch64-musl: $(call fn_output_path,aarch64-musl) build-client
 
 $(call fn_output_path,aarch64-musl) &: $(PROJECT_SRCS)
 	@echo "Building for aarch64-unknown-linux-musl"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
 		cargo build --target=aarch64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,aarch64-unknown-linux-musl/release) \
@@ -110,7 +109,7 @@ build-aarch64-gnu: $(call fn_output_path,aarch64-gnu) build-client
 
 $(call fn_output_path,aarch64-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for aarch64-unknown-linux-gnu"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clinker=aarch64-linux-gnu-gcc" && \
 		cargo build --target=aarch64-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,aarch64-unknown-linux-gnu/release) \
@@ -123,7 +122,7 @@ build-armv7-musleabi: $(call fn_output_path,armv7-musleabi) build-client
 
 $(call fn_output_path,armv7-musleabi) &: $(PROJECT_SRCS)
 	@echo "Building for armv7-unknown-linux-musleabi"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
 		cargo build --target=armv7-unknown-linux-musleabi --release
 	@install -D $(call fn_target_path,armv7-unknown-linux-musleabi/release) \
@@ -136,7 +135,7 @@ build-armv6-musleabi: $(call fn_output_path,armv6-musleabi) build-client
 
 $(call fn_output_path,armv6-musleabi) &: $(PROJECT_SRCS)
 	@echo "Building for arm-unknown-linux-musleabi"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
 		cargo build --target=arm-unknown-linux-musleabi --release
 	@install -D $(call fn_target_path,arm-unknown-linux-musleabi/release) \
@@ -149,7 +148,7 @@ build-riscv64gc-gnu: $(call fn_output_path,riscv64gc-gnu) build-client
 
 $(call fn_output_path,riscv64gc-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for riscv64gc-unknown-linux-gnu"
-	@cd ./server && \
+	@cd nut_webgui && \
 		export RUSTFLAGS="-Clinker=riscv64-linux-gnu-gcc -Ctarget-feature=+crt-static" && \
 		cargo build --target=riscv64gc-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,riscv64gc-unknown-linux-gnu/release) \
@@ -159,8 +158,8 @@ $(call fn_output_path,riscv64gc-gnu) &: $(PROJECT_SRCS)
 build-client: $(STATIC_OBJS)
 
 $(STATIC_OBJS) &: $(STATIC_SRCS)
-	@pnpm install -C ./client/
-	@pnpm run -C ./client/ build --outdir=../$(BIN_DIR)/static --minify
+	@pnpm install -C ./nut_webgui_client/
+	@pnpm run -C ./nut_webgui_client/ build --outdir=../$(BIN_DIR)/static --minify
 
 .PHONY: build-all
 build-all: $(addprefix build-,$(PACK_TARGETS))
@@ -181,7 +180,7 @@ pack: $(STATIC_OBJS)
 
 .PHONY: test
 test:
-	@cd ./server && cargo test
+	@cd nut_webgui && cargo test
 
 .PHONY: generate-dockerfiles
 generate-dockerfiles: 
@@ -221,21 +220,22 @@ generate-dockerfiles:
 		-e 's/{BUSYBOX_LABEL}/stable-musl/g' \
 		"$(DOCKER_TEMPLATE)" > ./containers/riscv64.Dockerfile
 	@echo "Generating annotation.conf"
-	@CARGO_MANIFEST=$$(cargo read-manifest --manifest-path ./server/Cargo.toml); \
-	echo "VERSION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".version")\"" > ./containers/annotation.conf; \
-	echo "HOME_URL=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".homepage")\"" >> ./containers/annotation.conf; \
-	echo "NAME=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".name")\"" >> ./containers/annotation.conf; \
-	echo "LICENSES=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".license")\"" >> ./containers/annotation.conf; \
-	echo "AUTHORS=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r '.authors | join(" ")')\"" >> ./containers/annotation.conf; \
-	echo "DOCUMENTATION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".documentation")\"" >> ./containers/annotation.conf; \
-	echo "SOURCE=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".repository")\"" >> ./containers/annotation.conf; \
-	echo "DESCRIPTION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".description")\"" >> ./containers/annotation.conf; \
-	echo "REVISION=\"$$(git rev-parse --verify HEAD)\"" >> ./containers/annotation.conf;
+	@CARGO_MANIFEST=$$(cargo read-manifest --manifest-path ./nut_webgui/Cargo.toml); \
+	echo "VERSION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".version")\"" > ./bin/annotation.conf; \
+	echo "HOME_URL=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".homepage")\"" >> ./bin/annotation.conf; \
+	echo "NAME=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".name")\"" >> ./bin/annotation.conf; \
+	echo "LICENSES=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".license")\"" >> ./bin/annotation.conf; \
+	echo "AUTHORS=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r '.authors | join(" ")')\"" >> ./bin/annotation.conf; \
+	echo "DOCUMENTATION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".documentation")\"" >> ./bin/annotation.conf; \
+	echo "SOURCE=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".repository")\"" >> ./bin/annotation.conf; \
+	echo "DESCRIPTION=\"$$(echo -n "$${CARGO_MANIFEST}" | jq -r ".description")\"" >> ./bin/annotation.conf; \
+	echo "REVISION=\"$$(git rev-parse --verify HEAD)\"" >> ./bin/annotation.conf;
 	
 .PHONY: clean
 clean:
 	@echo "Cleaning artifacts"
-	@cd server && cargo clean
+	@cd nut_webgui && cargo clean
+	@cd nut_webgui_upsmpc && cargo clean
 	@if [ -d "$(BIN_DIR)" ]; then rm -r "$(BIN_DIR)"; fi;
 	@if [ -d "$(STATIC_DIR)" ]; then rm -r "$(STATIC_DIR)"; fi;
 	@if [ -d "$(NODE_MODULES_DIR)" ]; then rm -r "$(NODE_MODULES_DIR)"; fi;

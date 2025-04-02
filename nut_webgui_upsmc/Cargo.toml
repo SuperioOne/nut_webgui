@@ -1,0 +1,22 @@
+[package]
+name = "nut_webgui_upsmc"
+version = "0.1.0"
+edition = "2024"
+
+authors = ["Timur Olur <pm@smdd.dev>"]
+description = "UPS Management Client"
+documentation = "https://github.com/SuperioOne/nut_webgui"
+homepage = "https://github.com/SuperioOne/nut_webgui"
+keywords = ["nut", "ups", "network-ups-tools", "RFC9271"]
+license = "Apache-2.0"
+repository = "https://github.com/SuperioOne/nut_webgui"
+
+[features]
+default = []
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { version = "1", features = ["serde_derive"], optional = true }
+tokio = { version = "1", features = ["net", "io-util"] }
+tokio-util = { version = "0.7"}
+tracing = "0.1"
