@@ -1,0 +1,98 @@
+/* Register all required css files here*/
+@import "tailwindcss";
+@source "./src/**/*.{html,js}";
+@source "../../nut_webgui/src/http_server/hypermedia/**/*.{rs,html}";
+
+@plugin "daisyui" {
+        themes: light --default, dark --prefersdark, abyss, autumn, business, corporate, dim, dracula, forest, night, nord, sunset, synthwave, winter;
+}
+
+@plugin "daisyui/theme" {
+        name: "tokyo-night";
+        default: false;
+        prefersdark: false;
+        color-scheme: "dark";
+        --color-base-100: oklch(20.45% 0.018 284.72);
+        --color-base-200: oklch(22.68% 0.023 280.66);
+        --color-base-300: oklch(22% 0 0);
+        --color-base-content: oklch(76.66% 0.054 275.49);
+        --color-primary: oklch(71.90% 0.132 264.20);
+        --color-primary-content: oklch(100% 0 0);
+        --color-secondary: oklch(62.59% 0.129 298.13);
+        --color-secondary-content: oklch(100% 0 0);
+        --color-accent: oklch(73.47% 0.129 214.55);
+        --color-accent-content: oklch(100% 0 0);
+        --color-neutral: oklch(35% 0 0);
+        --color-neutral-content: oklch(100% 0 0);
+        --color-info: oklch(47.94% 0.121 266.01);
+        --color-info-content: oklch(92% 0.013 255.508);
+        --color-success: oklch(70.07% 0.140 133.72);
+        --color-success-content: oklch(37% 0.044 257.287);
+        --color-warning: oklch(70.57% 0.093 75.58);
+        --color-warning-content: oklch(0.00% 0.000 0);
+        --color-error: oklch(44.24% 0.110 15.96);
+        --color-error-content: oklch(81.83% 0.043 275.04);
+        --radius-selector: 0.5rem;
+        --radius-field: 0.5rem;
+        --radius-box: 0.5rem;
+        --size-selector: 0.25rem;
+        --size-field: 0.25rem;
+        --border: 1px;
+        --depth: 0;
+        --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+        name: "kanagawa-dragon";
+        default: false;
+        prefersdark: false;
+        color-scheme: "dark";
+        --color-base-100: oklch(18.10% 0.006 106.98);
+        --color-base-200: oklch(22.64% 0.006 91.62);
+        --color-base-300: oklch(18.10% 0.006 106.98);
+        --color-base-content: oklch(83.16% 0.007 145.51);
+        --color-primary: oklch(76.88% 0.058 86.58);
+        --color-primary-content: oklch(15.56% 0.002 17.34);
+        --color-secondary: oklch(67.94% 0.031 324.11);
+        --color-secondary-content: oklch(15.56% 0.002 17.34);
+        --color-accent: oklch(70.11% 0.035 264.32);
+        --color-accent-content: oklch(15.56% 0.002 17.34);
+        --color-neutral: oklch(15.56% 0.002 17.34);
+        --color-neutral-content: oklch(83.16% 0.007 145.51);
+        --color-info: oklch(59.78% 0.043 228.33);
+        --color-info-content: oklch(15.56% 0.002 17.34);
+        --color-success: oklch(74.77% 0.112 128.36);
+        --color-success-content: oklch(15.56% 0.002 17.34);
+        --color-warning: oklch(78.27% 0.158 61.68);
+        --color-warning-content: oklch(15.56% 0.002 17.34);
+        --color-error: oklch(59.76% 0.227 27.65);
+        --color-error-content: oklch(15.56% 0.002 17.34);
+        --radius-selector: 0.25rem;
+        --radius-field: 0.25rem;
+        --radius-box: 0.25rem;
+        --size-selector: 0.25rem;
+        --size-field: 0.25rem;
+        --border: 1px;
+        --depth: 0;
+        --noise: 0;
+}
+
+@layer components {
+        .htmx-send-error-indicator {
+                display: none;
+        }
+
+        .htmx-send-error-indicator.htmx-send-error-active {
+                display: inline-block;
+                color: var(--color-error);
+                animation: var(--animate-pulse);
+        }
+
+        .content-card {
+                @apply bg-base-200 rounded-box shadow-md text-base-content p-6;
+        }
+}
+
+@view-transition {
+        navigation: auto;
+}

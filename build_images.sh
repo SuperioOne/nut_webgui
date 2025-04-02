@@ -13,7 +13,7 @@ TLS_VERIFY="false";
 ALIAS_TAGS="";
 DRY_RUN="false";
 PUBLISH="false";
-ANNOTATION_CONF="./containers/annotation.conf";
+ANNOTATION_CONF="./bin/annotation.conf";
 USER_NAME="";
 USER_PASS="";
 
