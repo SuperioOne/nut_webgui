@@ -73,7 +73,7 @@ macro_rules! ups_validation_test {
       let ups_var_list = ddf.into_list_var_response().unwrap();
       let var_count = (&ups_var_list).lines().count() - 2;
 
-      match nut_webgui_upsmc::parser::parse_var_list(&ups_var_list) {
+      match nut_webgui_upsmc::_old::parser::parse_var_list(&ups_var_list) {
         Ok(result) => {
           assert_eq!(var_count, result.len());
         }

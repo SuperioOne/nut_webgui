@@ -1,6 +1,6 @@
 use super::UpsVarDetail;
 use nut_webgui_upsmc::{
-  client::{Client, UpsClient},
+  Client, UpsClient,
   errors::NutClientErrors,
   ups_variables::{UpsVariable, VAR_UPS_STATUS},
 };

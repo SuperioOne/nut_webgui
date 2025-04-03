@@ -181,6 +181,7 @@ pack: $(STATIC_OBJS)
 .PHONY: test
 test:
 	@cd nut_webgui && cargo test
+	@cd nut_webgui_upsmc && cargo test
 
 .PHONY: generate-dockerfiles
 generate-dockerfiles: 
