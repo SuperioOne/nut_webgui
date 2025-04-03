@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use super::errors::NutClientErrors;
+use crate::errors::NutClientErrors;
 use std::fmt::{Display, Formatter};
 
 pub const VAR_AMBIENT_HUMIDITY: &str = "ambient.humidity";

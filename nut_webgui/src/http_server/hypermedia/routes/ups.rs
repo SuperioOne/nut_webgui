@@ -13,7 +13,7 @@ use axum::{
   http::StatusCode,
   response::{Html, IntoResponse, Redirect, Response},
 };
-use nut_webgui_upsmc::{client::UpsAuthClient, errors::NutClientErrors};
+use nut_webgui_upsmc::{UpsAuthClient, errors::NutClientErrors};
 use serde::Deserialize;
 use tracing::{error, info};
 

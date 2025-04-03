@@ -9,9 +9,7 @@ use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
 };
-use nut_webgui_upsmc::{
-  client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable,
-};
+use nut_webgui_upsmc::{UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable};
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
 use std::{collections::BTreeMap, ops::Deref};
 use tracing::info;

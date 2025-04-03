@@ -1,8 +1,7 @@
-use super::errors::ParseErrorKind;
+use crate::errors::ParseErrorKind;
+use crate::internal::word_split::AsciiWords;
 use crate::{Ups, errors::NutClientErrors, ups_variables::UpsVariable};
-use std::borrow::Cow;
 
-#[macro_export]
 macro_rules! is_error_response {
   ( $x:expr ) => {{
     let value: &str = $x;
@@ -10,14 +9,12 @@ macro_rules! is_error_response {
   }};
 }
 
-#[macro_export]
 macro_rules! is_ok_response {
   ( $x:expr ) => {
     "OK\n" == $x
   };
 }
 
-#[macro_export]
 macro_rules! is_list_end {
   ( $x:expr ) => {{
     let line: &str = $x;
@@ -29,7 +26,6 @@ macro_rules! is_list_end {
   }};
 }
 
-#[macro_export]
 macro_rules! extract_error {
   ($x:expr) => {{
     let line: &str = $x;
@@ -53,90 +49,11 @@ macro_rules! check_list_start {
   }};
 }
 
-const ESCAPE_BYTE: u8 = b'\\';
-const ESCAPE_CHAR: char = '\\';
-const QUOTE_BYTE: u8 = b'"';
-
-pub struct AsciiWords<'a> {
-  inner: Vec<Cow<'a, str>>,
-}
-
-// NOTE: Insert `Must Not` meme to limit the urge for creating SIMD version.
-
-/// Splits US-ASCII text into words based on notation defined in RFC 9271 with minimal allocations.
-impl<'a> AsciiWords<'a> {
-  /// Internal only
-  /// If necessary, allocates new String without escape characters.
-  fn into_escaped(word: &'a str) -> Cow<'a, str> {
-    if let Some(first_idx) = word.find(ESCAPE_CHAR) {
-      let mut escaped_word = String::from(&word[..first_idx]);
-      let mut slice_start: usize = 0;
-      let remaining = &word[first_idx + 1..];
-
-      for (idx, character) in remaining.as_bytes().iter().enumerate() {
-        if *character == ESCAPE_BYTE {
-          if slice_start < idx {
-            escaped_word.push_str(&remaining[slice_start..idx]);
-            slice_start = idx + 1;
-          }
-        }
-      }
-
-      if slice_start < remaining.len() {
-        escaped_word.push_str(&remaining[slice_start..]);
-      }
-
-      Cow::Owned(escaped_word)
-    } else {
-      Cow::Borrowed(word)
-    }
-  }
-
-  pub fn split(input: &'a str) -> Self {
-    let mut words: Vec<Cow<'a, str>> = Vec::new();
-    let mut slice_start: Option<usize> = None;
-    let mut escape: bool = false;
-    let mut slice_char: Option<u8> = None;
-
-    for (idx, char_byte) in input.as_bytes().iter().enumerate() {
-      if escape {
-        escape = false;
-      } else if *char_byte == QUOTE_BYTE && slice_char != Some(QUOTE_BYTE) {
-        slice_char = Some(QUOTE_BYTE);
-        slice_start = Some(idx + 1);
-      } else if slice_char.is_some_and(|sc| sc == *char_byte)
-        || (slice_char.is_none() && char_byte.is_ascii_whitespace())
-      {
-        if let Some(start) = slice_start {
-          words.push(Self::into_escaped(&input[start..idx]));
-        }
-
-        slice_start = None;
-        slice_char = None;
-      } else if *char_byte == ESCAPE_BYTE {
-        escape = true;
-
-        if slice_start.is_none() {
-          slice_start = Some(idx);
-        }
-      } else if slice_start.is_none() {
-        slice_start = Some(idx);
-      }
-    }
-
-    if let Some(start) = slice_start {
-      words.push(Self::into_escaped(&input[start..]));
-    }
-
-    Self { inner: words }
-  }
-
-  /// Returns splitted words as slice.
-  #[inline]
-  pub fn as_slice(&self) -> &[Cow<'a, str>] {
-    &self.inner
-  }
-}
+pub(crate) use check_list_start;
+pub(crate) use extract_error;
+pub(crate) use is_error_response;
+pub(crate) use is_list_end;
+pub(crate) use is_ok_response;
 
 #[inline]
 pub fn parse_cmd_list(buffer: &str) -> Result<Vec<Box<str>>, NutClientErrors> {

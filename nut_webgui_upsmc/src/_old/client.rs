@@ -2,8 +2,10 @@ use super::{parser::parse_variable, ups_variables::UpsVariable};
 use crate::{
   Ups,
   errors::NutClientErrors,
-  extract_error, is_error_response, is_list_end, is_ok_response,
-  parser::{parse_cmd_list, parse_ups_list, parse_var_list},
+  parser::{
+    extract_error, is_error_response, is_list_end, is_ok_response, parse_cmd_list, parse_ups_list,
+    parse_var_list,
+  },
 };
 use tokio::{
   io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader},
