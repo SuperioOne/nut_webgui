@@ -2,7 +2,7 @@ use crate::errors::ParseErrors;
 use crate::internal::{ReadOnlyStr, ascii_rules::NutAsciiText};
 
 /// INST command name.
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CmdName {
   name: ReadOnlyStr,
 }

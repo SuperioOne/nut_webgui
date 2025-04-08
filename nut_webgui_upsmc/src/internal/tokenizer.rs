@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Token {
   At(usize),
   Backslash(usize),
@@ -9,36 +9,143 @@ pub enum Token {
   Whitespace(usize),
 }
 
-pub struct TokenIterator<'a> {
-  text_bytes: &'a [u8],
+#[derive(Debug, Clone, Copy)]
+struct TokenizerState {
   slice_head: usize,
   read_head: usize,
 }
 
-impl<'a> Iterator for TokenIterator<'a> {
-  type Item = Token;
+pub struct Tokenizer<'a> {
+  buffer: &'a [u8],
+  state: TokenizerState,
+}
 
-  fn next(&mut self) -> Option<Self::Item> {
+impl<'a> Tokenizer<'a> {
+  pub const fn new(buffer: &'a [u8]) -> Self {
+    Self {
+      buffer,
+      state: TokenizerState {
+        read_head: 0,
+        slice_head: 0,
+      },
+    }
+  }
+
+  #[inline]
+  pub const fn from_str(buffer: &'a str) -> Self {
+    Self::new(buffer.as_bytes())
+  }
+
+  pub fn skip_while<F>(&mut self, predicate: F)
+  where
+    F: Fn((Token, Option<Token>)) -> bool,
+  {
+    let mut tmp_tokenizer = Self {
+      state: self.state,
+      buffer: self.buffer,
+    };
+
+    let mut tmp_state = tmp_tokenizer.state;
+
+    loop {
+      match tmp_tokenizer.next_token() {
+        Some(token) => {
+          let next = tmp_tokenizer.peek();
+
+          if predicate((token, next)) {
+            tmp_state = tmp_tokenizer.state;
+          } else {
+            self.state = tmp_state;
+            break;
+          }
+        }
+        None => {
+          break;
+        }
+      }
+    }
+  }
+
+  pub fn take_while<F>(&mut self, predicate: F) -> Vec<Token>
+  where
+    F: Fn((Token, Option<Token>)) -> bool,
+  {
+    let mut extracted: Vec<Token> = Vec::new();
+    let mut tmp_tokenizer = Self {
+      state: self.state,
+      buffer: self.buffer,
+    };
+
+    let mut tmp_state = tmp_tokenizer.state;
+
+    loop {
+      match tmp_tokenizer.next_token() {
+        Some(token) => {
+          let next = tmp_tokenizer.peek();
+
+          if predicate((token, next)) {
+            tmp_state = tmp_tokenizer.state;
+            extracted.push(token);
+          } else {
+            self.state = tmp_state;
+            break;
+          }
+        }
+        None => {
+          break;
+        }
+      }
+    }
+
+    extracted
+  }
+
+  pub fn skip_whitespace(&mut self) {
+    let mut tmp_tokenizer = Self {
+      state: self.state,
+      buffer: self.buffer,
+    };
+
+    let mut state = self.state;
+
+    while let Some(Token::Whitespace(_)) = tmp_tokenizer.next_token() {
+      state = tmp_tokenizer.state;
+      continue;
+    }
+
+    self.state = state;
+  }
+
+  pub fn peek(&self) -> Option<Token> {
+    let mut tmp_tokenizer = Self {
+      state: self.state,
+      buffer: self.buffer,
+    };
+
+    tmp_tokenizer.next_token()
+  }
+
+  pub fn next_token(&mut self) -> Option<Token> {
     macro_rules! char_token_case {
       ($variant:ident) => {{
-        if self.read_head != 0 && self.slice_head < self.read_head {
-          let token = Some(Token::Text(self.slice_head, self.read_head - 1));
+        if self.state.read_head != 0 && self.state.slice_head < self.state.read_head {
+          let token = Some(Token::Text(self.state.slice_head, self.state.read_head - 1));
 
-          self.slice_head = self.read_head + 1;
+          self.state.slice_head = self.state.read_head + 1;
 
           return token;
         } else {
-          let token = Some(Token::$variant(self.read_head));
-          self.read_head += 1;
-          self.slice_head = self.read_head;
+          let token = Some(Token::$variant(self.state.read_head));
+          self.state.read_head += 1;
+          self.state.slice_head = self.state.read_head;
 
           return token;
         }
       }};
     }
 
-    while self.read_head < self.text_bytes.len() {
-      let char_byte = self.text_bytes.get(self.read_head);
+    while self.state.read_head < self.buffer.len() {
+      let char_byte = self.buffer.get(self.state.read_head);
 
       match char_byte.as_deref() {
         Some(b'"') => char_token_case!(DoubleQuote),
@@ -48,14 +155,14 @@ impl<'a> Iterator for TokenIterator<'a> {
         Some(b'\n') => char_token_case!(LF),
         Some(v) if v.is_ascii_whitespace() => char_token_case!(Whitespace),
         _ => {
-          self.read_head += 1;
+          self.state.read_head += 1;
         }
       }
     }
 
-    if self.slice_head < self.text_bytes.len() {
-      let token = Some(Token::Text(self.slice_head, self.text_bytes.len() - 1));
-      self.slice_head = self.text_bytes.len();
+    if self.state.slice_head < self.buffer.len() {
+      let token = Some(Token::Text(self.state.slice_head, self.buffer.len() - 1));
+      self.state.slice_head = self.buffer.len();
 
       token
     } else {
@@ -64,23 +171,31 @@ impl<'a> Iterator for TokenIterator<'a> {
   }
 }
 
-pub trait StringTokenizer {
-  fn iter_tokenizer(&self) -> TokenIterator<'_>;
+pub struct TokenizerIter<'a> {
+  inner: Tokenizer<'a>,
 }
 
-impl StringTokenizer for &str {
-  fn iter_tokenizer(&self) -> TokenIterator<'_> {
-    TokenIterator {
-      text_bytes: self.as_bytes(),
-      slice_head: 0,
-      read_head: 0,
-    }
+impl<'a> Iterator for TokenizerIter<'a> {
+  type Item = Token;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    self.inner.next_token()
+  }
+}
+
+impl<'a> IntoIterator for Tokenizer<'a> {
+  type Item = Token;
+
+  type IntoIter = TokenizerIter<'a>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    Self::IntoIter { inner: self }
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use crate::internal::tokenizer::{StringTokenizer, Token};
+  use crate::internal::tokenizer::{Token, Tokenizer, TokenizerState};
 
   fn has_any_special_token(input: &str) -> bool {
     for chr_byte in input.as_bytes() {
@@ -105,10 +220,10 @@ mod tests {
       #[test]
       fn $test_name(){
         let input: &str = concat!($($text,)+);
-        let mut tokenizer = input.iter_tokenizer();
+        let mut tokenizer = Tokenizer::from_str(input);
 
         $(
-          match tokenizer.next() {
+          match tokenizer.next_token() {
            Some(Token::At(idx)) => {
              assert_eq!($text, &input[idx..=idx]);
              assert_eq!($text, "@");
@@ -148,7 +263,7 @@ mod tests {
           };
         )+
 
-        if let None = tokenizer.next() {
+        if let None = tokenizer.next_token() {
           assert!(true)
         } else {
           assert!(false, "Tokenizer does not end properly.");
@@ -231,10 +346,71 @@ mod tests {
 
   #[test]
   fn empty_text() {
-    for _ in "".iter_tokenizer() {
+    for _ in Tokenizer::from_str("") {
       assert!(false, "Input is empty, tokenizer must've return None!");
     }
 
     assert!(true);
+  }
+
+  #[test]
+  fn skip_whitespace() {
+    let mut tokenizer = Tokenizer::from_str("     hello.       ");
+
+    tokenizer.skip_whitespace();
+    assert_eq!(Some(Token::Text(5, 10)), tokenizer.next_token());
+
+    tokenizer.skip_whitespace();
+    assert_eq!(None, tokenizer.next_token());
+  }
+
+  #[test]
+  fn skip_but_no_whitespace() {
+    let mut tokenizer = Tokenizer::from_str("hello.");
+
+    tokenizer.skip_whitespace();
+    assert_eq!(Some(Token::Text(0, 5)), tokenizer.next_token());
+    assert_eq!(None, tokenizer.next_token());
+  }
+
+  #[test]
+  fn skip_whitespace_empty() {
+    let mut tokenizer = Tokenizer::from_str("");
+
+    tokenizer.skip_whitespace();
+    assert_eq!(None, tokenizer.next_token());
+  }
+
+  #[test]
+  fn skip_while() {
+    let text = r#""""""""text""#;
+    let mut tokenizer = Tokenizer::from_str(text);
+
+    tokenizer.skip_while(|tokens| match tokens {
+      (Token::Text(_, _), Some(Token::DoubleQuote(_))) => false,
+      _ => true,
+    });
+
+    assert_eq!(Some(Token::Text(7, 10)), tokenizer.next_token());
+    assert_eq!(Some(Token::DoubleQuote(11)), tokenizer.next_token());
+    assert_eq!(None, tokenizer.next_token());
+  }
+
+  #[test]
+  fn take_while() {
+    let text = r#"hello world""#;
+    let mut tokenizer = Tokenizer::from_str(text);
+
+    let tokens = tokenizer.take_while(|(token, _)| match token {
+      Token::DoubleQuote(_) => false,
+      _ => true,
+    });
+    assert_eq!(
+      &[Token::Text(0, 4), Token::Whitespace(5), Token::Text(6, 10)],
+      tokens.as_slice()
+    );
+
+    assert_eq!(Some(Token::DoubleQuote(11)), tokenizer.next_token());
+    assert_eq!(None, tokenizer.next_token());
   }
 }

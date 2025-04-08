@@ -1,0 +1,115 @@
+use nut_webgui_upsmc::VarName;
+use nut_webgui_upsmc::errors::ParseErrors;
+
+macro_rules! var_name_test {
+  ($test_name:ident, $name:literal) => {
+    #[test]
+    fn $test_name() {
+      if let Err(err) = VarName::new($name) {
+        assert!(false, "Variable name validation failed {:?}", err)
+      } else {
+        assert!(true)
+      }
+    }
+  };
+
+  ($test_name:ident, $name:literal, $fail_reason:pat_param) => {
+    #[test]
+    fn $test_name() {
+      match VarName::new($name) {
+        Err($fail_reason) => assert!(true),
+        Err(err) => assert!(
+          false,
+          "Variable name failed but error type does not match error={:?}",
+          err
+        ),
+        Ok(_) => assert!(
+          false,
+          "Variable name was expected to fail but it succeed unexpectedly"
+        ),
+      }
+    }
+  };
+}
+
+macro_rules! var_cmp_test {
+  ($test_name:ident, $left:expr, $right:expr) => {
+    #[test]
+    fn $test_name() {
+      assert!($left.eq(&$right))
+    }
+  };
+}
+
+var_name_test!(empty_name, "", ParseErrors::Empty);
+
+var_name_test!(
+  invalid_chars,
+  "ups.var;with.semicolon",
+  ParseErrors::InvalidChar { position: 7 }
+);
+
+var_name_test!(
+  invalid_whitespace,
+  "  ups.not.trimmed",
+  ParseErrors::InvalidChar { position: 0 }
+);
+
+var_name_test!(
+  invalid_dot_at_start,
+  ".ups.not.trimmed",
+  ParseErrors::InvalidChar { position: 0 }
+);
+
+var_name_test!(
+  invalid_uppercase,
+  "ups.statuS",
+  ParseErrors::InvalidChar { position: 9 }
+);
+
+var_name_test!(valid_name, "ups.load");
+
+var_name_test!(valid_name_with_numeric, "ups.sensors.1.temperature");
+
+var_name_test!(min_name_len_1, "w");
+
+var_cmp_test!(
+  cmp_standard_name,
+  VarName::UPS_STATUS,
+  VarName::new("ups.status").unwrap()
+);
+
+var_cmp_test!(
+  cmp_standard_name_reflexivity,
+  VarName::new("ups.status").unwrap(),
+  VarName::UPS_STATUS
+);
+
+var_cmp_test!(
+  cmp_custom_names,
+  VarName::new("custom.name").unwrap(),
+  VarName::new("custom.name").unwrap()
+);
+
+#[test]
+fn to_string() {
+  assert_eq!(
+    VarName::new("custom.name.1").unwrap().as_str(),
+    "custom.name.1"
+  );
+
+  assert_eq!(
+    VarName::new("custom.name.1").unwrap().to_string(),
+    String::from("custom.name.1")
+  );
+
+  assert_eq!(
+    VarName::AMBIENT_TEMPERATURE_LOW_WARNING.as_str(),
+    "ambient.temperature.low.warning"
+  );
+
+  assert_eq!(
+    VarName::AMBIENT_TEMPERATURE_LOW_WARNING.to_string(),
+    String::from("ambient.temperature.low.warning")
+  );
+}

@@ -8,7 +8,7 @@ macro_rules! impl_standard_names {
     ($const_name:ident, $variant_name:ident, $value:literal);
   )+
   ) => {
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
     enum $enum_name {
       $( $variant_name,)+
     }
@@ -185,8 +185,6 @@ where
 
   if name.is_empty() {
     Err(ParseErrors::Empty)
-  } else if name.len() > 63 {
-    Err(ParseErrors::OutOfBounds)
   } else if let Some(b'.') = name.get(0) {
     Err(ParseErrors::InvalidChar { position: 0 })
   } else {
@@ -205,7 +203,7 @@ where
 /// ```abnf
 /// varname = 1*LOWERCASE_ASCII *62( DOT 1*(DIGIT / LOWERCASE_ASCII) )
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, Hash)]
 pub struct VarName {
   name: Repr<StandardNames, ReadOnlyStr>,
 }
@@ -271,22 +269,39 @@ impl std::fmt::Display for VarName {
   }
 }
 
-impl<T> PartialEq<T> for VarName
-where
-  T: AsRef<str>,
-{
+impl PartialEq<str> for VarName {
   #[inline]
-  fn eq(&self, other: &T) -> bool {
-    let other_str: &str = other.as_ref();
-
+  fn eq(&self, other: &str) -> bool {
     match &self.name {
-      Repr::Standard(name) => name.as_str().eq(other_str),
-      Repr::Custom(boxed_name) => boxed_name.as_ref().eq(other_str),
+      Repr::Standard(name) => name.as_str().eq(other),
+      Repr::Custom(boxed_name) => boxed_name.as_ref().eq(other),
     }
   }
 }
 
-impl Eq for VarName {}
+impl PartialEq<Box<str>> for VarName {
+  #[inline]
+  fn eq(&self, other: &Box<str>) -> bool {
+    self.eq(other.as_ref())
+  }
+}
+
+impl PartialEq<String> for VarName {
+  #[inline]
+  fn eq(&self, other: &String) -> bool {
+    self.eq(other.as_str())
+  }
+}
+
+impl PartialEq<VarName> for VarName {
+  #[inline]
+  fn eq(&self, other: &VarName) -> bool {
+    match (&self.name, &other.name) {
+      (Repr::Standard(lhs), Repr::Standard(rhs)) => lhs == rhs,
+      _ => self.as_str().eq(other.as_str()),
+    }
+  }
+}
 
 impl PartialOrd for VarName {
   #[inline]
@@ -310,7 +325,7 @@ impl serde::Serialize for VarName {
   {
     match &self.name {
       Repr::Standard(name) => serializer.serialize_str(name.as_str()),
-      Repr::Custom(boxed_name) => serializer.serialize_str(&boxed_name),
+      Repr::Custom(name) => serializer.serialize_str(&name),
     }
   }
 }

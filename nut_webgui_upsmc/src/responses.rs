@@ -10,12 +10,6 @@ mod list_ups;
 mod list_var;
 mod misc;
 
-trait DeserializeResponse: Sized {
-  type Error;
-
-  fn deserialize_from(bytes: &[u8]) -> Result<Self, Self::Error>;
-}
-
 pub use get_cmd_desc::*;
 pub use get_ups_desc::*;
 pub use get_var::*;
@@ -27,3 +21,9 @@ pub use list_rw::*;
 pub use list_ups::*;
 pub use list_var::*;
 pub use misc::*;
+
+pub trait DeserializeResponse: Sized {
+  type Error;
+
+  fn deserialize(bytes: &str) -> Result<Self, Self::Error>;
+}
