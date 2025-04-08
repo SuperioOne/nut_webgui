@@ -1,6 +1,5 @@
-use crate::{UpsName, UpsVar};
+use crate::UpsVariables;
 
 pub struct ListVar {
-  pub variables: Vec<UpsVar>,
-  pub ups: UpsName,
+  pub variables: UpsVariables,
 }

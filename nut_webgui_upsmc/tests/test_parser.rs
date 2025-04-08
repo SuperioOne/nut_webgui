@@ -1,3 +1,5 @@
+mod test_cmd_name;
+
 use nut_webgui_upsmc::{
   _old::parser::{
     parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable,

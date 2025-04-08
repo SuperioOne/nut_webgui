@@ -1,5 +1,5 @@
 use crate::ups_variables::UpsError;
-use std::fmt::Display;
+use std::fmt::{self, Display};
 use std::num::{ParseFloatError, ParseIntError};
 
 #[derive(Debug)]
@@ -67,7 +67,7 @@ impl From<ParseFloatError> for NutClientErrors {
 }
 
 impl Display for NutClientErrors {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       NutClientErrors::EmptyResponse => f.write_str("Empty response received"),
       NutClientErrors::IOError { kind } => f.write_fmt(format_args!("IO error: {}", kind)),
@@ -80,7 +80,7 @@ impl Display for NutClientErrors {
 }
 
 impl Display for ParseErrorKind {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let message = match self {
       ParseErrorKind::InvalidCmdFormat => "Malformed CMD line format",
       ParseErrorKind::InvalidUpsFormat => "Malformed UPS line format",
@@ -173,9 +173,9 @@ impl AsRef<str> for ProtocolErrors {
   }
 }
 
-impl std::fmt::Display for ProtocolErrors {
+impl fmt::Display for ProtocolErrors {
   #[inline]
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.write_str(self.as_str())
   }
 }

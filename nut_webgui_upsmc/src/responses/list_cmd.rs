@@ -1,6 +1,5 @@
-use crate::{CmdName, UpsName};
+use crate::CmdName;
 
 pub struct ListCmd {
   pub cmds: Vec<CmdName>,
-  pub ups: UpsName,
 }

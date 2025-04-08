@@ -1,14 +1,14 @@
 use super::internal::{ReadOnlyStr, ascii_rules::NutAsciiText};
 use crate::errors::ParseErrors;
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Hostname {
   name: ReadOnlyStr,
   port: Option<u16>,
 }
 
 /// UPS name
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct UpsName {
   group: Option<ReadOnlyStr>,
   hostname: Option<Hostname>,
