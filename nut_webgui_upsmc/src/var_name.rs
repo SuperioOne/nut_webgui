@@ -1,5 +1,5 @@
 use super::internal::{ReadOnlyStr, Repr, ascii_rules::NutAsciiText};
-use crate::errors::ParseErrors;
+use crate::errors::VarNameParseError;
 
 macro_rules! impl_standard_names {
   ($enum_name:ident,
@@ -58,7 +58,7 @@ macro_rules! impl_standard_names {
 }
 
 impl_standard_names!(
-  StandardNames,
+  StandardName,
   (AMBIENT_HUMIDITY, AmbientHumidity, "ambient.humidity");
   (AMBIENT_HUMIDITY_ALARM, AmbientHumidityAlarm, "ambient.humidity.alarm");
   (AMBIENT_HUMIDITY_ALARM_ENABLE, AmbientHumidityAlarmEnable, "ambient.humidity.alarm.enable");
@@ -177,25 +177,29 @@ impl_standard_names!(
 /// ```abnf
 /// varname = 1*LOWERCASE_ASCII *62( DOT 1*(DIGIT / LOWERCASE_ASCII) )
 /// ```
-fn is_var_name<T>(name: T) -> Result<(), ParseErrors>
+fn is_var_name<T>(name: T) -> Result<(), VarNameParseError>
 where
   T: AsRef<str>,
 {
   let name = name.as_ref().as_bytes();
 
   if name.is_empty() {
-    Err(ParseErrors::Empty)
-  } else if let Some(b'.') = name.get(0) {
-    Err(ParseErrors::InvalidChar { position: 0 })
-  } else {
-    for (idx, byte) in name.iter().enumerate() {
-      if !byte.is_ascii_nut_var() {
-        return Err(ParseErrors::InvalidChar { position: idx });
-      }
-    }
-
-    Ok(())
+    return Err(VarNameParseError::Empty);
   }
+
+  if let Some(first) = name.get(0) {
+    if first.is_ascii_digit() || *first == b'.' {
+      return Err(VarNameParseError::InvalidName);
+    }
+  }
+
+  for byte in name.iter() {
+    if !byte.is_ascii_nut_var() {
+      return Err(VarNameParseError::InvalidName);
+    }
+  }
+
+  Ok(())
 }
 
 /// UPS variable name.
@@ -205,15 +209,15 @@ where
 /// ```
 #[derive(Debug, Clone, Eq, Hash)]
 pub struct VarName {
-  name: Repr<StandardNames, ReadOnlyStr>,
+  name: Repr<StandardName, ReadOnlyStr>,
 }
 
 impl VarName {
-  pub fn new<T>(name: T) -> Result<Self, ParseErrors>
+  pub fn new<T>(name: T) -> Result<Self, VarNameParseError>
   where
     T: AsRef<str>,
   {
-    is_var_name(&name)?;
+    _ = is_var_name(&name)?;
 
     Ok(Self::new_unchecked(name))
   }
@@ -224,7 +228,7 @@ impl VarName {
   {
     let name_str: &str = name.as_ref();
 
-    if let Ok(name) = StandardNames::try_from(name_str) {
+    if let Ok(name) = StandardName::try_from(name_str) {
       Self {
         name: Repr::Standard(name),
       }
@@ -256,6 +260,15 @@ impl AsRef<str> for VarName {
       Repr::Standard(name) => name.as_str(),
       Repr::Custom(boxed_name) => &boxed_name,
     }
+  }
+}
+
+impl TryFrom<&str> for VarName {
+  type Error = VarNameParseError;
+
+  #[inline]
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    Self::new(value)
   }
 }
 

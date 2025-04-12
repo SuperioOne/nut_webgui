@@ -1,4 +1,4 @@
-use crate::errors::ParseErrors;
+use crate::errors::CmdParseError;
 use crate::internal::{ReadOnlyStr, ascii_rules::NutAsciiText};
 
 /// INST command name.
@@ -10,24 +10,22 @@ pub struct CmdName {
 /// Checks if [`&str`] matches to cmdname ABNF grammar.
 ///
 /// ```abnf
-/// varname = 1*LOWERCASE_ASCII *62( DOT 1*LOWERCASE_ASCII )
+/// cmdname = 1*LOWERCASE_ASCII *62( DOT 1*LOWERCASE_ASCII )
 /// ```
-fn is_cmd_name<T>(name: T) -> Result<(), ParseErrors>
+fn is_cmd_name<T>(name: T) -> Result<(), CmdParseError>
 where
   T: AsRef<str>,
 {
   let name = name.as_ref().as_bytes();
 
   if name.is_empty() {
-    Err(ParseErrors::Empty)
-  } else if name.len() > 63 {
-    Err(ParseErrors::OutOfBounds)
+    Err(CmdParseError::Empty)
   } else if let Some(b'.') = name.get(0) {
-    Err(ParseErrors::InvalidChar { position: 0 })
+    Err(CmdParseError::InvalidName)
   } else {
-    for (idx, byte) in name.iter().enumerate() {
+    for byte in name.iter() {
       if !byte.is_ascii_nut_cmd() {
-        return Err(ParseErrors::InvalidChar { position: idx });
+        return Err(CmdParseError::InvalidName);
       }
     }
 
@@ -36,7 +34,7 @@ where
 }
 
 impl CmdName {
-  pub fn new<T>(name: T) -> Result<Self, ParseErrors>
+  pub fn new<T>(name: T) -> Result<Self, CmdParseError>
   where
     T: AsRef<str>,
   {
@@ -62,6 +60,15 @@ impl CmdName {
   #[inline]
   pub fn is_valid_name(name: &str) -> bool {
     is_cmd_name(name).is_ok()
+  }
+}
+
+impl TryFrom<&str> for CmdName {
+  type Error = CmdParseError;
+
+  #[inline]
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    Self::new(value)
   }
 }
 

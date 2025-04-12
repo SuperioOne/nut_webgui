@@ -1,100 +1,131 @@
-use crate::ups_variables::UpsError;
-use std::fmt::{self, Display};
-use std::num::{ParseFloatError, ParseIntError};
+use crate::internal::lexer::Position;
 
 #[derive(Debug)]
-pub enum NutClientErrors {
+pub struct Error {
+  inner: Box<ErrorKind>,
+}
+
+impl Error {
+  pub const fn kind(&self) -> &ErrorKind {
+    &self.inner
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum ErrorKind {
+  IOError {
+    kind: std::io::ErrorKind,
+  },
+  ParseError {
+    inner: ParseError,
+    position: Position,
+  },
+  ProtocolError {
+    inner: ProtocolError,
+  },
+}
+
+#[derive(Debug, Clone)]
+pub enum ParseError {
+  CmdName(CmdParseError),
   EmptyResponse,
-  IOError { kind: std::io::ErrorKind },
-  ParseError { kind: ParseErrorKind },
-  ProtocolError { kind: UpsError },
+  ExpectedDoubleQuote,
+  InvalidToken,
+  UpsName(UpsNameParseError),
+  VarName(VarNameParseError),
 }
 
-#[derive(Debug)]
-pub enum ParseErrors {
+#[derive(Debug, Clone)]
+pub enum UpsNameParseError {
   Empty,
-  InvalidChar { position: usize },
-  OutOfBounds,
-  NaN,
+  ExpectedGroupName,
+  ExpectedHostName,
+  ExpectedPortNumber,
+  ExpectedUpsName,
+  InvalidGroupName,
+  InvalidHostName,
+  InvalidPortNumber,
+  InvalidUpsName,
 }
 
-#[derive(Debug)]
-pub enum ParseErrorKind {
-  InvalidName { reason: ParseErrors },
-  InvalidCmdFormat,
-  InvalidListEnd,
-  InvalidListStart,
-  InvalidUpsFormat,
-  InvalidVarFloatFormat { inner: ParseFloatError },
-  InvalidVarFormat,
-  InvalidVarIntFormat { inner: ParseIntError },
+#[derive(Debug, Clone)]
+pub enum VarNameParseError {
+  Empty,
+  InvalidName,
 }
 
-impl From<UpsError> for NutClientErrors {
-  fn from(kind: UpsError) -> Self {
-    Self::ProtocolError { kind }
-  }
+#[derive(Debug, Clone)]
+pub enum CmdParseError {
+  Empty,
+  InvalidName,
 }
 
-impl From<ParseErrorKind> for NutClientErrors {
-  fn from(kind: ParseErrorKind) -> Self {
-    Self::ParseError { kind }
-  }
-}
-
-impl From<std::io::Error> for NutClientErrors {
-  fn from(value: std::io::Error) -> Self {
-    NutClientErrors::IOError { kind: value.kind() }
-  }
-}
-
-impl From<ParseIntError> for NutClientErrors {
-  #[inline]
-  fn from(value: ParseIntError) -> Self {
-    Self::ParseError {
-      kind: ParseErrorKind::InvalidVarIntFormat { inner: value },
-    }
-  }
-}
-
-impl From<ParseFloatError> for NutClientErrors {
-  #[inline]
-  fn from(value: ParseFloatError) -> Self {
-    Self::ParseError {
-      kind: ParseErrorKind::InvalidVarFloatFormat { inner: value },
-    }
-  }
-}
-
-impl Display for NutClientErrors {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for CmdParseError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      NutClientErrors::EmptyResponse => f.write_str("Empty response received"),
-      NutClientErrors::IOError { kind } => f.write_fmt(format_args!("IO error: {}", kind)),
-      NutClientErrors::ParseError { kind } => f.write_fmt(format_args!("Parse error: {}", kind)),
-      NutClientErrors::ProtocolError { kind } => {
-        f.write_fmt(format_args!("NUT protocol error: {}", kind))
-      }
+      CmdParseError::Empty => f.write_str("empty string received"),
+      CmdParseError::InvalidName => f.write_str("invalid command name"),
     }
   }
 }
 
-impl Display for ParseErrorKind {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let message = match self {
-      ParseErrorKind::InvalidCmdFormat => "Malformed CMD line format",
-      ParseErrorKind::InvalidUpsFormat => "Malformed UPS line format",
-      ParseErrorKind::InvalidVarFloatFormat { inner } => {
-        &format!("Invalid float variable: {}", inner)
-      }
-      ParseErrorKind::InvalidVarFormat => "Malformed VAR line",
-      ParseErrorKind::InvalidVarIntFormat { inner } => &format!("Invalid int variable: {}", inner),
-      ParseErrorKind::InvalidListEnd => "Invalid list response ending",
-      ParseErrorKind::InvalidListStart => "Invalid list response beginning",
-      ParseErrorKind::InvalidName { .. } => "Invalid name format",
-    };
+impl std::fmt::Display for VarNameParseError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      VarNameParseError::Empty => f.write_str("empty string received"),
+      VarNameParseError::InvalidName => f.write_str("invalid variable name"),
+    }
+  }
+}
 
-    f.write_str(message)
+impl std::fmt::Display for UpsNameParseError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      UpsNameParseError::Empty => f.write_str("empty string received"),
+      UpsNameParseError::ExpectedGroupName => f.write_str("expected group name"),
+      UpsNameParseError::ExpectedHostName => f.write_str("expected hostname"),
+      UpsNameParseError::ExpectedPortNumber => f.write_str("expected port number"),
+      UpsNameParseError::ExpectedUpsName => f.write_str("expected UPS name"),
+      UpsNameParseError::InvalidGroupName => f.write_str("invalid group name"),
+      UpsNameParseError::InvalidHostName => f.write_str("invalid hostname"),
+      UpsNameParseError::InvalidPortNumber => f.write_str("invalid port number"),
+      UpsNameParseError::InvalidUpsName => f.write_str("invalid UPS name"),
+    }
+  }
+}
+
+impl std::fmt::Display for Error {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    (&self.inner).fmt(f)
+  }
+}
+
+impl std::fmt::Display for ErrorKind {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      ErrorKind::IOError { kind } => f.write_fmt(format_args!("io error occured. kind={}", kind)),
+      ErrorKind::ParseError { inner, position } => f.write_fmt(format_args!(
+        "{} at {}:{}",
+        inner, position.line, position.col
+      )),
+      ErrorKind::ProtocolError { inner } => f.write_fmt(format_args!(
+        "nut server responded with an error message. error={}",
+        inner
+      )),
+    }
+  }
+}
+
+impl std::fmt::Display for ParseError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      ParseError::CmdName(inner) => inner.fmt(f),
+      ParseError::EmptyResponse => f.write_str("empty response received"),
+      ParseError::ExpectedDoubleQuote => f.write_str("expected double quote"),
+      ParseError::InvalidToken => f.write_str("invalid token"),
+      ParseError::UpsName(inner) => inner.fmt(f),
+      ParseError::VarName(inner) => inner.fmt(f),
+    }
   }
 }
 
@@ -107,7 +138,7 @@ macro_rules! impl_protocol_errors {
 
     $(#[$enum_docs])*
     #[derive(Debug, Clone, Eq, PartialEq)]
-    pub enum ProtocolErrors {
+    pub enum ProtocolError {
       Unknown($crate::internal::ReadOnlyStr),
       $(
         $(#[$docs])*
@@ -115,7 +146,7 @@ macro_rules! impl_protocol_errors {
       )+
     }
 
-    impl ProtocolErrors {
+    impl ProtocolError {
       pub fn as_str(&self) -> &str {
         match self {
           Self::Unknown(value) => value.as_ref(),
@@ -124,7 +155,7 @@ macro_rules! impl_protocol_errors {
       }
     }
 
-    impl From<&str> for ProtocolErrors {
+    impl From<&str> for ProtocolError {
       fn from(value: &str) -> Self {
         match value {
           $($value => Self::$variant_name,)+
@@ -166,26 +197,50 @@ impl_protocol_errors!(
   (VarNotSupported, "VAR-NOT-SUPPORTED");
 );
 
-impl AsRef<str> for ProtocolErrors {
+impl AsRef<str> for ProtocolError {
   #[inline]
   fn as_ref(&self) -> &str {
     self.as_str()
   }
 }
 
-impl fmt::Display for ProtocolErrors {
+impl std::fmt::Display for ProtocolError {
   #[inline]
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str(self.as_str())
   }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for ProtocolErrors {
+impl serde::Serialize for ProtocolError {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
     S: serde::Serializer,
   {
     serializer.serialize_str(self.as_str())
+  }
+}
+
+impl From<ProtocolError> for Error {
+  fn from(value: ProtocolError) -> Self {
+    Self {
+      inner: Box::from(ErrorKind::ProtocolError { inner: value }),
+    }
+  }
+}
+
+impl From<ErrorKind> for Error {
+  fn from(value: ErrorKind) -> Self {
+    Self {
+      inner: Box::from(value),
+    }
+  }
+}
+
+impl From<std::io::ErrorKind> for Error {
+  fn from(value: std::io::ErrorKind) -> Self {
+    Self {
+      inner: Box::from(ErrorKind::IOError { kind: value }),
+    }
   }
 }

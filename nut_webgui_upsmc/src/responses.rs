@@ -21,9 +21,3 @@ pub use list_rw::*;
 pub use list_ups::*;
 pub use list_var::*;
 pub use misc::*;
-
-pub trait DeserializeResponse: Sized {
-  type Error;
-
-  fn deserialize(bytes: &str) -> Result<Self, Self::Error>;
-}
