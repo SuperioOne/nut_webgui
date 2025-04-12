@@ -1,5 +1,5 @@
 use nut_webgui_upsmc::CmdName;
-use nut_webgui_upsmc::errors::ParseErrors;
+use nut_webgui_upsmc::errors::CmdParseError;
 
 macro_rules! cmd_name_test {
   ($test_name:ident, $name:literal) => {
@@ -32,30 +32,36 @@ macro_rules! cmd_name_test {
   };
 }
 
-cmd_name_test!(empty_name, "", ParseErrors::Empty);
+cmd_name_test!(empty_name, "", CmdParseError::Empty);
 
 cmd_name_test!(
   invalid_chars,
   "ups.cmd;with.semicolon",
-  ParseErrors::InvalidChar { position: 7 }
+  CmdParseError::InvalidName
 );
 
 cmd_name_test!(
   invalid_whitespace,
   "  battery.off",
-  ParseErrors::InvalidChar { position: 0 }
+  CmdParseError::InvalidName
 );
 
 cmd_name_test!(
   invalid_dot_at_start,
   ".ups.shutdown",
-  ParseErrors::InvalidChar { position: 0 }
+  CmdParseError::InvalidName
+);
+
+cmd_name_test!(
+  invalid_number_at_start,
+  "0ups.shutdown",
+  CmdParseError::InvalidName
 );
 
 cmd_name_test!(
   invalid_uppercase,
   "battery.tesT",
-  ParseErrors::InvalidChar { position: 11 }
+  CmdParseError::InvalidName
 );
 
 cmd_name_test!(valid_name, "beeper.off");
@@ -63,10 +69,32 @@ cmd_name_test!(valid_name, "beeper.off");
 cmd_name_test!(
   invalid_name_with_numeric,
   "ups.sensors.1.on",
-  ParseErrors::InvalidChar { position: 12 }
+  CmdParseError::InvalidName
 );
 
 cmd_name_test!(min_name_len_1, "w");
+
+#[test]
+fn from_trait() {
+  match CmdName::try_from("beeper.off") {
+    Ok(name) => assert_eq!(name.as_str(), "beeper.off"),
+    Err(err) => assert!(false, "Parse failed unexpectedly error={}", err),
+  }
+
+  match CmdName::try_from("0beeper.off") {
+    Err(CmdParseError::InvalidName) => assert!(true),
+    Err(err) => assert!(
+      false,
+      "Expected error but error type is not correct error={}",
+      err
+    ),
+    Ok(name) => assert!(
+      false,
+      "Expected error but got variable name name={:?}",
+      name
+    ),
+  }
+}
 
 #[test]
 fn cmp_cmd_names() {

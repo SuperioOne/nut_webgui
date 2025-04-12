@@ -1,5 +1,5 @@
 use nut_webgui_upsmc::VarName;
-use nut_webgui_upsmc::errors::ParseErrors;
+use nut_webgui_upsmc::errors::VarNameParseError;
 
 macro_rules! var_name_test {
   ($test_name:ident, $name:literal) => {
@@ -41,30 +41,42 @@ macro_rules! var_cmp_test {
   };
 }
 
-var_name_test!(empty_name, "", ParseErrors::Empty);
+var_name_test!(empty_name, "", VarNameParseError::Empty);
 
 var_name_test!(
   invalid_chars,
   "ups.var;with.semicolon",
-  ParseErrors::InvalidChar { position: 7 }
+  VarNameParseError::InvalidName
 );
 
 var_name_test!(
   invalid_whitespace,
   "  ups.not.trimmed",
-  ParseErrors::InvalidChar { position: 0 }
+  VarNameParseError::InvalidName
 );
 
 var_name_test!(
   invalid_dot_at_start,
   ".ups.not.trimmed",
-  ParseErrors::InvalidChar { position: 0 }
+  VarNameParseError::InvalidName
 );
 
 var_name_test!(
   invalid_uppercase,
   "ups.statuS",
-  ParseErrors::InvalidChar { position: 9 }
+  VarNameParseError::InvalidName
+);
+
+var_name_test!(
+  invalid_number_at_start,
+  "1ups.status",
+  VarNameParseError::InvalidName
+);
+
+var_name_test!(
+  invalid_separator_at_start,
+  "_ups.status",
+  VarNameParseError::InvalidName
 );
 
 var_name_test!(valid_name, "ups.load");
@@ -90,6 +102,28 @@ var_cmp_test!(
   VarName::new("custom.name").unwrap(),
   VarName::new("custom.name").unwrap()
 );
+
+#[test]
+fn from_trait() {
+  match VarName::try_from("ups.status") {
+    Ok(name) => assert_eq!(name, VarName::UPS_STATUS),
+    Err(err) => assert!(false, "Parse failed unexpectedly error={}", err),
+  }
+
+  match VarName::try_from("1ups.status") {
+    Err(VarNameParseError::InvalidName) => assert!(true),
+    Err(err) => assert!(
+      false,
+      "Expected error but error type is not correct error={}",
+      err
+    ),
+    Ok(name) => assert!(
+      false,
+      "Expected error but got variable name name={:?}",
+      name
+    ),
+  }
+}
 
 #[test]
 fn to_string() {

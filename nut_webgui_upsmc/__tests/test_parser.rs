@@ -5,7 +5,7 @@ use nut_webgui_upsmc::{
     parse_cmd, parse_cmd_list, parse_ups, parse_ups_list, parse_var_list, parse_variable,
   },
   Ups,
-  errors::{NutClientErrors, ParseErrorKind},
+  errors::{NutClientErrors, ParseErrors},
   ups_variables::{UpsError, UpsVariable},
 };
 
@@ -151,7 +151,7 @@ END LIST VAR bx1600mi";
 #[test]
 fn parse_invalid_variable_type() {
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidVarFloatFormat { inner: _ },
+    kind: ParseErrors::InvalidVarFloatFormat { inner: _ },
   }) = parse_variable("VAR bx1600mi battery.charge invalid-value")
   {
     assert!(true);
@@ -163,7 +163,7 @@ fn parse_invalid_variable_type() {
 #[test]
 fn parse_invalid_variable_format() {
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidVarFormat,
+    kind: ParseErrors::InvalidVarFormat,
   }) = parse_variable("NOVAR bx1600mi battery.charge")
   {
     assert!(true);
@@ -175,7 +175,7 @@ fn parse_invalid_variable_format() {
 #[test]
 fn parse_invalid_ups_format() {
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidUpsFormat,
+    kind: ParseErrors::InvalidUpsFormat,
   }) = parse_ups("VAR bx1600mi")
   {
     assert!(true);
@@ -187,7 +187,7 @@ fn parse_invalid_ups_format() {
 #[test]
 fn parse_invalid_cmd_format() {
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidCmdFormat,
+    kind: ParseErrors::InvalidCmdFormat,
   }) = parse_cmd("cmd lowercaseonly")
   {
     assert!(true);
@@ -205,7 +205,7 @@ VAR bx1600mi battery.mfr.date \"2001/01/01\"
 END LIST VAR bx1600mi";
 
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidListStart,
+    kind: ParseErrors::InvalidListStart,
   }) = parse_var_list(input_start)
   {
     assert!(true);
@@ -219,7 +219,7 @@ VAR bx1600mi battery.charge.low \"10\"
 VAR bx1600mi battery.mfr.date \"2001/01/01\"";
 
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidListEnd,
+    kind: ParseErrors::InvalidListEnd,
   }) = parse_var_list(input_end)
   {
     assert!(true);
@@ -235,7 +235,7 @@ UPS bx1600mi \"APC Back-UPS BX1600MI\"
 END LIST UPS";
 
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidListStart,
+    kind: ParseErrors::InvalidListStart,
   }) = parse_ups_list(input_start)
   {
     assert!(true);
@@ -247,7 +247,7 @@ END LIST UPS";
 UPS bx1600mi \"APC Back-UPS BX1600MI\"";
 
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidListEnd,
+    kind: ParseErrors::InvalidListEnd,
   }) = parse_ups_list(input_end)
   {
     assert!(true);
@@ -263,7 +263,7 @@ CMD bx1600mi beeper.enable
 END LIST CMD bx1600mi";
 
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidListStart,
+    kind: ParseErrors::InvalidListStart,
   }) = parse_cmd_list(input_start)
   {
     assert!(true);
@@ -275,7 +275,7 @@ END LIST CMD bx1600mi";
 CMD bx1600mi beeper.enable";
 
   if let Err(NutClientErrors::ParseError {
-    kind: ParseErrorKind::InvalidListEnd,
+    kind: ParseErrors::InvalidListEnd,
   }) = parse_cmd_list(input_end)
   {
     assert!(true);
