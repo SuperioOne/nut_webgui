@@ -1,6 +1,6 @@
 use crate::ups_daemon_state::UpsDaemonState;
 use axum::{
-  http::StatusCode,
+  http::{header::CACHE_CONTROL, HeaderValue, StatusCode},
   routing::{get, post},
   Router, ServiceExt,
 };
@@ -9,7 +9,7 @@ use tokio::{spawn, sync::RwLock, task::JoinHandle};
 use tower::{Layer, ServiceBuilder};
 use tower_http::{
   compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
-  services::ServeDir, timeout::TimeoutLayer, trace::TraceLayer,
+  services::ServeDir, set_header::SetResponseHeaderLayer, timeout::TimeoutLayer, trace::TraceLayer,
 };
 
 use self::middlewares::DaemonStateLayer;
@@ -53,7 +53,11 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
     let middleware = ServiceBuilder::new()
       .layer(CompressionLayer::new().br(true).gzip(true).deflate(true))
       .layer(TraceLayer::new_for_http())
-      .layer(TimeoutLayer::new(Duration::from_secs(10)));
+      .layer(TimeoutLayer::new(Duration::from_secs(10)))
+      .layer(SetResponseHeaderLayer::if_not_present(
+        CACHE_CONTROL,
+        HeaderValue::from_static("no-cache, max-age=0"),
+      ));
 
     let probes = Router::new()
       .route("/health", get(probes::get_health))
@@ -70,7 +74,6 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       .layer(CorsLayer::permissive());
 
     let hypermedia_api = Router::new()
-      .nest_service("/static", ServeDir::new(static_dir))
       .route("/ups/:ups_name", get(hypermedia::routes::ups::get))
       .route(
         "/ups/:ups_name/command",
@@ -86,6 +89,7 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
     };
 
     let router = Router::new()
+      .nest_service("/static", ServeDir::new(static_dir))
       .nest("/api", data_api)
       .nest("/probes", probes)
       .merge(hypermedia_api)
