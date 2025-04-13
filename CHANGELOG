@@ -1,3 +1,13 @@
+# v0.4.1 - April 13, 2025
+
+## Changed
+- The NUT protocol parser has been optimized slightly better performance.
+- The UI notifications have been simplified.
+
+## Fixed
+- Missing cache-control headers caused 308 redirects to `not found` pages.
+- The page cannot be routed when the URL contains a trailing forward slash.
+
 # v0.4.0 - October 12, 2024
 
 ## Changed
