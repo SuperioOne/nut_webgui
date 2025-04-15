@@ -7,6 +7,18 @@ pub struct Hostname {
   pub port: Option<u16>,
 }
 
+impl std::fmt::Display for Hostname {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Hostname {
+        name,
+        port: Some(port),
+      } => write!(f, "{name}:{port}"),
+      Hostname { name, .. } => f.write_str(name),
+    }
+  }
+}
+
 /// UPS name
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct UpsName {
@@ -21,8 +33,8 @@ fn parse(input: &str) -> Result<UpsName, UpsNameParseError> {
   }
 
   match input.split_once('@') {
-    Some((_, "")) => Err(UpsNameParseError::ExpectedHostName),
-    Some(("", _)) => Err(UpsNameParseError::ExpectedHostName),
+    Some((_, "")) => Err(UpsNameParseError::ExpectedHostname),
+    Some(("", _)) => Err(UpsNameParseError::ExpectedUpsName),
     Some((name, hostname)) => {
       let (group_name, ups_name) = parse_ups_name(name)?;
       let hostname = parse_hostname(hostname)?;
@@ -75,7 +87,7 @@ fn parse_ups_name(input: &str) -> Result<(Option<&str>, &str), UpsNameParseError
 fn parse_hostname(input: &str) -> Result<Hostname, UpsNameParseError> {
   match input.split_once(':') {
     Some((_, "")) => Err(UpsNameParseError::ExpectedPortNumber),
-    Some(("", _)) => Err(UpsNameParseError::ExpectedHostName),
+    Some(("", _)) => Err(UpsNameParseError::ExpectedHostname),
     Some((hostname, port)) => {
       let port: u16 = port
         .parse()
@@ -176,7 +188,28 @@ impl TryFrom<&str> for UpsName {
 impl std::fmt::Display for UpsName {
   #[inline]
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.write_str(&self.name)
+    match self {
+      UpsName {
+        group: Some(group),
+        hostname: Some(hostname),
+        name,
+      } => write!(f, "{group}:{name}@{hostname}"),
+      UpsName {
+        group: None,
+        hostname: None,
+        name,
+      } => f.write_str(name),
+      UpsName {
+        group: None,
+        hostname: Some(hostname),
+        name,
+      } => write!(f, "{name}@{hostname}"),
+      UpsName {
+        group: Some(group),
+        hostname: None,
+        name,
+      } => write!(f, "{group}:{name}"),
+    }
   }
 }
 

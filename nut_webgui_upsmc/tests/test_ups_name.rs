@@ -1,37 +1,6 @@
 use nut_webgui_upsmc::errors::UpsNameParseError;
 use nut_webgui_upsmc::{Hostname, UpsName};
 
-macro_rules! ups_name_test {
-  ($test_name:ident, $name:literal) => {
-    #[test]
-    fn $test_name() {
-      if let Err(err) = UpsName::try_from($name) {
-        assert!(false, "Command name validation failed {:?}", err)
-      } else {
-        assert!(true)
-      }
-    }
-  };
-
-  ($test_name:ident, $name:literal, $fail_reason:pat_param) => {
-    #[test]
-    fn $test_name() {
-      match UpsName::try_from($name) {
-        Err($fail_reason) => assert!(true),
-        Err(err) => assert!(
-          false,
-          "UPS name failed but error type does not match error={:?}",
-          err
-        ),
-        Ok(_) => assert!(
-          false,
-          "UPS name was expected to fail but it succeed unexpectedly"
-        ),
-      }
-    }
-  };
-}
-
 macro_rules! format_name {
 (!, $($parts:tt)+) => {
     {
@@ -139,13 +108,27 @@ macro_rules! ups_parse_test {
     #[test]
     fn $test_name() {
       let input = format_name!(!, $($parts)+);
-      println!("Test input {}", &input);
       let ups_name = UpsName::try_from(input.as_str()).unwrap();
 
       verify_part!(ups_name, $($parts)+);
     }
   };
+}
 
+macro_rules! ups_parse_fail_test {
+  ($test_name:ident, $expected:pat_param, $($parts:tt)+) => {
+
+    #[test]
+    fn $test_name() {
+      let input = format_name!(!, $($parts)+);
+
+      match UpsName::try_from(input.as_str()) {
+        Err($expected) => assert!(true),
+        Err(err) => assert!(false, "Parser returned an error but error type is not equal to expected error type error={:?}", err),
+        Ok(ups_name) => assert!(false, "Parser should've failed but its succeed input={} ups_name={:?}", input, ups_name),
+      }
+    }
+  };
 }
 
 ups_parse_test!(
@@ -177,27 +160,79 @@ ups_parse_test!(
   port = 3493_u16
 );
 
-ups_name_test!(empty_name, "", UpsNameParseError::Empty);
+ups_parse_test!(ups_name_with_min_len, ups = "p");
 
-ups_name_test!(
+ups_parse_fail_test!(empty_name, UpsNameParseError::Empty, ups = "");
+
+ups_parse_fail_test!(
   invalid_ups_name,
-  "my=broken=ups",
-  UpsNameParseError::InvalidUpsName
+  UpsNameParseError::InvalidUpsName,
+  ups = "borked=name"
 );
 
-ups_name_test!(
+ups_parse_fail_test!(
   invalid_group_name,
-  "=broken_group:ups_name",
-  UpsNameParseError::InvalidGroupName
+  UpsNameParseError::InvalidGroupName,
+  ups = "ups_name",
+  group = "borked=group"
 );
 
-ups_name_test!(
+ups_parse_fail_test!(
+  expected_group_name,
+  UpsNameParseError::ExpectedGroupName,
+  ups = "ups_name",
+  group = ""
+);
+
+ups_parse_fail_test!(
+  expected_group_name_2,
+  UpsNameParseError::ExpectedGroupName,
+  ups = "ups_name",
+  hostname = "megusta.org",
+  port = 9000_u16,
+  group = ""
+);
+
+ups_parse_fail_test!(
   expected_host_name,
-  "group:name@",
-  UpsNameParseError::ExpectedHostName
+  UpsNameParseError::ExpectedHostname,
+  ups = "ups_name",
+  hostname = ""
 );
 
-ups_name_test!(min_name_len_1, "w");
+ups_parse_fail_test!(
+  expected_host_name_2,
+  UpsNameParseError::ExpectedHostname,
+  group = "test",
+  ups = "ups_name",
+  hostname = ""
+);
+
+ups_parse_fail_test!(
+  expected_host_name_3,
+  UpsNameParseError::ExpectedHostname,
+  group = "test",
+  ups = "ups_name",
+  hostname = "",
+  port = 42_u16
+);
+
+ups_parse_fail_test!(
+  expected_ups_name,
+  UpsNameParseError::ExpectedUpsName,
+  ups = "",
+  hostname = "megusta.org",
+  port = 1616_u16
+);
+
+ups_parse_fail_test!(
+  expected_ups_name_2,
+  UpsNameParseError::ExpectedUpsName,
+  ups = "",
+  group = "group",
+  hostname = "megusta.org",
+  port = 1616_u16
+);
 
 #[test]
 fn from_trait() {
@@ -212,6 +247,11 @@ fn cmp_ups_names() {
   let lhs = UpsName::try_from("PowerPenguin").unwrap();
   let rhs = UpsName::try_from("PowerPenguin").unwrap();
 
+  assert!(lhs == rhs);
+
+  let lhs = UpsName::try_from("Group:PowerPenguin@localhost:4242").unwrap();
+  let rhs = UpsName::try_from("Group:PowerPenguin@localhost:4242").unwrap();
+
   assert!(lhs == rhs)
 }
 
@@ -220,5 +260,33 @@ fn to_string() {
   assert_eq!(
     UpsName::try_from("protectorino").unwrap().to_string(),
     "protectorino"
+  );
+}
+
+#[test]
+fn to_string_all_parts() {
+  assert_eq!(
+    UpsName::try_from("group:ups_name@host:12345")
+      .unwrap()
+      .to_string(),
+    "group:ups_name@host:12345"
+  );
+}
+
+#[test]
+fn to_string_with_group() {
+  assert_eq!(
+    UpsName::try_from("group:ups_name").unwrap().to_string(),
+    "group:ups_name"
+  );
+}
+
+#[test]
+fn to_string_with_hostname() {
+  assert_eq!(
+    UpsName::try_from("ups_name@host:12345")
+      .unwrap()
+      .to_string(),
+    "ups_name@host:12345"
   );
 }
