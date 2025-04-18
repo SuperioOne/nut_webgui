@@ -19,6 +19,14 @@ impl UpsVariables {
     }
   }
 
+  pub fn get(&self, name: &VarName) -> Option<&Value> {
+    self.inner.get(&name)
+  }
+
+  pub fn get_mut(&mut self, name: &VarName) -> Option<&mut Value> {
+    self.inner.get_mut(&name)
+  }
+
   pub fn insert(&mut self, name: VarName, value: Value) -> Option<Value> {
     self.inner.insert(name, value)
   }
@@ -65,6 +73,14 @@ impl<'a> Iterator for UpsVariablesIter<'a> {
 
   fn next(&mut self) -> Option<Self::Item> {
     self.inner_iter.next()
+  }
+}
+
+impl<const N: usize> From<[(VarName, Value); N]> for UpsVariables {
+  fn from(value: [(VarName, Value); N]) -> Self {
+    Self {
+      inner: HashMap::from(value),
+    }
   }
 }
 
