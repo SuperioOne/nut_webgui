@@ -27,6 +27,6 @@ serde = { version = "1", features = ["serde_derive"] }
 tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal"] }
 tokio-util = { version = "0.7"}
 tower = { version = "0.5" }
-tower-http = { version = "0.6", features = ["compression-br", "compression-deflate", "compression-gzip", "cors", "fs", "normalize-path", "timeout", "tower", "trace"] }
+tower-http = { version = "0.6", features = ["compression-br", "compression-deflate", "compression-gzip", "cors", "fs", "normalize-path", "timeout", "tower", "trace", "set-header"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"

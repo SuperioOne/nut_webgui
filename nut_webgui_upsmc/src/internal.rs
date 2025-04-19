@@ -2,6 +2,7 @@ use self::lexer::Lexer;
 
 pub mod ascii_rules;
 pub mod lexer;
+pub mod parser_utils;
 
 // Inspired from http crates' Repr<T>
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]

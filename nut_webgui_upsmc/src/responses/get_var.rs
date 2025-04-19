@@ -1,15 +1,14 @@
 use crate::{
-  Value, VarName,
-  errors::{Error, ParseError},
-  internal::{
-    DeserializeResponse,
-    lexer::{Lexer, Token},
-  },
+  UpsName, Value, VarName,
+  errors::{Error, ErrorKind, ParseError},
+  internal::{DeserializeResponse, lexer::Lexer, parser_utils::parse_line},
 };
 
+#[derive(Debug)]
 pub struct GetVar {
   pub value: Value,
   pub name: VarName,
+  pub ups: UpsName,
 }
 
 // VAR bx1600mi battery.charge "87.0"
@@ -17,11 +16,24 @@ pub struct GetVar {
 impl DeserializeResponse for GetVar {
   type Error = Error;
 
-  fn deserialize(tokenizer: &mut Lexer) -> Result<Self, Self::Error> {
-    Ok(Self {
-      value: Value::Int(0),
-      name: VarName::UPS_STATUS,
-    })
+  fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
+    let (ups, name, value) = parse_line!(lexer, "VAR" {UPS, name = ups_name} {VAR, name = var_name} {QUOTED_TEXT, name = value})?;
+
+    if lexer.is_finished() {
+      Ok(Self {
+        name,
+        ups,
+        value: Value::Int(0),
+      })
+    } else {
+      return Err(
+        ErrorKind::ParseError {
+          inner: ParseError::InvalidToken,
+          position: lexer.get_positon(),
+        }
+        .into(),
+      );
+    }
   }
 }
 
@@ -34,10 +46,12 @@ mod test {
 
   #[test]
   fn extract_test() {
-    let text = "VAR    group:bx1600mi@abuzer.com:12345   battery.charge \"87.0\"";
+    let text = "VAR    group:bx1600mi@abuzer.com:12345   battery.charge \"87.0\"\n\n\n\n";
     let mut tokenizer = Lexer::from_str(text);
 
-    _ = GetVar::deserialize(&mut tokenizer);
+    let response = GetVar::deserialize(&mut tokenizer);
+
+    println!("{:?}", response);
 
     assert!(true)
   }

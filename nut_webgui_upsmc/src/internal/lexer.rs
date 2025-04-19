@@ -4,29 +4,53 @@ use std::borrow::Cow;
 #[derive(Debug, PartialEq)]
 pub enum Token {
   QuotedText {
-    /// Human readable position
-    position: Position,
-
     /// text starting index on target buffer
     start: usize,
 
     /// text ending index on target buffer.
     end: usize,
   },
-  LF {
-    /// Human readable position
-    position: Position,
-  },
+  LF,
   Text {
-    /// Human readable position
-    position: Position,
-
     /// text starting index on target buffer
     start: usize,
 
     /// text ending index on target buffer.
     end: usize,
   },
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum TokenKind {
+  QuotedText,
+  LF,
+  Text,
+}
+
+impl Token {
+  pub const fn kind(&self) -> TokenKind {
+    match self {
+      Token::QuotedText { .. } => TokenKind::QuotedText,
+      Token::LF => TokenKind::LF,
+      Token::Text { .. } => TokenKind::Text,
+    }
+  }
+}
+
+impl std::fmt::Display for TokenKind {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(self.as_str())
+  }
+}
+
+impl TokenKind {
+  pub const fn as_str(&self) -> &'static str {
+    match self {
+      TokenKind::QuotedText => "double-quoted text node",
+      TokenKind::LF => "line feed node",
+      TokenKind::Text => "text node",
+    }
+  }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -109,6 +133,11 @@ impl<'a> Lexer<'a> {
   }
 
   #[inline]
+  pub const fn get_positon(&self) -> Position {
+    self.state.position
+  }
+
+  #[inline]
   fn read_text(&mut self) -> (usize, usize) {
     let start = self.state.read_head;
     let mut end = start;
@@ -172,15 +201,39 @@ impl<'a> Lexer<'a> {
     self.state.position.col = self.state.position.col.saturating_add_signed(by);
   }
 
+  pub fn skip_whitespaces(&mut self) {
+    let buffer = &self.buffer.as_bytes()[self.state.read_head..];
+
+    for char_byte in buffer.iter() {
+      match char_byte {
+        b'\n' => {
+          self.state.read_head += 1;
+          self.state.position.col = 0;
+          self.state.position.line += 1;
+        }
+        v if v.is_ascii_whitespace() => {
+          self.move_read_head(1);
+        }
+        _ => break,
+      }
+    }
+  }
+
+  #[inline]
+  pub fn is_finished(&self) -> bool {
+    match self.peek() {
+      Some(_) => false,
+      None => true,
+    }
+  }
+
   pub fn next_token(&mut self) -> Result<Option<Token>, Error> {
     let buffer = &self.buffer.as_bytes()[self.state.read_head..];
 
     for char_byte in buffer.iter() {
       match char_byte {
         b'\n' => {
-          let token = Some(Token::LF {
-            position: self.state.position.clone(),
-          });
+          let token = Some(Token::LF);
 
           self.state.read_head += 1;
           self.state.position.col = 0;
@@ -192,26 +245,15 @@ impl<'a> Lexer<'a> {
           self.move_read_head(1);
         }
         b'"' => {
-          let position = self.state.position.clone();
-
           self.move_read_head(1);
           let (start, end) = self.read_quoted_text()?;
           self.move_read_head(1);
 
-          return Ok(Some(Token::QuotedText {
-            position,
-            start,
-            end,
-          }));
+          return Ok(Some(Token::QuotedText { start, end }));
         }
         _ => {
-          let position = self.state.position.clone();
           let (start, end) = self.read_text();
-          return Ok(Some(Token::Text {
-            position,
-            start,
-            end,
-          }));
+          return Ok(Some(Token::Text { start, end }));
         }
       }
     }
