@@ -1,5 +1,5 @@
 use crate::{
-  CmdName, UpsName, VarName,
+  CmdName, UpsName, Value, VarName,
   errors::{Error, ErrorKind, ParseError},
   internal::lexer::{Lexer, Token},
 };
@@ -66,6 +66,13 @@ pub fn extract_quoted_text<'a>(lexer: &'a mut Lexer) -> Result<Cow<'a, str>, Err
       )
     }
   }
+}
+
+pub fn extract_value<'a>(lexer: &'a mut Lexer) -> Result<Value, Error> {
+  let text = extract_quoted_text(lexer)?;
+  let value = Value::infer_from_str(&text);
+
+  Ok(value)
 }
 
 pub fn extract_ups_name<'a>(lexer: &'a mut Lexer) -> Result<UpsName, Error> {
@@ -298,6 +305,7 @@ pub fn end_parser<'a>(lexer: &'a mut Lexer) -> Result<(), Error> {
 /// `{TEXT}` : Only checks if the token type is [`Token::Text`].
 /// `{QUOTED_TEXT, name = extract_name}` : Captures quoted text token.
 /// `{QUOTED_TEXT}` : Only checks if token type is [`Token::QuotedText`]
+/// `{VALUE, name = extracted_name}` : Captures [`Token::QuotedText`] and converts it to [`Value`] with type inference.
 macro_rules! parse_line {
   ($lexer:expr, $($rules:tt)+) => {
     'line: {
@@ -417,6 +425,19 @@ macro_rules! parse_line {
       };
 
       parse_line!(@internal $lexer, $label, [$($type;$extracted)* $crate::VarName;$name], $($rest)*)
+    }
+  };
+
+  (@internal $lexer:expr, $label:lifetime, [$($type:ty;$extracted:ident)*], {VALUE, name = $name:ident} $($rest:tt)*) => {
+    {
+      let $name = {
+        match $crate::internal::parser_utils::extract_value($lexer) {
+          Ok(var) => var,
+          Err(err) => break $label Err(err)
+        }
+      };
+
+      parse_line!(@internal $lexer, $label, [$($type;$extracted)* $crate::Value;$name], $($rest)*)
     }
   };
 
