@@ -42,16 +42,6 @@ pub trait NutAsciiText {
   fn is_ascii_nut_ups(&self) -> bool;
   fn is_ascii_nut_cmd(&self) -> bool;
   fn is_ascii_nut_var(&self) -> bool;
-
-  #[inline]
-  fn is_ascii_nut_group(&self) -> bool {
-    self.is_ascii_nut_ups()
-  }
-
-  #[inline]
-  fn is_ascii_nut_hostname(&self) -> bool {
-    self.is_ascii_nut_ups()
-  }
 }
 
 impl NutAsciiText for u8 {

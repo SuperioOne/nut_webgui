@@ -1,3 +1,5 @@
+#![allow(unused_assignments)]
+
 use crate::errors::{Error, ErrorKind, ParseError};
 use std::borrow::Cow;
 
@@ -129,6 +131,15 @@ impl<'a> Lexer<'a> {
     match tmp_tokenizer.next_token() {
       Ok(next @ Some(_)) => next,
       _ => None,
+    }
+  }
+
+  pub fn peek_as_str(&self) -> Option<&str> {
+    match self.peek() {
+      Some(Token::LF) => Some("\n"),
+      Some(Token::Text { start, end }) => Some(&self.buffer[start..end]),
+      Some(Token::QuotedText { start, end }) => Some(&self.buffer[start..end]),
+      None => None,
     }
   }
 

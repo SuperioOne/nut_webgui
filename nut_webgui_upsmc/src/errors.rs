@@ -31,6 +31,7 @@ pub enum ParseError {
   EmptyResponse,
   ExpectedDoubleQuote,
   InvalidToken,
+  InvalidIpAddr,
   ExpectedTextToken,
   ExpectedUpsToken,
   ExpectedVarToken,
@@ -126,15 +127,16 @@ impl std::fmt::Display for ParseError {
     match self {
       ParseError::CmdName(inner) => inner.fmt(f),
       ParseError::EmptyResponse => f.write_str("empty response received"),
+      ParseError::ExpectedCmdToken => f.write_str("expected command token"),
       ParseError::ExpectedDoubleQuote => f.write_str("expected double quote character"),
-      ParseError::InvalidToken => f.write_str("invalid token"),
-      ParseError::UpsName(inner) => inner.fmt(f),
-      ParseError::VarName(inner) => inner.fmt(f),
+      ParseError::ExpectedDoubleQuotedTextToken => f.write_str("expected double quoted text token"),
       ParseError::ExpectedTextToken => f.write_str("expected text token"),
       ParseError::ExpectedUpsToken => f.write_str("expected ups token"),
       ParseError::ExpectedVarToken => f.write_str("expected var token"),
-      ParseError::ExpectedCmdToken => f.write_str("expected command token"),
-      ParseError::ExpectedDoubleQuotedTextToken => f.write_str("expected double quoted text token"),
+      ParseError::InvalidIpAddr => f.write_str("invalid ipv4 or ipv6 text"),
+      ParseError::InvalidToken => f.write_str("invalid token"),
+      ParseError::UpsName(inner) => inner.fmt(f),
+      ParseError::VarName(inner) => inner.fmt(f),
     }
   }
 }
