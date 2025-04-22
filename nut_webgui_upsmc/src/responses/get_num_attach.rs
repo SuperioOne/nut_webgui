@@ -1,32 +1,37 @@
 use crate::{
-  UpsName, Value, VarName,
+  UpsName,
   errors::{Error, ErrorKind, ParseError},
   internal::{DeserializeResponse, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
-pub struct UpsVar {
-  pub value: Value,
-  pub name: VarName,
+pub struct AttachedDaemons {
   pub ups: UpsName,
+  pub attached: usize,
 }
 
-impl DeserializeResponse for UpsVar {
+impl DeserializeResponse for AttachedDaemons {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
-    let (ups, name, value) = parse_line!(lexer, "VAR" {UPS, name = ups_name} {VAR, name = var_name} {VALUE, name = value})?;
+    let (ups, value) =
+      parse_line!(lexer, "NUMATTACH" {UPS, name = ups_name} {TEXT, name = attached})?;
+
+    let attached = value.parse::<usize>().map_err(|_| ErrorKind::ParseError {
+      inner: ParseError::InvalidToken,
+      position: lexer.get_positon(),
+    })?;
 
     if lexer.is_finished() {
-      Ok(Self { name, ups, value })
+      Ok(Self { ups, attached })
     } else {
-      Err(
+      return Err(
         ErrorKind::ParseError {
           inner: ParseError::InvalidToken,
           position: lexer.get_positon(),
         }
         .into(),
-      )
+      );
     }
   }
 }

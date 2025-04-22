@@ -441,13 +441,33 @@ macro_rules! parse_line {
     }
   };
 
-  (@internal $lexer:expr,$label:lifetime,  [$($type:ty;$extracted:ident)*],) => {
+  (@internal $lexer:expr,$label:lifetime, [],) => {
     {
       if let Err(err) = $crate::internal::parser_utils::end_parser($lexer) {
         break $label Err(err);
       }
 
-      Result::<($($type),*), $crate::errors::Error>::Ok(($($extracted),*))
+      Result::<(), $crate::errors::Error>::Ok(())
+    }
+  };
+
+  (@internal $lexer:expr,$label:lifetime, [$type:ty;$extracted:ident],) => {
+    {
+      if let Err(err) = $crate::internal::parser_utils::end_parser($lexer) {
+        break $label Err(err);
+      }
+
+      Result::<$type, $crate::errors::Error>::Ok($extracted)
+    }
+  };
+
+  (@internal $lexer:expr,$label:lifetime, [$type_first:ty;$extracted_first:ident $($type:ty;$extracted:ident)+],) => {
+    {
+      if let Err(err) = $crate::internal::parser_utils::end_parser($lexer) {
+        break $label Err(err);
+      }
+
+      Result::<($type_first, $($type),+), $crate::errors::Error>::Ok(($extracted_first, $($extracted),+))
     }
   };
 }

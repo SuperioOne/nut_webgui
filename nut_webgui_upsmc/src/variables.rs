@@ -8,6 +8,7 @@ use crate::var_name::VarName;
 ///
 /// ## Implementation notes:
 /// It simply a wrapper struct for [`HashMap`].
+#[derive(Debug)]
 pub struct UpsVariables {
   inner: HashMap<VarName, Value>,
 }

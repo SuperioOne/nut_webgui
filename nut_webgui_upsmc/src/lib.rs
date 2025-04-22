@@ -6,6 +6,7 @@ mod value;
 mod var_name;
 mod variables;
 
+pub mod commands;
 pub mod errors;
 pub mod responses;
 

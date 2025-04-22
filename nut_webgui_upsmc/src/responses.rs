@@ -1,7 +1,9 @@
 mod get_cmd_desc;
+mod get_num_attach;
 mod get_ups_desc;
 mod get_var;
 mod get_var_desc;
+mod list_client;
 mod list_cmd;
 mod list_enum;
 mod list_range;
@@ -11,9 +13,11 @@ mod list_var;
 mod misc;
 
 pub use get_cmd_desc::*;
+pub use get_num_attach::*;
 pub use get_ups_desc::*;
 pub use get_var::*;
 pub use get_var_desc::*;
+pub use list_client::*;
 pub use list_cmd::*;
 pub use list_enum::*;
 pub use list_range::*;
