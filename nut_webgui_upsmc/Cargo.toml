@@ -15,8 +15,10 @@ repository = "https://github.com/SuperioOne/nut_webgui"
 default = []
 serde = ["dep:serde"]
 
+[dev-dependencies]
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt", "rt-multi-thread", "sync" ], default-features = false }
+
 [dependencies]
 serde = { version = "1", features = ["serde_derive"], optional = true }
-tokio = { version = "1", features = ["net", "io-util"] }
-tokio-util = { version = "0.7"}
+tokio = { version = "1", features = ["net", "io-util", "sync" ], default-features = false }
 tracing = "0.1"

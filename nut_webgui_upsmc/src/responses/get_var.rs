@@ -1,7 +1,7 @@
 use crate::{
   UpsName, Value, VarName,
   errors::{Error, ErrorKind, ParseError},
-  internal::{DeserializeResponse, lexer::Lexer, parser_utils::parse_line},
+  internal::{Deserialize, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
@@ -11,7 +11,7 @@ pub struct UpsVar {
   pub ups: UpsName,
 }
 
-impl DeserializeResponse for UpsVar {
+impl Deserialize for UpsVar {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {

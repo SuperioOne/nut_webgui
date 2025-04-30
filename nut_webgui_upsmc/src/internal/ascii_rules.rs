@@ -34,6 +34,7 @@ lookup_table!(LOOKUP_ASCII_UPS, 128,
 
 lookup_table!(LOOKUP_ASCII_VAR, 128,
   (b'.');
+  (b'_');
   (b'0'..b'9');
   (b'a'..b'z');
 );

@@ -1,6 +1,7 @@
 use self::lexer::Lexer;
 
 pub mod ascii_rules;
+pub mod item_pool;
 pub mod lexer;
 pub mod parser_utils;
 
@@ -14,8 +15,14 @@ pub enum Repr<S, C> {
 /// Alias for [`Box<str>`]
 pub type ReadOnlyStr = Box<str>;
 
-pub trait DeserializeResponse: Sized {
+pub trait Deserialize: Sized {
   type Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error>;
+}
+
+pub trait Serialize {
+  type Output;
+
+  fn serialize(self) -> Self::Output;
 }

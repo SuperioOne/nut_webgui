@@ -141,7 +141,7 @@ where
 impl UpsName {
   pub fn new<T>(
     name: T,
-    group: Option<T>,
+    group: Option<&str>,
     hostname: Option<Hostname>,
   ) -> Result<Self, UpsNameParseError>
   where
@@ -160,13 +160,12 @@ impl UpsName {
     Ok(Self::new_unchecked(name, group, hostname))
   }
 
-  pub fn new_unchecked<T, G>(name: T, group: Option<G>, hostname: Option<Hostname>) -> Self
+  pub fn new_unchecked<T>(name: T, group: Option<&str>, hostname: Option<Hostname>) -> Self
   where
     T: AsRef<str>,
-    G: AsRef<str>,
   {
     let name = ReadOnlyStr::from(name.as_ref());
-    let group = group.map(|v| ReadOnlyStr::from(v.as_ref()));
+    let group = group.map(|v| ReadOnlyStr::from(v));
 
     Self {
       name,

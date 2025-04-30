@@ -1,7 +1,7 @@
 use crate::{
   UpsName,
   errors::{Error, ErrorKind, ParseError},
-  internal::{DeserializeResponse, ReadOnlyStr, lexer::Lexer, parser_utils::parse_line},
+  internal::{Deserialize, ReadOnlyStr, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub struct UpsList {
   pub devices: Vec<UpsDevice>,
 }
 
-impl DeserializeResponse for UpsList {
+impl Deserialize for UpsList {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
@@ -39,13 +39,13 @@ impl DeserializeResponse for UpsList {
     if lexer.is_finished() {
       Ok(Self { devices })
     } else {
-      return Err(
+      Err(
         ErrorKind::ParseError {
           inner: ParseError::InvalidToken,
           position: lexer.get_positon(),
         }
         .into(),
-      );
+      )
     }
   }
 }
