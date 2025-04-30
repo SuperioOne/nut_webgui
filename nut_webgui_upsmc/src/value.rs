@@ -1,4 +1,5 @@
 use crate::internal::ReadOnlyStr;
+use std::borrow::Cow;
 
 macro_rules! impl_value_from {
   ($type:ty, $enum:ident) => {
@@ -68,15 +69,41 @@ impl Value {
       ),
     }
   }
+
+  pub fn as_escaped_str(&self) -> Cow<'_, str> {
+    match self {
+      Value::Float(num) => Cow::Owned(format!("{:.2}", num)),
+      Value::Int(num) => Cow::Owned(num.to_string()),
+      Value::String(text) => {
+        let mut escaped = String::new();
+        let mut slice_start: usize = 0;
+
+        for (idx, char_byte) in text.as_bytes().iter().enumerate() {
+          if (*char_byte == b'"' || *char_byte == b'\\') && slice_start < idx {
+            escaped.push_str(&text[slice_start..idx]);
+            slice_start = idx + 1;
+          } else {
+            continue;
+          }
+        }
+
+        if escaped.is_empty() {
+          Cow::Borrowed(text)
+        } else {
+          if slice_start < text.len() {
+            escaped.push_str(&text[slice_start..]);
+          }
+
+          Cow::Owned(escaped)
+        }
+      }
+    }
+  }
 }
 
 impl std::fmt::Display for Value {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Value::Float(val) => val.fmt(f),
-      Value::Int(val) => val.fmt(f),
-      Value::String(val) => val.fmt(f),
-    }
+    f.write_str(&self.as_escaped_str())
   }
 }
 

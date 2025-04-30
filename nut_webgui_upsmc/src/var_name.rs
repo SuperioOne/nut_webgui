@@ -115,7 +115,6 @@ impl_standard_names!(
   (BATTERY_VOLTAGE_MAXIMUM                            ,BatteryVoltageMaximum                           ,"battery.voltage.maximum");
   (BATTERY_VOLTAGE_MINIMUM                            ,BatteryVoltageMinimum                           ,"battery.voltage.minimum");
   (BATTERY_VOLTAGE_NOMINAL                            ,BatteryVoltageNominal                           ,"battery.voltage.nominal");
-  (BEEPER_STATUS                                      ,BeeperStatus                                    ,"beeper.status");
   (DEVICE_CONTACT                                     ,DeviceContact                                   ,"device.contact");
   (DEVICE_DESCRIPTION                                 ,DeviceDescription                               ,"device.description");
   (DEVICE_LOCATION                                    ,DeviceLocation                                  ,"device.location");
@@ -198,7 +197,6 @@ impl_standard_names!(
   (DRIVER_VERSION_DATA                                ,DriverVersionData                               ,"driver.version.data");
   (DRIVER_VERSION_INTERNAL                            ,DriverVersionInternal                           ,"driver.version.internal");
   (DRIVER_VERSION_USB                                 ,DriverVersionUsb                                ,"driver.version.usb");
-  (FAULT_SITE_STATUS                                  ,FaultSiteStatus                                 ,"fault.site.status");
   (INPUT_BYPASS_CURRENT                               ,InputBypassCurrent                              ,"input.bypass.current");
   (INPUT_BYPASS_FREQUENCY                             ,InputBypassFrequency                            ,"input.bypass.frequency");
   (INPUT_BYPASS_FREQUENCY_NOMINAL                     ,InputBypassFrequencyNominal                     ,"input.bypass.frequency.nominal");

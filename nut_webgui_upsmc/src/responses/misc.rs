@@ -1,13 +1,11 @@
-use crate::internal::{ReadOnlyStr, parser_utils::parse_line};
-
 #[derive(Debug)]
 pub struct ProtVer {
-  pub ver: ReadOnlyStr,
+  pub ver: String,
 }
 
 #[derive(Debug)]
 pub struct DaemonVer {
-  pub ver: ReadOnlyStr,
+  pub ver: String,
 }
 
 macro_rules! impl_ok_parser {
@@ -15,10 +13,12 @@ macro_rules! impl_ok_parser {
     #[derive(Debug)]
     pub struct $name;
 
-    impl $crate::internal::DeserializeResponse for $name {
+    impl $crate::internal::Deserialize for $name {
       type Error = $crate::errors::Error;
 
       fn deserialize(lexer: &mut $crate::internal::lexer::Lexer) -> Result<Self, Self::Error> {
+        use $crate::internal::parser_utils::parse_line;
+
         parse_line!(lexer, $($tokens)+)?;
 
         if lexer.is_finished() {

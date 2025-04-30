@@ -83,6 +83,13 @@ impl<'a> Lexer<'a> {
     }
   }
 
+  pub fn reset(&mut self) {
+    self.state = State {
+      position: Position::default(),
+      read_head: 0,
+    }
+  }
+
   pub fn extract_from_token(&self, token: &Token) -> Cow<'_, str> {
     let buffer_str = &self.buffer;
 

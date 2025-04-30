@@ -3,7 +3,7 @@ use std::net::IpAddr;
 use crate::{
   UpsName,
   errors::{Error, ErrorKind, ParseError},
-  internal::{DeserializeResponse, lexer::Lexer, parser_utils::parse_line},
+  internal::{Deserialize, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
@@ -12,7 +12,7 @@ pub struct ClientList {
   pub ips: Vec<IpAddr>,
 }
 
-impl DeserializeResponse for ClientList {
+impl Deserialize for ClientList {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
@@ -44,13 +44,13 @@ impl DeserializeResponse for ClientList {
     if lexer.is_finished() {
       Ok(Self { ups, ips })
     } else {
-      return Err(
+      Err(
         ErrorKind::ParseError {
           inner: ParseError::InvalidToken,
           position: lexer.get_positon(),
         }
         .into(),
-      );
+      )
     }
   }
 }

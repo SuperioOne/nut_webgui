@@ -1,7 +1,7 @@
 use crate::{
   UpsName, Value, VarName,
   errors::{Error, ErrorKind, ParseError},
-  internal::{DeserializeResponse, lexer::Lexer, parser_utils::parse_line},
+  internal::{Deserialize, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
@@ -11,7 +11,7 @@ pub struct EnumList {
   pub values: Vec<Value>,
 }
 
-impl DeserializeResponse for EnumList {
+impl Deserialize for EnumList {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
@@ -44,13 +44,13 @@ impl DeserializeResponse for EnumList {
     if lexer.is_finished() {
       Ok(Self { ups, values, name })
     } else {
-      return Err(
+      Err(
         ErrorKind::ParseError {
           inner: ParseError::InvalidToken,
           position: lexer.get_positon(),
         }
         .into(),
-      );
+      )
     }
   }
 }
