@@ -19,18 +19,22 @@ where
   let name = name.as_ref().as_bytes();
 
   if name.is_empty() {
-    Err(CmdParseError::Empty)
-  } else if let Some(b'.') = name.get(0) {
-    Err(CmdParseError::InvalidName)
-  } else {
-    for byte in name.iter() {
-      if !byte.is_ascii_nut_cmd() {
-        return Err(CmdParseError::InvalidName);
-      }
-    }
-
-    Ok(())
+    return Err(CmdParseError::Empty);
   }
+
+  if let Some(first) = name.get(0) {
+    if !first.is_ascii_alphabetic() {
+      return Err(CmdParseError::InvalidName);
+    }
+  }
+
+  for byte in name.iter() {
+    if !byte.is_ascii_nut_cmd() {
+      return Err(CmdParseError::InvalidName);
+    }
+  }
+
+  Ok(())
 }
 
 impl CmdName {

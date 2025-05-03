@@ -343,11 +343,6 @@ impl_standard_names!(
   (UPS_VOLTAGE_NOMINAL                                ,UpsVoltageNominal                               ,"ups.voltage.nominal");
 );
 
-/// Checks if [`&str`] matches to varname ABNF grammar.
-///
-/// ```abnf
-/// varname = 1*LOWERCASE_ASCII *62( DOT 1*(DIGIT / LOWERCASE_ASCII) )
-/// ```
 fn is_var_name<T>(name: T) -> Result<(), VarNameParseError>
 where
   T: AsRef<str>,
@@ -359,7 +354,7 @@ where
   }
 
   if let Some(first) = name.get(0) {
-    if first.is_ascii_digit() || *first == b'.' {
+    if !first.is_ascii_alphabetic() {
       return Err(VarNameParseError::InvalidName);
     }
   }
@@ -374,10 +369,6 @@ where
 }
 
 /// UPS variable name.
-///
-/// ```abnf
-/// varname = 1*LOWERCASE_ASCII *62( DOT 1*(DIGIT / LOWERCASE_ASCII) )
-/// ```
 #[derive(Debug, Clone, Eq, Hash)]
 pub struct VarName {
   name: Repr<StandardName, ReadOnlyStr>,

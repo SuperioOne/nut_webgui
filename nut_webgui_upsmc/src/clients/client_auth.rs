@@ -1,16 +1,22 @@
+use tokio::io::{AsyncRead, AsyncWrite};
+
 use crate::{
-  CmdName, UpsName, Value, VarName,
-  clients::{NutClient, NutTcpClient},
-  commands,
-  errors::Error,
-  responses,
+  CmdName, UpsName, Value, VarName, clients::AsyncNutClient, commands, errors::Error, responses,
 };
 
-pub struct NutAuthClient {
-  inner: NutTcpClient,
+use super::NutClient;
+
+pub struct NutAuthClient<T>
+where
+  T: AsyncRead + AsyncWrite + Unpin,
+{
+  inner: NutClient<T>,
 }
 
-impl NutClient for &mut NutAuthClient {
+impl<T> AsyncNutClient for &mut NutAuthClient<T>
+where
+  T: AsyncRead + AsyncWrite + Unpin,
+{
   fn get_attached(
     self,
     ups: &UpsName,
@@ -26,31 +32,12 @@ impl NutClient for &mut NutAuthClient {
     self.inner.get_cmd_desc(ups, cmd)
   }
 
-  fn get_cmd_list(
-    self,
-    ups_name: &UpsName,
-  ) -> impl Future<Output = Result<responses::CmdList, Error>> {
-    self.inner.get_cmd_list(ups_name)
-  }
-
-  fn get_enum_list(
-    self,
-    ups: &UpsName,
-    var: &VarName,
-  ) -> impl Future<Output = Result<responses::EnumList, Error>> {
-    self.inner.get_enum_list(ups, var)
-  }
-
-  fn get_rw_list(self, ups: &UpsName) -> impl Future<Output = Result<responses::RwList, Error>> {
-    self.inner.get_rw_list(ups)
+  fn get_protver(self) -> impl Future<Output = Result<responses::ProtVer, Error>> {
+    self.inner.get_protver()
   }
 
   fn get_ups_desc(self, ups: &UpsName) -> impl Future<Output = Result<responses::UpsDesc, Error>> {
     self.inner.get_ups_desc(ups)
-  }
-
-  fn get_ups_list(self) -> impl Future<Output = Result<responses::UpsList, Error>> {
-    self.inner.get_ups_list()
   }
 
   fn get_var(
@@ -69,31 +56,54 @@ impl NutClient for &mut NutAuthClient {
     self.inner.get_var_desc(ups, var)
   }
 
-  fn get_var_list(
-    self,
-    ups_name: &UpsName,
-  ) -> impl Future<Output = Result<responses::UpsVarList, Error>> {
-    self.inner.get_var_list(ups_name)
-  }
-
   fn get_ver(self) -> impl Future<Output = Result<responses::DaemonVer, Error>> {
     self.inner.get_ver()
   }
 
-  fn get_protver(self) -> impl Future<Output = Result<responses::ProtVer, Error>> {
-    self.inner.get_protver()
+  fn list_cmd(self, ups: &UpsName) -> impl Future<Output = Result<responses::CmdList, Error>> {
+    self.inner.list_cmd(ups)
   }
 
-  fn get_range_list(
+  fn list_enum(
+    self,
+    ups: &UpsName,
+    var: &VarName,
+  ) -> impl Future<Output = Result<responses::EnumList, Error>> {
+    self.inner.list_enum(ups, var)
+  }
+
+  fn list_ranges(
     self,
     ups: &UpsName,
     var: &VarName,
   ) -> impl Future<Output = Result<responses::RangeList, Error>> {
-    self.inner.get_range_list(ups, var)
+    self.inner.list_ranges(ups, var)
+  }
+
+  fn list_rw(self, ups: &UpsName) -> impl Future<Output = Result<responses::RwList, Error>> {
+    self.inner.list_rw(ups)
+  }
+
+  fn list_ups(self) -> impl Future<Output = Result<responses::UpsList, Error>> {
+    self.inner.list_ups()
+  }
+
+  fn list_var(self, ups: &UpsName) -> impl Future<Output = Result<responses::UpsVarList, Error>> {
+    self.inner.list_var(ups)
+  }
+
+  fn list_client(
+    self,
+    ups: &UpsName,
+  ) -> impl Future<Output = Result<responses::ClientList, Error>> {
+    self.inner.list_client(ups)
   }
 }
 
-impl NutAuthClient {
+impl<T> NutAuthClient<T>
+where
+  T: AsyncRead + AsyncWrite + Unpin,
+{
   pub async fn fsd(&mut self, ups: &UpsName) -> Result<(), Error> {
     self
       .inner
@@ -126,29 +136,20 @@ impl NutAuthClient {
     Ok(())
   }
 
-  pub async fn reconnect(&mut self, username: &str, password: &str) -> Result<(), Error> {
-    _ = self.inner.reconnect().await?;
-
-    _ = self
-      .inner
-      .send::<responses::ProtOk>(commands::Username { username })
-      .await?;
-
-    _ = self
-      .inner
-      .send::<responses::ProtOk>(commands::Password { password })
-      .await?;
-
-    Ok(())
-  }
-
   pub fn close(self) -> impl Future<Output = Result<(), Error>> {
     self.inner.close()
   }
 }
 
-impl NutTcpClient {
-  pub async fn authenticate(self, username: &str, password: &str) -> Result<NutAuthClient, Error> {
+impl<T> NutClient<T>
+where
+  T: AsyncRead + AsyncWrite + Unpin,
+{
+  pub async fn authenticate(
+    self,
+    username: &str,
+    password: &str,
+  ) -> Result<NutAuthClient<T>, Error> {
     let mut client = NutAuthClient { inner: self };
     _ = client
       .inner

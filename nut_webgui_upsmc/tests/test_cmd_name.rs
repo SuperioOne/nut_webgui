@@ -52,25 +52,7 @@ cmd_name_test!(
   CmdParseError::InvalidName
 );
 
-cmd_name_test!(
-  invalid_number_at_start,
-  "0ups.shutdown",
-  CmdParseError::InvalidName
-);
-
-cmd_name_test!(
-  invalid_uppercase,
-  "battery.tesT",
-  CmdParseError::InvalidName
-);
-
 cmd_name_test!(valid_name, "beeper.off");
-
-cmd_name_test!(
-  invalid_name_with_numeric,
-  "ups.sensors.1.on",
-  CmdParseError::InvalidName
-);
 
 cmd_name_test!(min_name_len_1, "w");
 

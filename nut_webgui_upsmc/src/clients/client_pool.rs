@@ -1,6 +1,7 @@
+use tokio::net::TcpStream;
 use tracing::warn;
 
-use super::{NutClient, NutTcpClient};
+use super::{AsyncNutClient, NutClient};
 use crate::{
   CmdName, UpsName, VarName,
   errors::{Error, ErrorKind},
@@ -14,11 +15,11 @@ pub struct ClientAllocator {
 }
 
 impl ItemAllocator for ClientAllocator {
-  type Output = NutTcpClient;
+  type Output = NutClient<TcpStream>;
   type Error = Error;
 
   fn init(&self) -> impl Future<Output = Result<Self::Output, Self::Error>> {
-    NutTcpClient::connect(self.addr)
+    NutClient::connect(self.addr)
   }
 
   async fn dealloc(&self, item: Self::Output) {
@@ -38,7 +39,7 @@ impl From<ItemPoolError<Error>> for Error {
 }
 
 pub struct NutPoolClient {
-  pool: ItemPool<NutTcpClient, ClientAllocator>,
+  pool: ItemPool<NutClient<TcpStream>, ClientAllocator>,
 }
 
 unsafe impl Send for NutPoolClient {}
@@ -80,15 +81,7 @@ impl NutPoolClient {
   }
 }
 
-impl NutClient for &NutPoolClient {
-  async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
-    impl_pooled_call!(self.pool, get_ver)
-  }
-
-  async fn get_protver(self) -> Result<responses::ProtVer, Error> {
-    impl_pooled_call!(self.pool, get_protver)
-  }
-
+impl AsyncNutClient for &NutPoolClient {
   async fn get_attached(self, ups: &UpsName) -> Result<responses::AttachedDaemons, Error> {
     impl_pooled_call!(self.pool, get_attached, ups)
   }
@@ -97,32 +90,12 @@ impl NutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, get_cmd_desc, ups, cmd)
   }
 
-  async fn get_cmd_list(self, ups: &UpsName) -> Result<responses::CmdList, Error> {
-    impl_pooled_call!(self.pool, get_cmd_list, ups)
-  }
-
-  async fn get_enum_list(self, ups: &UpsName, var: &VarName) -> Result<responses::EnumList, Error> {
-    impl_pooled_call!(self.pool, get_enum_list, ups, var)
-  }
-
-  async fn get_range_list(
-    self,
-    ups: &UpsName,
-    var: &VarName,
-  ) -> Result<responses::RangeList, Error> {
-    impl_pooled_call!(self.pool, get_range_list, ups, var)
-  }
-
-  async fn get_rw_list(self, ups: &UpsName) -> Result<responses::RwList, Error> {
-    impl_pooled_call!(self.pool, get_rw_list, ups)
+  async fn get_protver(self) -> Result<responses::ProtVer, Error> {
+    impl_pooled_call!(self.pool, get_protver)
   }
 
   async fn get_ups_desc(self, ups: &UpsName) -> Result<responses::UpsDesc, Error> {
     impl_pooled_call!(self.pool, get_ups_desc, ups)
-  }
-
-  async fn get_ups_list(self) -> Result<responses::UpsList, Error> {
-    impl_pooled_call!(self.pool, get_ups_list)
   }
 
   async fn get_var(self, ups: &UpsName, var: &VarName) -> Result<responses::UpsVar, Error> {
@@ -137,7 +110,35 @@ impl NutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, get_var_desc, ups, var)
   }
 
-  async fn get_var_list(self, ups: &UpsName) -> Result<responses::UpsVarList, Error> {
-    impl_pooled_call!(self.pool, get_var_list, ups)
+  async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
+    impl_pooled_call!(self.pool, get_ver)
+  }
+
+  async fn list_cmd(self, ups: &UpsName) -> Result<responses::CmdList, Error> {
+    impl_pooled_call!(self.pool, list_cmd, ups)
+  }
+
+  async fn list_enum(self, ups: &UpsName, var: &VarName) -> Result<responses::EnumList, Error> {
+    impl_pooled_call!(self.pool, list_enum, ups, var)
+  }
+
+  async fn list_ranges(self, ups: &UpsName, var: &VarName) -> Result<responses::RangeList, Error> {
+    impl_pooled_call!(self.pool, list_ranges, ups, var)
+  }
+
+  async fn list_rw(self, ups: &UpsName) -> Result<responses::RwList, Error> {
+    impl_pooled_call!(self.pool, list_rw, ups)
+  }
+
+  async fn list_ups(self) -> Result<responses::UpsList, Error> {
+    impl_pooled_call!(self.pool, list_ups)
+  }
+
+  async fn list_var(self, ups: &UpsName) -> Result<responses::UpsVarList, Error> {
+    impl_pooled_call!(self.pool, list_var, ups)
+  }
+
+  async fn list_client(self, ups: &UpsName) -> Result<responses::ClientList, Error> {
+    impl_pooled_call!(self.pool, list_client, ups)
   }
 }
