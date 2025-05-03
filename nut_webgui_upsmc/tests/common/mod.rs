@@ -17,7 +17,7 @@ impl DeviceDumpFile {
   }
 
   /// Reads all dump file contents and converts it to [RFC9271 LIST VAR](https://www.rfc-editor.org/rfc/rfc9271.html#section-4.2.7.7) response
-  pub fn into_list_var_response(mut self) -> Result<String, std::io::Error> {
+  pub fn into_prot_response(mut self) -> Result<String, std::io::Error> {
     let mut buf = String::new();
     self.file.read_to_string(&mut buf)?;
 
@@ -57,34 +57,8 @@ fn device_dump_to_rfc9271(ups_name: &str, dump_text: &str) -> String {
   }
 
   response
-    .write_fmt(format_args!("END LIST VAR {}", ups_name))
+    .write_fmt(format_args!("END LIST VAR {}\n", ups_name))
     .expect("Cannot end response.");
 
   response
-}
-
-#[macro_export]
-macro_rules! ups_validation_test {
-  (test_name = $test_name:ident , dump_file = $path:expr, ups_name = $ups_name:expr) => {
-    #[test]
-    fn $test_name() {
-      let path = std::path::Path::new($path);
-      let ddf = $crate::common::DeviceDumpFile::new($ups_name, &path).unwrap();
-      let ups_var_list = ddf.into_list_var_response().unwrap();
-      let var_count = (&ups_var_list).lines().count() - 2;
-
-      match nut_webgui_upsmc::_old::parser::parse_var_list(&ups_var_list) {
-        Ok(result) => {
-          assert_eq!(var_count, result.len());
-        }
-        Err(err) => {
-          assert!(
-            false,
-            "Parsing failed for {} with error {:?}",
-            $ups_name, err
-          );
-        }
-      }
-    }
-  };
 }

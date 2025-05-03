@@ -55,10 +55,16 @@ impl TokenKind {
   }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Position {
   pub line: usize,
   pub col: usize,
+}
+
+impl Default for Position {
+  fn default() -> Self {
+    Self { line: 1, col: 1 }
+  }
 }
 
 #[derive(Debug, Clone)]
@@ -78,7 +84,7 @@ impl<'a> Lexer<'a> {
       buffer,
       state: State {
         read_head: 0,
-        position: Position { col: 0, line: 0 },
+        position: Position { col: 1, line: 1 },
       },
     }
   }
@@ -226,7 +232,7 @@ impl<'a> Lexer<'a> {
       match char_byte {
         b'\n' => {
           self.state.read_head += 1;
-          self.state.position.col = 0;
+          self.state.position.col = 1;
           self.state.position.line += 1;
         }
         v if v.is_ascii_whitespace() => {

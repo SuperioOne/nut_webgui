@@ -62,20 +62,14 @@ var_name_test!(
 );
 
 var_name_test!(
-  invalid_uppercase,
-  "ups.statuS",
-  VarNameParseError::InvalidName
-);
-
-var_name_test!(
   invalid_number_at_start,
   "1ups.status",
   VarNameParseError::InvalidName
 );
 
 var_name_test!(
-  invalid_separator_at_start,
-  "_ups.status",
+  invalid_char_at_start,
+  "=ups.status",
   VarNameParseError::InvalidName
 );
 

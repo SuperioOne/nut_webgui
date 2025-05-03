@@ -1,4 +1,4 @@
-use super::NutClient;
+use super::AsyncNutClient;
 use crate::{
   CmdName, UpsName, VarName, commands,
   errors::{Error, ProtocolError},
@@ -7,43 +7,31 @@ use crate::{
 };
 use core::net::SocketAddr;
 use tokio::{
-  io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
+  io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader},
   net::TcpStream,
 };
-use tracing::{trace, warn};
+use tracing::trace;
 
-pub struct NutTcpClient {
-  connection: TcpStream,
-  address: SocketAddr,
+pub struct NutClient<T>
+where
+  T: AsyncRead + AsyncWrite,
+{
+  connection: T,
 }
 
-impl NutTcpClient {
+impl NutClient<TcpStream> {
   pub async fn connect(addr: SocketAddr) -> Result<Self, Error> {
     let connection = TcpStream::connect(&addr).await?;
     connection.set_nodelay(true)?;
 
-    Ok(Self {
-      connection,
-      address: addr,
-    })
+    Ok(Self { connection })
   }
+}
 
-  pub async fn reconnect(&mut self) -> Result<(), Error> {
-    if let Err(err) = self.connection.shutdown().await {
-      warn!(
-        message = "unable to close an existing client connection before reconnecting",
-        error = %err
-      )
-    }
-
-    let connection = TcpStream::connect(&self.address).await?;
-    connection.set_nodelay(true)?;
-
-    self.connection = connection;
-
-    Ok(())
-  }
-
+impl<T> NutClient<T>
+where
+  T: AsyncWrite + AsyncRead + Unpin,
+{
   pub async fn close(mut self) -> Result<(), Error> {
     self.connection.shutdown().await?;
     Ok(())
@@ -84,12 +72,12 @@ impl NutTcpClient {
     }
   }
 
-  pub(crate) async fn send<T>(
+  pub(crate) async fn send<R>(
     &mut self,
     command: impl Serialize<Output = impl AsRef<str>>,
-  ) -> Result<T, Error>
+  ) -> Result<R, Error>
   where
-    T: Deserialize<Error = Error>,
+    R: Deserialize<Error = Error>,
   {
     let cmd_str = command.serialize();
     let response = self.send_raw(cmd_str.as_ref()).await?;
@@ -102,11 +90,14 @@ impl NutTcpClient {
 
     let mut lexer = Lexer::new(&response);
 
-    T::deserialize(&mut lexer)
+    R::deserialize(&mut lexer)
   }
 }
 
-impl NutClient for &mut NutTcpClient {
+impl<T> AsyncNutClient for &mut NutClient<T>
+where
+  T: AsyncRead + AsyncWrite + Unpin,
+{
   fn get_attached(
     self,
     ups: &UpsName,
@@ -124,41 +115,16 @@ impl NutClient for &mut NutTcpClient {
     self.send::<responses::CmdDesc>(command)
   }
 
-  fn get_cmd_list(self, ups: &UpsName) -> impl Future<Output = Result<responses::CmdList, Error>> {
-    let command = commands::ListCmd { ups };
-    self.send::<responses::CmdList>(command)
-  }
-
-  fn get_enum_list(
-    self,
-    ups: &UpsName,
-    var: &VarName,
-  ) -> impl Future<Output = Result<responses::EnumList, Error>> {
-    let command = commands::ListEnum { ups, var };
-    self.send::<responses::EnumList>(command)
-  }
-
-  fn get_range_list(
-    self,
-    ups: &UpsName,
-    var: &VarName,
-  ) -> impl Future<Output = Result<responses::RangeList, Error>> {
-    let command = commands::ListRange { ups, var };
-    self.send::<responses::RangeList>(command)
-  }
-
-  fn get_rw_list(self, ups: &UpsName) -> impl Future<Output = Result<responses::RwList, Error>> {
-    let command = commands::ListRw { ups };
-    self.send::<responses::RwList>(command)
+  async fn get_protver(self) -> Result<responses::ProtVer, Error> {
+    let response = self.send_raw(commands::GetProtVer.serialize()).await?;
+    Ok(responses::ProtVer {
+      ver: response.trim().to_owned(),
+    })
   }
 
   fn get_ups_desc(self, ups: &UpsName) -> impl Future<Output = Result<responses::UpsDesc, Error>> {
     let command = commands::GetUpsDesc { ups };
     self.send::<responses::UpsDesc>(command)
-  }
-
-  fn get_ups_list(self) -> impl Future<Output = Result<responses::UpsList, Error>> {
-    self.send::<responses::UpsList>(commands::ListUps)
   }
 
   fn get_var(
@@ -179,14 +145,6 @@ impl NutClient for &mut NutTcpClient {
     self.send::<responses::UpsVarDesc>(command)
   }
 
-  fn get_var_list(
-    self,
-    ups: &UpsName,
-  ) -> impl Future<Output = Result<responses::UpsVarList, Error>> {
-    let command = commands::ListVar { ups };
-    self.send::<responses::UpsVarList>(command)
-  }
-
   async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
     let response = self.send_raw(commands::GetDaemonVer.serialize()).await?;
     Ok(responses::DaemonVer {
@@ -194,10 +152,57 @@ impl NutClient for &mut NutTcpClient {
     })
   }
 
-  async fn get_protver(self) -> Result<responses::ProtVer, Error> {
-    let response = self.send_raw(commands::GetProtVer.serialize()).await?;
-    Ok(responses::ProtVer {
-      ver: response.trim().to_owned(),
-    })
+  fn list_client(
+    self,
+    ups: &UpsName,
+  ) -> impl Future<Output = Result<responses::ClientList, Error>> {
+    let command = commands::ListClient { ups };
+    self.send::<responses::ClientList>(command)
+  }
+
+  fn list_cmd(self, ups: &UpsName) -> impl Future<Output = Result<responses::CmdList, Error>> {
+    let command = commands::ListCmd { ups };
+    self.send::<responses::CmdList>(command)
+  }
+
+  fn list_enum(
+    self,
+    ups: &UpsName,
+    var: &VarName,
+  ) -> impl Future<Output = Result<responses::EnumList, Error>> {
+    let command = commands::ListEnum { ups, var };
+    self.send::<responses::EnumList>(command)
+  }
+
+  fn list_ranges(
+    self,
+    ups: &UpsName,
+    var: &VarName,
+  ) -> impl Future<Output = Result<responses::RangeList, Error>> {
+    let command = commands::ListRange { ups, var };
+    self.send::<responses::RangeList>(command)
+  }
+
+  fn list_rw(self, ups: &UpsName) -> impl Future<Output = Result<responses::RwList, Error>> {
+    let command = commands::ListRw { ups };
+    self.send::<responses::RwList>(command)
+  }
+
+  fn list_ups(self) -> impl Future<Output = Result<responses::UpsList, Error>> {
+    self.send::<responses::UpsList>(commands::ListUps)
+  }
+
+  fn list_var(self, ups: &UpsName) -> impl Future<Output = Result<responses::UpsVarList, Error>> {
+    let command = commands::ListVar { ups };
+    self.send::<responses::UpsVarList>(command)
+  }
+}
+
+impl<S> From<S> for NutClient<S>
+where
+  S: AsyncWrite + AsyncRead + Unpin,
+{
+  fn from(value: S) -> Self {
+    Self { connection: value }
   }
 }

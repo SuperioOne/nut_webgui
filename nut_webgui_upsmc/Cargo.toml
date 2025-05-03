@@ -17,6 +17,7 @@ serde = ["dep:serde"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["io-util", "macros", "net", "rt", "rt-multi-thread", "sync" ], default-features = false }
+tokio-test = { version = "0.4" }
 
 [dependencies]
 serde = { version = "1", features = ["serde_derive"], optional = true }
