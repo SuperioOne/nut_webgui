@@ -46,7 +46,7 @@ impl UpsVariables {
     }
   }
 
-  pub fn iter(&mut self) -> UpsVariablesIter<'_> {
+  pub fn iter(&self) -> UpsVariablesIter<'_> {
     UpsVariablesIter {
       inner_iter: self.inner.iter(),
     }

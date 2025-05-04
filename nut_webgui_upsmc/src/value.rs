@@ -27,16 +27,11 @@ pub enum Value {
   String(ReadOnlyStr),
 }
 
-impl Default for Value {
-  fn default() -> Self {
-    Value::String(ReadOnlyStr::from(""))
-  }
-}
-
 #[derive(Debug, PartialEq, Eq)]
 enum InferredType {
   Int,
   Float,
+  String,
 }
 
 impl Value {
@@ -46,13 +41,21 @@ impl Value {
     // Checks first char to guess initial value type.
     let mut inferred_type = match char_iter.next() {
       Some(b'-') => InferredType::Int,
+      Some(b'0') => {
+        // Second char
+        match char_iter.next() {
+          Some(b'.') => InferredType::Float,
+          Some(_) => InferredType::String,
+          None => InferredType::Int,
+        }
+      }
       Some(b'0'..=b'9') => InferredType::Int,
       _ => return Self::String(ReadOnlyStr::from(input)),
     };
 
     for byte in char_iter {
       inferred_type = match *byte {
-        b'.' if inferred_type != InferredType::Float => InferredType::Float,
+        b'.' if inferred_type == InferredType::Int => InferredType::Float,
         b'0'..=b'9' => inferred_type,
         _ => return Self::String(ReadOnlyStr::from(input)),
       };
@@ -67,6 +70,8 @@ impl Value {
         |_| Self::String(ReadOnlyStr::from(input)),
         |v| Self::Float(v),
       ),
+
+      _ => Self::String(ReadOnlyStr::from(input)),
     }
   }
 
@@ -114,20 +119,89 @@ impl_value_from!(i64, Int);
 impl_value_from!(i8, Int, i64);
 
 impl From<String> for Value {
+  #[inline]
   fn from(value: String) -> Self {
     Self::String(ReadOnlyStr::from(value.as_str()))
   }
 }
 
 impl From<ReadOnlyStr> for Value {
+  #[inline]
   fn from(value: ReadOnlyStr) -> Self {
     Self::String(value.clone())
   }
 }
 
 impl From<&str> for Value {
+  #[inline]
   fn from(value: &str) -> Self {
     Self::String(ReadOnlyStr::from(value))
+  }
+}
+
+impl PartialEq<i64> for Value {
+  #[inline]
+  fn eq(&self, other: &i64) -> bool {
+    match self {
+      Value::Float(_) => false,
+      Value::Int(val) => val.eq(other),
+      Value::String(_) => false,
+    }
+  }
+}
+
+impl PartialEq<f64> for Value {
+  #[inline]
+  fn eq(&self, other: &f64) -> bool {
+    match self {
+      Value::Float(val) => val.eq(other),
+      Value::Int(_) => false,
+      Value::String(_) => false,
+    }
+  }
+}
+
+impl PartialEq<&str> for Value {
+  #[inline]
+  fn eq(&self, other: &&str) -> bool {
+    match self {
+      Value::Float(_) => false,
+      Value::Int(_) => false,
+      Value::String(inner) => inner.as_ref().eq(*other),
+    }
+  }
+}
+
+impl PartialEq<str> for Value {
+  #[inline]
+  fn eq(&self, other: &str) -> bool {
+    match self {
+      Value::Float(_) => false,
+      Value::Int(_) => false,
+      Value::String(inner) => inner.as_ref().eq(other),
+    }
+  }
+}
+
+impl PartialEq<Box<str>> for Value {
+  #[inline]
+  fn eq(&self, other: &Box<str>) -> bool {
+    match self {
+      Value::Float(_) => false,
+      Value::Int(_) => false,
+      Value::String(inner) => inner.as_ref().eq(other.as_ref()),
+    }
+  }
+}
+
+impl PartialEq<String> for Value {
+  #[inline]
+  fn eq(&self, other: &String) -> bool {
+    match self {
+      Value::Float(_) => false,
+      Value::Int(_) => false,
+      Value::String(inner) => inner.as_ref().eq(other),
+    }
   }
 }
 

@@ -444,6 +444,16 @@ impl std::fmt::Display for VarName {
   }
 }
 
+impl PartialEq<&str> for VarName {
+  #[inline]
+  fn eq(&self, other: &&str) -> bool {
+    match &self.name {
+      Repr::Standard(name) => name.as_str().eq(*other),
+      Repr::Custom(boxed_name) => boxed_name.as_ref().eq(*other),
+    }
+  }
+}
+
 impl PartialEq<str> for VarName {
   #[inline]
   fn eq(&self, other: &str) -> bool {
@@ -457,14 +467,14 @@ impl PartialEq<str> for VarName {
 impl PartialEq<Box<str>> for VarName {
   #[inline]
   fn eq(&self, other: &Box<str>) -> bool {
-    self.eq(other.as_ref())
+    self.eq(&other.as_ref())
   }
 }
 
 impl PartialEq<String> for VarName {
   #[inline]
   fn eq(&self, other: &String) -> bool {
-    self.eq(other.as_str())
+    self.eq(&other.as_str())
   }
 }
 

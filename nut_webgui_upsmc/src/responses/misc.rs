@@ -1,11 +1,11 @@
 #[derive(Debug)]
 pub struct ProtVer {
-  pub ver: String,
+  pub value: String,
 }
 
 #[derive(Debug)]
 pub struct DaemonVer {
-  pub ver: String,
+  pub value: String,
 }
 
 macro_rules! impl_ok_parser {

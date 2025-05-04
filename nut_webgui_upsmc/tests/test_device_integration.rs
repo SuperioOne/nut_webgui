@@ -12,7 +12,7 @@ macro_rules! gen_dev_integration_test {
               clients::{AsyncNutClient, NutClient}
             };
 
-            let ups_name = UpsName::new_unchecked("UPS_DEVICE", None, None);
+            let ups_name = UpsName::new_unchecked("UPS_DEVICE");
             let path = std::path::Path::new($path);
             let var_list = crate::common::DeviceDumpFile::new(&ups_name.to_string(), &path).unwrap();
             let prot_response = var_list.into_prot_response().unwrap();

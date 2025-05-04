@@ -43,6 +43,11 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Clone)]
+pub struct UnsupportedUpsStatus {
+  pub status: Box<str>,
+}
+
+#[derive(Debug, Clone)]
 pub enum UpsNameParseError {
   Empty,
   ExpectedGroupName,
@@ -65,6 +70,15 @@ pub enum VarNameParseError {
 pub enum CmdParseError {
   Empty,
   InvalidName,
+}
+
+impl std::fmt::Display for UnsupportedUpsStatus {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_fmt(format_args!(
+      "unsupported ups status flag '{flag}'",
+      flag = self.status
+    ))
+  }
 }
 
 impl std::fmt::Display for CmdParseError {

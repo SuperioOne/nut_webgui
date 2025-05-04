@@ -45,7 +45,7 @@ pub trait AsyncNutClient {
   fn list_enum(self, ups: &UpsName, var: &VarName)
   -> impl Future<Output = Result<EnumList, Error>>;
 
-  fn list_ranges(
+  fn list_range(
     self,
     ups: &UpsName,
     var: &VarName,

@@ -1,5 +1,6 @@
 use super::internal::{ReadOnlyStr, ascii_rules::NutAsciiText};
 use crate::errors::UpsNameParseError;
+use core::num::NonZeroU16;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Hostname {
@@ -16,6 +17,31 @@ impl std::fmt::Display for Hostname {
       } => write!(f, "{name}:{port}"),
       Hostname { name, .. } => f.write_str(name),
     }
+  }
+}
+
+impl TryFrom<&str> for Hostname {
+  type Error = UpsNameParseError;
+
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    parse_hostname(value)
+  }
+}
+
+impl Hostname {
+  pub fn new<T>(hostname: T) -> Self
+  where
+    T: AsRef<str>,
+  {
+    Self {
+      port: None,
+      name: hostname.as_ref().into(),
+    }
+  }
+
+  pub fn set_port(mut self, port: NonZeroU16) -> Self {
+    self.port = Some(port.get());
+    self
   }
 }
 
@@ -139,11 +165,7 @@ where
 }
 
 impl UpsName {
-  pub fn new<T>(
-    name: T,
-    group: Option<&str>,
-    hostname: Option<Hostname>,
-  ) -> Result<Self, UpsNameParseError>
+  pub fn new<T>(name: T) -> Result<Self, UpsNameParseError>
   where
     T: AsRef<str>,
   {
@@ -151,27 +173,46 @@ impl UpsName {
       return Err(UpsNameParseError::InvalidUpsName);
     }
 
-    if let Some(group) = &group {
-      if !is_ups_name(group) {
-        return Err(UpsNameParseError::InvalidGroupName);
-      }
-    }
-
-    Ok(Self::new_unchecked(name, group, hostname))
+    Ok(Self::new_unchecked(name))
   }
 
-  pub fn new_unchecked<T>(name: T, group: Option<&str>, hostname: Option<Hostname>) -> Self
+  pub fn new_unchecked<T>(name: T) -> Self
   where
     T: AsRef<str>,
   {
     let name = ReadOnlyStr::from(name.as_ref());
-    let group = group.map(|v| ReadOnlyStr::from(v));
 
     Self {
-      name,
-      group,
-      hostname,
+      name: ReadOnlyStr::from(name.as_ref()),
+      group: None,
+      hostname: None,
     }
+  }
+
+  pub fn set_group<T>(mut self, group: T) -> Result<Self, UpsNameParseError>
+  where
+    T: AsRef<str>,
+  {
+    if !is_ups_name(&group) {
+      return Err(UpsNameParseError::InvalidGroupName);
+    }
+
+    self.group = Some(ReadOnlyStr::from(group.as_ref()));
+
+    Ok(self)
+  }
+
+  pub fn set_group_unchecked<T>(mut self, group: T) -> Self
+  where
+    T: AsRef<str>,
+  {
+    self.group = Some(ReadOnlyStr::from(group.as_ref()));
+    self
+  }
+
+  pub fn set_hostname(mut self, hostname: Hostname) -> Self {
+    self.hostname = Some(hostname);
+    self
   }
 }
 

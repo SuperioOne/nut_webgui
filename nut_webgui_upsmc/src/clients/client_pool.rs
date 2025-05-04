@@ -122,8 +122,8 @@ impl AsyncNutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, list_enum, ups, var)
   }
 
-  async fn list_ranges(self, ups: &UpsName, var: &VarName) -> Result<responses::RangeList, Error> {
-    impl_pooled_call!(self.pool, list_ranges, ups, var)
+  async fn list_range(self, ups: &UpsName, var: &VarName) -> Result<responses::RangeList, Error> {
+    impl_pooled_call!(self.pool, list_range, ups, var)
   }
 
   async fn list_rw(self, ups: &UpsName) -> Result<responses::RwList, Error> {
