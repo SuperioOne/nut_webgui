@@ -72,12 +72,12 @@ where
     self.inner.list_enum(ups, var)
   }
 
-  fn list_ranges(
+  fn list_range(
     self,
     ups: &UpsName,
     var: &VarName,
   ) -> impl Future<Output = Result<responses::RangeList, Error>> {
-    self.inner.list_ranges(ups, var)
+    self.inner.list_range(ups, var)
   }
 
   fn list_rw(self, ups: &UpsName) -> impl Future<Output = Result<responses::RwList, Error>> {

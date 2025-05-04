@@ -89,13 +89,6 @@ impl<'a> Lexer<'a> {
     }
   }
 
-  pub fn reset(&mut self) {
-    self.state = State {
-      position: Position::default(),
-      read_head: 0,
-    }
-  }
-
   pub fn extract_from_token(&self, token: &Token) -> Cow<'_, str> {
     let buffer_str = &self.buffer;
 
@@ -128,11 +121,6 @@ impl<'a> Lexer<'a> {
         }
       }
     }
-  }
-
-  #[inline]
-  pub const fn from_str(buffer: &'a str) -> Self {
-    Self::new(buffer)
   }
 
   pub fn peek(&self) -> Option<Token> {
@@ -298,7 +286,7 @@ mod tests {
       #[test]
       fn $test_name(){
         let input: &str = $input;
-        let mut lexer = Lexer::from_str(input);
+        let mut lexer = Lexer::new(input);
 
         $(
           match lexer.next_token() {
@@ -388,7 +376,7 @@ VAR TEST END",
 
   #[test]
   fn empty_text() {
-    let mut lexer = Lexer::from_str("");
+    let mut lexer = Lexer::new("");
 
     match lexer.next_token() {
       Ok(None) => assert!(true),

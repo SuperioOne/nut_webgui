@@ -83,6 +83,27 @@ impl AsRef<str> for CmdName {
   }
 }
 
+impl PartialEq<str> for CmdName {
+  #[inline]
+  fn eq(&self, other: &str) -> bool {
+    self.name.as_ref().eq(other)
+  }
+}
+
+impl PartialEq<String> for CmdName {
+  #[inline]
+  fn eq(&self, other: &String) -> bool {
+    self.name.as_ref().eq(other)
+  }
+}
+
+impl PartialEq<Box<str>> for CmdName {
+  #[inline]
+  fn eq(&self, other: &Box<str>) -> bool {
+    self.name.as_ref().eq(other.as_ref())
+  }
+}
+
 impl std::fmt::Display for CmdName {
   #[inline]
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

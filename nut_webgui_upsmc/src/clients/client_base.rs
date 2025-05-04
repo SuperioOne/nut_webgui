@@ -38,7 +38,8 @@ where
   }
 
   pub async fn send_raw(&mut self, send: &str) -> Result<String, Error> {
-    const LIST_START: &'static str = "BEGIN";
+    const LIST_START: &'static str = "BEGIN LIST";
+    const LIST_END: &'static str = "END LIST";
     const PROT_ERR: &'static str = "ERR";
 
     self.connection.write_all(send.as_bytes()).await?;
@@ -49,13 +50,11 @@ where
     let mut start_pos = reader.read_line(&mut response_buf).await?;
 
     if response_buf.starts_with(LIST_START) {
-      let expected_end = format!("END{}", &response_buf[LIST_START.len()..]);
-
       loop {
         let read = reader.read_line(&mut response_buf).await?;
         let line = &response_buf[start_pos..];
 
-        if line == &expected_end {
+        if line.starts_with(LIST_END) {
           break;
         } else {
           start_pos += read;
@@ -118,7 +117,7 @@ where
   async fn get_protver(self) -> Result<responses::ProtVer, Error> {
     let response = self.send_raw(commands::GetProtVer.serialize()).await?;
     Ok(responses::ProtVer {
-      ver: response.trim().to_owned(),
+      value: response.trim().to_owned(),
     })
   }
 
@@ -148,7 +147,7 @@ where
   async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
     let response = self.send_raw(commands::GetDaemonVer.serialize()).await?;
     Ok(responses::DaemonVer {
-      ver: response.trim().to_owned(),
+      value: response.trim().to_owned(),
     })
   }
 
@@ -174,7 +173,7 @@ where
     self.send::<responses::EnumList>(command)
   }
 
-  fn list_ranges(
+  fn list_range(
     self,
     ups: &UpsName,
     var: &VarName,
