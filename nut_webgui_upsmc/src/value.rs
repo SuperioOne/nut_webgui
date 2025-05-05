@@ -161,17 +161,6 @@ impl PartialEq<f64> for Value {
   }
 }
 
-impl PartialEq<&str> for Value {
-  #[inline]
-  fn eq(&self, other: &&str) -> bool {
-    match self {
-      Value::Float(_) => false,
-      Value::Int(_) => false,
-      Value::String(inner) => inner.as_ref().eq(*other),
-    }
-  }
-}
-
 impl PartialEq<str> for Value {
   #[inline]
   fn eq(&self, other: &str) -> bool {
@@ -202,6 +191,48 @@ impl PartialEq<String> for Value {
       Value::Int(_) => false,
       Value::String(inner) => inner.as_ref().eq(other),
     }
+  }
+}
+
+impl PartialEq<&str> for Value {
+  #[inline]
+  fn eq(&self, other: &&str) -> bool {
+    self == *other
+  }
+}
+
+impl PartialEq<i64> for &Value {
+  #[inline]
+  fn eq(&self, other: &i64) -> bool {
+    **self == *other
+  }
+}
+
+impl PartialEq<f64> for &Value {
+  #[inline]
+  fn eq(&self, other: &f64) -> bool {
+    **self == *other
+  }
+}
+
+impl PartialEq<str> for &Value {
+  #[inline]
+  fn eq(&self, other: &str) -> bool {
+    **self == *other
+  }
+}
+
+impl PartialEq<Box<str>> for &Value {
+  #[inline]
+  fn eq(&self, other: &Box<str>) -> bool {
+    **self == *other
+  }
+}
+
+impl PartialEq<String> for &Value {
+  #[inline]
+  fn eq(&self, other: &String) -> bool {
+    **self == *other
   }
 }
 

@@ -132,7 +132,7 @@ fn to_string() {
   );
 
   assert_eq!(
-    VarName::AMBIENT_TEMPERATURE_LOW_WARNING.as_str(),
+    VarName::AMBIENT_TEMPERATURE_LOW_WARNING,
     "ambient.temperature.low.warning"
   );
 

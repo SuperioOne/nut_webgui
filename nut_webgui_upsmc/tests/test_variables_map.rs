@@ -1,4 +1,4 @@
-use nut_webgui_upsmc::{UpsVariables, Value, VarName};
+use nut_webgui_upsmc::{Value, VarName, variables::UpsVariables};
 
 #[test]
 fn initialize() {
@@ -47,7 +47,8 @@ fn insert_new() {
     Some(value) => {
       assert!(
         false,
-        "Insert should've not return any value for insert new test.",
+        "Insert should've not return any value for insert new test. value={}",
+        value
       );
     }
     None => assert!(true),

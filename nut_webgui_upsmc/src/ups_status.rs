@@ -13,7 +13,7 @@ macro_rules! impl_status {
         for status in value.as_ref().split_whitespace() {
           match status {
             $(
-              $value => { result |= $crate::UpsStatus::$name },
+              $value => { result |= $crate::ups_status::UpsStatus::$name },
             )+
             _ => {}
           };
@@ -125,8 +125,8 @@ impl UpsStatus {
     self.0.count_ones()
   }
 
-  pub fn iter(&self) -> UpsStatusIterator {
-    UpsStatusIterator {
+  pub fn iter(&self) -> Iter {
+    Iter {
       state: self.clone(),
     }
   }
@@ -180,11 +180,11 @@ impl core::ops::BitXorAssign for UpsStatus {
   }
 }
 
-pub struct UpsStatusIterator {
+pub struct Iter {
   state: UpsStatus,
 }
 
-impl Iterator for UpsStatusIterator {
+impl Iterator for Iter {
   type Item = UpsStatus;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -202,7 +202,7 @@ impl Iterator for UpsStatusIterator {
 
 impl IntoIterator for UpsStatus {
   type Item = UpsStatus;
-  type IntoIter = UpsStatusIterator;
+  type IntoIter = Iter;
 
   fn into_iter(self) -> Self::IntoIter {
     Self::IntoIter { state: self }

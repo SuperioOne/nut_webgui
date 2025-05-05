@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::collections::hash_map::{Iter, IterMut};
 
 use crate::value::Value;
 use crate::var_name::VarName;
@@ -40,24 +39,24 @@ impl UpsVariables {
     self.inner.len()
   }
 
-  pub fn iter_mut(&mut self) -> UpsVariablesIterMut<'_> {
-    UpsVariablesIterMut {
+  pub fn iter_mut(&mut self) -> IterMut<'_> {
+    IterMut {
       inner_iter: self.inner.iter_mut(),
     }
   }
 
-  pub fn iter(&self) -> UpsVariablesIter<'_> {
-    UpsVariablesIter {
+  pub fn iter(&self) -> Iter<'_> {
+    Iter {
       inner_iter: self.inner.iter(),
     }
   }
 }
 
-pub struct UpsVariablesIterMut<'a> {
-  inner_iter: IterMut<'a, VarName, Value>,
+pub struct IterMut<'a> {
+  inner_iter: std::collections::hash_map::IterMut<'a, VarName, Value>,
 }
 
-impl<'a> Iterator for UpsVariablesIterMut<'a> {
+impl<'a> Iterator for IterMut<'a> {
   type Item = (&'a VarName, &'a mut Value);
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -65,11 +64,11 @@ impl<'a> Iterator for UpsVariablesIterMut<'a> {
   }
 }
 
-pub struct UpsVariablesIter<'a> {
-  inner_iter: Iter<'a, VarName, Value>,
+pub struct Iter<'a> {
+  inner_iter: std::collections::hash_map::Iter<'a, VarName, Value>,
 }
 
-impl<'a> Iterator for UpsVariablesIter<'a> {
+impl<'a> Iterator for Iter<'a> {
   type Item = (&'a VarName, &'a Value);
 
   fn next(&mut self) -> Option<Self::Item> {
