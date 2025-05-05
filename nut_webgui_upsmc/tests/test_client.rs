@@ -215,7 +215,7 @@ async fn list_var() {
 
         $(
           match var_list.variables.get(&VarName::new_unchecked($name)) {
-            Some(value) => assert_eq!(*value, $value),
+            Some(value) => assert_eq!(value, $value),
             None => assert!(false)
           }
         )+

@@ -425,15 +425,6 @@ impl AsRef<str> for VarName {
   }
 }
 
-impl TryFrom<&str> for VarName {
-  type Error = VarNameParseError;
-
-  #[inline]
-  fn try_from(value: &str) -> Result<Self, Self::Error> {
-    Self::new(value)
-  }
-}
-
 impl std::fmt::Display for VarName {
   #[inline]
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -444,13 +435,12 @@ impl std::fmt::Display for VarName {
   }
 }
 
-impl PartialEq<&str> for VarName {
+impl TryFrom<&str> for VarName {
+  type Error = VarNameParseError;
+
   #[inline]
-  fn eq(&self, other: &&str) -> bool {
-    match &self.name {
-      Repr::Standard(name) => name.as_str().eq(*other),
-      Repr::Custom(boxed_name) => boxed_name.as_ref().eq(*other),
-    }
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    Self::new(value)
   }
 }
 
@@ -464,17 +454,24 @@ impl PartialEq<str> for VarName {
   }
 }
 
+impl PartialEq<&str> for VarName {
+  #[inline]
+  fn eq(&self, other: &&str) -> bool {
+    *self == **other
+  }
+}
+
 impl PartialEq<Box<str>> for VarName {
   #[inline]
   fn eq(&self, other: &Box<str>) -> bool {
-    self.eq(&other.as_ref())
+    self.eq(other.as_ref())
   }
 }
 
 impl PartialEq<String> for VarName {
   #[inline]
   fn eq(&self, other: &String) -> bool {
-    self.eq(&other.as_str())
+    self.eq(other.as_str())
   }
 }
 
