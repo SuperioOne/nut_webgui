@@ -1,18 +1,22 @@
-mod http_server;
 pub mod ups_daemon_state;
+
+mod base_path;
+mod http_server;
 mod ups_services;
 mod upsd_client;
 
 use crate::{
-  http_server::{start_http_server, HttpServerConfig, UpsdConfig},
+  http_server::{start_http_server, HttpServerConfig, ServerConfig},
   ups_services::{
     upsd_poll_service, upsd_state_service, UpsPollerConfig, UpsStorageConfig, UpsUpdateMessage,
   },
 };
+use base_path::get_base_path;
 use clap::Parser;
 use std::{
   net::{IpAddr, Ipv4Addr, SocketAddr},
   panic,
+  process::exit,
   sync::Arc,
 };
 use tokio::{
@@ -71,13 +75,25 @@ struct ServerArgs {
   /// Static file directory
   #[arg(long, default_value_t = String::from("static"))]
   static_dir: String,
+
+  /// Overrides base path
+  #[arg(long)]
+  base_path: Option<String>,
 }
 
 #[tokio::main]
 async fn main() {
   let args = ServerArgs::parse();
-
   fmt().with_max_level(args.log_level).init();
+
+  let base_path = match get_base_path(args.base_path) {
+    Ok(path) => path,
+    Err(err) => {
+      error!(message = "server start failed", err=%err);
+      exit(-1)
+    }
+  };
+
   debug!(
     message = "Server initialized.",
     poll_interval = &args.poll_interval,
@@ -89,6 +105,7 @@ async fn main() {
     listen = &args.listen.to_string(),
     port = &args.port,
     log_level = args.log_level.as_str(),
+    base_path = &base_path,
     static_dir = &args.static_dir
   );
 
@@ -130,12 +147,13 @@ async fn main() {
     upsd_state: state_arc,
     listen: SocketAddr::new(args.listen, args.port),
     static_dir: args.static_dir,
-    upsd_config: UpsdConfig {
+    config: ServerConfig {
       addr: upsd_address,
       pass: args.upsd_pass,
       user: args.upsd_user,
       poll_freq: Duration::from_secs(poll_freq),
       poll_interval: Duration::from_secs(poll_interval),
+      base_path: base_path,
     },
   });
 

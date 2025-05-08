@@ -5,17 +5,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NUT Web - {{ title }}</title>
-    <link href="/static/style.css" rel="preload" as="style" />
-    <link href="/static/index.js" rel="preload" as="script" />
-    <link href="/static/style.css" rel="stylesheet" />
-    <link rel="icon" href="/static/icon.svg" />
+    <link href="{{base_path}}/static/style.css" rel="preload" as="style" />
+    <link href="{{base_path}}/static/index.js" rel="preload" as="script" />
+    <link href="{{base_path}}/static/style.css" rel="stylesheet" />
+    <link rel="icon" href="{{base_path}}/static/icon.svg" />
     <script>
       "use strict";
       var o=window.matchMedia("(prefers-color-scheme: dark)");
       var t=localStorage.getItem("app_theme")||(o&&o.matches&&"dark")||"light";
       if(t){document.documentElement.setAttribute("data-theme",t)}
     </script>
-    <script src="/static/index.js" defer></script>
+  <script src="{{base_path}}/static/index.js" defer></script>
     {% block head %}{% endblock head %}
   </head>
 
@@ -23,8 +23,8 @@
     <header>
       <div class="navbar bg-base-100">
         <div class="flex-1">
-          <a class="btn btn-ghost text-xl drop-shadow" href="/">
-            <img width="32" height="32" src="/static/icon.svg" alt="icon" />
+          <a class="btn btn-ghost text-xl drop-shadow" href="{{base_path}}/">
+            <img width="32" height="32" src="{{base_path}}/static/icon.svg" alt="icon" />
             <span class="hidden sm:inline-block"> NUT Web Monitor </span>
           </a>
         </div>

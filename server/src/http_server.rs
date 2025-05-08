@@ -23,22 +23,23 @@ mod probes;
 pub struct HttpServerConfig {
   pub listen: SocketAddr,
   pub upsd_state: Arc<RwLock<UpsDaemonState>>,
-  pub upsd_config: UpsdConfig,
+  pub config: ServerConfig,
   pub static_dir: String,
 }
 
-pub(crate) struct UpsdConfig {
+pub(crate) struct ServerConfig {
   pub pass: Option<String>,
   pub user: Option<String>,
   pub addr: String,
   pub poll_freq: Duration,
   pub poll_interval: Duration,
+  pub base_path: String,
 }
 
 #[derive(Clone)]
 pub(crate) struct ServerState {
   pub upsd_state: Arc<RwLock<UpsDaemonState>>,
-  pub upsd_config: Arc<UpsdConfig>,
+  pub configs: Arc<ServerConfig>,
 }
 
 pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
@@ -46,7 +47,7 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
     let HttpServerConfig {
       upsd_state,
       listen,
-      upsd_config,
+      config,
       static_dir,
     } = config;
 
@@ -83,9 +84,10 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       .route("/not-found", get(hypermedia::routes::not_found::get))
       .fallback(hypermedia::routes::not_found::get);
 
+    let base_path = config.base_path.clone();
     let state = ServerState {
       upsd_state,
-      upsd_config: Arc::new(upsd_config),
+      configs: Arc::new(config),
     };
 
     let router = Router::new()
@@ -94,8 +96,13 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       .nest("/probes", probes)
       .merge(hypermedia_api)
       .layer(middleware)
-      .with_state(state)
-      .into_service();
+      .with_state(state);
+
+    let router = if base_path.is_empty() {
+      router.into_service()
+    } else {
+      Router::new().nest(&base_path, router).into_service()
+    };
 
     let app = NormalizePathLayer::trim_trailing_slash().layer(router);
     let listener = tokio::net::TcpListener::bind(listen).await.unwrap();

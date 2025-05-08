@@ -2,7 +2,7 @@ use crate::{
   htmx_redirect,
   http_server::{
     hypermedia::notifications::{Notification, NotificationTemplate},
-    ServerState, UpsdConfig,
+    ServerConfig, ServerState,
   },
   ups_daemon_state::UpsEntry,
   upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
@@ -72,6 +72,7 @@ impl From<&UpsEntry> for UpsStatusTemplate {
 #[template(path = "ups/ups_info.html", ext = "html", escape = "none")]
 struct UpsInfoTemplate<'a> {
   title: &'a str,
+  base_path: &'a str,
   battery_voltage: Option<f64>,
   charge: Option<f64>,
   charge_low: Option<f64>,
@@ -92,12 +93,7 @@ struct UpsInfoTemplate<'a> {
 }
 
 impl<'a> UpsInfoTemplate<'a> {
-  pub fn set_status_interval(mut self, value_secs: u64) -> Self {
-    self.hx_status_interval = value_secs;
-    self
-  }
-
-  pub fn from_ups_entry(ups: &'a UpsEntry) -> Self {
+  pub fn from_ups_entry(ups: &'a UpsEntry, configs: &'a ServerConfig) -> Self {
     let variables: Vec<(&'a str, String)> = ups
       .variables
       .iter()
@@ -106,6 +102,7 @@ impl<'a> UpsInfoTemplate<'a> {
 
     let mut template = Self {
       title: &ups.name,
+      base_path: &configs.base_path,
       battery_voltage: None,
       charge: None,
       charge_low: None,
@@ -122,7 +119,7 @@ impl<'a> UpsInfoTemplate<'a> {
       runtime: None,
       variables,
       ups_status_template: UpsStatusTemplate::default(),
-      hx_status_interval: 2_u64,
+      hx_status_interval: configs.poll_interval.as_secs(),
     };
 
     for variable in ups.variables.iter() {
@@ -201,55 +198,56 @@ impl<'a> UpsInfoTemplate<'a> {
   }
 }
 
-impl<'a> From<&'a UpsEntry> for UpsInfoTemplate<'a> {
-  fn from(entry: &'a UpsEntry) -> Self {
-    Self::from_ups_entry(entry)
-  }
-}
-
 // TODO: Switch to block fragments when askama v0.13 released
 #[derive(Template)]
 #[template(path = "ups/+page.html", ext = "html", escape = "none")]
 struct UpsPageTemplate<'a> {
   title: &'a str,
+  base_path: &'a str,
   ups_info: UpsInfoTemplate<'a>,
   commands: &'a [Box<str>],
   hx_info_interval: u64,
 }
 
 #[inline]
-fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
+fn page_response(entry: Option<&UpsEntry>, configs: &ServerConfig) -> Response {
   if let Some(ups) = entry {
-    let template = UpsPageTemplate {
+    UpsPageTemplate {
+      base_path: &configs.base_path,
       commands: &ups.commands,
-      hx_info_interval: upsd_config.poll_freq.as_secs(),
+      hx_info_interval: configs.poll_freq.as_secs(),
       title: &ups.name,
-      ups_info: UpsInfoTemplate::from(ups).set_status_interval(upsd_config.poll_interval.as_secs()),
-    };
-
-    template.into_response()
+      ups_info: UpsInfoTemplate::from_ups_entry(ups, configs),
+    }
+    .into_response()
   } else {
-    Redirect::permanent("/not-found").into_response()
+    Redirect::permanent(&format!("{}/not-found", configs.base_path)).into_response()
   }
 }
 
 #[inline]
-fn partial_ups_info(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
+fn partial_ups_info(entry: Option<&UpsEntry>, configs: &ServerConfig) -> Response {
   if let Some(ups) = entry {
-    UpsInfoTemplate::from(ups)
-      .set_status_interval(upsd_config.poll_interval.as_secs())
-      .into_response()
+    UpsInfoTemplate::from_ups_entry(ups, configs).into_response()
   } else {
-    htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
+    htmx_redirect!(
+      StatusCode::NOT_FOUND,
+      format!("{}/not-found", configs.base_path)
+    )
+    .into_response()
   }
 }
 
 #[inline]
-fn partial_ups_status(entry: Option<&UpsEntry>) -> Response {
+fn partial_ups_status(entry: Option<&UpsEntry>, configs: &ServerConfig) -> Response {
   if let Some(ups) = entry {
     UpsStatusTemplate::from(ups).into_response()
   } else {
-    htmx_redirect!(StatusCode::NOT_FOUND, "/not-found").into_response()
+    htmx_redirect!(
+      StatusCode::NOT_FOUND,
+      format!("{}/not-found", configs.base_path)
+    )
+    .into_response()
   }
 }
 
@@ -262,9 +260,9 @@ pub async fn get(
   let ups_entry = upsd_state.get_ups(&ups_name);
 
   match query.section.as_deref() {
-    Some("info") => partial_ups_info(ups_entry, &state.upsd_config),
-    Some("status") => partial_ups_status(ups_entry),
-    _ => page_response(ups_entry, &state.upsd_config),
+    Some("info") => partial_ups_info(ups_entry, &state.configs),
+    Some("status") => partial_ups_status(ups_entry, &state.configs),
+    _ => page_response(ups_entry, &state.configs),
   }
 }
 
@@ -274,9 +272,9 @@ pub async fn post_command(
   Form(request): Form<CommandRequest>,
 ) -> Response {
   let template: NotificationTemplate = {
-    if let (Some(user), Some(pass)) = (&state.upsd_config.user, &state.upsd_config.pass) {
+    if let (Some(user), Some(pass)) = (&state.configs.user, &state.configs.pass) {
       match {
-        let addr: &str = &state.upsd_config.addr;
+        let addr: &str = &state.configs.addr;
         let ups_name: &str = &ups_name;
         let cmd: &str = &request.command;
 

@@ -21,7 +21,7 @@ pub async fn get_health(State(state): State<ServerState>) -> Response {
 
   let response = Json(HealthResponse {
     last_modified: upsd_state.last_modified.as_ref(),
-    upsd_server: &state.upsd_config.addr,
+    upsd_server: &state.configs.addr,
     upsd_status: upsd_state.status,
   });
 

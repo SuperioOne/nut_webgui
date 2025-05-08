@@ -20,7 +20,7 @@
       <div
         id="ups_status"
         hx-ext="morph"
-        hx-get="/ups/{{title}}?section=status"
+        hx-get="{{base_path}}/ups/{{title}}?section=status"
         hx-indicator="#indicator"
         hx-swap="morph:innerHTML"
         hx-trigger="every {{hx_status_interval}}s"

@@ -21,7 +21,7 @@
       {% for row in ups_list %}
         <tr class="break-all">
           <td>
-            <a class="link font-bold text-primary" href="/ups/{{row.name}}">
+            <a class="link font-bold text-primary" href="{{base_path}}/ups/{{row.name}}">
               {{row.name}}
             </a>
           </td>
@@ -64,7 +64,7 @@
             {% endif %}
           </td>
           <td class="hidden sm:table-cell w-32">
-            <a role="button" href="/ups/{{row.name}}" class="btn btn-sm btn-outline">Details</a>
+            <a role="button" href="{{base_path}}/ups/{{row.name}}" class="btn btn-sm btn-outline">Details</a>
           </td>
         </tr>
       {% endfor %}

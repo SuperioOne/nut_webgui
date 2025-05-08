@@ -12,4 +12,5 @@ exec "$BIN_LOCATION" --static-dir "$STATIC_LOCATION" \
     ${UPSD_ADDR:+"--upsd-addr=$UPSD_ADDR"} \
     ${UPSD_USER:+"--upsd-user=$UPSD_USER"} \
     ${UPSD_PASS:+"--upsd-pass=$UPSD_PASS"} \
-    ${LOG_LEVEL:+"--log-level=$LOG_LEVEL"}
+    ${LOG_LEVEL:+"--log-level=$LOG_LEVEL"} \
+    ${BASE_PATH:+"--base-path=$BASE_PATH"}

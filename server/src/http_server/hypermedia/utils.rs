@@ -9,10 +9,9 @@ const INFO_CLASS: &str = "info";
 macro_rules! htmx_redirect {
   ($c:expr, $u:expr) => {{
     let code: axum::http::StatusCode = $c;
-    let uri: &str = $u;
     let headers = axum::http::HeaderMap::new();
 
-    (code, [("HX-Redirect", uri)], headers)
+    (code, [("HX-Redirect", $u)], headers)
   }};
 }
 

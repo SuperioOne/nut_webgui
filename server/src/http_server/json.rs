@@ -1,6 +1,6 @@
 use super::common::ProblemDetailsResponse;
 use crate::{
-  http_server::{ServerState, UpsdConfig},
+  http_server::{ServerConfig, ServerState},
   ups_daemon_state::UpsEntry,
   upsd_client::{client::UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable},
 };
@@ -77,8 +77,8 @@ pub async fn post_command(
   let upsd_state = state.upsd_state.read().await;
 
   match upsd_state.get_ups(&ups_name) {
-    Some(_) => match state.upsd_config.deref() {
-      UpsdConfig {
+    Some(_) => match state.configs.deref() {
+      ServerConfig {
         addr,
         pass: Some(password),
         user: Some(username),
