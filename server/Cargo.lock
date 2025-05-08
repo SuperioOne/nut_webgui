@@ -714,7 +714,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "algorithms_random",
  "askama",

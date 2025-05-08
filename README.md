@@ -50,28 +50,39 @@ docker run -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass -p 90
 
 ## Command-Line arguments
 
+* `--base-path`: Overrides HTTP server base path. Default is `/`.
+* `--listen`: Listen address for the HTTP server. Default is `0.0.0.0`.
+* `--log-level`: Log level for the HTTP server. Default is `info`.
 * `--poll-freq`: UPS[pollfreq](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `30`.
 * `--poll-interval`: UPS [pollinterval](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `2`.
+* `--port`: Port used by the HTTP server. Default is `9000`.
+* `--static-dir`: Directory path for static files. Default is `./static`.
 * `--upsd-addr`: UPS daemon address. Default is `localhost`.
+* `--upsd-pass`: UPS daemon password.
 * `--upsd-port`: UPS daemon port. Default is `3493`.
 * `--upsd-user`: UPS daemon username.
-* `--upsd-pass`: UPS daemon password.
-* `--listen`: Listen address for the HTTP server. Default is `0.0.0.0`.
-* `--port`: Port used by the HTTP server. Default is `9000`.
-* `--log-level`: Log level for the HTTP server. Default is `info`.
-* `--static-dir`: Directory path for static files. Default is `./static`.
 
 ## Container image environment variables
 
+* `BASE_PATH`: Overrides HTTP server base path. Default is `/`.
+* `LISTEN`: Listen address for the HTTP server. Default is `0.0.0.0`.
+* `LOG_LEVEL`: Log level. Default is `info`.
 * `POLL_FREQ`: UPS [pollfreq](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `30`.
 * `POLL_INTERVAL`: UPS [pollinterval](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `2`.
+* `PORT`: Port used by the HTTP server. Default is `9000`.
 * `UPSD_ADDR`: UPS daemon address. Default is `localhost`.
+* `UPSD_PASS`: UPS daemon password.
 * `UPSD_PORT`: UPS daemon port. Default is `3493`.
 * `UPSD_USER`: UPS daemon username.
-* `UPSD_PASS`: UPS daemon password.
-* `LISTEN`: Listen address for the HTTP server. Default is `0.0.0.0`.
-* `PORT`: Port used by the HTTP server. Default is `9000`.
-* `LOG_LEVEL`: Log level. Default is `info`.
+
+> Log level options: `info`, `warn`, `error`, `debug`, `trace`
+
+> `BASE_PATH` rules:
+>
+> - Allows multiple path segments. (eg. `segment1/segment2/...`)
+> - Whitespaces and trailing forward slash `/` characters will be trimmed. For example, `  base_path   ` and `/base_path/` are treated as the same.
+> - Percent encoded characters are not supported.
+> - Unlike RFC3986 path definition, `:` and `'` characters are not allowed. However, you can still use some questionable base paths such as `(-_-)/(@_@)/($_$)/nut-xyz.monitor/`
 
 ## JSON data API
 

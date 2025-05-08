@@ -1,3 +1,9 @@
+# v0.4.2 - May 08, 2025
+
+## Added
+
+- Configuration option for HTTP server base path.
+
 # v0.4.1 - April 13, 2025
 
 ## Changed
