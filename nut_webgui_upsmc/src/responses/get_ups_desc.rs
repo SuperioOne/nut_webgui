@@ -7,18 +7,18 @@ use crate::{
 #[derive(Debug)]
 pub struct UpsDesc {
   pub desc: ReadOnlyStr,
-  pub ups: UpsName,
+  pub ups_name: UpsName,
 }
 
 impl Deserialize for UpsDesc {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
-    let (ups, desc) =
+    let (ups_name, desc) =
       parse_line!(lexer, "UPSDESC" {UPS, name = ups_name} {QUOTED_TEXT, name = desc})?;
 
     if lexer.is_finished() {
-      Ok(Self { ups, desc })
+      Ok(Self { ups_name, desc })
     } else {
       Err(
         ErrorKind::ParseError {

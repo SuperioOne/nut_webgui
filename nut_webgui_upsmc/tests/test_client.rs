@@ -17,7 +17,7 @@ async fn cmd_desc() {
   let cmd_desc = client.get_cmd_desc(&ups, &cmd).await.unwrap();
 
   assert_eq!(cmd_desc.cmd, cmd);
-  assert_eq!(cmd_desc.ups, ups);
+  assert_eq!(cmd_desc.ups_name, ups);
   assert_eq!(cmd_desc.desc.as_ref(), "Obsolete (use beeper.enable)");
 }
 
@@ -45,7 +45,7 @@ async fn var_desc() {
     .unwrap();
 
   assert_eq!(var_desc.var, VarName::UPS_BEEPER_STATUS);
-  assert_eq!(var_desc.ups, ups);
+  assert_eq!(var_desc.ups_name, ups);
   assert_eq!(var_desc.desc.as_ref(), "UPS beeper status");
 }
 
@@ -68,7 +68,7 @@ END LIST UPS
 
   let device = ups_list.devices.get(0).unwrap();
 
-  assert_eq!(device.ups.to_string(), "bx1600mi");
+  assert_eq!(device.ups_name.to_string(), "bx1600mi");
   assert_eq!(device.desc.as_ref(), "APC Back-UPS\\ BX1600MI");
 }
 
@@ -96,7 +96,7 @@ async fn get_var() {
     .await
     .unwrap();
 
-  assert_eq!(var.ups, ups);
+  assert_eq!(var.ups_name, ups);
   assert_eq!(var.name, VarName::UPS_BEEPER_STATUS);
   assert_eq!(var.value, "disabled");
 }
@@ -118,7 +118,7 @@ END LIST CLIENT bx1600mi
   let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
   let client_list = client.list_client(&ups).await.unwrap();
 
-  assert_eq!(client_list.ups, ups);
+  assert_eq!(client_list.ups_name, ups);
   assert_eq!(client_list.ips.len(), 1);
 
   let ip = client_list.ips.get(0).unwrap();
@@ -152,7 +152,7 @@ async fn list_cmd() {
         let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
         let cmd_list = client.list_cmd(&ups).await.unwrap();
 
-        assert_eq!(cmd_list.ups, ups);
+        assert_eq!(cmd_list.ups_name, ups);
         assert_eq!(cmd_list.cmds.len(), cmd_len);
 
         let mut iter = cmd_list.cmds.iter();
@@ -210,7 +210,7 @@ async fn list_var() {
         let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
         let var_list = client.list_var(&ups).await.unwrap();
 
-        assert_eq!(var_list.ups, ups);
+        assert_eq!(var_list.ups_name, ups);
         assert_eq!(var_list.variables.len(), var_len);
 
         $(
@@ -301,7 +301,7 @@ END LIST RANGE bx1600mi input.transfer.low
     .await
     .unwrap();
 
-  assert_eq!(range_list.ups, ups);
+  assert_eq!(range_list.ups_name, ups);
   assert_eq!(range_list.name, VarName::INPUT_TRANSFER_LOW);
 
   let range = range_list.ranges.get(0).unwrap();
@@ -338,7 +338,7 @@ END LIST ENUM bx1600mi input.transfer.low
     .await
     .unwrap();
 
-  assert_eq!(enum_list.ups, ups);
+  assert_eq!(enum_list.ups_name, ups);
   assert_eq!(enum_list.name, VarName::INPUT_TRANSFER_LOW);
 
   let first = enum_list.values.get(0).unwrap();
@@ -375,7 +375,7 @@ async fn list_rw() {
         let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
         let rw_list = client.list_rw(&ups).await.unwrap();
 
-        assert_eq!(rw_list.ups, ups);
+        assert_eq!(rw_list.ups_name, ups);
         assert_eq!(rw_list.variables.len(), rw_len);
 
         $(

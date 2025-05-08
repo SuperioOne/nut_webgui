@@ -6,7 +6,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct RangeList {
-  pub ups: UpsName,
+  pub ups_name: UpsName,
   pub ranges: Vec<(Value, Value)>,
   pub name: VarName,
 }
@@ -16,7 +16,7 @@ impl Deserialize for RangeList {
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
     let mut ranges: Vec<(Value, Value)> = Vec::new();
-    let (ups_name, var_name) =
+    let (ups_name_text, var_name) =
       parse_line!(lexer, "BEGIN" "LIST" "RANGE" {TEXT, name = ups_name} {TEXT, name = var_name})?;
 
     let name = VarName::new(&var_name).map_err(|err| ErrorKind::ParseError {
@@ -24,25 +24,30 @@ impl Deserialize for RangeList {
       position: lexer.get_positon(),
     })?;
 
-    let ups = UpsName::try_from(ups_name.as_ref()).map_err(|err| ErrorKind::ParseError {
-      inner: ParseError::UpsName(err),
-      position: lexer.get_positon(),
-    })?;
+    let ups_name =
+      UpsName::try_from(ups_name_text.as_ref()).map_err(|err| ErrorKind::ParseError {
+        inner: ParseError::UpsName(err),
+        position: lexer.get_positon(),
+      })?;
 
     loop {
       match lexer.peek_as_str() {
         Some("RANGE") => {
-          let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = &var_name} {VALUE, name = min} {VALUE, name = max})?;
+          let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = &var_name} {VALUE, name = min} {VALUE, name = max})?;
           ranges.push(range);
         }
         _ => break,
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = &var_name})?;
+    _ = parse_line!(lexer, "END" "LIST" "RANGE" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = &var_name})?;
 
     if lexer.is_finished() {
-      Ok(Self { ups, ranges, name })
+      Ok(Self {
+        ups_name,
+        ranges,
+        name,
+      })
     } else {
       Err(
         ErrorKind::ParseError {

@@ -8,7 +8,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct ClientList {
-  pub ups: UpsName,
+  pub ups_name: UpsName,
   pub ips: Vec<IpAddr>,
 }
 
@@ -17,16 +17,18 @@ impl Deserialize for ClientList {
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
     let mut ips: Vec<IpAddr> = Vec::new();
-    let ups_name = parse_line!(lexer, "BEGIN" "LIST" "CLIENT" {TEXT, name = ups_name})?;
-    let ups = UpsName::try_from(ups_name.as_ref()).map_err(|err| ErrorKind::ParseError {
-      inner: ParseError::UpsName(err),
-      position: lexer.get_positon(),
-    })?;
+    let ups_name_text = parse_line!(lexer, "BEGIN" "LIST" "CLIENT" {TEXT, name = ups_name})?;
+    let ups_name =
+      UpsName::try_from(ups_name_text.as_ref()).map_err(|err| ErrorKind::ParseError {
+        inner: ParseError::UpsName(err),
+        position: lexer.get_positon(),
+      })?;
 
     loop {
       match lexer.peek_as_str() {
         Some("CLIENT") => {
-          let ip_text = parse_line!(lexer, "CLIENT" {TEXT, cmp_to = &ups_name} {TEXT, name = ip})?;
+          let ip_text =
+            parse_line!(lexer, "CLIENT" {TEXT, cmp_to = &ups_name_text} {TEXT, name = ip})?;
 
           let ip: IpAddr = ip_text.parse().map_err(|_| ErrorKind::ParseError {
             inner: ParseError::InvalidToken,
@@ -39,10 +41,10 @@ impl Deserialize for ClientList {
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "CLIENT" {TEXT, cmp_to = &ups_name})?;
+    _ = parse_line!(lexer, "END" "LIST" "CLIENT" {TEXT, cmp_to = &ups_name_text})?;
 
     if lexer.is_finished() {
-      Ok(Self { ups, ips })
+      Ok(Self { ups_name, ips })
     } else {
       Err(
         ErrorKind::ParseError {

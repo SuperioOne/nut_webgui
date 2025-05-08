@@ -6,7 +6,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct CmdList {
-  pub ups: UpsName,
+  pub ups_name: UpsName,
   pub cmds: Vec<CmdName>,
 }
 
@@ -15,17 +15,18 @@ impl Deserialize for CmdList {
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
     let mut cmds: Vec<CmdName> = Vec::new();
-    let ups_name = parse_line!(lexer, "BEGIN" "LIST" "CMD" {TEXT, name = ups_name})?;
-    let ups = UpsName::try_from(ups_name.as_ref()).map_err(|err| ErrorKind::ParseError {
-      inner: ParseError::UpsName(err),
-      position: lexer.get_positon(),
-    })?;
+    let ups_name_text = parse_line!(lexer, "BEGIN" "LIST" "CMD" {TEXT, name = ups_name})?;
+    let ups_name =
+      UpsName::try_from(ups_name_text.as_ref()).map_err(|err| ErrorKind::ParseError {
+        inner: ParseError::UpsName(err),
+        position: lexer.get_positon(),
+      })?;
 
     loop {
       match lexer.peek_as_str() {
         Some("CMD") => {
           let cmd_name =
-            parse_line!(lexer, "CMD" {TEXT, cmp_to = &ups_name} {CMD, name = cmd_name})?;
+            parse_line!(lexer, "CMD" {TEXT, cmp_to = &ups_name_text} {CMD, name = cmd_name})?;
 
           cmds.push(cmd_name);
         }
@@ -33,10 +34,10 @@ impl Deserialize for CmdList {
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "CMD" {TEXT, cmp_to = &ups_name})?;
+    _ = parse_line!(lexer, "END" "LIST" "CMD" {TEXT, cmp_to = &ups_name_text})?;
 
     if lexer.is_finished() {
-      Ok(Self { ups, cmds })
+      Ok(Self { ups_name, cmds })
     } else {
       Err(
         ErrorKind::ParseError {

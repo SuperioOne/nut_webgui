@@ -60,6 +60,13 @@ where
     self.inner.get_ver()
   }
 
+  fn list_client(
+    self,
+    ups: &UpsName,
+  ) -> impl Future<Output = Result<responses::ClientList, Error>> {
+    self.inner.list_client(ups)
+  }
+
   fn list_cmd(self, ups: &UpsName) -> impl Future<Output = Result<responses::CmdList, Error>> {
     self.inner.list_cmd(ups)
   }
@@ -90,13 +97,6 @@ where
 
   fn list_var(self, ups: &UpsName) -> impl Future<Output = Result<responses::UpsVarList, Error>> {
     self.inner.list_var(ups)
-  }
-
-  fn list_client(
-    self,
-    ups: &UpsName,
-  ) -> impl Future<Output = Result<responses::ClientList, Error>> {
-    self.inner.list_client(ups)
   }
 }
 
@@ -134,6 +134,10 @@ where
       .await?;
 
     Ok(())
+  }
+
+  pub fn is_open(&mut self) -> impl Future<Output = bool> {
+    self.inner.is_open()
   }
 
   pub fn close(self) -> impl Future<Output = Result<(), Error>> {

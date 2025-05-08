@@ -8,17 +8,21 @@ use crate::{
 pub struct UpsVar {
   pub value: Value,
   pub name: VarName,
-  pub ups: UpsName,
+  pub ups_name: UpsName,
 }
 
 impl Deserialize for UpsVar {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
-    let (ups, name, value) = parse_line!(lexer, "VAR" {UPS, name = ups_name} {VAR, name = var_name} {VALUE, name = value})?;
+    let (ups_name, name, value) = parse_line!(lexer, "VAR" {UPS, name = ups_name} {VAR, name = var_name} {VALUE, name = value})?;
 
     if lexer.is_finished() {
-      Ok(Self { name, ups, value })
+      Ok(Self {
+        name,
+        ups_name,
+        value,
+      })
     } else {
       Err(
         ErrorKind::ParseError {

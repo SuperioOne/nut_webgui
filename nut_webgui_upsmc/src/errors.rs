@@ -24,12 +24,12 @@ pub enum ErrorKind {
     inner: ProtocolError,
   },
   ConnectionPoolClosed,
+  EmptyResponse,
 }
 
 #[derive(Debug, Clone)]
 pub enum ParseError {
   CmdName(CmdParseError),
-  EmptyResponse,
   ExpectedDoubleQuote,
   InvalidToken,
   InvalidIpAddr,
@@ -43,7 +43,7 @@ pub enum ParseError {
 }
 
 #[derive(Debug, Clone)]
-pub struct UnsupportedUpsStatus {
+pub struct UnsupportedStatusError {
   pub status: Box<str>,
 }
 
@@ -72,7 +72,7 @@ pub enum CmdParseError {
   InvalidName,
 }
 
-impl std::fmt::Display for UnsupportedUpsStatus {
+impl std::fmt::Display for UnsupportedStatusError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_fmt(format_args!(
       "unsupported ups status flag '{flag}'",
@@ -124,6 +124,7 @@ impl std::fmt::Display for Error {
 impl std::fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
+      ErrorKind::EmptyResponse => f.write_str("empty response received"),
       ErrorKind::ConnectionPoolClosed => {
         f.write_str("new connection request received but connection pool is already closed")
       }
@@ -144,7 +145,6 @@ impl std::fmt::Display for ParseError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
       ParseError::CmdName(inner) => inner.fmt(f),
-      ParseError::EmptyResponse => f.write_str("empty response received"),
       ParseError::ExpectedCmdToken => f.write_str("expected command token"),
       ParseError::ExpectedDoubleQuote => f.write_str("expected double quote character"),
       ParseError::ExpectedDoubleQuotedTextToken => f.write_str("expected double quoted text token"),
@@ -282,3 +282,10 @@ impl From<std::io::Error> for Error {
     }
   }
 }
+
+impl std::error::Error for Error {}
+impl std::error::Error for UpsNameParseError {}
+impl std::error::Error for CmdParseError {}
+impl std::error::Error for VarNameParseError {}
+impl std::error::Error for ParseError {}
+impl std::error::Error for UnsupportedStatusError {}

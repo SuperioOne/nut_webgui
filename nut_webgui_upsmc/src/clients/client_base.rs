@@ -1,7 +1,7 @@
 use super::AsyncNutClient;
 use crate::{
   CmdName, UpsName, VarName, commands,
-  errors::{Error, ProtocolError},
+  errors::{Error, ErrorKind, ProtocolError},
   internal::{Deserialize, Serialize, lexer::Lexer},
   responses,
 };
@@ -12,11 +12,11 @@ use tokio::{
 };
 use tracing::trace;
 
-pub struct NutClient<T>
+pub struct NutClient<S>
 where
-  T: AsyncRead + AsyncWrite,
+  S: AsyncRead + AsyncWrite,
 {
-  connection: T,
+  stream: S,
 }
 
 impl NutClient<TcpStream> {
@@ -24,29 +24,41 @@ impl NutClient<TcpStream> {
     let connection = TcpStream::connect(&addr).await?;
     connection.set_nodelay(true)?;
 
-    Ok(Self { connection })
+    Ok(Self { stream: connection })
   }
 }
 
-impl<T> NutClient<T>
+impl<S> NutClient<S>
 where
-  T: AsyncWrite + AsyncRead + Unpin,
+  S: AsyncWrite + AsyncRead + Unpin,
 {
+  pub fn new(stream: S) -> Self {
+    Self { stream }
+  }
+
+  pub async fn is_open(&mut self) -> bool {
+    match self.send_raw(commands::GetProtVer.serialize()).await {
+      Ok(response) if !response.is_empty() => true,
+      _ => false,
+    }
+  }
+
   pub async fn close(mut self) -> Result<(), Error> {
-    self.connection.shutdown().await?;
+    self.stream.shutdown().await?;
     Ok(())
   }
 
   pub async fn send_raw(&mut self, send: &str) -> Result<String, Error> {
+    trace!(message = "tcp message", send = send);
     const LIST_START: &'static str = "BEGIN LIST";
     const LIST_END: &'static str = "END LIST";
     const PROT_ERR: &'static str = "ERR";
 
-    self.connection.write_all(send.as_bytes()).await?;
-    self.connection.flush().await?;
+    self.stream.write_all(send.as_bytes()).await?;
+    self.stream.flush().await?;
 
     let mut response_buf = String::new();
-    let mut reader = BufReader::new(&mut self.connection);
+    let mut reader = BufReader::new(&mut self.stream);
     let mut start_pos = reader.read_line(&mut response_buf).await?;
 
     if response_buf.starts_with(LIST_START) {
@@ -61,12 +73,30 @@ where
         }
       }
 
+      trace!(
+        message = "nut tcp list message received",
+        response = &response_buf,
+        command = send
+      );
+
       Ok(response_buf)
     } else if response_buf.starts_with(PROT_ERR) {
       let prot_err = ProtocolError::from((&response_buf[PROT_ERR.len()..]).trim());
 
+      trace!(
+        message = "upsd tcp prot error received",
+        response = &response_buf,
+        command = send
+      );
+
       Err(prot_err.into())
     } else {
+      trace!(
+        message = "nut tcp line message received",
+        response = &response_buf,
+        command = send
+      );
+
       Ok(response_buf)
     }
   }
@@ -81,21 +111,19 @@ where
     let cmd_str = command.serialize();
     let response = self.send_raw(cmd_str.as_ref()).await?;
 
-    trace!(
-      message = "nut TCP message received",
-      response = &response,
-      command = cmd_str.as_ref()
-    );
+    if response.is_empty() {
+      Err(ErrorKind::EmptyResponse.into())
+    } else {
+      let mut lexer = Lexer::new(&response);
 
-    let mut lexer = Lexer::new(&response);
-
-    R::deserialize(&mut lexer)
+      R::deserialize(&mut lexer)
+    }
   }
 }
 
-impl<T> AsyncNutClient for &mut NutClient<T>
+impl<S> AsyncNutClient for &mut NutClient<S>
 where
-  T: AsyncRead + AsyncWrite + Unpin,
+  S: AsyncRead + AsyncWrite + Unpin,
 {
   fn get_attached(
     self,
@@ -116,9 +144,14 @@ where
 
   async fn get_protver(self) -> Result<responses::ProtVer, Error> {
     let response = self.send_raw(commands::GetProtVer.serialize()).await?;
-    Ok(responses::ProtVer {
-      value: response.trim().to_owned(),
-    })
+
+    if response.is_empty() {
+      Err(ErrorKind::EmptyResponse.into())
+    } else {
+      Ok(responses::ProtVer {
+        value: response.trim().to_owned(),
+      })
+    }
   }
 
   fn get_ups_desc(self, ups: &UpsName) -> impl Future<Output = Result<responses::UpsDesc, Error>> {
@@ -146,9 +179,14 @@ where
 
   async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
     let response = self.send_raw(commands::GetDaemonVer.serialize()).await?;
-    Ok(responses::DaemonVer {
-      value: response.trim().to_owned(),
-    })
+
+    if response.is_empty() {
+      Err(ErrorKind::EmptyResponse.into())
+    } else {
+      Ok(responses::DaemonVer {
+        value: response.trim().to_owned(),
+      })
+    }
   }
 
   fn list_client(
@@ -202,6 +240,6 @@ where
   S: AsyncWrite + AsyncRead + Unpin,
 {
   fn from(value: S) -> Self {
-    Self { connection: value }
+    Self { stream: value }
   }
 }

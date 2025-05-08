@@ -25,7 +25,7 @@ macro_rules! gen_dev_integration_test {
             let mut client = NutClient::from(stream);
             let var_list = client.list_var(&ups_name).await.unwrap();
 
-            assert_eq!(ups_name, var_list.ups);
+            assert_eq!(ups_name, var_list.ups_name);
             assert_eq!(var_list.variables.len(), prot_response.lines().count() - 2);
           }
     )+

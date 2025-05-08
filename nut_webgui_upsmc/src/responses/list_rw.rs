@@ -9,7 +9,7 @@ use tracing::warn;
 #[derive(Debug)]
 pub struct RwList {
   pub variables: UpsVariables,
-  pub ups: UpsName,
+  pub ups_name: UpsName,
 }
 
 impl Deserialize for RwList {
@@ -17,16 +17,17 @@ impl Deserialize for RwList {
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
     let mut variables = UpsVariables::new();
-    let ups_name = parse_line!(lexer, "BEGIN" "LIST" "RW" {TEXT, name = ups_name})?;
-    let ups = UpsName::try_from(ups_name.as_ref()).map_err(|err| ErrorKind::ParseError {
-      inner: ParseError::UpsName(err),
-      position: lexer.get_positon(),
-    })?;
+    let ups_name_text = parse_line!(lexer, "BEGIN" "LIST" "RW" {TEXT, name = ups_name})?;
+    let ups_name =
+      UpsName::try_from(ups_name_text.as_ref()).map_err(|err| ErrorKind::ParseError {
+        inner: ParseError::UpsName(err),
+        position: lexer.get_positon(),
+      })?;
 
     loop {
       match lexer.peek_as_str() {
         Some("RW") => {
-          let (name, value) = parse_line!(lexer, "RW" {TEXT, cmp_to = &ups_name} {VAR, name = var_name} {VALUE, name = value})?;
+          let (name, value) = parse_line!(lexer, "RW" {TEXT, cmp_to = &ups_name_text} {VAR, name = var_name} {VALUE, name = value})?;
 
           if let Some(previous) = variables.insert(name, value) {
             warn!(
@@ -39,10 +40,13 @@ impl Deserialize for RwList {
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "RW" {TEXT, cmp_to = &ups_name})?;
+    _ = parse_line!(lexer, "END" "LIST" "RW" {TEXT, cmp_to = &ups_name_text})?;
 
     if lexer.is_finished() {
-      Ok(Self { ups, variables })
+      Ok(Self {
+        ups_name,
+        variables,
+      })
     } else {
       Err(
         ErrorKind::ParseError {

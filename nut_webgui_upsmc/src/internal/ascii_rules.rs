@@ -7,12 +7,7 @@ const LOOKUP_ASCII_UPS: [bool; 128] = {
   while i < 128 {
     let cell = unsafe { table_ptr.offset(i) };
     let val = match i as u8 {
-      b'-' => true,
-      b'.' => true,
-      b'0'..=b'9' => true,
-      b'A'..=b'Z' => true,
-      b'_' => true,
-      b'a'..=b'z' => true,
+      b'-' | b'.' | b'0'..=b'9' | b'A'..=b'Z' | b'_' | b'a'..=b'z' => true,
       _ => false,
     };
 

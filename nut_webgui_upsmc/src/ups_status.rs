@@ -1,3 +1,5 @@
+use crate::errors::UnsupportedStatusError;
+
 // Implements repetitive traits and const values
 macro_rules! impl_status {
   ($(($name:ident, $value:literal);)+) => {
@@ -24,7 +26,7 @@ macro_rules! impl_status {
     }
 
     impl TryFrom<&str> for UpsStatus {
-      type Error = $crate::errors::UnsupportedUpsStatus;
+      type Error = $crate::errors::UnsupportedStatusError;
 
       fn try_from(value: &str) -> Result<Self, Self::Error> {
         let mut result = Self::default();
@@ -34,7 +36,7 @@ macro_rules! impl_status {
             $(
               $value => { result |= Self::$name },
             )+
-            _ => return Err($crate::errors::UnsupportedUpsStatus { status: Box::from(status)})
+            _ => return Err($crate::errors::UnsupportedStatusError { status: Box::from(status)})
           };
         }
 
@@ -94,6 +96,14 @@ impl std::fmt::Display for UpsStatus {
     } else {
       f.write_str(get_state_str(*self))
     }
+  }
+}
+
+impl std::str::FromStr for UpsStatus {
+  type Err = UnsupportedStatusError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Self::try_from(s)
   }
 }
 

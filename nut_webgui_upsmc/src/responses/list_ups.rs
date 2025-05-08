@@ -6,7 +6,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct UpsDevice {
-  pub ups: UpsName,
+  pub ups_name: UpsName,
   pub desc: ReadOnlyStr,
 }
 
@@ -25,10 +25,10 @@ impl Deserialize for UpsList {
     loop {
       match lexer.peek_as_str() {
         Some("UPS") => {
-          let (ups, desc) =
+          let (ups_name, desc) =
             parse_line!(lexer, "UPS" {UPS, name = ups_name} {QUOTED_TEXT, name = desc})?;
 
-          devices.push(UpsDevice { ups, desc });
+          devices.push(UpsDevice { ups_name, desc });
         }
         _ => break,
       }
