@@ -4,6 +4,7 @@ use crate::{
 use askama::Template;
 use axum::{
   extract::{Query, State},
+  http::HeaderMap,
   response::Response,
 };
 use axum_core::response::IntoResponse;
@@ -57,6 +58,7 @@ impl<'a> From<&'a UpsEntry> for UpsTableRow<'a> {
 #[template(path = "ups_table.html", ext = "html")]
 struct UpsTableTemplate<'a> {
   ups_list: Vec<UpsTableRow<'a>>,
+  url_prefix: &'a str,
 }
 
 #[derive(Deserialize)]
@@ -69,9 +71,18 @@ pub struct HomeFragmentQuery {
 struct HomeTemplate<'a> {
   title: &'a str,
   ups_table: UpsTableTemplate<'a>,
+  url_prefix: &'a str,
 }
 
-pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerState>) -> Response {
+pub async fn get(
+  query: Query<HomeFragmentQuery>,
+  State(state): State<ServerState>,
+  headers: HeaderMap,
+) -> Response {
+  let script_name = headers
+    .get("x-script-name")
+    .and_then(|v| v.to_str().ok())
+    .unwrap_or("");
   let upsd_state = &state.upsd_state.read().await;
   let mut ups_list: Vec<UpsTableRow> = upsd_state
     .iter()
@@ -80,13 +91,17 @@ pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerStat
 
   ups_list.sort_unstable_by_key(|v| v.name);
 
-  let table_template = UpsTableTemplate { ups_list };
+  let table_template = UpsTableTemplate {
+    ups_list,
+    url_prefix: script_name,
+  };
 
   match query.section.as_deref() {
     Some("ups_table") => table_template.into_response(),
     _ => HomeTemplate {
       title: "Home",
       ups_table: table_template,
+      url_prefix: script_name,
     }
     .into_response(),
   }

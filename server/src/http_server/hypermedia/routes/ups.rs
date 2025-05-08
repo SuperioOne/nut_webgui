@@ -11,7 +11,7 @@ use askama::Template;
 use askama_axum::Response;
 use axum::{
   extract::{Path, Query, State},
-  http::StatusCode,
+  http::{HeaderMap, StatusCode},
   response::Redirect,
   Form,
 };
@@ -215,16 +215,22 @@ struct UpsPageTemplate<'a> {
   ups_info: UpsInfoTemplate<'a>,
   commands: &'a [Box<str>],
   hx_info_interval: u64,
+  url_prefix: &'a str,
 }
 
 #[inline]
-fn page_response(entry: Option<&UpsEntry>, upsd_config: &UpsdConfig) -> Response {
+fn page_response(
+  entry: Option<&UpsEntry>,
+  upsd_config: &UpsdConfig,
+  script_name: &str,
+) -> Response {
   if let Some(ups) = entry {
     let template = UpsPageTemplate {
       commands: &ups.commands,
       hx_info_interval: upsd_config.poll_freq.as_secs(),
       title: &ups.name,
       ups_info: UpsInfoTemplate::from(ups).set_status_interval(upsd_config.poll_interval.as_secs()),
+      url_prefix: script_name,
     };
 
     template.into_response()
@@ -257,14 +263,20 @@ pub async fn get(
   Path(ups_name): Path<String>,
   query: Query<UpsFragmentQuery>,
   state: State<ServerState>,
+  headers: HeaderMap,
 ) -> Response {
+  let script_name = headers
+    .get("x-script-name")
+    .and_then(|v| v.to_str().ok())
+    .unwrap_or("");
+
   let upsd_state = state.upsd_state.read().await;
   let ups_entry = upsd_state.get_ups(&ups_name);
 
   match query.section.as_deref() {
     Some("info") => partial_ups_info(ups_entry, &state.upsd_config),
     Some("status") => partial_ups_status(ups_entry),
-    _ => page_response(ups_entry, &state.upsd_config),
+    _ => page_response(ups_entry, &state.upsd_config, script_name),
   }
 }
 
