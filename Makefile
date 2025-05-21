@@ -241,3 +241,8 @@ clean:
 	@if [ -d "$(STATIC_DIR)" ]; then rm -r "$(STATIC_DIR)"; fi;
 	@if [ -d "$(NODE_MODULES_DIR)" ]; then rm -r "$(NODE_MODULES_DIR)"; fi;
 	@echo "Clean completed"
+
+.PHONY: check
+check:
+	@cd nut_webgui && cargo check
+	@cd nut_webgui_upsmpc && cargo check

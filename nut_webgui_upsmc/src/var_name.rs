@@ -1,5 +1,6 @@
 use super::internal::{ReadOnlyStr, Repr, ascii_rules::NutAsciiText};
 use crate::errors::VarNameParseError;
+use core::borrow::Borrow;
 
 macro_rules! impl_standard_names {
   ($enum_name:ident,
@@ -402,6 +403,14 @@ impl VarName {
   }
 
   #[inline]
+  pub fn into_box_str(self) -> Box<str> {
+    match self.name {
+      Repr::Standard(_) => Box::from(self.as_str()),
+      Repr::Custom(inner) => inner,
+    }
+  }
+
+  #[inline]
   pub fn is_valid_name(name: &str) -> bool {
     is_var_name(name).is_ok()
   }
@@ -485,6 +494,12 @@ impl PartialEq<VarName> for VarName {
   }
 }
 
+impl Borrow<str> for VarName {
+  fn borrow(&self) -> &str {
+    self.as_str()
+  }
+}
+
 impl PartialOrd for VarName {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -496,6 +511,13 @@ impl Ord for VarName {
   #[inline]
   fn cmp(&self, other: &Self) -> std::cmp::Ordering {
     self.as_str().cmp(other.as_str())
+  }
+}
+
+impl From<VarName> for Box<str> {
+  #[inline]
+  fn from(value: VarName) -> Self {
+    value.into_box_str()
   }
 }
 

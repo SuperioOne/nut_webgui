@@ -20,11 +20,11 @@ impl UpsVariables {
   }
 
   pub fn get(&self, name: &VarName) -> Option<&Value> {
-    self.inner.get(&name)
+    self.inner.get(name)
   }
 
   pub fn get_mut(&mut self, name: &VarName) -> Option<&mut Value> {
-    self.inner.get_mut(&name)
+    self.inner.get_mut(name)
   }
 
   pub fn insert(&mut self, name: VarName, value: Value) -> Option<Value> {

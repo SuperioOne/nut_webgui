@@ -225,6 +225,101 @@ impl TryFrom<&str> for UpsName {
   }
 }
 
+#[inline]
+fn cmp_slice_and_move<'a, 'b>(input: &'a str, target: &'b str) -> Option<&'b str> {
+  if input.len() < target.len() {
+    let cmp_window = &target[..input.len()];
+
+    if cmp_window == input {
+      Some(&target[input.len()..])
+    } else {
+      None
+    }
+  } else if input == target {
+    Some(target)
+  } else {
+    None
+  }
+}
+
+impl PartialEq<str> for Hostname {
+  fn eq(&self, other: &str) -> bool {
+    let mut rhs_slice: &str = other;
+
+    match cmp_slice_and_move(self.name.as_ref(), rhs_slice) {
+      Some(next) => rhs_slice = next,
+      None => return false,
+    };
+
+    if let Some(port) = self.port.as_ref() {
+      match rhs_slice.as_bytes().get(0) {
+        Some(b':') => {
+          rhs_slice = &rhs_slice[1..];
+        }
+        _ => return false,
+      };
+
+      if &port.to_string() != rhs_slice {
+        return false;
+      }
+    }
+
+    true
+  }
+}
+
+impl PartialEq<str> for UpsName {
+  fn eq(&self, other: &str) -> bool {
+    let mut rhs_slice: &str = other;
+
+    if let Some(group) = self.group.as_deref() {
+      match cmp_slice_and_move(group, rhs_slice) {
+        Some(next) => rhs_slice = next,
+        None => return false,
+      };
+
+      match rhs_slice.as_bytes().get(0) {
+        Some(b':') => {
+          rhs_slice = &rhs_slice[1..];
+        }
+        _ => return false,
+      };
+    }
+
+    match cmp_slice_and_move(self.name.as_ref(), rhs_slice) {
+      Some(next) => rhs_slice = next,
+      None => return false,
+    };
+
+    if let Some(hostname) = self.hostname.as_ref() {
+      match rhs_slice.as_bytes().get(0) {
+        Some(b'@') => {
+          rhs_slice = &rhs_slice[1..];
+        }
+        _ => return false,
+      };
+
+      return hostname == rhs_slice;
+    }
+
+    true
+  }
+}
+
+impl PartialEq<&str> for UpsName {
+  #[inline]
+  fn eq(&self, other: &&str) -> bool {
+    Self::eq(&self, *other)
+  }
+}
+
+impl PartialEq<&str> for Hostname {
+  #[inline]
+  fn eq(&self, other: &&str) -> bool {
+    Self::eq(&self, *other)
+  }
+}
+
 impl std::fmt::Display for UpsName {
   #[inline]
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

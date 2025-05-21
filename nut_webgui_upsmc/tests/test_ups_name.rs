@@ -131,6 +131,22 @@ macro_rules! ups_parse_fail_test {
   };
 }
 
+macro_rules! cmp_str_test {
+  ($test_name:ident, $input:expr, $target:literal, PASS) => {
+    #[test]
+    fn $test_name() {
+      assert_eq!(UpsName::try_from($input).unwrap(), $target);
+    }
+  };
+
+  ($test_name:ident, $input:expr, $target:literal, FAIL) => {
+    #[test]
+    fn $test_name() {
+      assert_ne!(UpsName::try_from($input).unwrap(), $target);
+    }
+  };
+}
+
 ups_parse_test!(
   ups_name_all_parts,
   ups = "test",
@@ -233,6 +249,64 @@ ups_parse_fail_test!(
   hostname = "megusta.org",
   port = 1616_u16
 );
+
+cmp_str_test!(
+  eq_str_full,
+  "group:test@host:1234",
+  "group:test@host:1234",
+  PASS
+);
+cmp_str_test!(eq_str_host, "test@host", "test@host", PASS);
+cmp_str_test!(
+  eq_str_host_and_port,
+  "test@host:1234",
+  "test@host:1234",
+  PASS
+);
+cmp_str_test!(eq_str_name, "test", "test", PASS);
+cmp_str_test!(eq_str_with_group, "group:test", "group:test", PASS);
+
+cmp_str_test!(
+  ne_str_port,
+  "group:test@host:1234",
+  "group:test@host:1235",
+  FAIL
+);
+cmp_str_test!(ne_str_host, "test@hosttt", "test@host", FAIL);
+cmp_str_test!(ne_str_name, "test@host:1234", "test@borked.com", FAIL);
+cmp_str_test!(ne_str_name_basic, "burnace", "test1", FAIL);
+cmp_str_test!(ne_str_group, "group:test", "group00:test", FAIL);
+cmp_str_test!(
+  ne_str_missing_group_separator,
+  "group01:test",
+  "group01test",
+  FAIL
+);
+cmp_str_test!(
+  ne_str_missing_at,
+  "group01:test@host",
+  "group01testhost",
+  FAIL
+);
+cmp_str_test!(
+  ne_str_missing_port_separator,
+  "group01:test@host:1234",
+  "group01:test@host1234",
+  FAIL
+);
+cmp_str_test!(
+  ne_str_missing_group,
+  "group01:test@host:1234",
+  ":test@host1234",
+  FAIL
+);
+cmp_str_test!(
+  ne_str_missing_host_name,
+  "group01:test@host:1234",
+  "group01:test@:1234",
+  FAIL
+);
+cmp_str_test!(ne_str_empty_str, "group01:test@host:1234", "", FAIL);
 
 #[test]
 fn from_trait() {

@@ -1,5 +1,6 @@
 use crate::errors::CmdParseError;
 use crate::internal::{ReadOnlyStr, ascii_rules::NutAsciiText};
+use core::borrow::Borrow;
 
 /// INST command name.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
@@ -57,6 +58,11 @@ impl CmdName {
   }
 
   #[inline]
+  pub fn into_box_str(self) -> Box<str> {
+    self.name
+  }
+
+  #[inline]
   pub const fn as_str(&self) -> &str {
     &self.name
   }
@@ -101,6 +107,19 @@ impl PartialEq<Box<str>> for CmdName {
   #[inline]
   fn eq(&self, other: &Box<str>) -> bool {
     self.name.as_ref().eq(other.as_ref())
+  }
+}
+
+impl From<CmdName> for Box<str> {
+  #[inline]
+  fn from(value: CmdName) -> Self {
+    value.into_box_str()
+  }
+}
+
+impl Borrow<str> for CmdName {
+  fn borrow(&self) -> &str {
+    self.as_str()
   }
 }
 

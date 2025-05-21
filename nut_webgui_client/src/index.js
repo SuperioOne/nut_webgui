@@ -51,6 +51,9 @@ function attr_preserve(attr_name, node, mutation_type) {
   }
 }
 
+/**
+ * @param {string} swapStyle
+ */
 function create_morph_config(swapStyle) {
   let config;
   if (swapStyle === "morph" || swapStyle === "morph:outerHTML") {

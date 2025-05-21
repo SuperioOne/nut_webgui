@@ -1,10 +1,11 @@
 // mod http;
 mod config;
-mod events;
+mod event;
 mod state;
 mod sync;
 mod uri_path;
 
+use event::EventChannel;
 use nut_webgui_upsmc::clients::NutPoolClient;
 // use crate::{
 //   http::{HttpServerConfig, UpsdConfig, start_http_server},
@@ -12,20 +13,27 @@ use nut_webgui_upsmc::clients::NutPoolClient;
 //     UpsPollerConfig, UpsStorageConfig, UpsUpdateMessage, upsd_poll_service, upsd_state_service,
 //   },
 // };
+use self::config::{
+  ServerConfig, cfg_args::ServerCliArgs, cfg_env::ServerEnvArgs, cfg_toml::ServerTomlArgs,
+};
 use state::{DaemonState, ServerState};
 use std::{collections::HashMap, panic, sync::Arc, time::Duration};
-use sync::ups_sync::DeviceSyncService;
+use sync::{desc_sync::DescriptionSyncService, ups_sync::DeviceSyncService};
 use tokio::{
   select,
   signal::{self, unix::SignalKind},
   sync::RwLock,
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info, warn};
-// use ups_daemon_state::UpsDaemonState;
-use self::config::{
-  ServerConfig, cfg_args::ServerCliArgs, cfg_env::ServerEnvArgs, cfg_toml::ServerTomlArgs,
-};
+use tracing::{debug, info};
+
+macro_rules! timeout {
+  ($handle:expr, seconds = $time:expr, message = $message:literal) => {
+    if let Err(_) = tokio::time::timeout(std::time::Duration::from_secs($time), $handle).await {
+      tracing::warn!(message = $message);
+    }
+  };
+}
 
 fn load_configs() -> ServerConfig {
   let cli_args = ServerCliArgs::load();
@@ -80,6 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     port = &configs.upsd.port
   );
 
+  let event_channel = EventChannel::new(50);
   let client_pool = NutPoolClient::new(socket_addr, configs.upsd.max_conn);
   let cancellation = CancellationToken::new();
   let server_state = Arc::new(RwLock::new(ServerState {
@@ -88,9 +97,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     shared_desc: HashMap::new(),
   }));
 
+  let desc_service_handle = tokio::spawn(
+    DescriptionSyncService::new(
+      client_pool.clone(),
+      event_channel.clone(),
+      server_state.clone(),
+      cancellation.clone(),
+    )
+    .run(),
+  );
+
   let sync_service_handle = tokio::spawn(
     DeviceSyncService::new(
       client_pool.clone(),
+      event_channel.clone(),
       server_state.clone(),
       Duration::from_secs(configs.upsd.poll_freq),
       cancellation.clone(),
@@ -126,15 +146,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
   info!("shutting down services");
 
-  if let Err(_) = tokio::time::timeout(Duration::from_secs(5), sync_service_handle).await {
-    warn!(message = "sync service took too long, cancelling service forcefully");
-  }
-  // _ = poll_srv_handle.await;
-  // _ = state_srv_handle.await;
+  timeout!(
+    sync_service_handle,
+    seconds = 5,
+    message = "sync service shutdown took too long, aborting service forcefully"
+  );
 
-  info!("Shutting down http server");
-  // server_handle.abort();
+  timeout!(
+    desc_service_handle,
+    seconds = 5,
+    message = "description service shutdown took too long, aborting service forcefully"
+  );
 
   _ = client_pool.close().await;
+
   Ok(())
 }

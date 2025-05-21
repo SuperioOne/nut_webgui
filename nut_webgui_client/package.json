@@ -10,7 +10,8 @@
   "scripts": {
     "dev-js": "esbuild ./src/index.js --bundle --outdir=./dist/debug --target=firefox109,chrome108,safari15 --format=iife --watch=forever",
     "dev-css": "npx @tailwindcss/cli -i ./src/style.css -o ./dist/debug/style.css --minify --watch",
-    "build": "node ./scripts/build.js --outdir=./dist/release"
+    "build": "node ./scripts/build.js --outdir=./dist/release",
+    "check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "Timur Olur",

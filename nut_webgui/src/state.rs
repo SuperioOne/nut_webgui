@@ -2,9 +2,7 @@ use chrono::{DateTime, Utc};
 use core::net::IpAddr;
 use nut_webgui_upsmc::{CmdName, UpsName, VarName, ups_status::UpsStatus, variables::UpsVariables};
 use serde::Serialize;
-use std::collections::HashMap;
-
-use crate::config::ServerConfig;
+use std::{borrow::Borrow, collections::HashMap};
 
 #[derive(Debug)]
 pub struct ServerState {
@@ -15,18 +13,18 @@ pub struct ServerState {
   pub state: DaemonState,
 
   /// Shared description table for ups variables
-  pub shared_desc: HashMap<VarName, Box<str>>,
+  pub shared_desc: HashMap<DescriptionKey, Box<str>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct DeviceEntry {
-  pub desc: Box<str>,
-  pub name: UpsName,
-  pub status: UpsStatus,
-
   pub attached: Vec<IpAddr>,
   pub commands: Vec<CmdName>,
+  pub desc: Box<str>,
+  pub last_modified: DateTime<Utc>,
+  pub name: UpsName,
   pub rw_variables: Vec<VarName>,
+  pub status: UpsStatus,
   pub variables: UpsVariables,
 }
 
@@ -49,17 +47,50 @@ impl std::fmt::Display for DaemonStatus {
 
 #[derive(Debug)]
 pub struct DaemonState {
-  pub last_full_sync: Option<DateTime<Utc>>,
-  pub last_modified: Option<DateTime<Utc>>,
+  pub last_ups_sync: Option<DateTime<Utc>>,
+  pub last_status_sync: Option<DateTime<Utc>>,
   pub status: DaemonStatus,
 }
 
 impl DaemonState {
   pub const fn new() -> DaemonState {
     DaemonState {
-      last_full_sync: None,
-      last_modified: None,
+      last_ups_sync: None,
+      last_status_sync: None,
       status: DaemonStatus::NotReady,
     }
+  }
+}
+
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub struct DescriptionKey {
+  inner: Box<str>,
+}
+
+impl From<CmdName> for DescriptionKey {
+  fn from(value: CmdName) -> Self {
+    Self {
+      inner: Box::from(value.as_str()),
+    }
+  }
+}
+
+impl From<Box<str>> for DescriptionKey {
+  fn from(value: Box<str>) -> Self {
+    Self { inner: value }
+  }
+}
+
+impl From<VarName> for DescriptionKey {
+  fn from(value: VarName) -> Self {
+    Self {
+      inner: Box::from(value.as_str()),
+    }
+  }
+}
+
+impl Borrow<str> for DescriptionKey {
+  fn borrow(&self) -> &str {
+    &self.inner
   }
 }
