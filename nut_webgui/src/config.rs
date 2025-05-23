@@ -1,6 +1,6 @@
 use crate::uri_path::UriPath;
 use core::net::{IpAddr, Ipv4Addr};
-use std::{num::NonZeroUsize, path::PathBuf};
+use std::{net::ToSocketAddrs, num::NonZeroUsize, path::PathBuf};
 use tracing::Level;
 
 pub mod cfg_args;
@@ -54,6 +54,13 @@ pub struct UpsdConfig {
 
   /// Maximum allowed connection limit aka pool size
   pub max_conn: NonZeroUsize,
+}
+
+impl UpsdConfig {
+  /// Returns an owned upsd socket address.
+  pub fn get_socket_addr(&self) -> impl ToSocketAddrs + 'static {
+    format!("{address}:{port}", address = self.addr, port = self.port)
+  }
 }
 
 impl Default for HttpServerConfig {

@@ -6,7 +6,8 @@ use crate::{
   responses,
 };
 use core::num::NonZeroUsize;
-use tokio::net::{TcpStream, ToSocketAddrs};
+use std::net::ToSocketAddrs;
+use tokio::net::TcpStream;
 use tracing::warn;
 
 pub struct ClientAllocator<A>
@@ -24,7 +25,8 @@ where
   type Error = Error;
 
   async fn init(&self) -> Result<Self::Output, Self::Error> {
-    let connection = TcpStream::connect(&self.addr).await?;
+    let addr: Vec<_> = self.addr.to_socket_addrs()?.collect();
+    let connection = TcpStream::connect(addr.as_slice()).await?;
     connection.set_nodelay(true)?;
 
     Ok(NutClient::from(connection))

@@ -236,7 +236,7 @@ generate-dockerfiles:
 clean:
 	@echo "Cleaning artifacts"
 	@cd nut_webgui && cargo clean
-	@cd nut_webgui_upsmpc && cargo clean
+	@cd nut_webgui_upsmc && cargo clean
 	@if [ -d "$(BIN_DIR)" ]; then rm -r "$(BIN_DIR)"; fi;
 	@if [ -d "$(STATIC_DIR)" ]; then rm -r "$(STATIC_DIR)"; fi;
 	@if [ -d "$(NODE_MODULES_DIR)" ]; then rm -r "$(NODE_MODULES_DIR)"; fi;
@@ -245,4 +245,4 @@ clean:
 .PHONY: check
 check:
 	@cd nut_webgui && cargo check
-	@cd nut_webgui_upsmpc && cargo check
+	@cd nut_webgui_upsmc && cargo check

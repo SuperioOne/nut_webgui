@@ -1,7 +1,10 @@
+use super::{
+  BackgroundService,
+  error::{DeviceLoadError, IntoLoadError, SyncTaskError},
+};
 use crate::{
-  event::{ChannelClosedError, EventChannel, SystemEvent},
+  event::{EventBatch, EventChannel, SystemEvent},
   state::{DaemonStatus, DeviceEntry, ServerState},
-  sync::error::IntoLoadError as _,
 };
 use chrono::Utc;
 use nut_webgui_upsmc::{
@@ -10,20 +13,19 @@ use nut_webgui_upsmc::{
   responses::UpsDevice,
   ups_status::UpsStatus,
 };
-use std::{collections::HashMap, str::FromStr, sync::Arc, time::Duration};
-use tokio::{join, net::ToSocketAddrs, select, sync::RwLock, task::JoinSet, time::interval};
+use std::{collections::HashMap, net::ToSocketAddrs, sync::Arc, time::Duration};
+use tokio::{join, select, sync::RwLock, task::JoinSet, time::interval};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
-
-use super::error::{DeviceLoadError, SyncTaskError};
 
 /// Synchronizes device list from UPSD.
 pub struct DeviceSyncService<A>
 where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
-  task: SyncTask<A>,
-  cancellation: CancellationToken,
+  client: NutPoolClient<A>,
+  event_channel: EventChannel,
+  state: Arc<RwLock<ServerState>>,
   poll_interval: Duration,
 }
 
@@ -36,55 +38,64 @@ where
     event_channel: EventChannel,
     state: Arc<RwLock<ServerState>>,
     poll_interval: Duration,
-    cancellation: CancellationToken,
   ) -> Self {
     Self {
-      task: SyncTask {
-        client,
-        state,
-        event_channel,
-      },
-      cancellation,
+      client,
+      state,
+      event_channel,
       poll_interval,
     }
   }
+}
 
-  pub async fn run(self) {
-    let Self {
-      cancellation,
-      task,
-      poll_interval: interval_duration,
-      ..
-    } = self;
+impl<A> BackgroundService for DeviceSyncService<A>
+where
+  A: ToSocketAddrs + Send + Sync + 'static,
+{
+  fn run(
+    &self,
+    token: CancellationToken,
+  ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>> {
+    let state = self.state.clone();
+    let event_channel = self.event_channel.clone();
+    let poll_interval = self.poll_interval;
+    let client = self.client.clone();
 
-    let mut interval = interval(interval_duration);
-    interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-
-    'MAIN: loop {
-      select! {
-        _ = interval.tick() => { }
-        _ = cancellation.cancelled() =>  {
-            break 'MAIN;
-        }
+    Box::pin(async move {
+      let task = DeviceSyncTask {
+        state,
+        client,
+        event_channel,
       };
+      let mut interval = interval(poll_interval);
+      interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
-      select! {
-        v = task.next() => {
-          if let Err(err) = v {
-            error!(message = "sync failed: unable to communicate with upsd", reason=%err)
+      'MAIN: loop {
+        select! {
+          _ = interval.tick() => { }
+          _ = token.cancelled() =>  {
+              break 'MAIN;
           }
-        }
-        _ = cancellation.cancelled() =>  {
-            break 'MAIN;
-        }
-      };
-    }
+        };
 
-    info!(message = "ups sync task finished");
+        select! {
+          v = task.next() => {
+            if let Err(err) = v {
+              error!(message = "sync failed: unable to communicate with upsd", reason=%err)
+            }
+          }
+          _ = token.cancelled() =>  {
+              break 'MAIN;
+          }
+        };
+      }
+
+      info!(message = "ups sync task stopped");
+    })
   }
 }
 
-struct SyncTask<A>
+struct DeviceSyncTask<A>
 where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
@@ -93,16 +104,26 @@ where
   event_channel: EventChannel,
 }
 
-impl<A> SyncTask<A>
+impl<A> DeviceSyncTask<A>
 where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
   pub async fn next(&self) -> Result<(), SyncTaskError> {
-    let remote_devices = match self.client.list_ups().await {
+    let remote = match self.client.list_ups().await {
       Ok(res) => Ok(res),
       Err(err) => {
         let mut write_lock = self.state.write().await;
-        write_lock.state.status = DaemonStatus::Dead;
+
+        if write_lock.state.status != DaemonStatus::Dead {
+          write_lock.state.status = DaemonStatus::Dead;
+
+          error!(message = "ups daemon is disconnected");
+
+          _ = self.event_channel.send(SystemEvent::UpsdStatus {
+            status: DaemonStatus::Dead,
+          });
+        }
+
         write_lock.devices = HashMap::new();
 
         Err(err)
@@ -126,18 +147,18 @@ where
         .collect()
     };
 
-    let total_device_count = remote_devices.devices.len();
-    let diff = DeviceDiff::new(local_devices, remote_devices.devices);
+    let total_device_count = remote.devices.len();
+    let diff = DeviceDiff::new(local_devices, remote.devices);
 
     let mut failure_count = 0;
     let mut task_set = JoinSet::new();
 
     for device in diff.new.into_iter() {
       let client = self.client.clone();
-      task_set.spawn(load_device_entry(client, device));
+      task_set.spawn(Self::load_device_entry(client, device));
     }
 
-    let mut new_devices: Vec<DeviceEntry> = Vec::with_capacity(task_set.len());
+    let mut new_devices: Vec<DeviceEntry> = Vec::new();
 
     while let Some(result) = task_set.join_next().await {
       match result {
@@ -157,6 +178,7 @@ where
       let mut write_lock = self.state.write().await;
 
       if write_lock.state.status != DaemonStatus::Dead {
+        error!(message = "ups daemon is disconnected");
         write_lock.state.status = DaemonStatus::Dead;
 
         if let Err(err) = self.event_channel.send(SystemEvent::UpsdStatus {
@@ -167,7 +189,7 @@ where
       }
 
       write_lock.devices = HashMap::new();
-      write_lock.state.last_ups_sync = Some(Utc::now());
+      write_lock.state.last_device_sync = Some(Utc::now());
 
       Err(SyncTaskError::DeviceLoadFailed)
     } else {
@@ -175,7 +197,7 @@ where
       let mut write_lock = self.state.write().await;
 
       for entry in new_devices.into_iter() {
-        info!(message = "new device found", device = %&entry.name);
+        info!(message = "device connected", device = %&entry.name);
 
         events.push_new_device(entry.name.clone());
         write_lock.devices.insert(entry.name.clone(), entry);
@@ -183,7 +205,7 @@ where
 
       for entry in diff.updated.into_iter() {
         if let Some(device) = write_lock.devices.get_mut(&entry.ups_name) {
-          info!(message = "device description updated", device = %&device.name);
+          info!(message = "device details updated", device = %&device.name);
 
           events.push_updated_device(entry.ups_name);
           device.desc = entry.desc;
@@ -191,18 +213,20 @@ where
       }
 
       for device_name in diff.removed.into_iter() {
-        info!(message = "device disconnected", device = %&device_name);
+        info!(message = "device disconnected", device=%device_name);
 
         _ = write_lock.devices.remove(&device_name);
         events.push_removed_device(device_name);
       }
 
       if write_lock.state.status != DaemonStatus::Online {
+        info!(message = "ups daemon is online");
+
         write_lock.state.status = DaemonStatus::Online;
         events.set_upsd_status(DaemonStatus::Online);
       }
 
-      write_lock.state.last_ups_sync = Some(Utc::now());
+      write_lock.state.last_device_sync = Some(Utc::now());
 
       if let Err(err) = events.send(&self.event_channel) {
         warn!(message = "Unable to send events", reason= %err);
@@ -211,63 +235,46 @@ where
       Ok(())
     }
   }
-}
 
-struct EventBatch {
-  new: Vec<UpsName>,
-  removed: Vec<UpsName>,
-  updated: Vec<UpsName>,
-  upsd_status: Option<DaemonStatus>,
-}
+  async fn load_device_entry(
+    client: NutPoolClient<A>,
+    device: UpsDevice,
+  ) -> Result<DeviceEntry, DeviceLoadError> {
+    let UpsDevice { ups_name, desc } = device;
 
-impl EventBatch {
-  pub fn new() -> Self {
-    Self {
-      upsd_status: None,
-      new: Vec::new(),
-      updated: Vec::new(),
-      removed: Vec::new(),
-    }
-  }
+    let (vars, rw_vars, commands, clients) = join!(
+      client.list_var(&ups_name),
+      client.list_rw(&ups_name),
+      client.list_cmd(&ups_name),
+      client.list_client(&ups_name),
+    );
 
-  pub fn push_new_device(&mut self, name: UpsName) {
-    self.new.push(name);
-  }
+    let variables = vars.map_load_err(&ups_name)?.variables;
+    let status = match variables.get(&VarName::UPS_STATUS) {
+      Some(value) => UpsStatus::from(value),
+      _ => UpsStatus::default(),
+    };
+    let attached = clients.map_load_err(&ups_name)?.ips;
+    let commands = commands.map_load_err(&ups_name)?.cmds;
+    let rw_variables = rw_vars
+      .map_load_err(&ups_name)?
+      .variables
+      .iter()
+      .map(|(k, _)| k.clone())
+      .collect(); // FIX: RW need it's own type. It can be enum, range etc
 
-  pub fn push_removed_device(&mut self, name: UpsName) {
-    self.removed.push(name);
-  }
+    let entry = DeviceEntry {
+      name: ups_name,
+      desc,
+      variables,
+      attached,
+      commands,
+      rw_variables,
+      status,
+      last_modified: Utc::now(),
+    };
 
-  pub fn push_updated_device(&mut self, name: UpsName) {
-    self.updated.push(name);
-  }
-
-  pub fn set_upsd_status(&mut self, status: DaemonStatus) {
-    self.upsd_status = Some(status);
-  }
-
-  pub fn send(self, channel: &EventChannel) -> Result<(), ChannelClosedError> {
-    if !self.new.is_empty() {
-      _ = channel.send(SystemEvent::DevicesAdded { devices: self.new })?;
-    }
-
-    if !self.removed.is_empty() {
-      _ = channel.send(SystemEvent::DevicesRemoved {
-        devices: self.removed,
-      })?;
-    }
-
-    if !self.updated.is_empty() {
-      _ = channel.send(SystemEvent::DevicesUpdated {
-        devices: self.updated,
-      })?;
-    }
-
-    if let Some(status) = self.upsd_status {
-      _ = channel.send(SystemEvent::UpsdStatus { status })?;
-    }
-
-    Ok(())
+    Ok(entry)
   }
 }
 
@@ -307,48 +314,4 @@ impl DeviceDiff {
 
     result
   }
-}
-
-async fn load_device_entry<A>(
-  client: NutPoolClient<A>,
-  device: UpsDevice,
-) -> Result<DeviceEntry, DeviceLoadError>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
-  let UpsDevice { ups_name, desc } = device;
-
-  let (vars, rw_vars, commands, clients) = join!(
-    client.list_var(&ups_name),
-    client.list_rw(&ups_name),
-    client.list_cmd(&ups_name),
-    client.list_client(&ups_name),
-  );
-
-  let variables = vars.map_load_err(&ups_name)?.variables;
-  let status = match variables.get(&VarName::UPS_STATUS) {
-    Some(nut_webgui_upsmc::Value::String(inner)) => UpsStatus::from_str(inner).unwrap_or_default(),
-    _ => UpsStatus::default(),
-  };
-  let attached = clients.map_load_err(&ups_name)?.ips;
-  let commands = commands.map_load_err(&ups_name)?.cmds;
-  let rw_variables = rw_vars
-    .map_load_err(&ups_name)?
-    .variables
-    .iter()
-    .map(|(k, _)| k.clone())
-    .collect(); // FIX: RW need it's own type. It can be enum, range etc
-
-  let entry = DeviceEntry {
-    name: ups_name,
-    desc,
-    variables,
-    attached,
-    commands,
-    rw_variables,
-    status,
-    last_modified: Utc::now(),
-  };
-
-  Ok(entry)
 }

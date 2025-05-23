@@ -1,3 +1,4 @@
+use super::BackgroundService;
 use crate::{
   event::{EventChannel, SystemEvent},
   state::ServerState,
@@ -7,24 +8,22 @@ use nut_webgui_upsmc::{
   clients::{AsyncNutClient, NutPoolClient},
   responses::{CmdDesc, UpsVarDesc},
 };
-use std::{collections::HashSet, sync::Arc};
+use std::{collections::HashSet, net::ToSocketAddrs, sync::Arc};
 use tokio::{
-  join,
-  net::ToSocketAddrs,
-  select,
+  join, select,
   sync::{RwLock, broadcast::error::RecvError},
   task::JoinSet,
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
 pub struct DescriptionSyncService<A>
 where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
-  task: DescriptionTask<A>,
-  cancellation: CancellationToken,
   event_channel: EventChannel,
+  client: NutPoolClient<A>,
+  state: Arc<RwLock<ServerState>>,
 }
 
 impl<A> DescriptionSyncService<A>
@@ -35,43 +34,52 @@ where
     client: NutPoolClient<A>,
     event_channel: EventChannel,
     state: Arc<RwLock<ServerState>>,
-    cancellation: CancellationToken,
   ) -> Self {
     Self {
-      task: DescriptionTask { client, state },
+      client,
+      state,
       event_channel,
-      cancellation,
     }
   }
+}
 
-  pub async fn run(self) {
-    let Self {
-      event_channel,
-      cancellation,
-      task,
-    } = self;
+impl<A> BackgroundService for DescriptionSyncService<A>
+where
+  A: ToSocketAddrs + Send + Sync + 'static,
+{
+  fn run(
+    &self,
+    token: CancellationToken,
+  ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>> {
+    let mut events = self.event_channel.subscribe();
+    let client = self.client.clone();
+    let state = self.state.clone();
 
-    let mut events = event_channel.subscribe();
+    Box::pin(async move {
+      let task = DescriptionTask { state, client };
 
-    'MAIN: loop {
-      select! {
-          event = events.recv() => {
-            match event {
-              Ok(SystemEvent::DevicesAdded { devices }) => {
-                task.next(devices).await;
-              },
-              Ok(_) => continue,
-              Err(RecvError::Closed) => break 'MAIN,
-              Err(RecvError::Lagged(lagged)) => {
-                warn!(message = "description service can't keep up with system events", missed_event_count=lagged)
+      'MAIN: loop {
+        select! {
+            event = events.recv() => {
+              match event {
+                Ok(SystemEvent::DevicesAdded { devices }) => {
+                  task.next(devices).await;
+                },
+                Ok(_) => continue,
+                Err(RecvError::Closed) => break 'MAIN,
+                Err(RecvError::Lagged(lagged)) => {
+                  warn!(message = "description service can't keep up with system events", lagged_event_count=lagged)
+                }
               }
             }
-          }
-          _ = cancellation.cancelled() =>  {
-              break 'MAIN;
-          }
+            _ = token.cancelled() =>  {
+                break 'MAIN;
+            }
+        }
       }
-    }
+
+      info!(message = "description sync task stopped");
+    })
   }
 }
 
@@ -143,7 +151,7 @@ where
 
     for ctx in task_ctx {
       let nut_client = self.client.clone();
-      task_set.spawn(load_descs(nut_client, ctx));
+      task_set.spawn(Self::load_descs(nut_client, ctx));
     }
 
     let results = task_set.join_all().await;
@@ -153,33 +161,30 @@ where
       _ = write_lock.shared_desc.insert(k.into(), v)
     }
   }
-}
 
-/// **concurrently** loads requested command and variable descriptions for target ups.
-async fn load_descs<A>(client: NutPoolClient<A>, ctx: TaskContext) -> Vec<(Box<str>, Box<str>)>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
-  let cmd_future =
-    futures::future::join_all(ctx.cmds.iter().map(|v| client.get_cmd_desc(&ctx.name, v)));
+  /// **concurrently** loads requested command and variable descriptions for target ups.
+  async fn load_descs(client: NutPoolClient<A>, ctx: TaskContext) -> Vec<(Box<str>, Box<str>)> {
+    let cmd_future =
+      futures::future::join_all(ctx.cmds.iter().map(|v| client.get_cmd_desc(&ctx.name, v)));
 
-  let var_future =
-    futures::future::join_all(ctx.vars.iter().map(|v| client.get_var_desc(&ctx.name, v)));
+    let var_future =
+      futures::future::join_all(ctx.vars.iter().map(|v| client.get_var_desc(&ctx.name, v)));
 
-  let (cmds, vars) = join!(cmd_future, var_future);
-  let mut results = Vec::new();
+    let (cmds, vars) = join!(cmd_future, var_future);
+    let mut results = Vec::with_capacity(cmds.len() + vars.len());
 
-  for cmd_desc in cmds {
-    if let Ok(CmdDesc { desc, cmd, .. }) = cmd_desc {
-      results.push((cmd.into_box_str(), desc));
+    for cmd_desc in cmds {
+      if let Ok(CmdDesc { desc, cmd, .. }) = cmd_desc {
+        results.push((cmd.into_box_str(), desc));
+      }
     }
-  }
 
-  for var_desc in vars {
-    if let Ok(UpsVarDesc { desc, var, .. }) = var_desc {
-      results.push((var.into_box_str(), desc));
+    for var_desc in vars {
+      if let Ok(UpsVarDesc { desc, var, .. }) = var_desc {
+        results.push((var.into_box_str(), desc));
+      }
     }
-  }
 
-  results
+    results
+  }
 }

@@ -1,7 +1,7 @@
 use nut_webgui_upsmc::UpsName;
 
 #[derive(Debug)]
-pub enum SyncTaskError {
+pub(super) enum SyncTaskError {
   ClientError {
     inner: nut_webgui_upsmc::errors::Error,
   },
@@ -9,10 +9,13 @@ pub enum SyncTaskError {
 }
 
 #[derive(Debug)]
-pub struct DeviceLoadError {
+pub(super) struct DeviceLoadError {
   pub inner: nut_webgui_upsmc::errors::Error,
   pub name: String,
 }
+
+#[derive(Debug)]
+pub struct ShutdownTimedOut;
 
 impl From<nut_webgui_upsmc::errors::Error> for SyncTaskError {
   fn from(value: nut_webgui_upsmc::errors::Error) -> Self {
@@ -38,7 +41,15 @@ impl std::fmt::Display for DeviceLoadError {
   }
 }
 
-pub trait IntoLoadError<T> {
+impl std::fmt::Display for ShutdownTimedOut {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_fmt(format_args!(
+      "graceful shutdown timed out; services closed forcefully",
+    ))
+  }
+}
+
+pub(super) trait IntoLoadError<T> {
   fn map_load_err(self, name: &UpsName) -> Result<T, DeviceLoadError>;
 }
 
@@ -56,3 +67,4 @@ impl<T> IntoLoadError<T> for Result<T, nut_webgui_upsmc::errors::Error> {
 
 impl std::error::Error for SyncTaskError {}
 impl std::error::Error for DeviceLoadError {}
+impl std::error::Error for ShutdownTimedOut {}

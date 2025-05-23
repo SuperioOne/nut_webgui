@@ -1,4 +1,4 @@
-use crate::errors::UnsupportedStatusError;
+use crate::Value;
 
 // Implements repetitive traits and const values
 macro_rules! impl_status {
@@ -6,7 +6,7 @@ macro_rules! impl_status {
     impl $crate::ups_status::UpsStatus {
       impl_status!(@const_val 0, $(($name);)+);
 
-      pub fn from_str_unchecked<T>(value:T) -> Self
+      pub fn new<T>(value:T) -> Self
         where
           T: AsRef<str>
       {
@@ -22,25 +22,6 @@ macro_rules! impl_status {
         }
 
         result
-      }
-    }
-
-    impl TryFrom<&str> for UpsStatus {
-      type Error = $crate::errors::UnsupportedStatusError;
-
-      fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let mut result = Self::default();
-
-        for status in value.split_whitespace() {
-          match status {
-            $(
-              $value => { result |= Self::$name },
-            )+
-            _ => return Err($crate::errors::UnsupportedStatusError { status: Box::from(status)})
-          };
-        }
-
-        Ok(result)
       }
     }
 
@@ -66,6 +47,8 @@ macro_rules! impl_status {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct UpsStatus(u32);
 
+// NOTE: networkupstools may have more options like ECO (deprecated), FANFAIL, OVERHEAT etc.
+// Current implementation follows RFC version and ignores any other status texts.
 impl_status!(
 (ALARM,           "ALARM");
 (BOOST,           "BOOST");
@@ -99,11 +82,26 @@ impl std::fmt::Display for UpsStatus {
   }
 }
 
-impl std::str::FromStr for UpsStatus {
-  type Err = UnsupportedStatusError;
+impl From<Value> for UpsStatus {
+  #[inline]
+  fn from(value: Value) -> Self {
+    Self::from(&value)
+  }
+}
 
-  fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Self::try_from(s)
+impl From<&Value> for UpsStatus {
+  fn from(value: &Value) -> Self {
+    match value {
+      Value::String(text) => UpsStatus::new(text),
+      _ => UpsStatus::default(),
+    }
+  }
+}
+
+impl From<&str> for UpsStatus {
+  #[inline]
+  fn from(value: &str) -> Self {
+    Self::new(value)
   }
 }
 

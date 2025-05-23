@@ -1,39 +1,34 @@
 // mod http;
-mod config;
-mod event;
-mod state;
-mod sync;
-mod uri_path;
-
-use event::EventChannel;
-use nut_webgui_upsmc::clients::NutPoolClient;
 // use crate::{
 //   http::{HttpServerConfig, UpsdConfig, start_http_server},
 //   ups_services::{
 //     UpsPollerConfig, UpsStorageConfig, UpsUpdateMessage, upsd_poll_service, upsd_state_service,
 //   },
 // };
+
+mod config;
+mod event;
+mod service;
+mod state;
+mod uri_path;
+
 use self::config::{
   ServerConfig, cfg_args::ServerCliArgs, cfg_env::ServerEnvArgs, cfg_toml::ServerTomlArgs,
 };
+use event::EventChannel;
+use nut_webgui_upsmc::clients::NutPoolClient;
+use service::{
+  BackgroundServiceRunner, service_sync_desc::DescriptionSyncService,
+  service_sync_device::DeviceSyncService, service_sync_status::StatusSyncService,
+};
 use state::{DaemonState, ServerState};
 use std::{collections::HashMap, panic, sync::Arc, time::Duration};
-use sync::{desc_sync::DescriptionSyncService, ups_sync::DeviceSyncService};
 use tokio::{
   select,
   signal::{self, unix::SignalKind},
   sync::RwLock,
 };
-use tokio_util::sync::CancellationToken;
-use tracing::{debug, info};
-
-macro_rules! timeout {
-  ($handle:expr, seconds = $time:expr, message = $message:literal) => {
-    if let Err(_) = tokio::time::timeout(std::time::Duration::from_secs($time), $handle).await {
-      tracing::warn!(message = $message);
-    }
-  };
-}
+use tracing::{debug, info, warn};
 
 fn load_configs() -> ServerConfig {
   let cli_args = ServerCliArgs::load();
@@ -80,43 +75,43 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .with_max_level(configs.log_level)
     .init();
 
-  debug!(message = "Server initialized.", config = ?configs);
+  debug!(message = "server initialized", config = ?configs);
 
-  let socket_addr = format!(
-    "{addr}:{port}",
-    addr = &configs.upsd.addr,
-    port = &configs.upsd.port
-  );
-
-  let event_channel = EventChannel::new(50);
-  let client_pool = NutPoolClient::new(socket_addr, configs.upsd.max_conn);
-  let cancellation = CancellationToken::new();
+  let client_pool = NutPoolClient::new(configs.upsd.get_socket_addr(), configs.upsd.max_conn);
+  let event_channel = EventChannel::new(64);
   let server_state = Arc::new(RwLock::new(ServerState {
     state: DaemonState::new(),
     devices: HashMap::new(),
     shared_desc: HashMap::new(),
   }));
 
-  let desc_service_handle = tokio::spawn(
-    DescriptionSyncService::new(
-      client_pool.clone(),
-      event_channel.clone(),
-      server_state.clone(),
-      cancellation.clone(),
-    )
-    .run(),
+  let device_sync_svc = DeviceSyncService::new(
+    client_pool.clone(),
+    event_channel.clone(),
+    server_state.clone(),
+    Duration::from_secs(configs.upsd.poll_freq),
   );
 
-  let sync_service_handle = tokio::spawn(
-    DeviceSyncService::new(
-      client_pool.clone(),
-      event_channel.clone(),
-      server_state.clone(),
-      Duration::from_secs(configs.upsd.poll_freq),
-      cancellation.clone(),
-    )
-    .run(),
+  let desc_sync_svc = DescriptionSyncService::new(
+    client_pool.clone(),
+    event_channel.clone(),
+    server_state.clone(),
   );
+
+  let status_sync_svc = StatusSyncService::new(
+    client_pool.clone(),
+    event_channel.clone(),
+    server_state.clone(),
+    Duration::from_secs(configs.upsd.poll_interval),
+    Duration::from_secs(configs.upsd.poll_freq),
+  );
+
+  let bg_services = BackgroundServiceRunner::new()
+    .with_max_timeout(Duration::from_secs(15))
+    .add_service(device_sync_svc)
+    .add_service(desc_sync_svc)
+    .add_service(status_sync_svc)
+    .start();
 
   // // http server
   // let server_handle = start_http_server(HttpServerConfig {
@@ -140,23 +135,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     _ = sigterm.recv() => { info!("SIGTERM signal received.");}
     _ = sigquit.recv() => { info!("SIGQUIT signal received.");}
     _ = sigint.recv() => { info!("SIGINT signal received.");}
+  };
+
+  info!("shutting down background services");
+
+  if let Err(err) = bg_services.stop().await {
+    warn!(message = "some services are not shutdown properly", reason=%err)
   }
-
-  cancellation.cancel();
-
-  info!("shutting down services");
-
-  timeout!(
-    sync_service_handle,
-    seconds = 5,
-    message = "sync service shutdown took too long, aborting service forcefully"
-  );
-
-  timeout!(
-    desc_service_handle,
-    seconds = 5,
-    message = "description service shutdown took too long, aborting service forcefully"
-  );
 
   _ = client_pool.close().await;
 

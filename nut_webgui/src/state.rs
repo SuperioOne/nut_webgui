@@ -47,16 +47,14 @@ impl std::fmt::Display for DaemonStatus {
 
 #[derive(Debug)]
 pub struct DaemonState {
-  pub last_ups_sync: Option<DateTime<Utc>>,
-  pub last_status_sync: Option<DateTime<Utc>>,
+  pub last_device_sync: Option<DateTime<Utc>>,
   pub status: DaemonStatus,
 }
 
 impl DaemonState {
   pub const fn new() -> DaemonState {
     DaemonState {
-      last_ups_sync: None,
-      last_status_sync: None,
+      last_device_sync: None,
       status: DaemonStatus::NotReady,
     }
   }

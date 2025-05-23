@@ -14,7 +14,7 @@ use tracing::trace;
 
 pub struct NutClient<S>
 where
-  S: AsyncRead + AsyncWrite,
+  S: AsyncRead + AsyncWrite + Unpin,
 {
   stream: S,
 }
@@ -24,7 +24,7 @@ impl NutClient<TcpStream> {
     let connection = TcpStream::connect(&addr).await?;
     connection.set_nodelay(true)?;
 
-    Ok(Self { stream: connection })
+    Ok(Self::new(connection))
   }
 }
 

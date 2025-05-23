@@ -27,48 +27,48 @@ macro_rules! test_event_stream {
 #[test]
 fn base_events() {
   test_event_stream!(
-    (UpsStatus::ALARM => [UpsEvent::AlarmOn]);
-    (UpsStatus::BOOST => [UpsEvent::AlarmOff, UpsEvent::Boosting]);
-    (UpsStatus::BYPASS => [UpsEvent::BoostEnded, UpsEvent::BypassOn]);
-    (UpsStatus::CALIBRATING => [UpsEvent::BypassOff, UpsEvent::Calibrating]);
-    (UpsStatus::CHARGING => [UpsEvent::Charging, UpsEvent::CalibrationEnded]);
-    (UpsStatus::COMM => [UpsEvent::ChargeEnded, UpsEvent::COMM]);
-    (UpsStatus::DISCHARGE => [UpsEvent::Discharging]);
-    (UpsStatus::LOW_BATTERY => [UpsEvent::DischargeEnded, UpsEvent::LowBattery]);
-    (UpsStatus::ONLINE => [UpsEvent::LowBatteryEnded, UpsEvent::Online]);
-    (UpsStatus::ON_BATTERY => [UpsEvent::OnBattery]);
+    (UpsStatus::ALARM                          => [UpsEvent::AlarmOn]);
+    (UpsStatus::BOOST                          => [UpsEvent::AlarmOff, UpsEvent::Boosting]);
+    (UpsStatus::BYPASS                         => [UpsEvent::BoostEnded, UpsEvent::BypassOn]);
+    (UpsStatus::CALIBRATING                    => [UpsEvent::BypassOff, UpsEvent::Calibrating]);
+    (UpsStatus::CHARGING                       => [UpsEvent::Charging, UpsEvent::CalibrationEnded]);
+    (UpsStatus::COMM                           => [UpsEvent::ChargeEnded, UpsEvent::COMM]);
+    (UpsStatus::DISCHARGE                      => [UpsEvent::Discharging]);
+    (UpsStatus::LOW_BATTERY                    => [UpsEvent::DischargeEnded, UpsEvent::LowBattery]);
+    (UpsStatus::ONLINE                         => [UpsEvent::LowBatteryEnded, UpsEvent::Online]);
+    (UpsStatus::ON_BATTERY                     => [UpsEvent::OnBattery]);
     (UpsStatus::OVERLOADED | UpsStatus::ONLINE => [UpsEvent::Online, UpsEvent::Overloaded]);
-    (UpsStatus::REPLACE_BATTERY => [UpsEvent::OverloadEnded , UpsEvent::ReplaceBattery]);
-    (UpsStatus::TEST => [UpsEvent::ReplaceBatteryEnded, UpsEvent::Testing]);
-    (UpsStatus::TRIM => [UpsEvent::TestEnded, UpsEvent::Trimming]);
-    (UpsStatus::NOCOMM => [UpsEvent::TrimEnded, UpsEvent::NoCOMM]);
-    (UpsStatus::FORCED_SHUTDOWN => [UpsEvent::FSD]);
-    (UpsStatus::OFFLINE => [UpsEvent::DeviceOff]);
-    (UpsStatus::ONLINE => [UpsEvent::Online, UpsEvent::DeviceOn])
+    (UpsStatus::REPLACE_BATTERY                => [UpsEvent::OverloadEnded , UpsEvent::ReplaceBattery]);
+    (UpsStatus::TEST                           => [UpsEvent::ReplaceBatteryEnded, UpsEvent::Testing]);
+    (UpsStatus::TRIM                           => [UpsEvent::TestEnded, UpsEvent::Trimming]);
+    (UpsStatus::NOCOMM                         => [UpsEvent::TrimEnded, UpsEvent::NoCOMM]);
+    (UpsStatus::FORCED_SHUTDOWN                => [UpsEvent::FSD]);
+    (UpsStatus::OFFLINE                        => [UpsEvent::DeviceOff]);
+    (UpsStatus::ONLINE                         => [UpsEvent::Online, UpsEvent::DeviceOn])
   );
 }
 
 #[test]
 fn ups_status_simulation() {
   test_event_stream!(
-    (UpsStatus::ONLINE | UpsStatus::ALARM => [UpsEvent::Online, UpsEvent::AlarmOn]);
-    (UpsStatus::ONLINE | UpsStatus::ALARM => []);
-    (UpsStatus::ONLINE => [UpsEvent::AlarmOff]);
-    (UpsStatus::ONLINE => []);
-    (UpsStatus::ON_BATTERY | UpsStatus::DISCHARGE => [UpsEvent::OnBattery, UpsEvent::Discharging]);
-    (UpsStatus::ON_BATTERY | UpsStatus::DISCHARGE => []);
+    (UpsStatus::ONLINE | UpsStatus::ALARM                                  => [UpsEvent::Online, UpsEvent::AlarmOn]);
+    (UpsStatus::ONLINE | UpsStatus::ALARM                                  => []);
+    (UpsStatus::ONLINE                                                     => [UpsEvent::AlarmOff]);
+    (UpsStatus::ONLINE                                                     => []);
+    (UpsStatus::ON_BATTERY | UpsStatus::DISCHARGE                          => [UpsEvent::OnBattery, UpsEvent::Discharging]);
+    (UpsStatus::ON_BATTERY | UpsStatus::DISCHARGE                          => []);
     (UpsStatus::ON_BATTERY | UpsStatus::DISCHARGE | UpsStatus::LOW_BATTERY => [UpsEvent::LowBattery]);
-    (UpsStatus::ONLINE | UpsStatus::CHARGING | UpsStatus::LOW_BATTERY => [UpsEvent::Online, UpsEvent::DischargeEnded, UpsEvent::Charging]);
-    (UpsStatus::ONLINE | UpsStatus::CHARGING | UpsStatus::LOW_BATTERY => []);
-    (UpsStatus::ONLINE | UpsStatus::CHARGING => [UpsEvent::LowBatteryEnded]);
-    (UpsStatus::ONLINE => [UpsEvent::ChargeEnded]);
-    (UpsStatus::ONLINE | UpsStatus::TEST => [UpsEvent::Testing]);
-    (UpsStatus::ONLINE | UpsStatus::TEST => []);
-    (UpsStatus::ONLINE => [UpsEvent::TestEnded]);
-    (UpsStatus::ONLINE | UpsStatus::CALIBRATING => [UpsEvent::Calibrating]);
-    (UpsStatus::ONLINE => [UpsEvent::CalibrationEnded]);
-    (UpsStatus::ONLINE => []);
-    (UpsStatus::FORCED_SHUTDOWN  => [UpsEvent::FSD]);
-    (UpsStatus::OFFLINE => [UpsEvent::DeviceOff])
+    (UpsStatus::ONLINE | UpsStatus::CHARGING | UpsStatus::LOW_BATTERY      => [UpsEvent::Online, UpsEvent::DischargeEnded, UpsEvent::Charging]);
+    (UpsStatus::ONLINE | UpsStatus::CHARGING | UpsStatus::LOW_BATTERY      => []);
+    (UpsStatus::ONLINE | UpsStatus::CHARGING                               => [UpsEvent::LowBatteryEnded]);
+    (UpsStatus::ONLINE                                                     => [UpsEvent::ChargeEnded]);
+    (UpsStatus::ONLINE | UpsStatus::TEST                                   => [UpsEvent::Testing]);
+    (UpsStatus::ONLINE | UpsStatus::TEST                                   => []);
+    (UpsStatus::ONLINE                                                     => [UpsEvent::TestEnded]);
+    (UpsStatus::ONLINE | UpsStatus::CALIBRATING                            => [UpsEvent::Calibrating]);
+    (UpsStatus::ONLINE                                                     => [UpsEvent::CalibrationEnded]);
+    (UpsStatus::ONLINE                                                     => []);
+    (UpsStatus::FORCED_SHUTDOWN                                            => [UpsEvent::FSD]);
+    (UpsStatus::OFFLINE                                                    => [UpsEvent::DeviceOff])
   );
 }
