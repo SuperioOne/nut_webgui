@@ -84,13 +84,13 @@ impl ServerEnvArgs {
       ("NUTWG__HTTP_SERVER__LISTEN",    env_config.listen,        IpAddr);
       ("NUTWG__HTTP_SERVER__PORT",      env_config.port,          u16);
 
-      ("NUTWG__UPSD__ADDR",             env_config.upsd_addr,     boxed_str);
+      ("NUTWG__UPSD__ADDRESS",          env_config.upsd_addr,     boxed_str);
       ("NUTWG__UPSD__MAX_CONNECTION",   env_config.upsd_max_conn, NonZeroUsize);
-      ("NUTWG__UPSD__PASS",             env_config.upsd_pass,     boxed_str);
+      ("NUTWG__UPSD__PASSWORD",         env_config.upsd_pass,     boxed_str);
       ("NUTWG__UPSD__POLL_FREQ",        env_config.poll_freq,     u64);
       ("NUTWG__UPSD__POLL_INTERVAL",    env_config.poll_interval, u64);
       ("NUTWG__UPSD__PORT",             env_config.upsd_port,     u16);
-      ("NUTWG__UPSD__USER",             env_config.upsd_user,     boxed_str);
+      ("NUTWG__UPSD__USERNAME",         env_config.upsd_user,     boxed_str);
     );
 
     Ok(env_config)

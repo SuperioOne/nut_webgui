@@ -5,10 +5,12 @@ use crate::{
   internal::{Deserialize, Serialize, lexer::Lexer},
   responses,
 };
-use core::net::SocketAddr;
 use tokio::{
-  io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader},
-  net::TcpStream,
+  io::{
+    AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader, Interest, ReadHalf,
+    WriteHalf, split,
+  },
+  net::{TcpStream, ToSocketAddrs},
 };
 use tracing::trace;
 
@@ -16,15 +18,31 @@ pub struct NutClient<S>
 where
   S: AsyncRead + AsyncWrite + Unpin,
 {
-  stream: S,
+  reader: BufReader<ReadHalf<S>>,
+  writer: WriteHalf<S>,
 }
 
 impl NutClient<TcpStream> {
-  pub async fn connect(addr: SocketAddr) -> Result<Self, Error> {
-    let connection = TcpStream::connect(&addr).await?;
+  pub async fn connect<A>(addr: A) -> Result<Self, Error>
+  where
+    A: ToSocketAddrs,
+  {
+    let connection = TcpStream::connect(addr).await?;
     connection.set_nodelay(true)?;
+    connection
+      .ready(Interest::READABLE | Interest::WRITABLE)
+      .await?;
 
     Ok(Self::new(connection))
+  }
+}
+
+impl<S> From<S> for NutClient<S>
+where
+  S: AsyncWrite + AsyncRead + Unpin + 'static,
+{
+  fn from(value: S) -> Self {
+    Self::new(value)
   }
 }
 
@@ -33,7 +51,10 @@ where
   S: AsyncWrite + AsyncRead + Unpin,
 {
   pub fn new(stream: S) -> Self {
-    Self { stream }
+    let (reader, writer) = split(stream);
+    let reader = BufReader::new(reader);
+
+    Self { writer, reader }
   }
 
   pub async fn is_open(&mut self) -> bool {
@@ -44,7 +65,7 @@ where
   }
 
   pub async fn close(mut self) -> Result<(), Error> {
-    self.stream.shutdown().await?;
+    self.writer.shutdown().await?;
     Ok(())
   }
 
@@ -54,16 +75,15 @@ where
     const LIST_END: &'static str = "END LIST";
     const PROT_ERR: &'static str = "ERR";
 
-    self.stream.write_all(send.as_bytes()).await?;
-    self.stream.flush().await?;
+    self.writer.write_all(send.as_bytes()).await?;
+    self.writer.flush().await?;
 
     let mut response_buf = String::new();
-    let mut reader = BufReader::new(&mut self.stream);
-    let mut start_pos = reader.read_line(&mut response_buf).await?;
+    let mut start_pos = self.reader.read_line(&mut response_buf).await?;
 
     if response_buf.starts_with(LIST_START) {
       loop {
-        let read = reader.read_line(&mut response_buf).await?;
+        let read = self.reader.read_line(&mut response_buf).await?;
         let line = &response_buf[start_pos..];
 
         if line.starts_with(LIST_END) {
@@ -232,14 +252,5 @@ where
   fn list_var(self, ups: &UpsName) -> impl Future<Output = Result<responses::UpsVarList, Error>> {
     let command = commands::ListVar { ups };
     self.send::<responses::UpsVarList>(command)
-  }
-}
-
-impl<S> From<S> for NutClient<S>
-where
-  S: AsyncWrite + AsyncRead + Unpin,
-{
-  fn from(value: S) -> Self {
-    Self { stream: value }
   }
 }

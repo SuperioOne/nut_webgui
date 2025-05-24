@@ -16,7 +16,7 @@ use nut_webgui_upsmc::{
 use std::{collections::HashMap, net::ToSocketAddrs, sync::Arc, time::Duration};
 use tokio::{join, select, sync::RwLock, task::JoinSet, time::interval};
 use tokio_util::sync::CancellationToken;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 /// Synchronizes device list from UPSD.
 pub struct DeviceSyncService<A>
@@ -25,8 +25,8 @@ where
 {
   client: NutPoolClient<A>,
   event_channel: EventChannel,
-  state: Arc<RwLock<ServerState>>,
   poll_interval: Duration,
+  state: Arc<RwLock<ServerState>>,
 }
 
 impl<A> DeviceSyncService<A>
@@ -41,9 +41,9 @@ where
   ) -> Self {
     Self {
       client,
-      state,
       event_channel,
       poll_interval,
+      state,
     }
   }
 }
@@ -56,10 +56,10 @@ where
     &self,
     token: CancellationToken,
   ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>> {
-    let state = self.state.clone();
+    let client = self.client.clone();
     let event_channel = self.event_channel.clone();
     let poll_interval = self.poll_interval;
-    let client = self.client.clone();
+    let state = self.state.clone();
 
     Box::pin(async move {
       let task = DeviceSyncTask {
@@ -72,25 +72,22 @@ where
 
       'MAIN: loop {
         select! {
-          _ = interval.tick() => { }
-          _ = token.cancelled() =>  {
-              break 'MAIN;
-          }
+          _ = interval.tick() => debug!(message = "starting remote device sync"),
+          _ = token.cancelled() =>  { break 'MAIN; }
         };
 
         select! {
           v = task.next() => {
-            if let Err(err) = v {
-              error!(message = "sync failed: unable to communicate with upsd", reason=%err)
+            match v {
+              Ok(_) => debug!(message = "remote device sync completed") ,
+              Err(err) => error!(message = "remote device sync failed", reason=%err)
             }
           }
-          _ = token.cancelled() =>  {
-              break 'MAIN;
-          }
+          _ = token.cancelled() =>  { break 'MAIN; }
         };
       }
 
-      info!(message = "ups sync task stopped");
+      info!(message = "device sync task stopped");
     })
   }
 }
@@ -117,7 +114,7 @@ where
         if write_lock.state.status != DaemonStatus::Dead {
           write_lock.state.status = DaemonStatus::Dead;
 
-          error!(message = "ups daemon is disconnected");
+          error!(message = "ups daemon is disconnected", reason = %err);
 
           _ = self.event_channel.send(SystemEvent::UpsdStatus {
             status: DaemonStatus::Dead,
@@ -178,13 +175,17 @@ where
       let mut write_lock = self.state.write().await;
 
       if write_lock.state.status != DaemonStatus::Dead {
-        error!(message = "ups daemon is disconnected");
+        error!(
+          message = "ups daemon is disconnected",
+          reason = "received device list but unable to load device details"
+        );
+
         write_lock.state.status = DaemonStatus::Dead;
 
         if let Err(err) = self.event_channel.send(SystemEvent::UpsdStatus {
           status: DaemonStatus::Dead,
         }) {
-          warn!(message = "Unable to send status event", reason= %err);
+          warn!(message = "unable to send status event", reason= %err);
         }
       }
 
@@ -229,7 +230,7 @@ where
       write_lock.state.last_device_sync = Some(Utc::now());
 
       if let Err(err) = events.send(&self.event_channel) {
-        warn!(message = "Unable to send events", reason= %err);
+        warn!(message = "unable to send events", reason= %err);
       }
 
       Ok(())
@@ -242,11 +243,11 @@ where
   ) -> Result<DeviceEntry, DeviceLoadError> {
     let UpsDevice { ups_name, desc } = device;
 
-    let (vars, rw_vars, commands, clients) = join!(
-      client.list_var(&ups_name),
-      client.list_rw(&ups_name),
-      client.list_cmd(&ups_name),
+    let (clients, commands, rw_vars, vars) = join!(
       client.list_client(&ups_name),
+      client.list_cmd(&ups_name),
+      client.list_rw(&ups_name),
+      client.list_var(&ups_name),
     );
 
     let variables = vars.map_load_err(&ups_name)?.variables;
@@ -264,14 +265,14 @@ where
       .collect(); // FIX: RW need it's own type. It can be enum, range etc
 
     let entry = DeviceEntry {
-      name: ups_name,
-      desc,
-      variables,
       attached,
       commands,
+      desc,
+      last_modified: Utc::now(),
+      name: ups_name,
       rw_variables,
       status,
-      last_modified: Utc::now(),
+      variables,
     };
 
     Ok(entry)

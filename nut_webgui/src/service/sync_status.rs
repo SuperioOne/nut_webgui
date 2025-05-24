@@ -17,7 +17,7 @@ use tokio::{
   time::{Instant, Interval, MissedTickBehavior, interval},
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{info, trace, warn};
+use tracing::{debug, info, warn};
 
 pub struct StatusSyncService<A>
 where
@@ -60,8 +60,8 @@ where
     token: CancellationToken,
   ) -> std::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>> {
     let client = self.client.clone();
-    let state = self.state.clone();
     let event_channel = self.event_channel.clone();
+    let state = self.state.clone();
     let poll_freq = self.poll_freq;
     let poll_interval = {
       if self.poll_interval >= self.poll_freq {
@@ -83,7 +83,7 @@ where
       'MAIN: loop {
         let poll_type = select! {
           poll_type = interval.tick() => {
-            trace!(message = "status sync next tick has been started", poll_type=%poll_type);
+            debug!(message = "starting device status sync", poll_type=%poll_type);
             poll_type
           }
           _ = token.cancelled() => { break 'MAIN; }
@@ -93,7 +93,7 @@ where
           UpsPollType::Full => {
             select! {
               _ = task.variable_sync() => {
-                trace!(message = "full sync completed");
+                debug!(message = "full device status sync completed");
               }
               _ = token.cancelled() => { break 'MAIN; }
             };
@@ -101,7 +101,7 @@ where
           UpsPollType::Partial => {
             select! {
               _ = task.status_sync() => {
-                trace!(message = "partial sync completed");
+                debug!(message = "partial device status sync completed");
               }
               _ = token.cancelled() => { break 'MAIN; }
             };
@@ -109,7 +109,7 @@ where
         }
       }
 
-      info!(message = "ups status sync stopped");
+      info!(message = "device status sync stopped");
     })
   }
 }
@@ -169,7 +169,9 @@ where
               });
             }
           }
-          Err(err) => warn!(message = "unable to read ups status", device = %device, reason = %err),
+          Err(err) => {
+            debug!(message = "failed to read ups status", device = %device, reason = %err)
+          }
         }
       }
     }
@@ -180,7 +182,7 @@ where
         .send(SystemEvent::DeviceStatusUpdates { changes });
 
       if let Err(err) = send_result {
-        warn!(message = "Unable to send status update events", reason = %err);
+        warn!(message = "cannot write new system events to channel", reason = %err);
       }
     }
   }
@@ -226,14 +228,14 @@ where
             }
           }
           Err(err) => {
-            warn!(message = "unable to read ups variables", device = %device, reason = %err)
+            debug!(message = "failed to read ups variables", device = %device, reason = %err)
           }
         }
       }
     }
 
     if let Err(err) = events.send(&self.event_channel) {
-      warn!(message = "Unable to send events", reason = %err);
+      warn!(message = "cannot write new system events to channel", reason = %err);
     }
   }
 }

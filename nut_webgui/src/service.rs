@@ -8,9 +8,9 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 
 pub mod error;
-pub mod service_sync_desc;
-pub mod service_sync_device;
-pub mod service_sync_status;
+pub mod sync_desc;
+pub mod sync_device;
+pub mod sync_status;
 
 /// Trait for services that can be run in the background.
 ///

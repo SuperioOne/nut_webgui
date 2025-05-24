@@ -18,8 +18,8 @@ use self::config::{
 use event::EventChannel;
 use nut_webgui_upsmc::clients::NutPoolClient;
 use service::{
-  BackgroundServiceRunner, service_sync_desc::DescriptionSyncService,
-  service_sync_device::DeviceSyncService, service_sync_status::StatusSyncService,
+  BackgroundServiceRunner, sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
+  sync_status::StatusSyncService,
 };
 use state::{DaemonState, ServerState};
 use std::{collections::HashMap, panic, sync::Arc, time::Duration};

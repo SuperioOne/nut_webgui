@@ -26,10 +26,9 @@ where
 
   async fn init(&self) -> Result<Self::Output, Self::Error> {
     let addr: Vec<_> = self.addr.to_socket_addrs()?.collect();
-    let connection = TcpStream::connect(addr.as_slice()).await?;
-    connection.set_nodelay(true)?;
+    let client = NutClient::connect(addr.as_slice()).await?;
 
-    Ok(NutClient::from(connection))
+    Ok(client)
   }
 
   async fn dealloc(&self, item: Self::Output) {
@@ -99,7 +98,9 @@ macro_rules! impl_pooled_call {
       },
       Err(err) => {
         match err.kind() {
-          ErrorKind::IOError { .. } | ErrorKind::ConnectionPoolClosed | ErrorKind::EmptyResponse => {}
+          ErrorKind::IOError { .. } | ErrorKind::ConnectionPoolClosed | ErrorKind::EmptyResponse => {
+          drop($client);
+        }
           _ => {
             _ = $client.release().await;
           }
