@@ -19,7 +19,7 @@ impl Deserialize for RangeList {
     let (ups_name_text, var_name) =
       parse_line!(lexer, "BEGIN" "LIST" "RANGE" {TEXT, name = ups_name} {TEXT, name = var_name})?;
 
-    let name = VarName::new(&var_name).map_err(|err| ErrorKind::ParseError {
+    let name = VarName::try_from(var_name).map_err(|err| ErrorKind::ParseError {
       inner: ParseError::VarName(err),
       position: lexer.get_positon(),
     })?;
@@ -33,14 +33,14 @@ impl Deserialize for RangeList {
     loop {
       match lexer.peek_as_str() {
         Some("RANGE") => {
-          let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = &var_name} {VALUE, name = min} {VALUE, name = max})?;
+          let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = name.as_str()} {VALUE, name = min} {VALUE, name = max})?;
           ranges.push(range);
         }
         _ => break,
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "RANGE" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = &var_name})?;
+    _ = parse_line!(lexer, "END" "LIST" "RANGE" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = name.as_str()})?;
 
     if lexer.is_finished() {
       Ok(Self {

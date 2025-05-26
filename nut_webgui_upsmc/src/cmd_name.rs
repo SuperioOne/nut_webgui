@@ -1,11 +1,11 @@
 use crate::errors::CmdParseError;
-use crate::internal::{ReadOnlyStr, ascii_rules::NutAsciiText};
+use crate::internal::ascii_rules::NutAsciiText;
 use core::borrow::Borrow;
 
 /// INST command name.
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Hash)]
 pub struct CmdName {
-  name: ReadOnlyStr,
+  name: Box<str>,
 }
 
 /// Checks if [`&str`] matches to cmdname ABNF grammar.
@@ -53,12 +53,12 @@ impl CmdName {
     T: AsRef<str>,
   {
     Self {
-      name: ReadOnlyStr::from(name.as_ref()),
+      name: Box::from(name.as_ref()),
     }
   }
 
   #[inline]
-  pub fn into_box_str(self) -> Box<str> {
+  pub fn into_boxed_str(self) -> Box<str> {
     self.name
   }
 
@@ -79,6 +79,42 @@ impl TryFrom<&str> for CmdName {
   #[inline]
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     Self::new(value)
+  }
+}
+
+impl TryFrom<Box<str>> for CmdName {
+  type Error = CmdParseError;
+
+  #[inline]
+  fn try_from(value: Box<str>) -> Result<Self, Self::Error> {
+    is_cmd_name(&value)?;
+
+    Ok(Self { name: value })
+  }
+}
+
+impl TryFrom<std::borrow::Cow<'_, str>> for CmdName {
+  type Error = CmdParseError;
+
+  #[inline]
+  fn try_from(value: std::borrow::Cow<'_, str>) -> Result<Self, Self::Error> {
+    match value {
+      std::borrow::Cow::Borrowed(v) => Self::try_from(v),
+      std::borrow::Cow::Owned(v) => Self::try_from(v),
+    }
+  }
+}
+
+impl TryFrom<String> for CmdName {
+  type Error = CmdParseError;
+
+  #[inline]
+  fn try_from(value: String) -> Result<Self, Self::Error> {
+    is_cmd_name(&value)?;
+
+    Ok(Self {
+      name: value.into_boxed_str(),
+    })
   }
 }
 
@@ -113,7 +149,7 @@ impl PartialEq<Box<str>> for CmdName {
 impl From<CmdName> for Box<str> {
   #[inline]
   fn from(value: CmdName) -> Self {
-    value.into_box_str()
+    value.into_boxed_str()
   }
 }
 
@@ -131,12 +167,57 @@ impl std::fmt::Display for CmdName {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for CmdName {
-  #[inline]
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: serde::Serializer,
-  {
-    serializer.serialize_str(&self.name)
+mod serde {
+  use super::CmdName;
+  use serde::de::Visitor;
+
+  impl serde::Serialize for CmdName {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: serde::Serializer,
+    {
+      serializer.serialize_str(&self.name)
+    }
+  }
+
+  struct CmdNameVisitor;
+
+  impl<'de> serde::Deserialize<'de> for CmdName {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: serde::Deserializer<'de>,
+    {
+      deserializer.deserialize_string(CmdNameVisitor)
+    }
+  }
+
+  impl<'de> Visitor<'de> for CmdNameVisitor {
+    type Value = CmdName;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+      formatter.write_str("expecting an cmd name string")
+    }
+
+    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      CmdName::new(v).map_err(|err| E::custom(err.to_string()))
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      CmdName::try_from(v).map_err(|err| E::custom(err.to_string()))
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      CmdName::new(v).map_err(|err| E::custom(err.to_string()))
+    }
   }
 }

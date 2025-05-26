@@ -12,9 +12,6 @@ pub enum Repr<S, C> {
   Custom(C),
 }
 
-/// Alias for [`Box<str>`]
-pub type ReadOnlyStr = Box<str>;
-
 pub trait Deserialize: Sized {
   type Error;
 

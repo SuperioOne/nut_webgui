@@ -1,14 +1,14 @@
 use crate::{
   CmdName, UpsName,
   errors::{Error, ErrorKind, ParseError},
-  internal::{Deserialize, ReadOnlyStr, lexer::Lexer, parser_utils::parse_line},
+  internal::{Deserialize, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
 pub struct CmdDesc {
   pub cmd: CmdName,
   pub ups_name: UpsName,
-  pub desc: ReadOnlyStr,
+  pub desc: Box<str>,
 }
 
 impl Deserialize for CmdDesc {

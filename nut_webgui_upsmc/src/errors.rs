@@ -155,7 +155,7 @@ macro_rules! impl_protocol_errors {
     $(#[$enum_docs])*
     #[derive(Debug, Clone, Eq, PartialEq)]
     pub enum ProtocolError {
-      Unknown($crate::internal::ReadOnlyStr),
+      Unknown(Box<str>),
       $(
         $(#[$docs])*
         $variant_name,

@@ -1,13 +1,13 @@
 use crate::{
   UpsName, VarName,
   errors::{Error, ErrorKind, ParseError},
-  internal::{Deserialize, ReadOnlyStr, lexer::Lexer, parser_utils::parse_line},
+  internal::{Deserialize, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
 pub struct UpsVarDesc {
   pub var: VarName,
-  pub desc: ReadOnlyStr,
+  pub desc: Box<str>,
   pub ups_name: UpsName,
 }
 

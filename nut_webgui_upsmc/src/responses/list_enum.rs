@@ -19,7 +19,7 @@ impl Deserialize for EnumList {
     let (ups_name_text, var_name) =
       parse_line!(lexer, "BEGIN" "LIST" "ENUM" {TEXT, name = ups_name} {TEXT, name = var_name})?;
 
-    let name = VarName::new(&var_name).map_err(|err| ErrorKind::ParseError {
+    let name = VarName::try_from(var_name).map_err(|err| ErrorKind::ParseError {
       inner: ParseError::VarName(err),
       position: lexer.get_positon(),
     })?;
@@ -33,14 +33,14 @@ impl Deserialize for EnumList {
     loop {
       match lexer.peek_as_str() {
         Some("ENUM") => {
-          let value = parse_line!(lexer, "ENUM" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = &var_name} {VALUE, name = value})?;
+          let value = parse_line!(lexer, "ENUM" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = name.as_str()} {VALUE, name = value})?;
           values.push(value);
         }
         _ => break,
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "ENUM" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = &var_name})?;
+    _ = parse_line!(lexer, "END" "LIST" "ENUM" {TEXT, cmp_to = &ups_name_text} {TEXT, cmp_to = name.as_str()})?;
 
     if lexer.is_finished() {
       Ok(Self {

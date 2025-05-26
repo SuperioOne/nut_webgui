@@ -181,7 +181,12 @@ pack: $(STATIC_OBJS)
 .PHONY: test
 test:
 	@cd nut_webgui && cargo test
-	@cd nut_webgui_upsmc && cargo test
+	@cd nut_webgui_upsmc && cargo test --all-features
+
+.PHONY: check
+check:
+	@cd nut_webgui && cargo check
+	@cd nut_webgui_upsmc && cargo check --all-features
 
 .PHONY: generate-dockerfiles
 generate-dockerfiles: 
@@ -242,7 +247,3 @@ clean:
 	@if [ -d "$(NODE_MODULES_DIR)" ]; then rm -r "$(NODE_MODULES_DIR)"; fi;
 	@echo "Clean completed"
 
-.PHONY: check
-check:
-	@cd nut_webgui && cargo check
-	@cd nut_webgui_upsmc && cargo check

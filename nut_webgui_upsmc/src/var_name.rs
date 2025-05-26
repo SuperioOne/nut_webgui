@@ -1,4 +1,4 @@
-use super::internal::{ReadOnlyStr, Repr, ascii_rules::NutAsciiText};
+use super::internal::{Repr, ascii_rules::NutAsciiText};
 use crate::errors::VarNameParseError;
 use core::borrow::Borrow;
 
@@ -372,7 +372,7 @@ where
 /// UPS variable name.
 #[derive(Debug, Clone, Eq, Hash)]
 pub struct VarName {
-  name: Repr<StandardName, ReadOnlyStr>,
+  name: Repr<StandardName, Box<str>>,
 }
 
 impl VarName {
@@ -380,9 +380,16 @@ impl VarName {
   where
     T: AsRef<str>,
   {
-    _ = is_var_name(&name)?;
-
-    Ok(Self::new_unchecked(name))
+    if let Ok(name) = StandardName::try_from(name.as_ref()) {
+      Ok(Self {
+        name: Repr::Standard(name),
+      })
+    } else {
+      _ = is_var_name(&name)?;
+      Ok(Self {
+        name: Repr::Custom(Box::from(name.as_ref())),
+      })
+    }
   }
 
   pub fn new_unchecked<T>(name: T) -> Self
@@ -397,7 +404,7 @@ impl VarName {
       }
     } else {
       Self {
-        name: Repr::Custom(ReadOnlyStr::from(name_str)),
+        name: Repr::Custom(Box::from(name_str)),
       }
     }
   }
@@ -450,6 +457,52 @@ impl TryFrom<&str> for VarName {
   #[inline]
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     Self::new(value)
+  }
+}
+
+impl TryFrom<Box<str>> for VarName {
+  type Error = VarNameParseError;
+
+  fn try_from(value: Box<str>) -> Result<Self, Self::Error> {
+    if let Ok(name) = StandardName::try_from(value.as_ref()) {
+      Ok(Self {
+        name: Repr::Standard(name),
+      })
+    } else {
+      _ = is_var_name(&value)?;
+      Ok(Self {
+        name: Repr::Custom(value),
+      })
+    }
+  }
+}
+
+impl TryFrom<std::borrow::Cow<'_, str>> for VarName {
+  type Error = VarNameParseError;
+
+  #[inline]
+  fn try_from(value: std::borrow::Cow<'_, str>) -> Result<Self, Self::Error> {
+    match value {
+      std::borrow::Cow::Borrowed(v) => Self::try_from(v),
+      std::borrow::Cow::Owned(v) => Self::try_from(v),
+    }
+  }
+}
+
+impl TryFrom<String> for VarName {
+  type Error = VarNameParseError;
+
+  fn try_from(value: String) -> Result<Self, Self::Error> {
+    if let Ok(name) = StandardName::try_from(value.as_ref()) {
+      Ok(Self {
+        name: Repr::Standard(name),
+      })
+    } else {
+      _ = is_var_name(&value)?;
+      Ok(Self {
+        name: Repr::Custom(value.into_boxed_str()),
+      })
+    }
   }
 }
 
@@ -522,14 +575,60 @@ impl From<VarName> for Box<str> {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for VarName {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: serde::Serializer,
-  {
-    match &self.name {
-      Repr::Standard(name) => serializer.serialize_str(name.as_str()),
-      Repr::Custom(name) => serializer.serialize_str(&name),
+mod serde {
+  use super::VarName;
+  use crate::internal::Repr;
+  use serde::de::Visitor;
+
+  impl serde::Serialize for VarName {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: serde::Serializer,
+    {
+      match &self.name {
+        Repr::Standard(name) => serializer.serialize_str(name.as_str()),
+        Repr::Custom(name) => serializer.serialize_str(&name),
+      }
+    }
+  }
+
+  struct VarNameVisitor;
+
+  impl<'de> serde::Deserialize<'de> for VarName {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: serde::Deserializer<'de>,
+    {
+      deserializer.deserialize_string(VarNameVisitor)
+    }
+  }
+
+  impl<'de> Visitor<'de> for VarNameVisitor {
+    type Value = VarName;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+      formatter.write_str("expecting a variable name string")
+    }
+
+    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      VarName::new(v).map_err(|err| E::custom(err.to_string()))
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      VarName::try_from(v).map_err(|err| E::custom(err.to_string()))
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      VarName::new(v).map_err(|err| E::custom(err.to_string()))
     }
   }
 }

@@ -1,10 +1,11 @@
-use tokio::io::{AsyncRead, AsyncWrite};
-
+use super::NutClient;
 use crate::{
   CmdName, UpsName, Value, VarName, clients::AsyncNutClient, commands, errors::Error, responses,
 };
-
-use super::NutClient;
+use tokio::{
+  io::{AsyncRead, AsyncWrite},
+  net::{TcpStream, ToSocketAddrs},
+};
 
 pub struct NutAuthClient<T>
 where
@@ -142,6 +143,20 @@ where
 
   pub fn close(self) -> impl Future<Output = Result<(), Error>> {
     self.inner.close()
+  }
+}
+
+impl NutAuthClient<TcpStream> {
+  pub async fn connect<A>(addr: A, username: &str, password: &str) -> Result<Self, Error>
+  where
+    A: ToSocketAddrs,
+  {
+    let client = NutClient::connect(addr)
+      .await?
+      .authenticate(username, password)
+      .await?;
+
+    Ok(client)
   }
 }
 

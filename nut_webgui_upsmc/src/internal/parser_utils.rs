@@ -1,5 +1,5 @@
 use crate::{
-  CmdName, UpsName, Value, VarName,
+  CmdName, InferValueFrom, UpsName, Value, VarName,
   errors::{Error, ErrorKind, ParseError},
   internal::lexer::{Lexer, Token},
 };
@@ -70,7 +70,7 @@ pub fn extract_quoted_text<'a>(lexer: &'a mut Lexer) -> Result<Cow<'a, str>, Err
 
 pub fn extract_value<'a>(lexer: &'a mut Lexer) -> Result<Value, Error> {
   let text = extract_quoted_text(lexer)?;
-  let value = Value::infer_from_str(&text);
+  let value = Value::infer_from(text);
 
   Ok(value)
 }
@@ -80,7 +80,7 @@ pub fn extract_ups_name<'a>(lexer: &'a mut Lexer) -> Result<UpsName, Error> {
     Some(token @ Token::Text { .. }) => {
       let name = lexer.extract_from_token(&token);
 
-      let ups_name = UpsName::try_from(name.as_ref()).map_err(|err| ErrorKind::ParseError {
+      let ups_name = UpsName::new(name.as_ref()).map_err(|err| ErrorKind::ParseError {
         inner: ParseError::UpsName(err),
         position: lexer.get_positon(),
       })?;
@@ -121,7 +121,7 @@ pub fn extract_cmd_name<'a>(lexer: &'a mut Lexer) -> Result<CmdName, Error> {
     Some(token @ Token::Text { .. }) => {
       let name = lexer.extract_from_token(&token);
 
-      let cmd_name = CmdName::try_from(name.as_ref()).map_err(|err| ErrorKind::ParseError {
+      let cmd_name = CmdName::try_from(name).map_err(|err| ErrorKind::ParseError {
         inner: ParseError::CmdName(err),
         position: lexer.get_positon(),
       })?;
@@ -161,7 +161,7 @@ pub fn extract_var_name<'a>(lexer: &'a mut Lexer) -> Result<VarName, Error> {
     Some(token @ Token::Text { .. }) => {
       let name = lexer.extract_from_token(&token);
 
-      let var_name = VarName::try_from(name.as_ref()).map_err(|err| ErrorKind::ParseError {
+      let var_name = VarName::try_from(name).map_err(|err| ErrorKind::ParseError {
         inner: ParseError::VarName(err),
         position: lexer.get_positon(),
       })?;
@@ -378,13 +378,13 @@ macro_rules! parse_line {
     {
       let $name = {
         match $crate::internal::parser_utils::extract_text($lexer) {
-          Ok(std::borrow::Cow::Borrowed(text)) => $crate::internal::ReadOnlyStr::from(text),
+          Ok(std::borrow::Cow::Borrowed(text)) => Box::from(text),
           Ok(std::borrow::Cow::Owned(text)) => text.into_boxed_str(),
           Err(err) => break $label Err(err)
         }
       };
 
-      parse_line!(@internal $lexer, $label, [$($type;$extracted)* $crate::internal::ReadOnlyStr;$name], $($rest)*)
+      parse_line!(@internal $lexer, $label, [$($type;$extracted)* Box<str>;$name], $($rest)*)
     }
   };
 
@@ -392,13 +392,13 @@ macro_rules! parse_line {
     {
       let $name = {
         match $crate::internal::parser_utils::extract_quoted_text($lexer) {
-          Ok(std::borrow::Cow::Borrowed(text)) => $crate::internal::ReadOnlyStr::from(text),
+          Ok(std::borrow::Cow::Borrowed(text)) => Box::from(text),
           Ok(std::borrow::Cow::Owned(text)) => text.into_boxed_str(),
           Err(err) => break $label Err(err)
         }
       };
 
-      parse_line!(@internal $lexer, $label, [$($type;$extracted)* $crate::internal::ReadOnlyStr;$name], $($rest)*)
+      parse_line!(@internal $lexer, $label, [$($type;$extracted)* Box<str>;$name], $($rest)*)
     }
   };
 

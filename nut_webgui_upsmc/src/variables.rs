@@ -1,7 +1,5 @@
+use crate::{value::Value, var_name::VarName};
 use std::collections::HashMap;
-
-use crate::value::Value;
-use crate::var_name::VarName;
 
 /// List of UPS variables.
 ///
@@ -85,19 +83,59 @@ impl<const N: usize> From<[(VarName, Value); N]> for UpsVariables {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for UpsVariables {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: serde::Serializer,
-  {
-    use serde::ser::SerializeMap;
+mod serde {
+  use super::UpsVariables;
+  use serde::de::Visitor;
+  use std::collections::HashMap;
 
-    let mut map_serializer = serializer.serialize_map(Some(self.inner.len()))?;
+  impl serde::Serialize for UpsVariables {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: serde::Serializer,
+    {
+      use serde::ser::SerializeMap;
 
-    for (key, value) in self.inner.iter() {
-      map_serializer.serialize_entry(key, value)?;
+      let mut map_serializer = serializer.serialize_map(Some(self.inner.len()))?;
+
+      for (key, value) in self.inner.iter() {
+        map_serializer.serialize_entry(key, value)?;
+      }
+
+      map_serializer.end()
+    }
+  }
+
+  struct UpsVariablesVisitor;
+
+  impl<'de> serde::Deserialize<'de> for UpsVariables {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: serde::Deserializer<'de>,
+    {
+      deserializer.deserialize_map(UpsVariablesVisitor)
+    }
+  }
+
+  impl<'de> Visitor<'de> for UpsVariablesVisitor {
+    type Value = UpsVariables;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+      formatter.write_str("expecting a ups variable map object")
     }
 
-    map_serializer.end()
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+    where
+      A: serde::de::MapAccess<'de>,
+    {
+      let mut vars = UpsVariables {
+        inner: HashMap::with_capacity(map.size_hint().unwrap_or(0)),
+      };
+
+      while let Some((k, v)) = map.next_entry()? {
+        vars.insert(k, v);
+      }
+
+      Ok(vars)
+    }
   }
 }

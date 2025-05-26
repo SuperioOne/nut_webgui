@@ -1,10 +1,10 @@
-use super::internal::{ReadOnlyStr, ascii_rules::NutAsciiText};
+use super::internal::ascii_rules::NutAsciiText;
 use crate::errors::UpsNameParseError;
 use core::num::NonZeroU16;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Hostname {
-  pub name: ReadOnlyStr,
+  pub name: Box<str>,
   pub port: Option<u16>,
 }
 
@@ -48,9 +48,9 @@ impl Hostname {
 /// UPS name
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct UpsName {
-  pub group: Option<ReadOnlyStr>,
+  pub group: Option<Box<str>>,
   pub hostname: Option<Hostname>,
-  pub name: ReadOnlyStr,
+  pub name: Box<str>,
 }
 
 fn parse(input: &str) -> Result<UpsName, UpsNameParseError> {
@@ -66,18 +66,18 @@ fn parse(input: &str) -> Result<UpsName, UpsNameParseError> {
       let hostname = parse_hostname(hostname)?;
 
       Ok(UpsName {
-        name: ReadOnlyStr::from(ups_name),
+        name: Box::from(ups_name),
         hostname: Some(hostname),
-        group: group_name.map(|v| ReadOnlyStr::from(v)),
+        group: group_name.map(|v| Box::from(v)),
       })
     }
     None => {
       let (group_name, ups_name) = parse_ups_name(input)?;
 
       Ok(UpsName {
-        name: ReadOnlyStr::from(ups_name),
+        name: Box::from(ups_name),
         hostname: None,
-        group: group_name.map(|v| ReadOnlyStr::from(v)),
+        group: group_name.map(|v| Box::from(v)),
       })
     }
   }
@@ -120,12 +120,12 @@ fn parse_hostname(input: &str) -> Result<Hostname, UpsNameParseError> {
         .map_err(|_| UpsNameParseError::InvalidPortNumber)?;
 
       Ok(Hostname {
-        name: ReadOnlyStr::from(hostname),
+        name: Box::from(hostname),
         port: Some(port),
       })
     }
     None => Ok(Hostname {
-      name: ReadOnlyStr::from(input),
+      name: Box::from(input),
       port: None,
     }),
   }
@@ -180,10 +180,8 @@ impl UpsName {
   where
     T: AsRef<str>,
   {
-    let name = ReadOnlyStr::from(name.as_ref());
-
     Self {
-      name: ReadOnlyStr::from(name.as_ref()),
+      name: Box::from(name.as_ref()),
       group: None,
       hostname: None,
     }
@@ -197,7 +195,7 @@ impl UpsName {
       return Err(UpsNameParseError::InvalidGroupName);
     }
 
-    self.group = Some(ReadOnlyStr::from(group.as_ref()));
+    self.group = Some(Box::from(group.as_ref()));
 
     Ok(self)
   }
@@ -206,7 +204,7 @@ impl UpsName {
   where
     T: AsRef<str>,
   {
-    self.group = Some(ReadOnlyStr::from(group.as_ref()));
+    self.group = Some(Box::from(group.as_ref()));
     self
   }
 
@@ -349,12 +347,57 @@ impl std::fmt::Display for UpsName {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for UpsName {
-  #[inline]
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: serde::Serializer,
-  {
-    serializer.serialize_str(&self.name)
+mod serde {
+  use super::UpsName;
+  use serde::de::Visitor;
+
+  impl serde::Serialize for UpsName {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: serde::Serializer,
+    {
+      serializer.serialize_str(&self.to_string())
+    }
+  }
+
+  struct UpsNameVisitor;
+
+  impl<'de> serde::Deserialize<'de> for UpsName {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: serde::Deserializer<'de>,
+    {
+      deserializer.deserialize_str(UpsNameVisitor)
+    }
+  }
+
+  impl<'de> Visitor<'de> for UpsNameVisitor {
+    type Value = UpsName;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+      formatter.write_str("expecting an ups name string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      UpsName::try_from(v).map_err(|err| E::custom(err.to_string()))
+    }
+
+    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      UpsName::try_from(v).map_err(|err| E::custom(err.to_string()))
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      UpsName::try_from(v.as_str()).map_err(|err| E::custom(err.to_string()))
+    }
   }
 }
