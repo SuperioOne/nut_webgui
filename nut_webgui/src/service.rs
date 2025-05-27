@@ -57,12 +57,14 @@ impl BackgroundServiceRunner {
   }
 
   /// Sets up an external cancellation token for all services.
+  #[inline]
   pub fn with_cancellation(mut self, token: CancellationToken) -> Self {
     self.cancellation = Some(token);
     self
   }
 
   /// Sets a maximum timeout duration for waiting on service shutdown.
+  #[inline]
   pub const fn with_max_timeout(mut self, timeout: Duration) -> Self {
     self.wait_timeout = Some(timeout);
     self
@@ -72,6 +74,7 @@ impl BackgroundServiceRunner {
   ///
   /// The service will be started when `start()` is called and will run until
   /// cancelled or shut down via timeout.
+  #[inline]
   pub fn add_service<T>(mut self, service: T) -> Self
   where
     T: BackgroundService + 'static,

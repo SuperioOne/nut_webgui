@@ -1,6 +1,8 @@
 #![cfg(feature = "serde")]
 
-use nut_webgui_upsmc::{CmdName, Hostname, UpsName, Value, VarName, variables::UpsVariables};
+use nut_webgui_upsmc::{
+  CmdName, Hostname, UpsName, Value, VarName, ups_status::UpsStatus, variables::UpsVariables,
+};
 use std::num::NonZeroU16;
 
 #[test]
@@ -69,5 +71,22 @@ fn variables() {
       Some(v) => assert_eq!(v, value),
       None => assert!(false, "missing variable {name}"),
     }
+  }
+}
+
+#[test]
+fn ups_status() {
+  let input = vec![
+    UpsStatus::ONLINE,
+    UpsStatus::ON_BATTERY | UpsStatus::DISCHARGE,
+  ];
+
+  let json_str = serde_json::to_string_pretty(&input).unwrap();
+  let deserialized: Vec<UpsStatus> = serde_json::from_str(json_str.as_str()).unwrap();
+
+  assert_eq!(input.len(), deserialized.len());
+
+  for (r, l) in input.iter().zip(deserialized.iter()) {
+    assert_eq!(r, l);
   }
 }

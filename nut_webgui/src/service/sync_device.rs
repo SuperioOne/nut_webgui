@@ -87,7 +87,7 @@ where
         };
       }
 
-      info!(message = "device sync task stopped");
+      debug!(message = "device sync task stopped");
     })
   }
 }
@@ -111,8 +111,8 @@ where
       Err(err) => {
         let mut write_lock = self.state.write().await;
 
-        if write_lock.state.status != DaemonStatus::Dead {
-          write_lock.state.status = DaemonStatus::Dead;
+        if write_lock.remote_state.status != DaemonStatus::Dead {
+          write_lock.remote_state.status = DaemonStatus::Dead;
 
           error!(message = "ups daemon is disconnected", reason = %err);
 
@@ -121,7 +121,7 @@ where
           });
         }
 
-        write_lock.devices = HashMap::new();
+        write_lock.devices.clear();
 
         Err(err)
       }
@@ -174,13 +174,13 @@ where
     if failure_count >= total_device_count {
       let mut write_lock = self.state.write().await;
 
-      if write_lock.state.status != DaemonStatus::Dead {
+      if write_lock.remote_state.status != DaemonStatus::Dead {
         error!(
           message = "ups daemon is disconnected",
           reason = "received device list but unable to load device details"
         );
 
-        write_lock.state.status = DaemonStatus::Dead;
+        write_lock.remote_state.status = DaemonStatus::Dead;
 
         if let Err(err) = self.event_channel.send(SystemEvent::UpsdStatus {
           status: DaemonStatus::Dead,
@@ -189,8 +189,8 @@ where
         }
       }
 
-      write_lock.devices = HashMap::new();
-      write_lock.state.last_device_sync = Some(Utc::now());
+      write_lock.devices.clear();
+      write_lock.remote_state.last_device_sync = Some(Utc::now());
 
       Err(SyncTaskError::DeviceLoadFailed)
     } else {
@@ -220,14 +220,14 @@ where
         events.push_removed_device(device_name);
       }
 
-      if write_lock.state.status != DaemonStatus::Online {
+      if write_lock.remote_state.status != DaemonStatus::Online {
         info!(message = "ups daemon is online");
 
-        write_lock.state.status = DaemonStatus::Online;
+        write_lock.remote_state.status = DaemonStatus::Online;
         events.set_upsd_status(DaemonStatus::Online);
       }
 
-      write_lock.state.last_device_sync = Some(Utc::now());
+      write_lock.remote_state.last_device_sync = Some(Utc::now());
 
       if let Err(err) = events.send(&self.event_channel) {
         warn!(message = "unable to send events", reason= %err);

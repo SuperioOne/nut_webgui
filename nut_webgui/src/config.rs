@@ -1,6 +1,6 @@
 use crate::uri_path::UriPath;
 use core::net::{IpAddr, Ipv4Addr};
-use std::{net::ToSocketAddrs, num::NonZeroUsize, path::PathBuf};
+use std::{num::NonZeroUsize, path::PathBuf};
 use tracing::Level;
 
 pub mod cfg_args;
@@ -57,9 +57,14 @@ pub struct UpsdConfig {
 }
 
 impl UpsdConfig {
-  /// Returns an owned upsd socket address.
-  pub fn get_socket_addr(&self) -> impl ToSocketAddrs + 'static {
+  pub fn get_socket_addr(&self) -> String {
     format!("{address}:{port}", address = self.addr, port = self.port)
+  }
+}
+
+impl HttpServerConfig {
+  pub fn get_listen_addr(&self) -> String {
+    format!("{ip}:{port}", ip = self.listen, port = self.port)
   }
 }
 

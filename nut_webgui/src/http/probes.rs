@@ -1,28 +1,31 @@
-use super::ServerState;
-use crate::ups_daemon_state::DaemonStatus;
+use crate::state::DaemonStatus;
+
+use super::RouterState;
 use axum::{
+  Json,
   extract::State,
   http::StatusCode,
   response::{IntoResponse, Response},
-  Json,
 };
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct HealthResponse<'a> {
-  upsd_status: DaemonStatus,
-  last_modified: Option<&'a DateTime<Utc>>,
+  last_device_sync: Option<&'a DateTime<Utc>>,
+  upsd_port: u16,
   upsd_server: &'a str,
+  upsd_status: DaemonStatus,
 }
 
-pub async fn get_health(State(state): State<ServerState>) -> Response {
-  let upsd_state = state.upsd_state.read().await;
+pub async fn get_health(State(state): State<RouterState>) -> Response {
+  let upsd_state = state.state.read().await;
 
   let response = Json(HealthResponse {
-    last_modified: upsd_state.last_modified.as_ref(),
-    upsd_server: &state.configs.addr,
-    upsd_status: upsd_state.status,
+    last_device_sync: upsd_state.remote_state.last_device_sync.as_ref(),
+    upsd_server: &state.config.upsd.addr,
+    upsd_port: state.config.upsd.port,
+    upsd_status: upsd_state.remote_state.status,
   });
 
   if response.upsd_status != DaemonStatus::Dead {
@@ -32,10 +35,10 @@ pub async fn get_health(State(state): State<ServerState>) -> Response {
   }
 }
 
-pub async fn get_readiness(State(state): State<ServerState>) -> Response {
-  let upsd_state = state.upsd_state.read().await;
+pub async fn get_readiness(State(state): State<RouterState>) -> Response {
+  let upsd_state = state.state.read().await;
 
-  if upsd_state.status == DaemonStatus::Online {
+  if upsd_state.remote_state.status == DaemonStatus::Online {
     (StatusCode::OK, "READY").into_response()
   } else {
     (StatusCode::SERVICE_UNAVAILABLE, "NOT READY").into_response()

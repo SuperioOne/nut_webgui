@@ -344,6 +344,7 @@ impl_standard_names!(
   (UPS_VOLTAGE_NOMINAL                                ,UpsVoltageNominal                               ,"ups.voltage.nominal");
 );
 
+#[inline]
 fn is_var_name<T>(name: T) -> Result<(), VarNameParseError>
 where
   T: AsRef<str>,
@@ -463,6 +464,7 @@ impl TryFrom<&str> for VarName {
 impl TryFrom<Box<str>> for VarName {
   type Error = VarNameParseError;
 
+  #[inline]
   fn try_from(value: Box<str>) -> Result<Self, Self::Error> {
     if let Ok(name) = StandardName::try_from(value.as_ref()) {
       Ok(Self {
@@ -492,6 +494,7 @@ impl TryFrom<std::borrow::Cow<'_, str>> for VarName {
 impl TryFrom<String> for VarName {
   type Error = VarNameParseError;
 
+  #[inline]
   fn try_from(value: String) -> Result<Self, Self::Error> {
     if let Ok(name) = StandardName::try_from(value.as_ref()) {
       Ok(Self {
@@ -548,6 +551,7 @@ impl PartialEq<VarName> for VarName {
 }
 
 impl Borrow<str> for VarName {
+  #[inline]
   fn borrow(&self) -> &str {
     self.as_str()
   }

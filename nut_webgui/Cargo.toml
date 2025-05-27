@@ -28,7 +28,7 @@ tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal
 tokio-util = { version = "0.7"}
 toml = { version = "0.8", default-features = false, features = ["parse"]}
 tower = { version = "0.5" }
-tower-http = { version = "0.6", features = ["compression-br", "compression-deflate", "compression-gzip", "cors", "fs", "normalize-path", "timeout", "tower", "trace", "set-header"] }
+tower-http = { version = "0.6", features = ["compression-br", "compression-deflate", "compression-gzip", "cors", "fs", "normalize-path", "set-header", "timeout", "tower", "trace", "limit", "validate-request"] }
 futures = { version = "0.3" }
 tracing = "0.1"
 tracing-subscriber = "0.3"

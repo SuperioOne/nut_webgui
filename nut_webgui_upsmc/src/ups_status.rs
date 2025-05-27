@@ -216,3 +216,59 @@ impl IntoIterator for UpsStatus {
     Self::IntoIter { state: self }
   }
 }
+
+#[cfg(feature = "serde")]
+mod serde {
+  use super::UpsStatus;
+  use serde::de::Visitor;
+
+  impl serde::Serialize for UpsStatus {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: serde::Serializer,
+    {
+      serializer.serialize_str(&self.to_string())
+    }
+  }
+
+  struct UpsStatusVisitor;
+
+  impl<'de> serde::Deserialize<'de> for UpsStatus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+      D: serde::Deserializer<'de>,
+    {
+      deserializer.deserialize_str(UpsStatusVisitor)
+    }
+  }
+
+  impl<'de> Visitor<'de> for UpsStatusVisitor {
+    type Value = UpsStatus;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+      formatter.write_str("expecting an ups status string")
+    }
+
+    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      Ok(UpsStatus::new(v))
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      Ok(UpsStatus::new(v))
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+      E: serde::de::Error,
+    {
+      Ok(UpsStatus::new(v))
+    }
+  }
+}

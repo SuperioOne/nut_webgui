@@ -39,6 +39,7 @@ impl Hostname {
     }
   }
 
+  #[inline]
   pub fn set_port(mut self, port: NonZeroU16) -> Self {
     self.port = Some(port.get());
     self
@@ -187,6 +188,7 @@ impl UpsName {
     }
   }
 
+  #[inline]
   pub fn set_group<T>(mut self, group: T) -> Result<Self, UpsNameParseError>
   where
     T: AsRef<str>,
@@ -200,6 +202,7 @@ impl UpsName {
     Ok(self)
   }
 
+  #[inline]
   pub fn set_group_unchecked<T>(mut self, group: T) -> Self
   where
     T: AsRef<str>,
@@ -208,6 +211,7 @@ impl UpsName {
     self
   }
 
+  #[inline]
   pub fn set_hostname(mut self, hostname: Hostname) -> Self {
     self.hostname = Some(hostname);
     self

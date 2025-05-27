@@ -1,124 +1,208 @@
-use super::common::ProblemDetailsResponse;
-use crate::{
-  http_server::{ServerConfig, ServerState},
-  ups_daemon_state::UpsEntry,
-};
+use super::{RouterState, problem_detail::ProblemDetail};
+use crate::{config::UpsdConfig, state::DeviceEntry};
 use axum::{
   Json,
-  extract::{OriginalUri, Path, State},
+  body::Body,
+  extract::{
+    Path, State,
+    rejection::{JsonRejection, PathRejection},
+  },
   http::StatusCode,
   response::{IntoResponse, Response},
 };
-use nut_webgui_upsmc::{UpsAuthClient, errors::NutClientErrors, ups_variables::UpsVariable};
-use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
-use std::{collections::BTreeMap, ops::Deref};
-use tracing::info;
+use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName, clients::NutAuthClient};
+use serde::Deserialize;
+use tracing::{info, warn};
 
-impl Serialize for UpsEntry {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let mut obj = serializer.serialize_struct("UpsEntry", 4)?;
-    let mut vars: BTreeMap<&str, &UpsVariable> = BTreeMap::new();
-
-    for variable in self.variables.iter() {
-      vars.insert(variable.name(), variable);
+macro_rules! require_auth_config {
+  ($config:expr) => {
+    match $config {
+      upsd @ UpsdConfig {
+        pass: Some(pass),
+        user: Some(user),
+        ..
+      } => Ok((upsd.get_socket_addr(), user.as_ref(), pass.as_ref())),
+      _ => Err(
+        ProblemDetail::new("Insufficient upsd configuration", StatusCode::UNAUTHORIZED)
+          .with_detail("Operation requires valid username and password to be configured.".into()),
+      ),
     }
-
-    obj.serialize_field("name", &self.name)?;
-    obj.serialize_field("desc", &self.desc)?;
-    obj.serialize_field("vars", &vars)?;
-    obj.serialize_field("cmds", &self.commands)?;
-
-    obj.end()
-  }
+  };
 }
 
 #[derive(Debug, Deserialize)]
-pub struct CommandBody {
-  cmd: String,
+pub struct CommandRequest {
+  instcmd: CmdName,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RwRequest {
+  variable: VarName,
+  value: Value,
 }
 
 pub async fn get_ups_by_name(
-  State(state): State<ServerState>,
-  uri: OriginalUri,
-  Path(ups_name): Path<String>,
-) -> Response {
-  let upsd_state = state.upsd_state.read().await;
+  State(rs): State<RouterState>,
+  ups_name: Result<Path<UpsName>, PathRejection>,
+) -> Result<Response, ProblemDetail> {
+  let Path(ups_name) = ups_name?;
+  let server_state = rs.state.read().await;
 
-  if let Some(ups) = upsd_state.get_ups(&ups_name) {
-    Json(ups).into_response()
+  if let Some(ups) = server_state.devices.get(&ups_name) {
+    Ok(Json(ups).into_response())
   } else {
-    ProblemDetailsResponse {
-      status: StatusCode::NOT_FOUND,
-      instance: Some(uri.to_string()),
-      title: "UPS not found",
-      detail: None,
-    }
-    .into_response()
+    Err(ProblemDetail::new(
+      "Device not found",
+      StatusCode::NOT_FOUND,
+    ))
   }
 }
 
-pub async fn get_ups_list(State(state): State<ServerState>) -> Response {
-  let upsd_state = state.upsd_state.read().await;
-  let mut ups_list: Vec<&UpsEntry> = upsd_state.iter().map(|(_, entry)| entry).collect();
-  ups_list.sort_unstable_by_key(|v| &v.name);
+pub async fn get_ups_list(State(rs): State<RouterState>) -> Response {
+  let server_state = rs.state.read().await;
 
-  Json(ups_list).into_response()
+  let mut device_refs: Vec<&DeviceEntry> = server_state.devices.values().collect();
+  device_refs.sort_by(|r, l| r.name.cmp(&l.name));
+
+  Json(device_refs).into_response()
 }
 
 pub async fn post_command(
-  State(state): State<ServerState>,
-  uri: OriginalUri,
-  Path(ups_name): Path<String>,
-  Json(body): Json<CommandBody>,
-) -> Response {
-  let upsd_state = state.upsd_state.read().await;
+  State(rs): State<RouterState>,
+  ups_name: Result<Path<UpsName>, PathRejection>,
+  body: Result<Json<CommandRequest>, JsonRejection>,
+) -> Result<StatusCode, ProblemDetail> {
+  let Path(ups_name) = ups_name?;
+  let Json(body) = body?;
+  let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
 
-  match upsd_state.get_ups(&ups_name) {
-    Some(_) => match state.configs.deref() {
-      ServerConfig {
-        addr,
-        pass: Some(password),
-        user: Some(username),
-        ..
-      } => {
-        let command_result: Result<(), NutClientErrors> = async {
-          let mut client = UpsAuthClient::create(addr, username, password).await?;
-          client.send_instcmd(&ups_name, &body.cmd).await?;
+  _ = {
+    let server_state = rs.state.read().await;
+
+    match server_state.devices.get(&ups_name) {
+      Some(device) => {
+        if device.commands.contains(&body.instcmd) {
           Ok(())
-        }
-        .await;
-
-        info!("INSTCMD '{0}' called for UPS '{1}'", &body.cmd, ups_name);
-
-        match command_result {
-          Ok(()) => StatusCode::ACCEPTED.into_response(),
-          Err(err) => {
-            let mut problem = ProblemDetailsResponse::from(err);
-            problem.instance = Some(uri.to_string());
-
-            problem.into_response()
-          }
+        } else {
+          Err(
+            ProblemDetail::new("Invalid INSTCMD", StatusCode::BAD_REQUEST).with_detail(format!(
+              "'{cmd_name}' is not listed as supported command on device details.",
+              cmd_name = &body.instcmd
+            )),
+          )
         }
       }
-      _ => ProblemDetailsResponse {
-        status: StatusCode::UNAUTHORIZED,
-        instance: Some(uri.to_string()),
-        title: "Insufficient Upsd configuration",
-        detail: Some(String::from(
-          "CMD command requires valid username and password to be configured.",
-        )),
-      }
-      .into_response(),
-    },
-    None => ProblemDetailsResponse {
-      status: StatusCode::NOT_FOUND,
-      instance: Some(uri.to_string()),
-      title: "UPS not found",
-      detail: None,
+      None => Err(ProblemDetail::new(
+        "Device not found",
+        StatusCode::NOT_FOUND,
+      )),
     }
-    .into_response(),
-  }
+  }?;
+
+  let mut client = NutAuthClient::connect(addr, user, password).await?;
+
+  _ = {
+    let response = client.instcmd(&ups_name, &body.instcmd).await;
+    _ = client.close().await;
+
+    response
+  }?;
+
+  info!(
+    message = "instcmd called",
+    device = %ups_name,
+    instcmd = %&body.instcmd
+  );
+
+  Ok(StatusCode::ACCEPTED)
+}
+
+pub async fn post_fsd(
+  State(rs): State<RouterState>,
+  ups_name: Result<Path<UpsName>, PathRejection>,
+) -> Result<StatusCode, ProblemDetail> {
+  let Path(ups_name) = ups_name?;
+  let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
+
+  _ = {
+    let server_state = rs.state.read().await;
+    if server_state.devices.contains_key(&ups_name) {
+      Ok(())
+    } else {
+      Err(ProblemDetail::new(
+        "Device not found",
+        StatusCode::NOT_FOUND,
+      ))
+    }
+  }?;
+
+  let mut client = NutAuthClient::connect(addr, user, password).await?;
+
+  _ = {
+    let response = client.fsd(&ups_name).await;
+    _ = client.close().await;
+
+    response
+  }?;
+
+  warn!(
+    message = "force shutdown (fsd) called",
+    device = %ups_name,
+  );
+
+  Ok(StatusCode::ACCEPTED)
+}
+
+pub async fn patch_var(
+  State(rs): State<RouterState>,
+  ups_name: Result<Path<UpsName>, PathRejection>,
+  body: Result<Json<RwRequest>, JsonRejection>,
+) -> Result<StatusCode, ProblemDetail> {
+  let Path(ups_name) = ups_name?;
+  let Json(body) = body?;
+  let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
+
+  _ = {
+    let server_state = rs.state.read().await;
+
+    // TODO: current implementations does not check if value type is correct
+    match server_state.devices.get(&ups_name) {
+      Some(device) => {
+        if device.rw_variables.contains(&body.variable) {
+          Ok(())
+        } else {
+          Err(
+            ProblemDetail::new("Invalid RW variable", StatusCode::BAD_REQUEST).with_detail(
+              format!(
+                "'{var_name}' isn't listed as writeable on device details.",
+                var_name = &body.variable
+              ),
+            ),
+          )
+        }
+      }
+      None => Err(ProblemDetail::new(
+        "Device not found",
+        StatusCode::NOT_FOUND,
+      )),
+    }
+  }?;
+
+  let mut client = NutAuthClient::connect(addr, user, password).await?;
+
+  _ = {
+    let response = client.set_var(&ups_name, &body.variable, &body.value).await;
+    _ = client.close().await;
+
+    response
+  }?;
+
+  info!(
+    message = "set var called",
+    device = %ups_name,
+    variable = %body.variable,
+    value = %body.value,
+  );
+
+  Ok(StatusCode::ACCEPTED)
 }

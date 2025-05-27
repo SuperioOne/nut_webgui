@@ -17,7 +17,7 @@ use tokio::{
   time::{Instant, Interval, MissedTickBehavior, interval},
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info, warn};
+use tracing::{debug, warn};
 
 pub struct StatusSyncService<A>
 where
@@ -109,7 +109,7 @@ where
         }
       }
 
-      info!(message = "device status sync stopped");
+      debug!(message = "device status sync stopped");
     })
   }
 }

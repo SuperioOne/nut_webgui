@@ -1,60 +1,61 @@
-use crate::ups_daemon_state::UpsDaemonState;
-use axum::{
-  Router, ServiceExt,
-  http::{HeaderValue, StatusCode, header::CACHE_CONTROL},
-  routing::{get, post},
-};
-use std::{net::SocketAddr, sync::Arc, time::Duration};
-use tokio::{spawn, sync::RwLock, task::JoinHandle};
-use tower::{Layer, ServiceBuilder};
-use tower_http::{
-  compression::CompressionLayer, cors::CorsLayer, normalize_path::NormalizePathLayer,
-  services::ServeDir, set_header::SetResponseHeaderLayer, timeout::TimeoutLayer, trace::TraceLayer,
-};
-
-use self::middlewares::DaemonStateLayer;
-
-mod common;
-mod hypermedia;
+// mod hypermedia;
 mod json;
 mod middlewares;
 mod probes;
+mod problem_detail;
 
-pub struct HttpServerConfig {
-  pub listen: SocketAddr,
-  pub upsd_state: Arc<RwLock<UpsDaemonState>>,
-  pub config: ServerConfig,
-  pub static_dir: String,
+use crate::{config::ServerConfig, state::ServerState};
+use axum::{
+  Router, ServiceExt,
+  http::{HeaderValue, StatusCode, header::CACHE_CONTROL},
+  routing::{get, patch, post},
+};
+use middlewares::{
+  daemon_status::DaemonStateLayer, validate_content_length::ValidateEmptyContentLength,
+};
+use problem_detail::ProblemDetail;
+use std::{sync::Arc, time::Duration};
+use tokio::{net::TcpListener, sync::RwLock};
+use tower::{Layer, ServiceBuilder};
+use tower_http::{
+  compression::CompressionLayer, cors::CorsLayer, limit::RequestBodyLimitLayer,
+  normalize_path::NormalizePathLayer, services::ServeDir, set_header::SetResponseHeaderLayer,
+  timeout::TimeoutLayer, trace::TraceLayer, validate_request::ValidateRequestHeaderLayer,
+};
+
+#[derive(Clone, Debug)]
+struct RouterState {
+  config: Arc<ServerConfig>,
+  state: Arc<RwLock<ServerState>>,
 }
 
-pub(crate) struct ServerConfig {
-  pub pass: Option<String>,
-  pub user: Option<String>,
-  pub addr: String,
-  pub poll_freq: Duration,
-  pub poll_interval: Duration,
-  pub base_path: String,
+pub struct HttpServer {
+  config: ServerConfig,
+  server_state: Arc<RwLock<ServerState>>,
 }
 
-#[derive(Clone)]
-pub(crate) struct ServerState {
-  pub upsd_state: Arc<RwLock<UpsDaemonState>>,
-  pub configs: Arc<ServerConfig>,
-}
-
-pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
-  spawn(async move {
-    let HttpServerConfig {
-      upsd_state,
-      listen,
+impl HttpServer {
+  pub fn new(config: ServerConfig, server_state: Arc<RwLock<ServerState>>) -> Self {
+    Self {
       config,
-      static_dir,
-    } = config;
+      server_state,
+    }
+  }
+
+  pub async fn serve<F>(self, listener: TcpListener, close_signal: F) -> Result<(), std::io::Error>
+  where
+    F: Future<Output = ()> + Send + 'static,
+  {
+    let Self {
+      server_state,
+      config,
+    } = self;
 
     let middleware = ServiceBuilder::new()
       .layer(CompressionLayer::new().br(true).gzip(true).deflate(true))
+      .layer(RequestBodyLimitLayer::new(65556)) // 64 MiB request payload limit
       .layer(TraceLayer::new_for_http())
-      .layer(TimeoutLayer::new(Duration::from_secs(10)))
+      .layer(TimeoutLayer::new(Duration::from_secs(30)))
       .layer(SetResponseHeaderLayer::if_not_present(
         CACHE_CONTROL,
         HeaderValue::from_static("no-cache, max-age=0"),
@@ -67,48 +68,60 @@ pub fn start_http_server(config: HttpServerConfig) -> JoinHandle<()> {
       .layer(CorsLayer::permissive());
 
     let data_api = Router::new()
-      .route("/ups/:ups_name", get(json::get_ups_by_name))
       .route("/ups", get(json::get_ups_list))
-      .route("/ups/:ups_name/command", post(json::post_command))
-      .fallback(|| async { StatusCode::NOT_FOUND })
-      .layer(DaemonStateLayer::new(upsd_state.clone()))
+      .route("/ups/{ups_name}", get(json::get_ups_by_name))
+      .route("/ups/{ups_name}", patch(json::patch_var))
+      .route("/ups/{ups_name}/instcmd", post(json::post_command))
+      .route(
+        "/ups/{ups_name}/fsd",
+        post(json::post_fsd).layer(ValidateRequestHeaderLayer::custom(
+          ValidateEmptyContentLength,
+        )),
+      )
+      .fallback(|| async { ProblemDetail::new("Target resource not found", StatusCode::NOT_FOUND) })
+      .layer(DaemonStateLayer::new(server_state.clone()))
+      .layer(ValidateRequestHeaderLayer::accept("application/json"))
       .layer(CorsLayer::permissive());
 
-    let hypermedia_api = Router::new()
-      .route("/ups/:ups_name", get(hypermedia::routes::ups::get))
-      .route(
-        "/ups/:ups_name/command",
-        post(hypermedia::routes::ups::post_command),
-      )
-      .route("/", get(hypermedia::routes::home::get))
-      .route("/not-found", get(hypermedia::routes::not_found::get))
-      .fallback(hypermedia::routes::not_found::get);
+    // let hypermedia_api = Router::new()
+    //   .route("/ups/{ups_name}", get(hypermedia::routes::ups::get))
+    //   .route(
+    //     "/ups/{ups_name}/command",
+    //     post(hypermedia::routes::ups::post_command),
+    //   )
+    //   .route("/", get(hypermedia::routes::home::get))
+    //   .route("/not-found", get(hypermedia::routes::not_found::get))
+    //   .fallback(hypermedia::routes::not_found::get);
 
-    let base_path = config.base_path.clone();
-    let state = ServerState {
-      upsd_state,
-      configs: Arc::new(config),
+    let shared_config = Arc::new(config);
+    let router_state = RouterState {
+      config: shared_config.clone(),
+      state: server_state,
     };
 
     let router = Router::new()
-      .nest_service("/static", ServeDir::new(static_dir))
+      .nest_service(
+        "/static",
+        ServeDir::new(&shared_config.http_server.static_dir),
+      )
       .nest("/api", data_api)
       .nest("/probes", probes)
-      .merge(hypermedia_api)
+      // .merge(hypermedia_api)
       .layer(middleware)
-      .with_state(state);
+      .with_state(router_state);
 
-    let router = if base_path.is_empty() {
+    let router = if shared_config.http_server.base_path.is_empty() {
       router.into_service()
     } else {
-      Router::new().nest(&base_path, router).into_service()
+      Router::new()
+        .nest(shared_config.http_server.base_path.as_str(), router)
+        .into_service()
     };
 
     let app = NormalizePathLayer::trim_trailing_slash().layer(router);
-    let listener = tokio::net::TcpListener::bind(listen).await.unwrap();
 
     axum::serve(listener, app.into_make_service())
+      .with_graceful_shutdown(close_signal)
       .await
-      .unwrap();
-  })
+  }
 }

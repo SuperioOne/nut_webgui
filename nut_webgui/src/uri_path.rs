@@ -114,6 +114,11 @@ impl UriPath {
   pub fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
+
+  #[inline]
+  pub fn as_str(&self) -> &str {
+    self.inner.as_str()
+  }
 }
 
 impl Default for UriPath {

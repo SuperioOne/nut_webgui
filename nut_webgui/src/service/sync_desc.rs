@@ -15,7 +15,7 @@ use tokio::{
   task::JoinSet,
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info, warn};
+use tracing::{debug, warn};
 
 pub struct DescriptionSyncService<A>
 where
@@ -78,7 +78,7 @@ where
         }
       }
 
-      info!(message = "description sync task stopped");
+      debug!(message = "description sync task stopped");
     })
   }
 }
@@ -175,7 +175,7 @@ where
 
     for cmd_desc in cmds {
       if let Ok(CmdDesc { desc, cmd, .. }) = cmd_desc {
-        results.push((cmd.into_box_str(), desc));
+        results.push((cmd.into_boxed_str(), desc));
       }
     }
 

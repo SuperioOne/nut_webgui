@@ -10,13 +10,13 @@ pub struct ServerState {
   pub devices: HashMap<UpsName, DeviceEntry>,
 
   /// NUT daemon sync/connection state
-  pub state: DaemonState,
+  pub remote_state: DaemonState,
 
   /// Shared description table for ups variables
   pub shared_desc: HashMap<DescriptionKey, Box<str>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DeviceEntry {
   pub attached: Vec<IpAddr>,
   pub commands: Vec<CmdName>,

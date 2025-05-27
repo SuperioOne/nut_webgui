@@ -18,6 +18,8 @@ UPSD_USER=$(cat <<EOF
 [admin]
         password = test
         instcmds = all
+        actions = set
+        actions = fsd
         upsmon primary
 EOF
 );
