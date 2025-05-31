@@ -1,167 +1,27 @@
-use super::internal::ascii_rules::NutAsciiText;
-use crate::errors::UpsNameParseError;
-use core::num::NonZeroU16;
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct Hostname {
-  pub name: Box<str>,
-  pub port: Option<u16>,
-}
-
-impl std::fmt::Display for Hostname {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Hostname {
-        name,
-        port: Some(port),
-      } => write!(f, "{name}:{port}"),
-      Hostname { name, .. } => f.write_str(name),
-    }
-  }
-}
-
-impl TryFrom<&str> for Hostname {
-  type Error = UpsNameParseError;
-
-  fn try_from(value: &str) -> Result<Self, Self::Error> {
-    parse_hostname(value)
-  }
-}
-
-impl Hostname {
-  pub fn new<T>(hostname: T) -> Self
-  where
-    T: AsRef<str>,
-  {
-    Self {
-      port: None,
-      name: hostname.as_ref().into(),
-    }
-  }
-
-  #[inline]
-  pub fn set_port(mut self, port: NonZeroU16) -> Self {
-    self.port = Some(port.get());
-    self
-  }
-}
+use crate::{errors::UpsNameParseError, internal::escape::escape_nut_str};
 
 /// UPS name
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct UpsName {
-  pub group: Option<Box<str>>,
-  pub hostname: Option<Hostname>,
-  pub name: Box<str>,
+  name: Box<str>,
 }
 
-fn parse(input: &str) -> Result<UpsName, UpsNameParseError> {
-  if input.is_empty() {
-    return Err(UpsNameParseError::Empty);
-  }
-
-  match input.split_once('@') {
-    Some((_, "")) => Err(UpsNameParseError::ExpectedHostname),
-    Some(("", _)) => Err(UpsNameParseError::ExpectedUpsName),
-    Some((name, hostname)) => {
-      let (group_name, ups_name) = parse_ups_name(name)?;
-      let hostname = parse_hostname(hostname)?;
-
-      Ok(UpsName {
-        name: Box::from(ups_name),
-        hostname: Some(hostname),
-        group: group_name.map(|v| Box::from(v)),
-      })
-    }
-    None => {
-      let (group_name, ups_name) = parse_ups_name(input)?;
-
-      Ok(UpsName {
-        name: Box::from(ups_name),
-        hostname: None,
-        group: group_name.map(|v| Box::from(v)),
-      })
-    }
-  }
-}
-
-#[inline]
-fn parse_ups_name(input: &str) -> Result<(Option<&str>, &str), UpsNameParseError> {
-  match input.split_once(':') {
-    Some((_, "")) => Err(UpsNameParseError::ExpectedUpsName),
-    Some(("", _)) => Err(UpsNameParseError::ExpectedGroupName),
-    Some((group, ups)) => {
-      if !is_ups_name(ups) {
-        return Err(UpsNameParseError::InvalidUpsName);
-      }
-
-      if !is_ups_name(group) {
-        return Err(UpsNameParseError::InvalidGroupName);
-      }
-
-      Ok((Some(group), ups))
-    }
-    None => {
-      if is_ups_name(input) {
-        Ok((None, input))
-      } else {
-        Err(UpsNameParseError::InvalidUpsName)
-      }
-    }
-  }
-}
-
-#[inline]
-fn parse_hostname(input: &str) -> Result<Hostname, UpsNameParseError> {
-  match input.split_once(':') {
-    Some((_, "")) => Err(UpsNameParseError::ExpectedPortNumber),
-    Some(("", _)) => Err(UpsNameParseError::ExpectedHostname),
-    Some((hostname, port)) => {
-      let port: u16 = port
-        .parse()
-        .map_err(|_| UpsNameParseError::InvalidPortNumber)?;
-
-      Ok(Hostname {
-        name: Box::from(hostname),
-        port: Some(port),
-      })
-    }
-    None => Ok(Hostname {
-      name: Box::from(input),
-      port: None,
-    }),
-  }
-}
-
-/// Checks if [`&str`] matches to ups/group/hostname ABNF grammar.
-///
-/// ```abnf
-/// upschar  = DIGIT / ALPHA / 1"_" / 1"-" / 1"."
-/// ups      = 1*ALPHA *62upschar
-/// group    = ups
-/// hostname = ups
-/// ```
-fn is_ups_name<T>(name: T) -> bool
+fn is_ups_name<T>(name: T) -> Result<(), UpsNameParseError>
 where
   T: AsRef<str>,
 {
   let name = name.as_ref().as_bytes();
 
   if name.is_empty() {
-    false
+    Err(UpsNameParseError::Empty)
   } else {
-    if let Some(first) = name.get(0) {
-      if !first.is_ascii_alphabetic() {
-        return false;
-      }
-    }
-
     for byte in name.iter() {
-      if !byte.is_ascii_nut_ups() {
-        return false;
+      if byte.is_ascii_whitespace() {
+        return Err(UpsNameParseError::InvalidName);
       }
     }
 
-    true
+    Ok(())
   }
 }
 
@@ -170,11 +30,11 @@ impl UpsName {
   where
     T: AsRef<str>,
   {
-    if !is_ups_name(&name) {
-      return Err(UpsNameParseError::InvalidUpsName);
-    }
+    _ = is_ups_name(name.as_ref())?;
 
-    Ok(Self::new_unchecked(name))
+    Ok(Self {
+      name: Box::from(name.as_ref()),
+    })
   }
 
   pub fn new_unchecked<T>(name: T) -> Self
@@ -183,38 +43,22 @@ impl UpsName {
   {
     Self {
       name: Box::from(name.as_ref()),
-      group: None,
-      hostname: None,
     }
   }
 
   #[inline]
-  pub fn set_group<T>(mut self, group: T) -> Result<Self, UpsNameParseError>
-  where
-    T: AsRef<str>,
-  {
-    if !is_ups_name(&group) {
-      return Err(UpsNameParseError::InvalidGroupName);
-    }
-
-    self.group = Some(Box::from(group.as_ref()));
-
-    Ok(self)
+  pub fn as_str(&self) -> &str {
+    &self.name
   }
 
   #[inline]
-  pub fn set_group_unchecked<T>(mut self, group: T) -> Self
-  where
-    T: AsRef<str>,
-  {
-    self.group = Some(Box::from(group.as_ref()));
-    self
+  pub fn into_boxed_str(self) -> Box<str> {
+    self.name
   }
 
   #[inline]
-  pub fn set_hostname(mut self, hostname: Hostname) -> Self {
-    self.hostname = Some(hostname);
-    self
+  pub fn as_escaped_str(&self) -> std::borrow::Cow<'_, str> {
+    escape_nut_str(&self.name)
   }
 }
 
@@ -223,130 +67,98 @@ impl TryFrom<&str> for UpsName {
 
   #[inline]
   fn try_from(value: &str) -> Result<Self, Self::Error> {
-    parse(value)
+    Self::new(value)
   }
 }
 
-#[inline]
-fn cmp_slice_and_move<'a, 'b>(input: &'a str, target: &'b str) -> Option<&'b str> {
-  if input.len() < target.len() {
-    let cmp_window = &target[..input.len()];
+impl TryFrom<Box<str>> for UpsName {
+  type Error = UpsNameParseError;
 
-    if cmp_window == input {
-      Some(&target[input.len()..])
-    } else {
-      None
-    }
-  } else if input == target {
-    Some(target)
-  } else {
-    None
+  #[inline]
+  fn try_from(value: Box<str>) -> Result<Self, Self::Error> {
+    is_ups_name(value.as_ref())?;
+
+    Ok(Self { name: value })
   }
 }
 
-impl PartialEq<str> for Hostname {
-  fn eq(&self, other: &str) -> bool {
-    let mut rhs_slice: &str = other;
+impl TryFrom<String> for UpsName {
+  type Error = UpsNameParseError;
 
-    match cmp_slice_and_move(self.name.as_ref(), rhs_slice) {
-      Some(next) => rhs_slice = next,
-      None => return false,
-    };
+  #[inline]
+  fn try_from(value: String) -> Result<Self, Self::Error> {
+    is_ups_name(&value)?;
 
-    if let Some(port) = self.port.as_ref() {
-      match rhs_slice.as_bytes().get(0) {
-        Some(b':') => {
-          rhs_slice = &rhs_slice[1..];
-        }
-        _ => return false,
-      };
-
-      if &port.to_string() != rhs_slice {
-        return false;
-      }
-    }
-
-    true
+    Ok(Self {
+      name: value.into_boxed_str(),
+    })
   }
 }
 
-impl PartialEq<str> for UpsName {
-  fn eq(&self, other: &str) -> bool {
-    let mut rhs_slice: &str = other;
+impl TryFrom<std::borrow::Cow<'_, str>> for UpsName {
+  type Error = UpsNameParseError;
 
-    if let Some(group) = self.group.as_deref() {
-      match cmp_slice_and_move(group, rhs_slice) {
-        Some(next) => rhs_slice = next,
-        None => return false,
-      };
-
-      match rhs_slice.as_bytes().get(0) {
-        Some(b':') => {
-          rhs_slice = &rhs_slice[1..];
-        }
-        _ => return false,
-      };
+  #[inline]
+  fn try_from(value: std::borrow::Cow<'_, str>) -> Result<Self, Self::Error> {
+    match value {
+      std::borrow::Cow::Borrowed(v) => Self::try_from(v),
+      std::borrow::Cow::Owned(v) => Self::try_from(v),
     }
+  }
+}
 
-    match cmp_slice_and_move(self.name.as_ref(), rhs_slice) {
-      Some(next) => rhs_slice = next,
-      None => return false,
-    };
-
-    if let Some(hostname) = self.hostname.as_ref() {
-      match rhs_slice.as_bytes().get(0) {
-        Some(b'@') => {
-          rhs_slice = &rhs_slice[1..];
-        }
-        _ => return false,
-      };
-
-      return hostname == rhs_slice;
-    }
-
-    true
+impl AsRef<str> for UpsName {
+  #[inline]
+  fn as_ref(&self) -> &str {
+    &self.name
   }
 }
 
 impl PartialEq<&str> for UpsName {
   #[inline]
   fn eq(&self, other: &&str) -> bool {
-    Self::eq(&self, *other)
+    self.name.as_ref().eq(*other)
   }
 }
 
-impl PartialEq<&str> for Hostname {
+impl PartialEq<str> for UpsName {
   #[inline]
-  fn eq(&self, other: &&str) -> bool {
-    Self::eq(&self, *other)
+  fn eq(&self, other: &str) -> bool {
+    self.name.as_ref().eq(other)
+  }
+}
+
+impl PartialEq<String> for UpsName {
+  #[inline]
+  fn eq(&self, other: &String) -> bool {
+    self.name.as_ref().eq(other)
+  }
+}
+
+impl PartialEq<Box<str>> for UpsName {
+  #[inline]
+  fn eq(&self, other: &Box<str>) -> bool {
+    self.name.as_ref().eq(other.as_ref())
+  }
+}
+
+impl From<UpsName> for Box<str> {
+  #[inline]
+  fn from(value: UpsName) -> Self {
+    value.name
+  }
+}
+
+impl std::borrow::Borrow<str> for UpsName {
+  fn borrow(&self) -> &str {
+    self.name.as_ref()
   }
 }
 
 impl std::fmt::Display for UpsName {
   #[inline]
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      UpsName {
-        group: Some(group),
-        hostname: Some(hostname),
-        name,
-      } => write!(f, "{group}:{name}@{hostname}"),
-      UpsName {
-        group: None,
-        hostname: None,
-        name,
-      } => f.write_str(name),
-      UpsName {
-        group: None,
-        hostname: Some(hostname),
-        name,
-      } => write!(f, "{name}@{hostname}"),
-      UpsName {
-        group: Some(group),
-        hostname: None,
-        name,
-      } => write!(f, "{group}:{name}"),
-    }
+    f.write_str(self.name.as_ref())
   }
 }
 
@@ -361,7 +173,7 @@ mod serde {
     where
       S: serde::Serializer,
     {
-      serializer.serialize_str(&self.to_string())
+      serializer.serialize_str(self.name.as_ref())
     }
   }
 
@@ -372,7 +184,7 @@ mod serde {
     where
       D: serde::Deserializer<'de>,
     {
-      deserializer.deserialize_str(UpsNameVisitor)
+      deserializer.deserialize_string(UpsNameVisitor)
     }
   }
 
@@ -387,21 +199,21 @@ mod serde {
     where
       E: serde::de::Error,
     {
-      UpsName::try_from(v).map_err(|err| E::custom(err.to_string()))
+      UpsName::try_from(v).map_err(|err| E::custom(err))
     }
 
     fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
     where
       E: serde::de::Error,
     {
-      UpsName::try_from(v).map_err(|err| E::custom(err.to_string()))
+      UpsName::try_from(v).map_err(|err| E::custom(err))
     }
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
     where
       E: serde::de::Error,
     {
-      UpsName::try_from(v.as_str()).map_err(|err| E::custom(err.to_string()))
+      UpsName::try_from(v).map_err(|err| E::custom(err))
     }
   }
 }

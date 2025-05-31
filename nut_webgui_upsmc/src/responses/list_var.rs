@@ -17,17 +17,12 @@ impl Deserialize for UpsVarList {
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
     let mut variables = UpsVariables::new();
-    let ups_name_text = parse_line!(lexer, "BEGIN" "LIST" "VAR" {TEXT, name = ups_name})?;
-    let ups_name =
-      UpsName::try_from(ups_name_text.as_ref()).map_err(|err| ErrorKind::ParseError {
-        inner: ParseError::UpsName(err),
-        position: lexer.get_positon(),
-      })?;
+    let ups_name = parse_line!(lexer, "BEGIN" "LIST" "VAR" {UPS, name = ups_name})?;
 
     loop {
       match lexer.peek_as_str() {
         Some("VAR") => {
-          let (name, value) = parse_line!(lexer, "VAR" {TEXT, cmp_to = &ups_name_text} {VAR, name = var_name} {VALUE, name = value})?;
+          let (name, value) = parse_line!(lexer, "VAR" {TEXT, cmp_to = &ups_name} {VAR, name = var_name} {VALUE, name = value})?;
 
           if let Some(previous) = variables.insert(name, value) {
             warn!(
@@ -40,7 +35,7 @@ impl Deserialize for UpsVarList {
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "VAR" {TEXT, cmp_to = &ups_name_text})?;
+    _ = parse_line!(lexer, "END" "LIST" "VAR" {TEXT, cmp_to = &ups_name})?;
 
     if lexer.is_finished() {
       Ok(Self {

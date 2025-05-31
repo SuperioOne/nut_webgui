@@ -1,9 +1,8 @@
 #![cfg(feature = "serde")]
 
 use nut_webgui_upsmc::{
-  CmdName, Hostname, UpsName, Value, VarName, ups_status::UpsStatus, variables::UpsVariables,
+  CmdName, UpsName, Value, VarName, ups_status::UpsStatus, variables::UpsVariables,
 };
-use std::num::NonZeroU16;
 
 #[test]
 fn cmd_name() {
@@ -28,18 +27,14 @@ fn cmd_name() {
 #[test]
 fn ups_name() {
   let input: Vec<UpsName> = vec![
-    UpsName::new_unchecked("test0").set_hostname(
-      Hostname::new("localhost").set_port(unsafe { NonZeroU16::new_unchecked(9090) }),
-    ),
+    UpsName::new_unchecked("test0@localhost:12345"),
     UpsName::new_unchecked("test1"),
-    UpsName::new_unchecked("test2").set_hostname(Hostname::new("localhost")),
-    UpsName::new_unchecked("backup_sample").set_group_unchecked("sector_e"),
+    UpsName::new_unchecked("test2"),
+    UpsName::new_unchecked("sector_e:backup_sample"),
     UpsName::new_unchecked("lambda_core"),
   ];
 
   let json_str = serde_json::to_string_pretty(&input).unwrap();
-  println!("{json_str}");
-
   let deserialized: Vec<UpsName> = serde_json::from_str(json_str.as_str()).unwrap();
 
   assert_eq!(input.len(), deserialized.len());

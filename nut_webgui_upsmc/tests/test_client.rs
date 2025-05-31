@@ -1,6 +1,5 @@
 use nut_webgui_upsmc::clients::AsyncNutClient;
-use nut_webgui_upsmc::{CmdName, Hostname, UpsName, Value, VarName};
-use std::num::NonZeroU16;
+use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName};
 
 #[tokio::test]
 async fn cmd_desc() {
@@ -448,10 +447,7 @@ async fn instcmd() {
 
 #[tokio::test]
 async fn fsd() {
-  let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi")
-    .set_group_unchecked("home")
-    .set_hostname(Hostname::new("localhost").set_port(unsafe { NonZeroU16::new_unchecked(4242) }));
-
+  let ups = nut_webgui_upsmc::UpsName::new_unchecked("home:bx1600mi@localhost:4242");
   let stream = tokio_test::io::Builder::new()
     .write(b"USERNAME user\n")
     .read(b"OK\n")

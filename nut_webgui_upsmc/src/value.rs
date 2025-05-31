@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use crate::internal::escape::escape_nut_str;
+
 macro_rules! impl_value_from {
   ($type:ty, $enum:ident) => {
     impl From<$type> for Value {
@@ -34,33 +36,28 @@ enum InferredType {
 }
 
 impl Value {
+  #[inline]
+  pub fn is_numeric(&self) -> bool {
+    match self {
+      Value::Float(_) => true,
+      Value::Int(_) => true,
+      _ => false,
+    }
+  }
+
+  #[inline]
+  pub fn is_text(&self) -> bool {
+    match self {
+      Value::String(_) => true,
+      _ => false,
+    }
+  }
+
   pub fn as_escaped_str(&self) -> Cow<'_, str> {
     match self {
       Value::Float(num) => Cow::Owned(format!("{:.2}", num)),
       Value::Int(num) => Cow::Owned(num.to_string()),
-      Value::String(text) => {
-        let mut escaped = String::new();
-        let mut slice_start: usize = 0;
-
-        for (idx, char_byte) in text.as_bytes().iter().enumerate() {
-          if (*char_byte == b'"' || *char_byte == b'\\') && slice_start < idx {
-            escaped.push_str(&text[slice_start..idx]);
-            slice_start = idx + 1;
-          } else {
-            continue;
-          }
-        }
-
-        if escaped.is_empty() {
-          Cow::Borrowed(text)
-        } else {
-          if slice_start < text.len() {
-            escaped.push_str(&text[slice_start..]);
-          }
-
-          Cow::Owned(escaped)
-        }
-      }
+      Value::String(text) => escape_nut_str(text),
     }
   }
 }
@@ -158,7 +155,11 @@ impl InferValueFrom<Cow<'_, str>> for Value {
 
 impl std::fmt::Display for Value {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.write_str(&self.as_escaped_str())
+    match self {
+      Value::Float(v) => f.write_fmt(format_args!("{v}")),
+      Value::Int(v) => f.write_fmt(format_args!("{v}")),
+      Value::String(v) => f.write_str(&v),
+    }
   }
 }
 

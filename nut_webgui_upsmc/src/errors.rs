@@ -45,14 +45,7 @@ pub enum ParseError {
 #[derive(Debug, Clone)]
 pub enum UpsNameParseError {
   Empty,
-  ExpectedGroupName,
-  ExpectedHostname,
-  ExpectedPortNumber,
-  ExpectedUpsName,
-  InvalidGroupName,
-  InvalidHostname,
-  InvalidPortNumber,
-  InvalidUpsName,
+  InvalidName,
 }
 
 #[derive(Debug, Clone)]
@@ -89,14 +82,7 @@ impl std::fmt::Display for UpsNameParseError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
       UpsNameParseError::Empty => f.write_str("empty string received"),
-      UpsNameParseError::ExpectedGroupName => f.write_str("expected group name"),
-      UpsNameParseError::ExpectedHostname => f.write_str("expected hostname"),
-      UpsNameParseError::ExpectedPortNumber => f.write_str("expected port number"),
-      UpsNameParseError::ExpectedUpsName => f.write_str("expected UPS name"),
-      UpsNameParseError::InvalidGroupName => f.write_str("invalid group name"),
-      UpsNameParseError::InvalidHostname => f.write_str("invalid hostname"),
-      UpsNameParseError::InvalidPortNumber => f.write_str("invalid port number"),
-      UpsNameParseError::InvalidUpsName => f.write_str("invalid UPS name"),
+      UpsNameParseError::InvalidName => f.write_str("invalid UPS name"),
     }
   }
 }

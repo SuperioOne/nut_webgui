@@ -99,12 +99,20 @@ impl<'a> Lexer<'a> {
         let text = &buffer_str[*start..*end];
         let mut escaped = String::new();
         let mut slice_start: usize = 0;
+        let mut text_iter = text.as_bytes().iter().enumerate();
 
-        for (idx, character) in text.as_bytes().iter().enumerate() {
+        while let Some((idx, character)) = text_iter.next() {
           if *character == b'\\' {
             if slice_start < idx {
               escaped.push_str(&text[slice_start..idx]);
-              slice_start = idx + 1;
+            }
+
+            match text_iter.next() {
+              Some((idx, c)) => {
+                escaped.push(char::from(*c));
+                slice_start = idx + 1;
+              }
+              None => break,
             }
           }
         }
@@ -372,6 +380,14 @@ VAR TEST END",
 
   tokenizer_test!(escaped, "\"hello \\\"world\\\"\"",  [
     "hello \"world\"";
+  ]);
+
+  tokenizer_test!(escaped_backslash, "\"\\\\some\\\\win\\\\path\"",  [
+    "\\some\\win\\path";
+  ]);
+
+  tokenizer_test!(escaped_unknown, "\"\\some\\win\\path\"",  [
+    "somewinpath";
   ]);
 
   #[test]

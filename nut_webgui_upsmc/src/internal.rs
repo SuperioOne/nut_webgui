@@ -1,6 +1,7 @@
 use self::lexer::Lexer;
 
 pub mod ascii_rules;
+pub mod escape;
 pub mod item_pool;
 pub mod lexer;
 pub mod parser_utils;

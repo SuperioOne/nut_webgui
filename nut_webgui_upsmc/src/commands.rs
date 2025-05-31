@@ -9,7 +9,7 @@ impl Serialize for FsdCommand<'_> {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("FSD {}\n", self.ups)
+    format!("FSD {}\n", self.ups.as_escaped_str())
   }
 }
 
@@ -24,7 +24,7 @@ impl Serialize for GetCmdDesc<'_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "GET CMDDESC {ups_name} {cmd_name}\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       cmd_name = self.cmd
     )
   }
@@ -41,7 +41,7 @@ impl Serialize for GetVarDesc<'_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "GET DESC {ups_name} {var_name}\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       var_name = self.var
     )
   }
@@ -55,7 +55,7 @@ impl Serialize for GetUpsDesc<'_> {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("GET UPSDESC {}\n", self.ups)
+    format!("GET UPSDESC {}\n", self.ups.as_escaped_str())
   }
 }
 
@@ -67,7 +67,7 @@ impl Serialize for GetNumAttach<'_> {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("GET NUMATTACH {}\n", self.ups)
+    format!("GET NUMATTACH {}\n", self.ups.as_escaped_str())
   }
 }
 
@@ -82,7 +82,7 @@ impl Serialize for GetVar<'_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "GET VAR {ups_name} {var_name}\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       var_name = self.var
     )
   }
@@ -99,7 +99,7 @@ impl Serialize for GetType<'_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "GET TYPE {ups_name} {var_name}\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       var_name = self.var
     )
   }
@@ -116,7 +116,7 @@ impl Serialize for InstCmd<'_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "INSTCMD {ups_name} {cmd_name}\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       cmd_name = self.cmd
     )
   }
@@ -130,7 +130,7 @@ impl Serialize for ListClient<'_> {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("LIST CLIENT {}\n", self.ups)
+    format!("LIST CLIENT {}\n", self.ups.as_escaped_str())
   }
 }
 
@@ -142,7 +142,7 @@ impl Serialize for ListCmd<'_> {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("LIST CMD {}\n", self.ups)
+    format!("LIST CMD {}\n", self.ups.as_escaped_str())
   }
 }
 
@@ -154,7 +154,7 @@ impl Serialize for ListVar<'_> {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("LIST VAR {}\n", self.ups)
+    format!("LIST VAR {}\n", self.ups.as_escaped_str())
   }
 }
 
@@ -169,7 +169,7 @@ impl Serialize for ListEnum<'_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "LIST ENUM {ups_name} {var_name}\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       var_name = self.var
     )
   }
@@ -186,7 +186,7 @@ impl Serialize for ListRange<'_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "LIST RANGE {ups_name} {var_name}\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       var_name = self.var
     )
   }
@@ -200,7 +200,7 @@ impl Serialize for ListRw<'_> {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("LIST RW {}\n", self.ups)
+    format!("LIST RW {}\n", self.ups.as_escaped_str())
   }
 }
 
@@ -250,9 +250,9 @@ impl Serialize for SetVariable<'_, '_, '_> {
   fn serialize(self) -> Self::Output {
     format!(
       "SET VAR {ups_name} {var_name} \"{value}\"\n",
-      ups_name = self.ups,
+      ups_name = self.ups.as_escaped_str(),
       var_name = self.var,
-      value = self.value
+      value = self.value.as_escaped_str()
     )
   }
 }

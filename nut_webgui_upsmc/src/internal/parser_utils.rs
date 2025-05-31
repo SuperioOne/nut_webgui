@@ -79,8 +79,7 @@ pub fn extract_ups_name<'a>(lexer: &'a mut Lexer) -> Result<UpsName, Error> {
   match lexer.next_token()? {
     Some(token @ Token::Text { .. }) => {
       let name = lexer.extract_from_token(&token);
-
-      let ups_name = UpsName::new(name.as_ref()).map_err(|err| ErrorKind::ParseError {
+      let ups_name = UpsName::try_from(name).map_err(|err| ErrorKind::ParseError {
         inner: ParseError::UpsName(err),
         position: lexer.get_positon(),
       })?;
@@ -197,18 +196,21 @@ pub fn extract_var_name<'a>(lexer: &'a mut Lexer) -> Result<VarName, Error> {
   }
 }
 
-pub fn cmp_literal<'a>(lexer: &'a mut Lexer, cmp: &str) -> Result<(), Error> {
+pub fn cmp_literal<'a, T>(lexer: &'a mut Lexer, cmp: T) -> Result<(), Error>
+where
+  T: AsRef<str> + std::fmt::Display + 'a,
+{
   match lexer.next_token()? {
     Some(token @ Token::Text { .. }) => {
-      let name = lexer.extract_from_token(&token);
+      let name: Cow<'a, str> = lexer.extract_from_token(&token);
 
-      if name == cmp {
+      if cmp.as_ref().eq(name.as_ref()) {
         Ok(())
       } else {
         trace!(
           message = "literal tokens does not match",
           received = name.as_ref(),
-          expected = cmp
+          expected = %cmp
         );
 
         Err(
