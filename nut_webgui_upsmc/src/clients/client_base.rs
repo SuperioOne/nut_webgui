@@ -145,14 +145,6 @@ impl<S> AsyncNutClient for &mut NutClient<S>
 where
   S: AsyncRead + AsyncWrite + Unpin,
 {
-  fn get_attached(
-    self,
-    ups: &UpsName,
-  ) -> impl Future<Output = Result<responses::AttachedDaemons, Error>> {
-    let command = commands::GetNumAttach { ups };
-    self.send::<responses::AttachedDaemons>(command)
-  }
-
   fn get_cmd_desc(
     self,
     ups: &UpsName,
@@ -186,6 +178,15 @@ where
   ) -> impl Future<Output = Result<responses::UpsVar, Error>> {
     let command = commands::GetVar { ups, var };
     self.send::<responses::UpsVar>(command)
+  }
+
+  fn get_var_type(
+    self,
+    ups: &UpsName,
+    var: &VarName,
+  ) -> impl Future<Output = Result<responses::UpsVarType, Error>> {
+    let command = commands::GetVarType { ups, var };
+    self.send::<responses::UpsVarType>(command)
   }
 
   fn get_var_desc(

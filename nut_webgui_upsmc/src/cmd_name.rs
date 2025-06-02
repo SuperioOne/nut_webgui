@@ -73,11 +73,11 @@ impl CmdName {
   }
 }
 
-impl TryFrom<&str> for CmdName {
-  type Error = CmdParseError;
+impl core::str::FromStr for CmdName {
+  type Err = CmdParseError;
 
   #[inline]
-  fn try_from(value: &str) -> Result<Self, Self::Error> {
+  fn from_str(value: &str) -> Result<Self, Self::Err> {
     Self::new(value)
   }
 }
@@ -99,7 +99,7 @@ impl TryFrom<std::borrow::Cow<'_, str>> for CmdName {
   #[inline]
   fn try_from(value: std::borrow::Cow<'_, str>) -> Result<Self, Self::Error> {
     match value {
-      std::borrow::Cow::Borrowed(v) => Self::try_from(v),
+      std::borrow::Cow::Borrowed(v) => Self::new(v),
       std::borrow::Cow::Owned(v) => Self::try_from(v),
     }
   }

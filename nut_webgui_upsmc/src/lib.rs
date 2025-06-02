@@ -5,6 +5,7 @@ mod commands;
 mod ups_name;
 mod value;
 mod var_name;
+mod var_type;
 
 pub mod clients;
 pub mod errors;
@@ -17,3 +18,4 @@ pub use cmd_name::*;
 pub use ups_name::*;
 pub use value::*;
 pub use var_name::*;
+pub use var_type::*;

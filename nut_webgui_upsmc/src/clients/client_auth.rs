@@ -18,13 +18,6 @@ impl<T> AsyncNutClient for &mut NutAuthClient<T>
 where
   T: AsyncRead + AsyncWrite + Unpin,
 {
-  fn get_attached(
-    self,
-    ups: &UpsName,
-  ) -> impl Future<Output = Result<responses::AttachedDaemons, Error>> {
-    self.inner.get_attached(ups)
-  }
-
   fn get_cmd_desc(
     self,
     ups: &UpsName,
@@ -47,6 +40,14 @@ where
     var: &VarName,
   ) -> impl Future<Output = Result<responses::UpsVar, Error>> {
     self.inner.get_var(ups, var)
+  }
+
+  fn get_var_type(
+    self,
+    ups: &UpsName,
+    var: &VarName,
+  ) -> impl Future<Output = Result<responses::UpsVarType, Error>> {
+    self.inner.get_var_type(ups, var)
   }
 
   fn get_var_desc(
@@ -105,6 +106,26 @@ impl<T> NutAuthClient<T>
 where
   T: AsyncRead + AsyncWrite + Unpin,
 {
+  pub async fn attach(&mut self, ups: &UpsName) -> Result<(), Error> {
+    self
+      .inner
+      .send::<responses::ProtOk>(commands::AttachCommand { ups })
+      .await?;
+
+    Ok(())
+  }
+
+  pub async fn detach(mut self) -> Result<(), Error> {
+    self
+      .inner
+      .send::<responses::ProtOkDetach>(commands::DetachCommand)
+      .await?;
+
+    _ = self.inner.close().await;
+
+    Ok(())
+  }
+
   pub async fn fsd(&mut self, ups: &UpsName) -> Result<(), Error> {
     self
       .inner

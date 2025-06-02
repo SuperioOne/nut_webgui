@@ -40,6 +40,13 @@ pub enum ParseError {
   ExpectedDoubleQuotedTextToken,
   UpsName(UpsNameParseError),
   VarName(VarNameParseError),
+  VarType(VarTypeParseError),
+}
+
+#[derive(Debug, Clone)]
+pub enum VarTypeParseError {
+  Empty,
+  InvalidType,
 }
 
 #[derive(Debug, Clone)]
@@ -87,6 +94,15 @@ impl std::fmt::Display for UpsNameParseError {
   }
 }
 
+impl std::fmt::Display for VarTypeParseError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      VarTypeParseError::Empty => f.write_str("empty string received"),
+      VarTypeParseError::InvalidType => f.write_str("invalid type"),
+    }
+  }
+}
+
 impl std::fmt::Display for Error {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     (&self.inner).fmt(f)
@@ -127,6 +143,7 @@ impl std::fmt::Display for ParseError {
       ParseError::InvalidToken => f.write_str("invalid token"),
       ParseError::UpsName(inner) => inner.fmt(f),
       ParseError::VarName(inner) => inner.fmt(f),
+      ParseError::VarType(inner) => inner.fmt(f),
     }
   }
 }
@@ -255,8 +272,9 @@ impl From<std::io::Error> for Error {
   }
 }
 
-impl std::error::Error for Error {}
-impl std::error::Error for UpsNameParseError {}
 impl std::error::Error for CmdParseError {}
-impl std::error::Error for VarNameParseError {}
+impl std::error::Error for Error {}
 impl std::error::Error for ParseError {}
+impl std::error::Error for UpsNameParseError {}
+impl std::error::Error for VarNameParseError {}
+impl std::error::Error for VarTypeParseError {}

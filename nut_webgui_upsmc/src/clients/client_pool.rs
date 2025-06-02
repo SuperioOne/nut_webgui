@@ -136,10 +136,6 @@ impl<A> AsyncNutClient for &NutPoolClient<A>
 where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
-  async fn get_attached(self, ups: &UpsName) -> Result<responses::AttachedDaemons, Error> {
-    impl_pooled_call!(self.pool, get_attached, ups)
-  }
-
   async fn get_cmd_desc(self, ups: &UpsName, cmd: &CmdName) -> Result<responses::CmdDesc, Error> {
     impl_pooled_call!(self.pool, get_cmd_desc, ups, cmd)
   }
@@ -154,6 +150,14 @@ where
 
   async fn get_var(self, ups: &UpsName, var: &VarName) -> Result<responses::UpsVar, Error> {
     impl_pooled_call!(self.pool, get_var, ups, var)
+  }
+
+  async fn get_var_type(
+    self,
+    ups: &UpsName,
+    var: &VarName,
+  ) -> Result<responses::UpsVarType, Error> {
+    impl_pooled_call!(self.pool, get_var_type, ups, var)
   }
 
   async fn get_var_desc(

@@ -1,5 +1,5 @@
 use nut_webgui_upsmc::clients::AsyncNutClient;
-use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName};
+use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName, VarType};
 
 #[tokio::test]
 async fn cmd_desc() {
@@ -43,9 +43,36 @@ async fn var_desc() {
     .await
     .unwrap();
 
-  assert_eq!(var_desc.var, VarName::UPS_BEEPER_STATUS);
+  assert_eq!(var_desc.name, VarName::UPS_BEEPER_STATUS);
   assert_eq!(var_desc.ups_name, ups);
   assert_eq!(var_desc.desc.as_ref(), "UPS beeper status");
+}
+
+#[tokio::test]
+async fn var_type() {
+  const VAR_TYPE: &[u8] = b"TYPE bx1600mi ups.custom RW ENUM STRING:64 NUMBER RANGE\n";
+  let ups = UpsName::new_unchecked("bx1600mi");
+  let var_name = VarName::new_unchecked("ups.custom");
+
+  let stream = tokio_test::io::Builder::new()
+    .write(format!("GET TYPE {ups} {var}\n", ups = &ups, var = &var_name).as_bytes())
+    .read(VAR_TYPE)
+    .build();
+
+  let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
+  let var_desc = client.get_var_type(&ups, &var_name).await.unwrap();
+
+  assert_eq!(var_desc.name, var_name);
+  assert_eq!(var_desc.ups_name, ups);
+  assert!(var_desc.var_types.contains(&VarType::Enum));
+  assert!(var_desc.var_types.contains(&VarType::ReadWrite));
+  assert!(
+    var_desc
+      .var_types
+      .contains(&VarType::String { max_len: 64 })
+  );
+  assert!(var_desc.var_types.contains(&VarType::Range));
+  assert!(var_desc.var_types.contains(&VarType::Number));
 }
 
 #[tokio::test]
@@ -494,4 +521,27 @@ async fn set_var() {
     .set_var(&ups, &VarName::BATTERY_RUNTIME_LOW, &Value::from(32))
     .await
     .unwrap();
+}
+
+#[tokio::test]
+async fn attach_ups_and_detach() {
+  let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi");
+  let stream = tokio_test::io::Builder::new()
+    .write(b"USERNAME user\n")
+    .read(b"OK\n")
+    .write(b"PASSWORD password\n")
+    .read(b"OK\n")
+    .write(format!("LOGIN {ups}\n", ups = &ups,).as_bytes())
+    .read(b"OK\n")
+    .write(format!("LOGOUT\n").as_bytes())
+    .read(b"OK Goodbye\n")
+    .build();
+
+  let mut client = nut_webgui_upsmc::clients::NutClient::from(stream)
+    .authenticate("user", "password")
+    .await
+    .unwrap();
+
+  client.attach(&ups).await.unwrap();
+  client.detach().await.unwrap();
 }

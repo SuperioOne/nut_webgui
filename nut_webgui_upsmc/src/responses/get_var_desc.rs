@@ -6,7 +6,7 @@ use crate::{
 
 #[derive(Debug)]
 pub struct UpsVarDesc {
-  pub var: VarName,
+  pub name: VarName,
   pub desc: Box<str>,
   pub ups_name: UpsName,
 }
@@ -15,11 +15,11 @@ impl Deserialize for UpsVarDesc {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
-    let (ups_name, var, desc) = parse_line!(lexer, "DESC" {UPS, name = ups_name} {VAR, name = var_name} {QUOTED_TEXT, name = desc})?;
+    let (ups_name, name, desc) = parse_line!(lexer, "DESC" {UPS, name = ups_name} {VAR, name = var_name} {QUOTED_TEXT, name = desc})?;
 
     if lexer.is_finished() {
       Ok(Self {
-        var,
+        name,
         ups_name,
         desc,
       })

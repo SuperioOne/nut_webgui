@@ -1,3 +1,4 @@
+use core::str::FromStr;
 use nut_webgui_upsmc::VarName;
 use nut_webgui_upsmc::errors::VarNameParseError;
 
@@ -99,12 +100,12 @@ var_cmp_test!(
 
 #[test]
 fn from_trait() {
-  match VarName::try_from("ups.status") {
+  match VarName::from_str("ups.status") {
     Ok(name) => assert_eq!(name, VarName::UPS_STATUS),
     Err(err) => assert!(false, "Parse failed unexpectedly error={}", err),
   }
 
-  match VarName::try_from("1ups.status") {
+  match VarName::from_str("1ups.status") {
     Err(VarNameParseError::InvalidName) => assert!(true),
     Err(err) => assert!(
       false,

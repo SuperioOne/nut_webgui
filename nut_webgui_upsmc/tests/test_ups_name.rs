@@ -1,3 +1,4 @@
+use core::str::FromStr;
 use nut_webgui_upsmc::UpsName;
 use nut_webgui_upsmc::errors::UpsNameParseError;
 
@@ -56,12 +57,12 @@ ups_name_test!(min_name_len_1, "w");
 
 #[test]
 fn from_trait() {
-  match UpsName::try_from("regularups") {
+  match UpsName::from_str("regularups") {
     Ok(name) => assert_eq!(name, "regularups"),
     Err(err) => assert!(false, "Parse failed unexpectedly error={}", err),
   }
 
-  match UpsName::try_from("regular ups") {
+  match UpsName::from_str("regular ups") {
     Err(UpsNameParseError::InvalidName) => assert!(true),
     Err(err) => assert!(
       false,

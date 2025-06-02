@@ -1,3 +1,4 @@
+use core::str::FromStr;
 use nut_webgui_upsmc::CmdName;
 use nut_webgui_upsmc::errors::CmdParseError;
 
@@ -58,12 +59,12 @@ cmd_name_test!(min_name_len_1, "w");
 
 #[test]
 fn from_trait() {
-  match CmdName::try_from("beeper.off") {
+  match CmdName::from_str("beeper.off") {
     Ok(name) => assert_eq!(name.as_str(), "beeper.off"),
     Err(err) => assert!(false, "Parse failed unexpectedly error={}", err),
   }
 
-  match CmdName::try_from("0beeper.off") {
+  match CmdName::from_str("0beeper.off") {
     Err(CmdParseError::InvalidName) => assert!(true),
     Err(err) => assert!(
       false,

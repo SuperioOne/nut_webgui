@@ -62,11 +62,11 @@ impl UpsName {
   }
 }
 
-impl TryFrom<&str> for UpsName {
-  type Error = UpsNameParseError;
+impl core::str::FromStr for UpsName {
+  type Err = UpsNameParseError;
 
   #[inline]
-  fn try_from(value: &str) -> Result<Self, Self::Error> {
+  fn from_str(value: &str) -> Result<Self, Self::Err> {
     Self::new(value)
   }
 }
@@ -101,7 +101,7 @@ impl TryFrom<std::borrow::Cow<'_, str>> for UpsName {
   #[inline]
   fn try_from(value: std::borrow::Cow<'_, str>) -> Result<Self, Self::Error> {
     match value {
-      std::borrow::Cow::Borrowed(v) => Self::try_from(v),
+      std::borrow::Cow::Borrowed(v) => Self::new(v),
       std::borrow::Cow::Owned(v) => Self::try_from(v),
     }
   }
@@ -199,14 +199,14 @@ mod serde {
     where
       E: serde::de::Error,
     {
-      UpsName::try_from(v).map_err(|err| E::custom(err))
+      UpsName::new(v).map_err(|err| E::custom(err))
     }
 
     fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
     where
       E: serde::de::Error,
     {
-      UpsName::try_from(v).map_err(|err| E::custom(err))
+      UpsName::new(v).map_err(|err| E::custom(err))
     }
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E>

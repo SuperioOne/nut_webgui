@@ -2,8 +2,8 @@ use crate::{
   CmdName, UpsName, VarName,
   errors::Error,
   responses::{
-    AttachedDaemons, ClientList, CmdDesc, CmdList, DaemonVer, EnumList, ProtVer, RangeList, RwList,
-    UpsDesc, UpsList, UpsVar, UpsVarDesc, UpsVarList,
+    ClientList, CmdDesc, CmdList, DaemonVer, EnumList, ProtVer, RangeList, RwList, UpsDesc,
+    UpsList, UpsVar, UpsVarDesc, UpsVarList, UpsVarType,
   },
 };
 use core::future::Future;
@@ -16,8 +16,6 @@ pub use client_base::NutClient;
 pub use client_pool::NutPoolClient;
 
 pub trait AsyncNutClient {
-  fn get_attached(self, ups: &UpsName) -> impl Future<Output = Result<AttachedDaemons, Error>>;
-
   fn get_cmd_desc(
     self,
     ups: &UpsName,
@@ -29,6 +27,12 @@ pub trait AsyncNutClient {
   fn get_ups_desc(self, ups: &UpsName) -> impl Future<Output = Result<UpsDesc, Error>>;
 
   fn get_var(self, ups: &UpsName, var: &VarName) -> impl Future<Output = Result<UpsVar, Error>>;
+
+  fn get_var_type(
+    self,
+    ups: &UpsName,
+    var: &VarName,
+  ) -> impl Future<Output = Result<UpsVarType, Error>>;
 
   fn get_var_desc(
     self,

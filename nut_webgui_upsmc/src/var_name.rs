@@ -452,11 +452,11 @@ impl std::fmt::Display for VarName {
   }
 }
 
-impl TryFrom<&str> for VarName {
-  type Error = VarNameParseError;
+impl core::str::FromStr for VarName {
+  type Err = VarNameParseError;
 
   #[inline]
-  fn try_from(value: &str) -> Result<Self, Self::Error> {
+  fn from_str(value: &str) -> Result<Self, Self::Err> {
     Self::new(value)
   }
 }
@@ -485,7 +485,7 @@ impl TryFrom<std::borrow::Cow<'_, str>> for VarName {
   #[inline]
   fn try_from(value: std::borrow::Cow<'_, str>) -> Result<Self, Self::Error> {
     match value {
-      std::borrow::Cow::Borrowed(v) => Self::try_from(v),
+      std::borrow::Cow::Borrowed(v) => Self::new(v),
       std::borrow::Cow::Owned(v) => Self::try_from(v),
     }
   }

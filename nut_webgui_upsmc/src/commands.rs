@@ -1,6 +1,28 @@
 use crate::internal::Serialize;
 use crate::{CmdName, UpsName, Value, VarName};
 
+pub struct AttachCommand<'a> {
+  pub ups: &'a UpsName,
+}
+
+impl Serialize for AttachCommand<'_> {
+  type Output = String;
+
+  fn serialize(self) -> Self::Output {
+    format!("LOGIN {}\n", self.ups.as_escaped_str())
+  }
+}
+
+pub struct DetachCommand;
+
+impl Serialize for DetachCommand {
+  type Output = String;
+
+  fn serialize(self) -> Self::Output {
+    format!("LOGOUT\n")
+  }
+}
+
 pub struct FsdCommand<'a> {
   pub ups: &'a UpsName,
 }
@@ -47,6 +69,23 @@ impl Serialize for GetVarDesc<'_, '_> {
   }
 }
 
+pub struct GetVarType<'a, 'b> {
+  pub ups: &'a UpsName,
+  pub var: &'b VarName,
+}
+
+impl Serialize for GetVarType<'_, '_> {
+  type Output = String;
+
+  fn serialize(self) -> Self::Output {
+    format!(
+      "GET TYPE {ups_name} {var_name}\n",
+      ups_name = self.ups.as_escaped_str(),
+      var_name = self.var
+    )
+  }
+}
+
 pub struct GetUpsDesc<'a> {
   pub ups: &'a UpsName,
 }
@@ -56,18 +95,6 @@ impl Serialize for GetUpsDesc<'_> {
 
   fn serialize(self) -> Self::Output {
     format!("GET UPSDESC {}\n", self.ups.as_escaped_str())
-  }
-}
-
-pub struct GetNumAttach<'a> {
-  pub ups: &'a UpsName,
-}
-
-impl Serialize for GetNumAttach<'_> {
-  type Output = String;
-
-  fn serialize(self) -> Self::Output {
-    format!("GET NUMATTACH {}\n", self.ups.as_escaped_str())
   }
 }
 

@@ -50,8 +50,32 @@ impl UpsVariables {
   }
 }
 
+impl IntoIterator for UpsVariables {
+  type Item = (VarName, Value);
+
+  type IntoIter = IntoIter;
+
+  fn into_iter(self) -> Self::IntoIter {
+    Self::IntoIter {
+      inner_iter: self.inner.into_iter(),
+    }
+  }
+}
+
+pub struct IntoIter {
+  inner_iter: std::collections::hash_map::IntoIter<VarName, Value>,
+}
+
 pub struct IterMut<'a> {
   inner_iter: std::collections::hash_map::IterMut<'a, VarName, Value>,
+}
+
+impl Iterator for IntoIter {
+  type Item = (VarName, Value);
+
+  fn next(&mut self) -> Option<Self::Item> {
+    self.inner_iter.next()
+  }
 }
 
 impl<'a> Iterator for IterMut<'a> {
