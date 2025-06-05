@@ -54,7 +54,7 @@ fn insert_new() {
     None => assert!(true),
   };
 
-  match vars.get(&VarName::UPS_LOAD) {
+  match vars.get(VarName::UPS_LOAD) {
     Some(value) => {
       assert_eq!(&Value::Float(100.0), value);
     }
@@ -79,7 +79,7 @@ fn update() {
     None => assert!(false, "Insert should've return value for update test."),
   };
 
-  match vars.get(&VarName::UPS_STATUS) {
+  match vars.get(VarName::UPS_STATUS) {
     Some(value) => {
       assert_eq!(&Value::String("OB".into()), value);
     }

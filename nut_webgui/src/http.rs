@@ -1,4 +1,4 @@
-// mod hypermedia;
+mod hypermedia;
 mod json;
 mod middlewares;
 mod probes;
@@ -7,9 +7,10 @@ mod problem_detail;
 use crate::{config::ServerConfig, state::ServerState};
 use axum::{
   Router, ServiceExt,
-  http::{HeaderValue, StatusCode, header::CACHE_CONTROL},
+  http::{HeaderValue, StatusCode, header},
   routing::{get, patch, post},
 };
+use hypermedia::routes;
 use middlewares::{
   daemon_status::DaemonStateLayer, validate_content_length::ValidateEmptyContentLength,
 };
@@ -19,8 +20,8 @@ use tokio::{net::TcpListener, sync::RwLock};
 use tower::{Layer, ServiceBuilder};
 use tower_http::{
   compression::CompressionLayer, cors::CorsLayer, limit::RequestBodyLimitLayer,
-  normalize_path::NormalizePathLayer, services::ServeDir, set_header::SetResponseHeaderLayer,
-  timeout::TimeoutLayer, trace::TraceLayer, validate_request::ValidateRequestHeaderLayer,
+  normalize_path::NormalizePathLayer, set_header::SetResponseHeaderLayer, timeout::TimeoutLayer,
+  trace::TraceLayer, validate_request::ValidateRequestHeaderLayer,
 };
 
 #[derive(Clone, Debug)]
@@ -57,7 +58,7 @@ impl HttpServer {
       .layer(TraceLayer::new_for_http())
       .layer(TimeoutLayer::new(Duration::from_secs(30)))
       .layer(SetResponseHeaderLayer::if_not_present(
-        CACHE_CONTROL,
+        header::CACHE_CONTROL,
         HeaderValue::from_static("no-cache, max-age=0"),
       ));
 
@@ -83,15 +84,30 @@ impl HttpServer {
       .layer(ValidateRequestHeaderLayer::accept("application/json"))
       .layer(CorsLayer::permissive());
 
-    // let hypermedia_api = Router::new()
-    //   .route("/ups/{ups_name}", get(hypermedia::routes::ups::get))
-    //   .route(
-    //     "/ups/{ups_name}/command",
-    //     post(hypermedia::routes::ups::post_command),
-    //   )
-    //   .route("/", get(hypermedia::routes::home::get))
-    //   .route("/not-found", get(hypermedia::routes::not_found::get))
-    //   .fallback(hypermedia::routes::not_found::get);
+    let static_files = Router::new()
+      .route("/style.css", get(routes::static_content::get_css))
+      .route("/index.js", get(routes::static_content::get_javascript))
+      .route("/icon.svg", get(routes::static_content::get_icon))
+      .route(
+        "/feather-sprite.svg",
+        get(routes::static_content::get_sprite_sheet),
+      )
+      .fallback(|| async { StatusCode::NOT_FOUND });
+
+    let hypermedia_api = Router::new()
+      .nest_service("/static", static_files)
+      .route(
+        "/ups/{ups_name}/command",
+        post(hypermedia::routes::ups::post_command),
+      )
+      .route("/", get(hypermedia::routes::home::get))
+      .route(
+        "/_layout/themes",
+        get(hypermedia::routes::layout::get_themes),
+      )
+      .route("/not-found", get(hypermedia::routes::not_found::get))
+      .route("/ups/{ups_name}", get(hypermedia::routes::ups::get))
+      .fallback(hypermedia::routes::not_found::get);
 
     let shared_config = Arc::new(config);
     let router_state = RouterState {
@@ -100,13 +116,9 @@ impl HttpServer {
     };
 
     let router = Router::new()
-      .nest_service(
-        "/static",
-        ServeDir::new(&shared_config.http_server.static_dir),
-      )
       .nest("/api", data_api)
       .nest("/probes", probes)
-      // .merge(hypermedia_api)
+      .merge(hypermedia_api)
       .layer(middleware)
       .with_state(router_state);
 

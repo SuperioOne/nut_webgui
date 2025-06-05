@@ -27,6 +27,12 @@
      {%- call theme_selector("light") -%}
      {%- call theme_selector("dark") -%}
   </div>
+  {%- if let Some(theme) = default_theme -%}
+    <div class="col-span-full divider mb-0.5 mt-0.5">System Default</div>
+    <div class="w-full">
+      {%- call theme_selector(theme) -%}
+    </div>
+  {%- endif -%}
   <div class="col-span-full divider mb-0.5 mt-0.5">Alternatives</div>
   <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 w-full">
      {%- call theme_selector("abyss") -%}

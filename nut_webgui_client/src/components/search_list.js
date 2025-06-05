@@ -46,28 +46,25 @@ function calc_score(term, input, opts) {
 }
 
 export default class SearchList extends HTMLElement {
-  /** @type {MutationObserver | undefined} */
-  #mut_observer;
-
-  /** @type {Set<Element>} */
-  #target_nodes;
-
   /** @type {AbortController | undefined} **/
   #abort_controller;
+
+  /** @type{MutationObserver | undefined} */
+  #mutation_observer;
+
+  /** @type {string | undefined} */
+  #search_term;
 
   /** @type {SearchListAttributes[]} */
   static observedAttributes = ["for"];
 
   constructor() {
     super();
-    this.#target_nodes = new Set();
   }
 
   connectedCallback() {
-    const nodes = this.querySelectorAll(":scope>li[search-value]");
-    this.#target_nodes = new Set(nodes);
     this.#attach_input(this.getAttribute("for"));
-    this.#mut_observer = new MutationObserver((records) => {
+    this.#mutation_observer = new MutationObserver((records) => {
       for (const record of records) {
         for (const added of record.addedNodes) {
           if (
@@ -77,30 +74,18 @@ export default class SearchList extends HTMLElement {
             continue;
           }
 
-          const element = /** @type {HTMLElement} */ (added);
-          const search_value = element.getAttribute("search-value");
-
-          if (search_value && search_value.length > 0) {
-            this.#target_nodes.add(element);
-          }
-        }
-
-        for (const removed of record.removedNodes) {
-          if (removed.nodeType !== this.ELEMENT_NODE) {
-            continue;
-          }
-
-          this.#target_nodes.delete(/** @type {HTMLElement} */ (removed));
+          this.#search(this.#search_term);
+          break;
         }
       }
     });
 
-    this.#mut_observer.observe(this, { childList: true, subtree: true });
+    this.#mutation_observer.observe(this, { subtree: true, childList: true });
   }
 
   disconnectedCallback() {
-    this.#mut_observer?.disconnect();
     this.#abort_controller?.abort();
+    this.#mutation_observer?.disconnect();
   }
 
   /**
@@ -116,6 +101,71 @@ export default class SearchList extends HTMLElement {
       default:
         break;
     }
+  }
+
+  /** @param {string | undefined | null} term  */
+  #search(term) {
+    const nodes = this.querySelectorAll(":scope>li[search-value]");
+
+    let children;
+
+    if (term && term.length > 0) {
+      /** @type {{node: Element, score: number}[]} */
+      let search_results = [];
+      let total_score = 0;
+
+      for (const elem of nodes) {
+        const search_val = elem.getAttribute("search-value") ?? "";
+        const score =
+          search_val.length < 1
+            ? 0
+            : calc_score(term, search_val, {
+                gap_penalty: 3,
+                score_weight: 1,
+              });
+
+        total_score += score;
+        search_results.push({ score, node: elem });
+      }
+
+      const mean = total_score / search_results.length;
+
+      children = search_results
+        .sort((a, b) => b.score - a.score)
+        .map((e, idx) => {
+          const new_node = /** @type {Element} */ (e.node.cloneNode(true));
+
+          if (e.score - mean < 0) {
+            new_node.classList.add("hidden");
+          } else {
+            new_node.classList.remove("hidden");
+          }
+
+          return new_node;
+        });
+    } else {
+      children = [...nodes]
+        .sort((a, b) =>
+          localCompareStr(
+            a.getAttribute("search-value"),
+            b.getAttribute("search-value"),
+          ),
+        )
+        .map((e) => {
+          const new_node = /** @type {Element} */ (e.cloneNode(true));
+          new_node.classList.remove("hidden");
+
+          return new_node;
+        });
+    }
+
+    this.#mutation_observer?.disconnect();
+    this.replaceChildren(...children);
+    htmx.process(this);
+    this.#mutation_observer?.observe(this, {
+      subtree: true,
+      childList: true,
+    });
   }
 
   /**
@@ -140,61 +190,8 @@ export default class SearchList extends HTMLElement {
       const input_element = /** @type {HTMLInputElement}*/ (ev.target);
       const search_term = input_element.value;
 
-      let children;
-
-      if (search_term && search_term.length > 0) {
-        let sum = 0;
-        const results = [...this.#target_nodes].map((e) => {
-          const search_val = e.getAttribute("search-value") ?? "";
-          const score =
-            search_val.length < 1
-              ? 0
-              : calc_score(search_term, search_val, {
-                  gap_penalty: 3,
-                  score_weight: 1,
-                });
-
-          sum += score;
-
-          return {
-            score,
-            node: e,
-          };
-        });
-
-        const mean = sum / results.length;
-
-        children = results
-          .sort((a, b) => b.score - a.score)
-          .map((e) => {
-            const new_node = /** @type {Element} */ (e.node.cloneNode(true));
-
-            if (e.score - mean < 0) {
-              new_node.classList.add("hidden");
-            } else {
-              new_node.classList.remove("hidden");
-            }
-
-            return new_node;
-          });
-      } else {
-        children = [...this.#target_nodes]
-          .sort((a, b) =>
-            localCompareStr(
-              a.getAttribute("search-value"),
-              b.getAttribute("search-value"),
-            ),
-          )
-          .map((e) => {
-            const new_node = /** @type {Element} */ (e.cloneNode(true));
-            new_node.classList.remove("hidden");
-
-            return new_node;
-          });
-      }
-
-      this.replaceChildren(...children);
-      htmx.process(this);
+      this.#search_term = search_term;
+      this.#search(search_term);
     };
 
     const debounced_listener = into_debounced_fn(listener, {

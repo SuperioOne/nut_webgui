@@ -1,0 +1,8 @@
+[package]
+name = "nut_webgui_client"
+version = "0.1.0"
+edition = "2024"
+
+[build-dependencies]
+sha2 = "0.10"
+base16ct = { version = "0.2", features = [ "alloc" ] }

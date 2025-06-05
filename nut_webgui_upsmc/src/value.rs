@@ -60,6 +60,32 @@ impl Value {
       Value::String(text) => escape_nut_str(text),
     }
   }
+
+  pub fn as_str(&self) -> Cow<'_, str> {
+    match self {
+      Value::Float(num) => Cow::Owned(format!("{:.2}", num)),
+      Value::Int(num) => Cow::Owned(num.to_string()),
+      Value::String(text) => Cow::Borrowed(&text),
+    }
+  }
+
+  #[inline]
+  pub fn as_lossly_i64(&self) -> Option<i64> {
+    match self {
+      Value::Float(num) => Some(*num as i64),
+      Value::Int(num) => Some(*num),
+      _ => None,
+    }
+  }
+
+  #[inline]
+  pub fn as_lossly_f64(&self) -> Option<f64> {
+    match self {
+      Value::Float(num) => Some(*num),
+      Value::Int(num) => Some(*num as f64),
+      _ => None,
+    }
+  }
 }
 
 fn infer_type(input: &str) -> InferredType {

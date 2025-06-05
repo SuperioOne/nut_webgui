@@ -1,4 +1,5 @@
 use crate::{value::Value, var_name::VarName};
+use core::borrow;
 use std::collections::HashMap;
 
 /// List of UPS variables.
@@ -17,32 +18,56 @@ impl UpsVariables {
     }
   }
 
-  pub fn get(&self, name: &VarName) -> Option<&Value> {
-    self.inner.get(name)
+  #[inline]
+  pub fn get<K>(&self, name: K) -> Option<&Value>
+  where
+    K: borrow::Borrow<VarName>,
+  {
+    self.inner.get(name.borrow())
   }
 
-  pub fn get_mut(&mut self, name: &VarName) -> Option<&mut Value> {
-    self.inner.get_mut(name)
+  #[inline]
+  pub fn get_mut<K>(&mut self, name: K) -> Option<&mut Value>
+  where
+    K: borrow::Borrow<VarName>,
+  {
+    self.inner.get_mut(name.borrow())
   }
 
+  #[inline]
   pub fn insert(&mut self, name: VarName, value: Value) -> Option<Value> {
     self.inner.insert(name, value)
   }
 
-  pub fn remove(&mut self, name: VarName) -> Option<(VarName, Value)> {
-    self.inner.remove_entry(&name)
+  #[inline]
+  pub fn remove<K>(&mut self, name: K) -> Option<(VarName, Value)>
+  where
+    K: borrow::Borrow<VarName>,
+  {
+    self.inner.remove_entry(name.borrow())
   }
 
+  #[inline]
   pub fn len(&self) -> usize {
     self.inner.len()
   }
 
+  #[inline]
+  pub fn contains_key<K>(&self, name: K) -> bool
+  where
+    K: borrow::Borrow<VarName>,
+  {
+    self.inner.contains_key(name.borrow())
+  }
+
+  #[inline]
   pub fn iter_mut(&mut self) -> IterMut<'_> {
     IterMut {
       inner_iter: self.inner.iter_mut(),
     }
   }
 
+  #[inline]
   pub fn iter(&self) -> Iter<'_> {
     Iter {
       inner_iter: self.inner.iter(),

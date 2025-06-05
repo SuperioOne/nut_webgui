@@ -7,29 +7,36 @@
     <input type="search" placeholder="Filter" name="command-filter" maxlength="64" autocomplete="off" />
   </label>
   <nut-search-list for="command-filter" class="list">
-    {%- for row in ups.commands -%}
-      <li class="list-row" search-value="{{row}}">
+    {%- for cmd in device.commands -%}
+      <li class="list-row" search-value="{{cmd}}">
         <div></div>
-        <p class="break-all font-bold text-primary">
-          {{row}}
-        </p>
-        <form>
-          <nut-confirm-button
-            hx-post="/ups/{{ups.name}}/command"
-            hx-swap="none"
-            hx-trigger="command-confirmed"
-            cancel-text="Cancel"
-            class="btn btn-ghost btn-primary"
-            confirm-text="Run"
-            message="Are you sure about the run '{{row}}' command?"
-            name="command"
-            target-event="command-confirmed"
-            title="Command Confirmation"
-            value="{{row}}"
-          >
-            {%- call icons::get_svg("play", 24) -%}
-          </nut-confirm-button>
-        </form>
+        <div class="flex flex-row gap-3 list-col-grow">
+          <div class="grow">
+            <p class="break-all font-bold text-primary">
+              {{cmd}}
+            </p>
+            {%- if let Some(desc) = descriptions.get(cmd.as_str()) -%}
+              <p class="font-light list-col-wrap opacity-70 text-xs"> {{desc}} </p>
+            {%- endif -%}
+          </div>
+          <form>
+            <nut-confirm-button
+              hx-post="/ups/{{device.name | urlencode_strict}}/command"
+              hx-swap="none"
+              hx-trigger="command-confirmed"
+              cancel-text="Cancel"
+              class="btn btn-ghost btn-primary"
+              confirm-text="Run"
+              message="Are you sure about the run '{{cmd}}' command?"
+              name="command"
+              target-event="command-confirmed"
+              title="Command Confirmation"
+              value="{{cmd}}"
+            >
+              {%- call icons::get_svg("play", 24) -%}
+            </nut-confirm-button>
+          </form>
+        </div>
       </li>
     {%- endfor -%}
   </nut-search-list>

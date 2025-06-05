@@ -1,2 +1,2 @@
 [general]
-dirs = ["./src/http_server/hypermedia/templates"]
+dirs = ["./src/http/hypermedia/templates"]

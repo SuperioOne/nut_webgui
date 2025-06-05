@@ -1,8 +1,7 @@
 use super::{RouterState, problem_detail::ProblemDetail};
-use crate::{config::UpsdConfig, state::DeviceEntry};
+use crate::{config::UpsdConfig, device_entry::DeviceEntry};
 use axum::{
   Json,
-  body::Body,
   extract::{
     Path, State,
     rejection::{JsonRejection, PathRejection},
@@ -168,7 +167,7 @@ pub async fn patch_var(
     // TODO: current implementations does not check if value type is correct
     match server_state.devices.get(&ups_name) {
       Some(device) => {
-        if device.rw_variables.contains(&body.variable) {
+        if device.rw_variables.contains_key(&body.variable) {
           Ok(())
         } else {
           Err(

@@ -64,14 +64,13 @@ export default class TimeDisplay extends HTMLElement {
     super();
   }
 
-  disconnectedCallback() {
-    this.remove();
-  }
-
   connectedCallback() {
     this.innerHTML = "";
-    this.#root = this.attachShadow({ mode: "open" });
-    link_host_styles(this.#root);
+
+    if (!this.#root) {
+      this.#root = this.attachShadow({ mode: "open" });
+      link_host_styles(this.#root);
+    }
 
     const value = Number(this.getAttribute("value"));
     this.#generate_display(value);

@@ -28,7 +28,6 @@ pub struct HttpServerConfig {
   pub listen: IpAddr,
   pub port: u16,
   pub base_path: UriPath,
-  pub static_dir: PathBuf, // TODO: Deprecate this
 }
 
 #[derive(Debug)]
@@ -71,7 +70,6 @@ impl HttpServerConfig {
 impl Default for HttpServerConfig {
   fn default() -> Self {
     Self {
-      static_dir: PathBuf::from("static"),
       listen: Ipv4Addr::LOCALHOST.into(),
       base_path: UriPath::EMPTY,
       port: 9000,

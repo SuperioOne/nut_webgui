@@ -47,10 +47,6 @@ pub struct ServerCliArgs {
   #[arg(long, value_parser =  uri_path_parser)]
   pub base_path: Option<UriPath>,
 
-  /// Static file directory
-  #[arg(long)]
-  pub static_dir: Option<PathBuf>,
-
   /// Log level
   #[arg(long)]
   pub log_level: Option<tracing::Level>,
@@ -97,7 +93,6 @@ impl ConfigLayer for ServerCliArgs {
     override_opt_field!(config.http_server.base_path, inner_value:  self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);
     override_opt_field!(config.http_server.port, inner_value: self.port);
-    override_opt_field!(config.http_server.static_dir, inner_value: self.static_dir);
 
     config
   }

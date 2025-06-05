@@ -6,12 +6,13 @@ pub(super) enum SyncTaskError {
     inner: nut_webgui_upsmc::errors::Error,
   },
   DeviceLoadFailed,
+  InvalidTypeDetail,
 }
 
 #[derive(Debug)]
 pub(super) struct DeviceLoadError {
   pub inner: nut_webgui_upsmc::errors::Error,
-  pub name: String,
+  pub name: UpsName,
 }
 
 #[derive(Debug)]
@@ -28,6 +29,9 @@ impl std::fmt::Display for SyncTaskError {
     match self {
       SyncTaskError::ClientError { inner } => inner.fmt(f),
       SyncTaskError::DeviceLoadFailed => f.write_str("unable to get new device details from upsd"),
+      SyncTaskError::InvalidTypeDetail => {
+        f.write_str("upsd returns some unexpected type information for a variable")
+      }
     }
   }
 }
@@ -59,7 +63,7 @@ impl<T> IntoLoadError<T> for Result<T, nut_webgui_upsmc::errors::Error> {
       Ok(val) => Ok(val),
       Err(err) => Err(DeviceLoadError {
         inner: err,
-        name: name.to_string(),
+        name: name.to_owned(),
       }),
     }
   }

@@ -56,6 +56,7 @@ function attr_preserve(attr_name, node, mutation_type) {
  */
 function create_morph_config(swapStyle) {
   let config;
+
   if (swapStyle === "morph" || swapStyle === "morph:outerHTML") {
     config = { morphStyle: "outerHTML" };
   } else if (swapStyle === "morph:innerHTML") {
@@ -64,7 +65,9 @@ function create_morph_config(swapStyle) {
     config = Function("return (" + swapStyle.slice(6) + ")")();
   }
 
-  config.callbacks = { beforeAttributeUpdated: attr_preserve };
+  if (config) {
+    config.callbacks = { beforeAttributeUpdated: attr_preserve };
+  }
 
   return config;
 }
@@ -72,13 +75,17 @@ function create_morph_config(swapStyle) {
 htmx.defineExtension("morph", {
   isInlineSwap: function (swapStyle) {
     const config = create_morph_config(swapStyle);
-    return config.swapStyle === "outerHTML" || config.swapStyle == null;
+    return config?.morphStyle === "outerHTML" || config?.morphStyle === null;
   },
   handleSwap: function (swapStyle, target, fragment) {
     const config = create_morph_config(swapStyle);
 
     if (config) {
-      return Idiomorph.morph(target, fragment.children, config);
+      return Idiomorph.morph(
+        target,
+        /** @type {Element} **/ (fragment).children,
+        config,
+      );
     }
   },
 });

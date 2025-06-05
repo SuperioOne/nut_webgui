@@ -23,7 +23,7 @@
       <div
         id="ups_status"
         hx-ext="morph"
-        hx-get="/ups/{{name}}?section=status"
+        hx-get="/ups/{{name | urlencode_strict}}?section=status"
         hx-indicator="#indicator"
         hx-swap="morph:innerHTML"
         hx-trigger="every {{poll_interval}}s"
@@ -32,15 +32,9 @@
           {%- if let Some(status) = ups_status -%}
             <div class="font-bold text-center text-xl">
               <h1 class="leading-8">UPS Status</h1>
-              {%- let status_text = crate::http_server::hypermedia::ups_status::get_status_text(status) -%}
-
-              {%- if let Some(status_class) = crate::http_server::hypermedia::ups_status::get_status_class(status) -%}
                 <p>
-                  <span class="{{status_class}}">{{status_text}}</span>
+                  <span class="">{{status}}</span>
                 </p>
-              {%- else -%}
-                <p class="leading-6 text-primary">{{status_text}}</p>
-              {%- endif -%}
             </div>
             <div class="flex flex-row flex-wrap gap-2 justify-center mt-2 w-full">
               {%- match beeper_status -%}
@@ -55,9 +49,9 @@
                 {%- when None -%}
               {%- endmatch -%}
 
-              {%- for status_icon in crate::http_server::hypermedia::ups_status::StatusIconIter::new(status) -%}
-                <div class="tooltip tooltip-bottom {{status_icon.class}}" data-tip="{{status_icon.desc}}">
-                  {%- call icons::get_svg(status_icon.name, 20) -%}
+              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status) -%}
+                <div class="tooltip tooltip-bottom {{status_detail.class.as_text()}}" data-tip="{{status_detail.desc}}">
+                  {%- call icons::get_svg(status_detail.icon_name, 20) -%}
                 </div>
               {%- endfor -%}
             </div>
@@ -71,52 +65,52 @@
         <div id="tab-control" class="flex flex-row justify-center">
           <div role="tablist" class="md:w-fit tabs tabs-box w-full">
             <a
-            {% if let crate::http_server::hypermedia::routes::ups::UpsPageTabTemplate::Grid { .. } = tab_template  %}
+            {% if let crate::http::hypermedia::routes::ups::UpsPageTabTemplate::Grid { .. } = tab_template  %}
               class="tab tab-active"
               hx-disable
             {% else %}
               class="tab"
             {% endif %}
-              hx-get="/ups/{{name}}?tab=grid&section=tabcontent"
+              hx-get="/ups/{{name | urlencode_strict}}?tab=grid&section=tabcontent"
               hx-indicator="#indicator"
               hx-target="#tab-content"
               hx-swap="innerHTML"
               hx-trigger="click"
-              hx-push-url="/ups/{{name}}?tab=grid"
+              hx-push-url="/ups/{{name | urlencode_strict}}?tab=grid"
             >
               {%- call icons::get_svg("grid", 14) -%}
               <span class="mx-2">Grid View</span>
             </a>
             <a
-            {% if let crate::http_server::hypermedia::routes::ups::UpsPageTabTemplate::Variables { .. } = tab_template  %}
+            {% if let crate::http::hypermedia::routes::ups::UpsPageTabTemplate::Variables { .. } = tab_template  %}
               class="tab tab-active"
               hx-disable
             {% else %}
               class="tab"
             {% endif %}
-              hx-get="/ups/{{name}}?tab=variables&section=tabcontent"
+              hx-get="/ups/{{name | urlencode_strict}}?tab=variables&section=tabcontent"
               hx-indicator="#indicator"
               hx-target="#tab-content"
               hx-swap="innerHTML"
               hx-trigger="click"
-              hx-push-url="/ups/{{name}}?tab=variables"
+              hx-push-url="/ups/{{name | urlencode_strict}}?tab=variables"
             >
               {%- call icons::get_svg("table", 14) -%}
               <span class="mx-2">Variables</span>
             </a>
             <a
-            {% if let crate::http_server::hypermedia::routes::ups::UpsPageTabTemplate::Commands { .. } = tab_template  %}
+            {% if let crate::http::hypermedia::routes::ups::UpsPageTabTemplate::Commands { .. } = tab_template  %}
               class="tab tab-active"
               hx-disable
             {% else %}
               class="tab"
             {% endif %}
-              hx-get="/ups/{{name}}?tab=commands&section=tabcontent"
+              hx-get="/ups/{{name | urlencode_strict}}?tab=commands&section=tabcontent"
               hx-indicator="#indicator"
               hx-target="#tab-content"
               hx-swap="innerHTML"
               hx-trigger="click"
-              hx-push-url="/ups/{{name}}?tab=commands"
+              hx-push-url="/ups/{{name | urlencode_strict}}?tab=commands"
             >
               {%- call icons::get_svg("play", 14) -%}
               <span class="mx-2">Commands</span>
@@ -125,7 +119,7 @@
         </div>
 
         <div class="tab-body">
-          {{tab_template}}
+          {{tab_template | safe}}
         </div>
       {%- endblock tab_content -%}
     </div>

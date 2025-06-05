@@ -1,53 +1,55 @@
-use crate::{http_server::ServerState, ups_daemon_state::UpsEntry};
+use crate::{
+  device_entry::DeviceEntry,
+  http::{RouterState, hypermedia::device_entry_impls::ValueDetail},
+};
 use askama::Template;
 use axum::{
   extract::{Query, State},
   response::{Html, IntoResponse, Response},
 };
-use nut_webgui_upsmc::ups_variables::UpsVariable;
+use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::Deserialize;
 
 #[derive(Debug)]
-pub struct UpsTableRow<'a> {
-  charge: Option<f64>,
+pub struct DeviceTableRow<'a> {
+  attached: usize,
+  charge: Option<ValueDetail<'a>>,
   desc: &'a str,
-  load: Option<f64>,
-  name: &'a str,
+  load: Option<ValueDetail<'a>>,
+  name: &'a UpsName,
+  runtime: Option<ValueDetail<'a>>,
   status: Option<&'a str>,
+  temperature: Option<ValueDetail<'a>>,
+  power: Option<ValueDetail<'a>>,
 }
 
-impl<'a> UpsTableRow<'a> {
-  pub fn from_ups_entry(ups: &UpsEntry) -> UpsTableRow {
-    let mut row = UpsTableRow {
-      charge: None,
-      desc: &ups.desc,
-      load: None,
-      name: &ups.name,
-      status: None,
+impl<'a> From<&'a DeviceEntry> for DeviceTableRow<'a> {
+  #[inline]
+  fn from(device: &'a DeviceEntry) -> Self {
+    let charge = device.get_battery_charge();
+    let load = device.get_ups_load();
+    let runtime = device.get_battery_runtime();
+    let temperature = device.get_ups_temperature();
+    let power = device.get_power();
+
+    let status = {
+      match device.variables.get(VarName::UPS_STATUS) {
+        Some(Value::String(v)) => Some(v.as_ref()),
+        _ => None,
+      }
     };
 
-    for variable in &ups.variables {
-      match variable {
-        UpsVariable::UpsLoad(val) => {
-          row.load = Some(*val);
-        }
-        UpsVariable::BatteryCharge(val) => {
-          row.charge = Some(*val);
-        }
-        UpsVariable::UpsStatus(val) => {
-          row.status = Some(val.as_str());
-        }
-        _ => {}
-      }
+    DeviceTableRow {
+      attached: device.attached.len(),
+      charge,
+      desc: device.desc.as_ref(),
+      load,
+      name: &device.name,
+      runtime,
+      status,
+      temperature,
+      power,
     }
-
-    row
-  }
-}
-
-impl<'a> From<&'a UpsEntry> for UpsTableRow<'a> {
-  fn from(value: &'a UpsEntry) -> Self {
-    Self::from_ups_entry(value)
   }
 }
 
@@ -57,24 +59,31 @@ pub struct HomeFragmentQuery {
 }
 
 #[derive(Template)]
-#[template(path = "+page.html", blocks = ["ups_table"])]
+#[template(path = "+page.html", blocks = ["device_table"])]
 struct HomeTemplate<'a> {
-  ups_list: Vec<UpsTableRow<'a>>,
+  base_path: &'a str,
+  default_theme: Option<&'a str>,
+  devices: Vec<DeviceTableRow<'a>>,
 }
 
-pub async fn get(query: Query<HomeFragmentQuery>, State(state): State<ServerState>) -> Response {
-  let upsd_state = &state.upsd_state.read().await;
-  let mut ups_list: Vec<UpsTableRow> = upsd_state
+pub async fn get(query: Query<HomeFragmentQuery>, State(rs): State<RouterState>) -> Response {
+  let state = &rs.state.read().await;
+  let mut device_list: Vec<DeviceTableRow> = state
+    .devices
     .iter()
-    .map(|(_, ups)| UpsTableRow::from(ups))
+    .map(|(_, device)| DeviceTableRow::from(device))
     .collect();
 
-  ups_list.sort_unstable_by_key(|v| v.name);
+  device_list.sort_unstable_by_key(|v| v.name);
 
-  let template = HomeTemplate { ups_list };
+  let template = HomeTemplate {
+    devices: device_list,
+    base_path: rs.config.http_server.base_path.as_str(),
+    default_theme: rs.config.default_theme.as_deref(),
+  };
 
   match query.section.as_deref() {
-    Some("ups_table") => Html(template.as_ups_table().render().unwrap()).into_response(),
+    Some("device_table") => Html(template.as_device_table().render().unwrap()).into_response(),
     _ => Html(template.render().unwrap()).into_response(),
   }
 }

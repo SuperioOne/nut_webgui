@@ -137,6 +137,7 @@ where
     let devices = self.snapshot_device_names().await;
 
     if devices.is_empty() {
+      debug!(message = "no device available, nothing to sync");
       return;
     }
 
@@ -191,6 +192,7 @@ where
     let devices = self.snapshot_device_names().await;
 
     if devices.is_empty() {
+      debug!(message = "no device available, nothing to sync");
       return;
     }
 
@@ -209,7 +211,7 @@ where
         match result {
           Ok(var_list) => {
             if let Some(entry) = write_lock.devices.get_mut(&var_list.ups_name) {
-              if let Some(status_value) = var_list.variables.get(&VarName::UPS_STATUS) {
+              if let Some(status_value) = var_list.variables.get(VarName::UPS_STATUS) {
                 let new_status = UpsStatus::from(status_value);
                 let old_status = entry.status;
 

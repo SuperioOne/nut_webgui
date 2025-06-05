@@ -1,7 +1,11 @@
 /* Register all required css files here*/
 @import "tailwindcss";
 @source "./src/**/*.{html,js}";
-@source "../../nut_webgui/src/http_server/hypermedia/**/*.{rs,html}";
+@source "../../nut_webgui/src/http/hypermedia/**/*.{rs,html}";
+
+@theme {
+        --breakpoint-xs: 30rem;
+}
 
 @plugin "daisyui" {
         themes: light --default, dark --prefersdark, abyss, autumn, business, corporate, dim, dracula, forest, night, nord, sunset, synthwave, winter;
@@ -90,6 +94,14 @@
 
         .content-card {
                 @apply bg-base-200 rounded-box shadow-md text-base-content p-6;
+        }
+
+        .feather {
+                stroke: currentColor;
+                stroke-width: 2;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                fill: none;
         }
 }
 

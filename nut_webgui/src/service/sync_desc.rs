@@ -180,8 +180,8 @@ where
     }
 
     for var_desc in vars {
-      if let Ok(UpsVarDesc { desc, var, .. }) = var_desc {
-        results.push((var.into_box_str(), desc));
+      if let Ok(UpsVarDesc { desc, name, .. }) = var_desc {
+        results.push((name.into_box_str(), desc));
       }
     }
 

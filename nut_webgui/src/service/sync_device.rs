@@ -3,12 +3,14 @@ use super::{
   error::{DeviceLoadError, IntoLoadError, SyncTaskError},
 };
 use crate::{
+  device_entry::{DeviceEntry, VarDetail},
   event::{EventBatch, EventChannel, SystemEvent},
-  state::{DaemonStatus, DeviceEntry, ServerState},
+  state::{DaemonStatus, ServerState},
 };
 use chrono::Utc;
+use futures::future::join_all;
 use nut_webgui_upsmc::{
-  UpsName, VarName,
+  UpsName, Value, VarName, VarType,
   clients::{AsyncNutClient, NutPoolClient},
   responses::UpsDevice,
   ups_status::UpsStatus,
@@ -162,7 +164,7 @@ where
         Ok(Ok(device)) => new_devices.push(device),
         Ok(Err(err)) => {
           failure_count += 1;
-          error!(message = "unable to get device details from nut upsd", reason = %err.inner, ups_name = %err.name)
+          error!(message = "unable to get device details from nut upsd", reason = %err.inner, device = %err.name)
         }
         Err(err) => {
           failure_count += 1;
@@ -171,9 +173,9 @@ where
       }
     }
 
-    if failure_count >= total_device_count {
-      let mut write_lock = self.state.write().await;
+    let mut write_lock = self.state.write().await;
 
+    if failure_count >= total_device_count {
       if write_lock.remote_state.status != DaemonStatus::Dead {
         error!(
           message = "ups daemon is disconnected",
@@ -195,7 +197,6 @@ where
       Err(SyncTaskError::DeviceLoadFailed)
     } else {
       let mut events = EventBatch::new();
-      let mut write_lock = self.state.write().await;
 
       for entry in new_devices.into_iter() {
         info!(message = "device connected", device = %&entry.name);
@@ -251,18 +252,34 @@ where
     );
 
     let variables = vars.map_load_err(&ups_name)?.variables;
-    let status = match variables.get(&VarName::UPS_STATUS) {
+    let status = match variables.get(VarName::UPS_STATUS) {
       Some(value) => UpsStatus::from(value),
       _ => UpsStatus::default(),
     };
     let attached = clients.map_load_err(&ups_name)?.ips;
     let commands = commands.map_load_err(&ups_name)?.cmds;
-    let rw_variables = rw_vars
-      .map_load_err(&ups_name)?
-      .variables
-      .iter()
-      .map(|(k, _)| k.clone())
-      .collect(); // FIX: RW need it's own type. It can be enum, range etc
+
+    let rw_vars = join_all(
+      rw_vars
+        .map_load_err(&ups_name)?
+        .variables
+        .into_iter()
+        .map(|(var_name, _)| Self::load_var_detail(client.clone(), &ups_name, var_name)),
+    )
+    .await;
+
+    let mut rw_variables = HashMap::with_capacity(rw_vars.len());
+
+    for result in rw_vars {
+      match result {
+        Ok((var_name, detail)) => {
+          _ = rw_variables.insert(var_name, detail);
+        }
+        Err(err) => {
+          warn!(message = "failed to get RW variable type details, variable will be displayed as read-only", device = %err.name, reason = %err.inner );
+        }
+      };
+    }
 
     let entry = DeviceEntry {
       attached,
@@ -276,6 +293,68 @@ where
     };
 
     Ok(entry)
+  }
+
+  async fn load_var_detail(
+    client: NutPoolClient<A>,
+    ups_name: &UpsName,
+    var_name: VarName,
+  ) -> Result<(VarName, VarDetail), DeviceLoadError> {
+    let type_info = client
+      .get_var_type(ups_name, &var_name)
+      .await
+      .map_load_err(ups_name)?;
+
+    for var_type in type_info.var_types {
+      match var_type {
+        VarType::ReadWrite => continue,
+        VarType::Enum => {
+          let enum_list = client
+            .list_enum(ups_name, &var_name)
+            .await
+            .map_load_err(ups_name)?;
+
+          if enum_list.values.is_empty() {
+            warn!(message = "nut driver reports variable type as enum, but it does not provide any enum option", var_name = %var_name, device = %ups_name);
+          }
+
+          return Ok((
+            enum_list.name,
+            VarDetail::Enum {
+              options: enum_list.values,
+            },
+          ));
+        }
+        VarType::Range => {
+          let mut range_list = client
+            .list_range(ups_name, &var_name)
+            .await
+            .map_load_err(ups_name)?;
+
+          return match range_list.ranges.pop() {
+            Some((min, max)) => Ok((range_list.name, VarDetail::Range { min, max })),
+            None => {
+              warn!(message = "nut driver reports variable type as range, but it does not provide any range information", var_name = %var_name, device = %ups_name);
+              Ok((
+                range_list.name,
+                VarDetail::Range {
+                  min: Value::from(i64::MIN),
+                  max: Value::from(i64::MAX),
+                },
+              ))
+            }
+          };
+        }
+        VarType::String { max_len } => {
+          return Ok((var_name, VarDetail::String { max_len }));
+        }
+        VarType::Number => {
+          return Ok((var_name, VarDetail::Number));
+        }
+      }
+    }
+
+    Ok((var_name, VarDetail::String { max_len: 64 }))
   }
 }
 

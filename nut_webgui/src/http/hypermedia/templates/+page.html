@@ -1,86 +1,158 @@
 {%- extends "+layout.html" -%}
+{%- import "icons.html" as icons -%}
 
 {%- block page_title -%}
   NUT Web - Home
 {%- endblock page_title -%}
 
 {%- block content -%}
-  <div
-    hx-ext="morph"
-    hx-get="/?section=ups_table"
-    hx-trigger="every 15s"
-    hx-swap="morph:innerHTML"
-    hx-indicator="#indicator"
-  >
-    {%- block ups_table -%}
-      <div id="ups_table" class="bg-base-200 overflow-x-auto rounded-box shadow-md">
-        <table class="table table-fixed">
-          <thead>
-            <tr>
-              <th class="font-black">UPS Name</th>
-              <th class="font-black hidden sm:table-cell">Description</th>
-              <th class="font-black sm:w-36 w-auto">Status</th>
-              <th class="font-black">Battery</th>
-              <th class="font-black hidden sm:table-cell">Load</th>
-              <th class="font-black hidden sm:table-cell w-32"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {%- if ups_list.len() < 1 -%}
-              <tr>
-                <td class="py-6 text-center" colspan="6">
-                  No UPS available.
-                </td>
-              </tr>
-            {%- else -%}
-              {%- for row in ups_list -%}
-                <tr class="break-all">
-                  <td>
-                    <a class="font-bold link text-primary" href="/ups/{{row.name}}">
+  <div class="flex flex-col gap-4" >
+    <h1 class="font-bold opacity-60 text-xl tracking-wide">Devices</h1>
+    <label class="input input-ghost input-sm opacity-60 tracking-wide">
+      {%- call icons::get_svg("search", 16) -%}
+      <input
+        autocomplete="off"
+        id="device-filter-input"
+        maxlength="64"
+        name="device-filter"
+        placeholder="Fuzzy search by device name"
+      />
+    </label>
+    <div
+      hx-ext="morph"
+      hx-get="/?section=device_table"
+      hx-trigger="every 10s"
+      hx-swap="morph:innerHTML"
+      hx-indicator="#indicator"
+    >
+      {%- block device_table -%}
+        {% if devices.is_empty() -%}
+          <div id="_empty_row" class="font-light opacity-80 p-16 text-center text-lg">
+            No device available
+          </div>
+        {%- else -%}
+          <nut-search-list for="device-filter" id="device_list" class="list-none">
+            {%- for row in devices -%}
+              <li
+                class="content-card my-2 rounded shadow-md"
+                id="{{row.name}}"
+                morph-preserve-attr="class"
+                search-value="{{row.name}}"
+              >
+                <div class="grid grid-cols-15 p-2"> 
+                  <div class="col-span-full flex flex-col gap-2 grow items-center lg:col-span-3 lg:items-start p-2">
+                    <a
+                      class="break-all font-bold link link-hover text-primary text-wrap text-xl"
+                      href="{{base_path | urlencode}}/ups/{{row.name | urlencode_strict}}"
+                    >
                       {{row.name}}
                     </a>
-                  </td>
-                  <td class="hidden sm:table-cell">
-                    <span class="font-light text-base-content">{{row.desc}}</span>
-                  </td>
-                  <td class="sm:w-36 w-auto">
-                    {%- if let Some(status) = row.status -%}
-                      {%- if let Some(status_class) = crate::http_server::hypermedia::ups_status::get_status_class(status) -%}
-                        <span class="font-black uppercase {{status_class}}">{{status}}</span>
-                      {%- else -%}
-                        <span class="font-black uppercase">{{status}}</span>
-                      {%- endif -%}
-                    {%- endif -%}
-                  </td>
-                  <td>
-                    {%- if let Some(charge) = row.charge -%}
-                      {%- let battery_level_class = crate::http_server::hypermedia::semantic_classes::get_progress_class(**charge, 60.0, 10.0) -%}
-                      <progress class="progress w-full {{battery_level_class}}" value="{{charge}}" max="100"></progress>
-                      <div class="text-center text-primary w-full">{{charge}}%</div>
-                    {%- else -%}
-                      <p class="font-bold text-center">
-                        N/A
-                      </p>
-                    {%- endif -%}
-                  </td>
-                  <td class="hidden sm:table-cell">
-                    {%- if let Some(load) = row.load -%}
-                      {%- let load_level_class = crate::http_server::hypermedia::semantic_classes::get_progress_class(**load, 50.0, 75.0) -%}
-                      <progress class="progress w-full {{load_level_class}}" value="{{load}}" max="100"></progress>
-                      <div class="text-center text-primary w-full">{{load}}%</div>
-                    {%- else -%}
-                      <p class="font-bold text-center">N/A</p>
-                    {%- endif -%}
-                  </td>
-                  <td class="hidden sm:table-cell w-32">
-                    <a role="button" href="/ups/{{row.name}}" class="btn btn-outline btn-sm">Details</a>
-                  </td>
-                </tr>
+                    <div class="font-semibold opacity-80 text-xs uppercase">
+                      <div class="flex flex-row flex-wrap gap-2">
+                        {%- if let Some(status) = row.status -%}
+                          {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status) -%}
+                            <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
+                              {{status_detail.name}}
+                            </span>
+                          {%- endfor -%}
+                        {%- else -%}
+                          <span class="text-error">No Status</span>
+                        {%- endif -%}
+                      </div>
+                    </div>
+                    <p class="opacity-50 text-wrap text-xs">{{row.desc}}</p>
+                  </div>
+                  <div class="col-span-full grid grid-cols-6 lg:col-span-12">
+                    <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">
+                      <div class="stat-figure text-secondary">
+                        {%- call icons::get_svg("activity", 20) -%}
+                      </div>
+                      <div class="stat-title">Ups Load</div>
+                      <div class="stat-value text-lg">
+                        {%- match row.load -%}
+                          {%- when Some(load) -%}
+                            <div class="text-center w-full {{load.class.as_text()}}">{{load}}</div>
+                          {%- when None -%}
+                            <p class="font-bold opacity-50 text-center">N/A</p>
+                        {%- endmatch -%}
+                      </div>
+                    </div>
+                    <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">
+                      <div class="stat-figure text-secondary">
+                        {%- call icons::get_svg("zap", 20) -%}
+                      </div>
+                      <div class="stat-title">Ups Power</div>
+                      <div class="stat-value text-lg">
+                        {%- match row.power -%}
+                          {%- when Some(power) -%}
+                            <div class="text-center w-full {{power.class.as_text()}}">{{power}}</div>
+                          {%- when None -%}
+                            <p class="font-bold opacity-50 text-center">N/A</p>
+                        {%- endmatch -%}
+                      </div>
+                    </div>
+                    <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">
+                      <div class="stat-figure text-secondary">
+                        {%- call icons::get_svg("battery-charging", 20) -%}
+                      </div>
+                      <div class="stat-title">Battery Charge</div>
+                      <div class="stat-value text-lg">
+                        {%- match row.charge -%}
+                          {%- when Some(charge) -%}
+                            <div class="text-center w-full {{charge.class.as_text()}}">{{charge}}</div>
+                          {%- when None -%}
+                            <p class="font-bold opacity-50 text-center">N/A</p>
+                        {%- endmatch -%}
+                      </div>
+                    </div>
+                    <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">
+                      <div class="stat-figure text-secondary">
+                        {%- call icons::get_svg("clock", 20) -%}
+                      </div>
+                      <div class="stat-title">Battery Runtime</div>
+                      <div class="stat-value text-lg">
+                        {%- match row.runtime-%}
+                          {%- when Some(runtime) -%}
+                            <p class="font-bold text-center {{runtime.class.as_text()}}">
+                              <nut-time-display value="{{runtime.value}}"></nut-time-display>
+                            </p>
+                          {%- when None -%}
+                            <p class="font-bold opacity-50 text-center">N/A</p>
+                        {%- endmatch -%}
+                      </div>
+                    </div>
+                    <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">
+                      <div class="stat-figure text-secondary">
+                        {%- call icons::get_svg("thermometer", 20) -%}
+                      </div>
+                      <div class="stat-title">Ups Temperature</div>
+                      <div class="stat-value text-lg">
+                        {%- match row.temperature -%}
+                          {%- when Some(temperature) -%}
+                            <div class="text-center text-info w-full {{temperature.class.as_text()}}">
+                              {{temperature}}
+                            </div>
+                          {%- when None -%}
+                            <p class="font-bold opacity-50 text-center">N/A</p>
+                        {%- endmatch -%}
+                      </div>
+                    </div>
+                    <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">
+                      <div class="stat-figure text-secondary">
+                        {%- call icons::get_svg("monitor", 20) -%}
+                      </div>
+                      <div class="stat-title">Attached Clients</div>
+                      <div class="stat-value text-lg">
+                        <p class="font-bold text-center">{{row.attached}}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </li>
               {%- endfor -%}
-            {%- endif -%}
-          </tbody>
-        </table>
-      </div>
-    {%- endblock ups_table -%}
+          </nut-search-list>
+        {%- endif -%}
+      {%- endblock device_table -%}
+    </div>
   </div>
 {%- endblock content -%}

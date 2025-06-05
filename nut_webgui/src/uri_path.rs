@@ -128,16 +128,7 @@ impl Default for UriPath {
   }
 }
 
-impl TryFrom<&str> for UriPath {
-  type Error = InvalidPathError;
-
-  #[inline]
-  fn try_from(value: &str) -> Result<Self, Self::Error> {
-    Self::new(value)
-  }
-}
-
-impl std::str::FromStr for UriPath {
+impl core::str::FromStr for UriPath {
   type Err = InvalidPathError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {

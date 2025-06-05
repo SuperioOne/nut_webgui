@@ -1,95 +1,11 @@
 <div
   class="flex flex-col gap-6"
-  hx-get="/ups/{{name}}?tab=grid&section=tabcontent"
+  hx-get="/ups/{{device.name | urlencode_strict}}?tab=grid&section=tabcontent"
   hx-indicator="#indicator"
   hx-swap="morph:innerHTML"
   hx-trigger="every 5s"
   hx-target="#tab-content"
 >
   <div class="gap-2 gap-y-2 grid grid-cols-1 sm:grid-cols-2">
-    {%- if let Some(load) = load -%}
-    <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
-      <div class="font-bold">Load</div>
-      <div class="flex flex-row items-center justify-center">
-        {%- let load_level_class = crate::http_server::hypermedia::semantic_classes::get_fill_class(**load, 50.0, 75.0) -%}
-        <nut-gauge class="w-full {{load_level_class}}" value="{{load}}"></nut-gauge>
-      </div>
-
-      <div class="flex flex-col gap-3 grow justify-end">
-        {%- if let Some(realpower) = realpower -%}
-        <div class="font-bold text-sm">
-          Estimated real power
-          <span class="text-primary">{{realpower}} Watt</span>
-        </div>
-        {%- endif -%} 
-        {%- if let Some(realpower_nominal) = realpower_nominal -%}
-        <div class="font-bold text-sm">
-          Nominal real power
-          <span class="text-primary">{{realpower_nominal}} Watt</span>
-        </div>
-        {%- endif -%} 
-        {%- if let Some(power) = power -%}
-        <div class="font-bold text-sm">
-          Estimated power
-          <span class="text-primary">{{power}} VA</span>
-        </div>
-        {%- endif -%} 
-        {%- if let Some(power_nominal) = power_nominal -%}
-        <div class="font-bold text-sm">
-          Nominal power
-          <span class="text-primary"> {{power_nominal}} VA </span>
-        </div>
-        {%- endif -%}
-      </div>
-    </div>
-    {%- endif -%}
-
-    {%- if let Some(charge) = charge -%}
-    <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
-      <div class="font-bold">Battery</div>
-      <div class="flex flex-row items-center justify-center">
-        {%- let battery_level_class = crate::http_server::hypermedia::semantic_classes::get_fill_class(**charge, 60.0, 10.0) -%}
-        <nut-gauge class="w-full {{battery_level_class}}" value="{{charge}}"></nut-gauge>
-      </div>
-      <div class="flex flex-col gap-3 grow justify-end">
-        {%- if let Some(runtime) = runtime -%}
-        <div class="font-bold text-sm">
-          Remaining run time
-          <div class="tooltip tooltip-bottom" data-tip="{{runtime}} seconds">
-            <nut-time-display class="text-primary" value="{{runtime}}"></nut-time-display>
-          </div>
-        </div>
-        {%- endif -%}
-
-        {%- if let Some(charge_low) = charge_low -%}
-        <div class="font-bold text-sm">
-          Shutdown threshold <span class="text-error">{{charge_low}}%</span>
-        </div>
-        {%- endif -%}
-      </div>
-    </div>
-    {%- endif -%}
-
-    {%- if let Some(input_voltage) = input_voltage -%}
-    <div class="bg-base-200 card p-6 rounded-lg shadow">
-      <div class="font-bold">Input Voltage</div>
-      <div class="flex flex-row grow items-center justify-center">
-        <p class="p-6 text-7xl text-center">
-          <span class="text-primary">{{input_voltage}}V</span>
-        </p>
-      </div>
-    </div>
-    {%- endif -%}
-
-    {%- if let Some(battery_voltage) = battery_voltage -%}
-    <div class="bg-base-200 flex flex-col gap-3 p-6 rounded-lg shadow">
-      <div class="font-bold">Battery Voltage</div>
-      <div class="flex flex-row grow items-center justify-center">
-        <p class="p-6 text-7xl text-center">
-          <span class="text-primary">{{battery_voltage}}V</span>
-        </p>
-      </div>
-    </div>
-    {%- endif -%}
   </div>
 </div>

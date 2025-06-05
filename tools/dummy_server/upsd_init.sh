@@ -26,7 +26,7 @@ EOF
         );
 
         echo "${CONFIG}\n" >> "${TEMP_NUT_CONF_PATH}"
-        install "${device}" "/etc/nut/${DEVICE_FILE}";
+        ln -s "${device}" "/etc/nut/${DEVICE_FILE}";
     done;
 
     install "${TEMP_NUT_CONF_PATH}" "${NUT_CONF_PATH}";

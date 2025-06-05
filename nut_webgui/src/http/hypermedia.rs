@@ -1,3 +1,4 @@
+mod device_entry_impls;
 mod notifications;
 pub mod routes;
 mod semantic_classes;
