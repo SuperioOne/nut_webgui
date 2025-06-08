@@ -1,0 +1,108 @@
+{%- extends "+layout.html" -%}
+{%- import "icons.html" as icons -%}
+
+{%- macro list_item(name, value) -%}
+<li class="list-row">
+  <div></div>
+  <div class="gap-3 grid grid-cols-2 list-col-grows">
+    <p class="break-all font-bold text-primary"> {{name}} </p>
+    <p> {{ value }} </p>
+  </div>
+</li>
+{%- endmacro -%}
+
+{%- block page_title -%}
+  NUT Web - Server
+{%- endblock page_title -%}
+
+{%- block content -%}
+  <div 
+    class="flex flex-col gap-4"
+    hx-ext="morph"
+    hx-get="{{base_path | urlencode}}/server/?section=info_cards"
+    hx-trigger="every 15s"
+    hx-swap="morph:innerHTML"
+    hx-indicator="#indicator"
+  >
+    {%- block info_cards -%}
+      <div class="content-card flex flex-col gap-4" >
+        <h2 class="opacity-60 text-lg tracking-wide">Upsd State</h2>
+        <ul class="list">
+          {%- call list_item("state", state.status) -%}
+
+          {%- match state.last_device_sync -%}
+            {%- when Some(date) -%}
+              {%- call list_item("last sync", date) -%}
+            {%- when None -%}
+              {%- call list_item("last sync", "never") -%}
+          {%- endmatch -%}
+
+          {%- match state.prot_ver -%}
+            {%- when Some(prot_ver) -%}
+              {%- call list_item("protocol version", prot_ver) -%}
+            {%- when None -%}
+              {%- call list_item("protocol version", "-") -%}
+          {%- endmatch -%}
+
+          {%- match state.ver -%}
+            {%- when Some(ver) -%}
+              {%- call list_item("daemon version", ver) -%}
+            {%- when None -%}
+              {%- call list_item("daemon version", "-") -%}
+          {%- endmatch -%}
+
+          {%- call list_item("connected devices", device_count) -%}
+        </ul>
+      </div>
+
+      <div class="content-card flex flex-col gap-4" >
+        <h2 class="opacity-60 text-lg tracking-wide">Configs</h2>
+        <ul class="list">
+          {%- call list_item("log_level", config.log_level) -%}
+
+          {%- match config.default_theme -%}
+            {%- when Some(theme) -%}
+              {%- call list_item("default_theme", theme) -%}
+            {%- when None -%}
+              {%- call list_item("default_theme", "auto") -%}
+          {%- endmatch -%}
+
+          {%- match config.config_file -%}
+            {%- when Some(path) -%}
+              {%- call list_item("config_file", path.display()) -%}
+            {%- when None -%}
+              {%- call list_item("config_file", "NOT SET") -%}
+          {%- endmatch -%}
+
+          {%- call list_item("http.listen", config.http_server.listen) -%}
+          {%- call list_item("http.port", config.http_server.port) -%}
+
+          {%- if config.http_server.base_path.is_empty() -%}
+            {%- call list_item("http.base_path", "/") -%}
+          {%- else -%}
+            {%- call list_item("http.base_path", config.http_server.base_path) -%}
+          {%- endif -%}
+
+          {%- if config.upsd.user.is_some() -%}
+            {%- call list_item("upsd.username", "SET") -%}
+          {%- else -%}
+            {%- call list_item("upsd.username", "NOT SET") -%}
+          {%- endif -%}
+
+          {%- if config.upsd.pass.is_some() -%}
+            {%- call list_item("upsd.password", "SET") -%}
+          {%- else -%}
+            {%- call list_item("upsd.password", "NOT SET") -%}
+          {%- endif -%}
+
+          {%- call list_item("upsd.address", config.upsd.addr) -%}
+          {%- call list_item("upsd.port", config.upsd.port) -%}
+          {%- call list_item("upsd.max_connection", config.upsd.max_conn) -%}
+          {%- call list_item("upsd.poll_interval", config.upsd.poll_interval) -%}
+          {%- call list_item("upsd.poll_freq", config.upsd.poll_freq) -%}
+        </ul>
+      </div>
+    {%- endblock info_cards -%}
+  </div>
+{%- endblock content -%}
+

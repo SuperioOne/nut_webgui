@@ -17,6 +17,7 @@ repository = "https://github.com/SuperioOne/nut_webgui"
 codegen-units = 1
 lto = true
 strip = "debuginfo"
+panic = "abort"
 
 [dependencies]
 askama = { version = "0.14", features = ["blocks"] }

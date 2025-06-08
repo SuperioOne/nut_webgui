@@ -35,39 +35,69 @@
     <div class="drawer drawer-end">
       <input id="menu-toggle" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content flex flex-col justify-between min-h-screen">
-        <header>
-          <div class="bg-base-200 navbar shadow-sm">
-            <div class="navbar-start">
-              <a class="btn btn-ghost text-xl" href="{{base_path | urlencode}}/">
-                <img width="32" height="32" src="{{base_path | urlencode}}/static/icon.svg" alt="icon" />
-                <span class="hidden mx-1 sm:inline-block">NUT Web Monitor</span>
-              </a>
+        <header class="bg-base-200 navbar shadow-sm">
+          <div class="navbar-start">
+            <div class="dropdown">
+              <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+                {%- call icons::get_svg("menu", 24) -%}
+              </div>
+              <ul
+                tabindex="0"
+                class="menu menu-sm md:h-fit dropdown-content bg-base-100 rounded-box w-64 z-99 mt-3 p-2 shadow">
+                <li>
+                  <a class="text-lg" href="{{base_path | urlencode}}/">
+                    {%- call icons::get_svg("columns", 18) -%} Devices
+                  </a>
+                </li>
+                <li>
+                  <a class="text-lg" href="{{base_path | urlencode}}/server">
+                    {%- call icons::get_svg("server", 18) -%} Server
+                  </a>
+                </li>
+              </ul>
             </div>
-            <div class="navbar-end">
-              <div class="htmx-send-error-indicator">
-                <div class="text-error tooltip tooltip-bottom" data-tip="Network connection lost">
-                  {%- call icons::get_svg("wifi-off", 18) -%}
-                </div>
+            <a class="btn btn-ghost text-xl" href="{{base_path | urlencode}}/">
+              <img width="32" height="32" src="{{base_path | urlencode}}/static/icon.svg" alt="icon" />
+              <span class="hidden mx-1 sm:inline-block">NUT Web Monitor</span>
+            </a>
+          </div>
+          <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+              <li>
+                <a class="text-lg" href="{{base_path | urlencode}}/">
+                  {%- call icons::get_svg("columns", 18) -%} Devices
+                </a>
+              </li>
+              <li>
+                <a class="text-lg" href="{{base_path | urlencode}}/server">
+                  {%- call icons::get_svg("server", 18) -%} Server
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div class="navbar-end">
+            <div class="htmx-send-error-indicator">
+              <div class="text-error tooltip tooltip-bottom" data-tip="Network connection lost">
+                {%- call icons::get_svg("wifi-off", 18) -%}
               </div>
-              <div id="indicator" class="cursor-default htmx-indicator">
-                <div
-                  class="text-success tooltip tooltip-bottom"
-                  data-tip="Updating page"
-                >
-                  <span class="cursor-default loading loading-md loading-spinner text-info">
-                  </span>
-                </div>
-              </div>
-              <label
-                class="btn btn-circle btn-ghost drawer-button"
-                for="menu-toggle"
-                hx-get="/_layout/themes"
-                hx-target="#themes-panel"
-                hx-trigger="click once, pointerenter once"
+            </div>
+            <div id="indicator" class="cursor-default htmx-indicator">
+              <div
+                class="text-success tooltip tooltip-bottom"
+                data-tip="Updating page"
               >
-                {%- call icons::get_svg("sliders", 18) -%}
-              </label>
+                <span class="cursor-default loading loading-md loading-spinner text-info"></span>
+              </div>
             </div>
+            <label
+              class="btn btn-circle btn-ghost drawer-button"
+              for="menu-toggle"
+              hx-get="/_layout/themes"
+              hx-target="#themes-panel"
+              hx-trigger="click once, pointerenter once"
+            >
+              {%- call icons::get_svg("sliders", 18) -%}
+            </label>
           </div>
         </header>
         <div  class="flex flex-row grow justify-center lg:p-16 md:p-14 p-3 w-full">

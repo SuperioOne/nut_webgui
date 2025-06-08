@@ -20,7 +20,7 @@
     </label>
     <div
       hx-ext="morph"
-      hx-get="/?section=device_table"
+      hx-get="{{base_path | urlencode}}/?section=device_table"
       hx-trigger="every 10s"
       hx-swap="morph:innerHTML"
       hx-indicator="#indicator"
@@ -31,16 +31,16 @@
             No device available
           </div>
         {%- else -%}
-          <nut-search-list for="device-filter" id="device_list" class="list-none">
+          <nut-search-list for="device-filter" id="device_list" class="flex flex-col gap-1 list-none">
             {%- for row in devices -%}
               <li
-                class="content-card my-2 rounded shadow-md"
-                id="{{row.name}}"
+                class="content-card rounded shadow-md"
+                id="{{row.id}}"
                 morph-preserve-attr="class"
                 search-value="{{row.name}}"
               >
-                <div class="grid grid-cols-15 p-2"> 
-                  <div class="col-span-full flex flex-col gap-2 grow items-center lg:col-span-3 lg:items-start p-2">
+                <div class="grid grid-cols-15">
+                  <div class="border-b-1 border-daisy border-dashed col-span-full flex flex-col gap-2 grow items-center lg:border-b-0 lg:border-r-1 lg:col-span-3 lg:items-start p-2">
                     <a
                       class="break-all font-bold link link-hover text-primary text-wrap text-xl"
                       href="{{base_path | urlencode}}/ups/{{row.name | urlencode_strict}}"

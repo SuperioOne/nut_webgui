@@ -1,6 +1,9 @@
 use crate::{
   device_entry::DeviceEntry,
-  http::{RouterState, hypermedia::device_entry_impls::ValueDetail},
+  http::{
+    RouterState,
+    hypermedia::{device_entry_impls::ValueDetail, filters::normalize_id},
+  },
 };
 use askama::Template;
 use axum::{
@@ -9,9 +12,11 @@ use axum::{
 };
 use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::Deserialize;
+use std::borrow::Cow;
 
 #[derive(Debug)]
 pub struct DeviceTableRow<'a> {
+  id: Cow<'a, str>,
   attached: usize,
   charge: Option<ValueDetail<'a>>,
   desc: &'a str,
@@ -40,6 +45,7 @@ impl<'a> From<&'a DeviceEntry> for DeviceTableRow<'a> {
     };
 
     DeviceTableRow {
+      id: normalize_id(device.name.as_str()),
       attached: device.attached.len(),
       charge,
       desc: device.desc.as_ref(),

@@ -97,15 +97,16 @@ impl HttpServer {
     let hypermedia_api = Router::new()
       .nest_service("/static", static_files)
       .route(
+        "/_layout/themes",
+        get(hypermedia::routes::layout::get_themes),
+      )
+      .route(
         "/ups/{ups_name}/command",
         post(hypermedia::routes::ups::post_command),
       )
       .route("/", get(hypermedia::routes::home::get))
-      .route(
-        "/_layout/themes",
-        get(hypermedia::routes::layout::get_themes),
-      )
       .route("/not-found", get(hypermedia::routes::not_found::get))
+      .route("/server", get(hypermedia::routes::server_info::get))
       .route("/ups/{ups_name}", get(hypermedia::routes::ups::get))
       .fallback(hypermedia::routes::not_found::get);
 

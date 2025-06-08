@@ -1,3 +1,4 @@
+use askama::FastWritable;
 use serde::{Deserialize, de::Visitor};
 
 const LOOKUP_ASCII_URI: [bool; 128] = {
@@ -75,10 +76,6 @@ pub struct UriPath {
 pub struct InvalidPathError;
 
 impl UriPath {
-  pub const EMPTY: Self = Self {
-    inner: String::new(),
-  };
-
   pub fn new<T>(path: T) -> Result<Self, InvalidPathError>
   where
     T: AsRef<str>,
@@ -124,7 +121,28 @@ impl UriPath {
 impl Default for UriPath {
   #[inline]
   fn default() -> Self {
-    Self::EMPTY
+    Self {
+      inner: String::default(),
+    }
+  }
+}
+
+impl std::fmt::Display for UriPath {
+  #[inline]
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(self.as_str())
+  }
+}
+
+impl FastWritable for UriPath {
+  #[inline]
+  fn write_into<W: core::fmt::Write + ?Sized>(
+    &self,
+    dest: &mut W,
+    _values: &dyn askama::Values,
+  ) -> askama::Result<()> {
+    dest.write_str(self.as_str())?;
+    Ok(())
   }
 }
 

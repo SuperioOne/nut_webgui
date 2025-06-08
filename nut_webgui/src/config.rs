@@ -71,7 +71,7 @@ impl Default for HttpServerConfig {
   fn default() -> Self {
     Self {
       listen: Ipv4Addr::LOCALHOST.into(),
-      base_path: UriPath::EMPTY,
+      base_path: UriPath::default(),
       port: 9000,
     }
   }

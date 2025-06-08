@@ -59,7 +59,6 @@ pub async fn get_ups_by_name(
 
 pub async fn get_ups_list(State(rs): State<RouterState>) -> Response {
   let server_state = rs.state.read().await;
-
   let mut device_refs: Vec<&DeviceEntry> = server_state.devices.values().collect();
   device_refs.sort_by(|r, l| r.name.cmp(&l.name));
 

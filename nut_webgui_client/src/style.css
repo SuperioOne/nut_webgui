@@ -103,6 +103,11 @@
                 stroke-linejoin: round;
                 fill: none;
         }
+
+        .border-daisy {
+                border-style: dashed;
+                border-color: color-mix(in oklab, currentColor 10%, #0000);
+        }
 }
 
 @view-transition {

@@ -16,7 +16,7 @@ use nut_webgui_upsmc::{
   ups_status::UpsStatus,
 };
 use std::{collections::HashMap, net::ToSocketAddrs, sync::Arc, time::Duration};
-use tokio::{join, select, sync::RwLock, task::JoinSet, time::interval};
+use tokio::{join, select, sync::RwLock, task::JoinSet, time::interval, try_join};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
@@ -108,13 +108,21 @@ where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
   pub async fn next(&self) -> Result<(), SyncTaskError> {
-    let remote = match self.client.list_ups().await {
+    let remote_details = try_join!(
+      self.client.list_ups(),
+      self.client.get_protver(),
+      self.client.get_ver(),
+    );
+
+    let (remote, prot_ver, ver) = match remote_details {
       Ok(res) => Ok(res),
       Err(err) => {
         let mut write_lock = self.state.write().await;
 
         if write_lock.remote_state.status != DaemonStatus::Dead {
           write_lock.remote_state.status = DaemonStatus::Dead;
+          write_lock.remote_state.prot_ver = None;
+          write_lock.remote_state.ver = None;
 
           error!(message = "ups daemon is disconnected", reason = %err);
 
@@ -183,6 +191,8 @@ where
         );
 
         write_lock.remote_state.status = DaemonStatus::Dead;
+        write_lock.remote_state.prot_ver = None;
+        write_lock.remote_state.ver = None;
 
         if let Err(err) = self.event_channel.send(SystemEvent::UpsdStatus {
           status: DaemonStatus::Dead,
@@ -229,6 +239,8 @@ where
       }
 
       write_lock.remote_state.last_device_sync = Some(Utc::now());
+      write_lock.remote_state.prot_ver = Some(prot_ver.value.into_boxed_str());
+      write_lock.remote_state.ver = Some(ver.value.into_boxed_str());
 
       if let Err(err) = events.send(&self.event_channel) {
         warn!(message = "unable to send events", reason= %err);

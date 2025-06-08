@@ -37,6 +37,8 @@ impl std::fmt::Display for DaemonStatus {
 pub struct DaemonState {
   pub last_device_sync: Option<DateTime<Utc>>,
   pub status: DaemonStatus,
+  pub prot_ver: Option<Box<str>>,
+  pub ver: Option<Box<str>>,
 }
 
 impl DaemonState {
@@ -44,6 +46,8 @@ impl DaemonState {
     DaemonState {
       last_device_sync: None,
       status: DaemonStatus::NotReady,
+      ver: None,
+      prot_ver: None,
     }
   }
 }
