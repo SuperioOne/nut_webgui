@@ -5,13 +5,14 @@ use crate::{
   internal::{Deserialize, Serialize, lexer::Lexer},
   responses,
 };
-use core::borrow::Borrow;
+use core::{borrow::Borrow, time::Duration};
 use tokio::{
   io::{
     AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader, Interest, ReadHalf,
     WriteHalf, split,
   },
   net::{TcpStream, ToSocketAddrs},
+  time::timeout,
 };
 use tracing::trace;
 
@@ -21,6 +22,7 @@ where
 {
   reader: BufReader<ReadHalf<S>>,
   writer: WriteHalf<S>,
+  timeout: Duration,
 }
 
 impl NutClient<TcpStream> {
@@ -30,6 +32,7 @@ impl NutClient<TcpStream> {
   {
     let connection = TcpStream::connect(addr).await?;
     connection.set_nodelay(true)?;
+    connection.set_linger(None)?;
     connection
       .ready(Interest::READABLE | Interest::WRITABLE)
       .await?;
@@ -55,7 +58,16 @@ where
     let (reader, writer) = split(stream);
     let reader = BufReader::new(reader);
 
-    Self { writer, reader }
+    Self {
+      writer,
+      reader,
+      timeout: Duration::from_secs(60),
+    }
+  }
+
+  #[inline]
+  pub fn set_timeout(&mut self, timeout: Duration) {
+    self.timeout = timeout;
   }
 
   pub async fn is_open(&mut self) -> bool {
@@ -66,11 +78,18 @@ where
   }
 
   pub async fn close(mut self) -> Result<(), Error> {
-    self.writer.shutdown().await?;
+    _ = self.writer.shutdown().await?;
     Ok(())
   }
 
   pub async fn send_raw(&mut self, send: &str) -> Result<String, Error> {
+    match timeout(self.timeout, self.inner_send_raw(send)).await {
+      Ok(r) => r,
+      Err(_) => Err(ErrorKind::RequestTimeout.into()),
+    }
+  }
+
+  async fn inner_send_raw(&mut self, send: &str) -> Result<String, Error> {
     trace!(message = "tcp message", send = send);
     const LIST_START: &'static str = "BEGIN LIST";
     const LIST_END: &'static str = "END LIST";

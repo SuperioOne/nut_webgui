@@ -81,7 +81,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await
     .inspect_err(|err| error!(message = "cannot bind tcp socket to listen", reason = %err, listen_port = config.http_server.port))?;
 
-  let client_pool = NutPoolClient::new(config.upsd.get_socket_addr(), config.upsd.max_conn);
+  let client_pool = NutPoolClient::new_with_timeout(
+    config.upsd.get_socket_addr(),
+    config.upsd.max_conn,
+    Duration::from_secs(config.upsd.poll_freq),
+  );
   let event_channel = EventChannel::new(64);
   let server_state = Arc::new(RwLock::new(ServerState {
     remote_state: DaemonState::new(),

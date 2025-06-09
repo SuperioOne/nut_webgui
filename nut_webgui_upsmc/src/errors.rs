@@ -25,6 +25,7 @@ pub enum ErrorKind {
   },
   ConnectionPoolClosed,
   EmptyResponse,
+  RequestTimeout,
 }
 
 #[derive(Debug, Clone)]
@@ -112,6 +113,7 @@ impl std::fmt::Display for Error {
 impl std::fmt::Display for ErrorKind {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
+      ErrorKind::RequestTimeout => f.write_str("request timeout"),
       ErrorKind::EmptyResponse => f.write_str("empty response received"),
       ErrorKind::ConnectionPoolClosed => {
         f.write_str("new connection request received but connection pool is already closed")

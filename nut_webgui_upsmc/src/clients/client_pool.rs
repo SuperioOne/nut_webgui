@@ -5,7 +5,7 @@ use crate::{
   internal::item_pool::{ItemAllocator, ItemPool, ItemPoolError},
   responses,
 };
-use core::num::NonZeroUsize;
+use core::{num::NonZeroUsize, time::Duration};
 use std::net::ToSocketAddrs;
 use tokio::net::TcpStream;
 use tracing::warn;
@@ -15,6 +15,7 @@ where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
   addr: A,
+  timeout: Option<Duration>,
 }
 
 impl<A> ItemAllocator for ClientAllocator<A>
@@ -26,7 +27,11 @@ where
 
   async fn init(&self) -> Result<Self::Output, Self::Error> {
     let addr: Vec<_> = self.addr.to_socket_addrs()?.collect();
-    let client = NutClient::connect(addr.as_slice()).await?;
+    let mut client = NutClient::connect(addr.as_slice()).await?;
+
+    if let Some(timeout) = self.timeout {
+      client.set_timeout(timeout);
+    }
 
     Ok(client)
   }
@@ -37,12 +42,14 @@ where
     }
   }
 
+  #[inline]
   fn is_valid_state(&self, item: &mut Self::Output) -> impl Future<Output = bool> {
     item.is_open()
   }
 }
 
 impl From<ItemPoolError<Error>> for Error {
+  #[inline]
   fn from(value: ItemPoolError<Error>) -> Self {
     match value {
       ItemPoolError::PoolClosed => ErrorKind::ConnectionPoolClosed.into(),
@@ -62,6 +69,7 @@ impl<A> Clone for NutPoolClient<A>
 where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
+  #[inline]
   fn clone(&self) -> Self {
     Self {
       pool: self.pool.clone(),
@@ -80,7 +88,7 @@ macro_rules! impl_pooled_call {
       Ok(res) => Ok(res),
       Err(err) => {
         match err.kind() {
-          ErrorKind::IOError { .. } | ErrorKind::EmptyResponse => {
+          ErrorKind::IOError { .. } | ErrorKind::EmptyResponse | ErrorKind::RequestTimeout => {
             let mut client = $pool.get_checked().await?;
             impl_pooled_call!(@action client, $fn $(, $($args),+)?)
           }
@@ -98,7 +106,7 @@ macro_rules! impl_pooled_call {
       },
       Err(err) => {
         match err.kind() {
-          ErrorKind::IOError { .. } | ErrorKind::ConnectionPoolClosed | ErrorKind::EmptyResponse => {
+          ErrorKind::IOError { .. } | ErrorKind::ConnectionPoolClosed | ErrorKind::EmptyResponse | ErrorKind::RequestTimeout => {
           drop($client);
         }
           _ => {
@@ -119,14 +127,34 @@ where
 {
   pub fn new(addr: A, limit: NonZeroUsize) -> Self {
     Self {
-      pool: ItemPool::new(limit, ClientAllocator { addr }),
+      pool: ItemPool::new(
+        limit,
+        ClientAllocator {
+          addr,
+          timeout: None,
+        },
+      ),
     }
   }
 
+  pub fn new_with_timeout(addr: A, limit: NonZeroUsize, timeout: Duration) -> Self {
+    Self {
+      pool: ItemPool::new(
+        limit,
+        ClientAllocator {
+          addr,
+          timeout: Some(timeout),
+        },
+      ),
+    }
+  }
+
+  #[inline]
   pub fn close(self) -> impl Future<Output = ()> {
     self.pool.close()
   }
 
+  #[inline]
   pub fn clear(&mut self) -> impl Future<Output = ()> {
     self.pool.clear()
   }

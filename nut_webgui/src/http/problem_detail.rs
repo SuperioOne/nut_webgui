@@ -88,6 +88,11 @@ impl From<Error> for ProblemDetail {
         status: StatusCode::INTERNAL_SERVER_ERROR,
         detail: Some(err.to_string()),
       },
+      ErrorKind::RequestTimeout => ProblemDetail {
+        title: "Request timeout",
+        status: StatusCode::INTERNAL_SERVER_ERROR,
+        detail: Some(err.to_string()),
+      },
     }
   }
 }
