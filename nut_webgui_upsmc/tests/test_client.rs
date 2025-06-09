@@ -30,7 +30,7 @@ async fn var_desc() {
       format!(
         "GET DESC {ups} {var}\n",
         ups = &ups,
-        var = &VarName::UPS_BEEPER_STATUS
+        var = VarName::UPS_BEEPER_STATUS
       )
       .as_bytes(),
     )
@@ -39,7 +39,7 @@ async fn var_desc() {
 
   let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
   let var_desc = client
-    .get_var_desc(&ups, &VarName::UPS_BEEPER_STATUS)
+    .get_var_desc(&ups, VarName::UPS_BEEPER_STATUS)
     .await
     .unwrap();
 
@@ -118,7 +118,7 @@ async fn get_var() {
 
   let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
   let var = client
-    .get_var(&ups, &VarName::UPS_BEEPER_STATUS)
+    .get_var(&ups, VarName::UPS_BEEPER_STATUS)
     .await
     .unwrap();
 
@@ -314,7 +314,7 @@ END LIST RANGE bx1600mi input.transfer.low
       format!(
         "LIST RANGE {ups} {var}\n",
         ups = &ups,
-        var = &VarName::INPUT_TRANSFER_LOW
+        var = VarName::INPUT_TRANSFER_LOW
       )
       .as_bytes(),
     )
@@ -323,7 +323,7 @@ END LIST RANGE bx1600mi input.transfer.low
 
   let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
   let range_list = client
-    .list_range(&ups, &VarName::INPUT_TRANSFER_LOW)
+    .list_range(&ups, VarName::INPUT_TRANSFER_LOW)
     .await
     .unwrap();
 
@@ -351,7 +351,7 @@ END LIST ENUM bx1600mi input.transfer.low
       format!(
         "LIST ENUM {ups} {var}\n",
         ups = &ups,
-        var = &VarName::INPUT_TRANSFER_LOW
+        var = VarName::INPUT_TRANSFER_LOW
       )
       .as_bytes(),
     )
@@ -360,7 +360,7 @@ END LIST ENUM bx1600mi input.transfer.low
 
   let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
   let enum_list = client
-    .list_enum(&ups, &VarName::INPUT_TRANSFER_LOW)
+    .list_enum(&ups, VarName::INPUT_TRANSFER_LOW)
     .await
     .unwrap();
 
@@ -467,7 +467,7 @@ async fn instcmd() {
     .unwrap();
 
   client
-    .instcmd(&ups, &CmdName::new_unchecked("beeper.on"))
+    .instcmd(ups, CmdName::new_unchecked("beeper.on"))
     .await
     .unwrap();
 }
@@ -489,7 +489,7 @@ async fn fsd() {
     .await
     .unwrap();
 
-  client.fsd(&ups).await.unwrap();
+  client.fsd(ups).await.unwrap();
 }
 
 #[tokio::test]
@@ -518,7 +518,7 @@ async fn set_var() {
     .unwrap();
 
   client
-    .set_var(&ups, &VarName::BATTERY_RUNTIME_LOW, &Value::from(32))
+    .set_var(ups, VarName::BATTERY_RUNTIME_LOW, Value::from(32))
     .await
     .unwrap();
 }

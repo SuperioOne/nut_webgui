@@ -142,7 +142,7 @@ where
     }
 
     let responses = join_all(devices.iter().map(|device| async move {
-      let result = self.client.get_var(device, &VarName::UPS_STATUS).await;
+      let result = self.client.get_var(device, VarName::UPS_STATUS).await;
       (device, result)
     }))
     .await;

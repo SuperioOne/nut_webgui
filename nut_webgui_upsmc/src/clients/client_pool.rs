@@ -136,67 +136,98 @@ impl<A> AsyncNutClient for &NutPoolClient<A>
 where
   A: ToSocketAddrs + Send + Sync + 'static,
 {
-  async fn get_cmd_desc(self, ups: &UpsName, cmd: &CmdName) -> Result<responses::CmdDesc, Error> {
-    impl_pooled_call!(self.pool, get_cmd_desc, ups, cmd)
+  async fn get_cmd_desc<N, C>(self, ups: N, cmd: C) -> Result<responses::CmdDesc, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+    C: std::borrow::Borrow<CmdName>,
+  {
+    impl_pooled_call!(&self.pool, get_cmd_desc, ups.borrow(), cmd.borrow())
   }
 
   async fn get_protver(self) -> Result<responses::ProtVer, Error> {
-    impl_pooled_call!(self.pool, get_protver)
+    impl_pooled_call!(&self.pool, get_protver)
   }
 
-  async fn get_ups_desc(self, ups: &UpsName) -> Result<responses::UpsDesc, Error> {
-    impl_pooled_call!(self.pool, get_ups_desc, ups)
+  async fn get_ups_desc<N>(self, ups: N) -> Result<responses::UpsDesc, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+  {
+    impl_pooled_call!(&self.pool, get_ups_desc, ups.borrow())
   }
 
-  async fn get_var(self, ups: &UpsName, var: &VarName) -> Result<responses::UpsVar, Error> {
-    impl_pooled_call!(self.pool, get_var, ups, var)
+  async fn get_var<N, V>(self, ups: N, var: V) -> Result<responses::UpsVar, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+    V: std::borrow::Borrow<VarName>,
+  {
+    impl_pooled_call!(&self.pool, get_var, ups.borrow(), var.borrow())
   }
 
-  async fn get_var_type(
-    self,
-    ups: &UpsName,
-    var: &VarName,
-  ) -> Result<responses::UpsVarType, Error> {
-    impl_pooled_call!(self.pool, get_var_type, ups, var)
+  async fn get_var_type<N, V>(self, ups: N, var: V) -> Result<responses::UpsVarType, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+    V: std::borrow::Borrow<VarName>,
+  {
+    impl_pooled_call!(&self.pool, get_var_type, ups.borrow(), var.borrow())
   }
 
-  async fn get_var_desc(
-    self,
-    ups: &UpsName,
-    var: &VarName,
-  ) -> Result<responses::UpsVarDesc, Error> {
-    impl_pooled_call!(self.pool, get_var_desc, ups, var)
+  async fn get_var_desc<N, V>(self, ups: N, var: V) -> Result<responses::UpsVarDesc, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+    V: std::borrow::Borrow<VarName>,
+  {
+    impl_pooled_call!(&self.pool, get_var_desc, ups.borrow(), var.borrow())
   }
 
   async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
-    impl_pooled_call!(self.pool, get_ver)
+    impl_pooled_call!(&self.pool, get_ver)
   }
 
-  async fn list_client(self, ups: &UpsName) -> Result<responses::ClientList, Error> {
-    impl_pooled_call!(self.pool, list_client, ups)
+  async fn list_client<N>(self, ups: N) -> Result<responses::ClientList, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+  {
+    impl_pooled_call!(&self.pool, list_client, ups.borrow())
   }
 
-  async fn list_cmd(self, ups: &UpsName) -> Result<responses::CmdList, Error> {
-    impl_pooled_call!(self.pool, list_cmd, ups)
+  async fn list_cmd<N>(self, ups: N) -> Result<responses::CmdList, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+  {
+    impl_pooled_call!(&self.pool, list_cmd, ups.borrow())
   }
 
-  async fn list_enum(self, ups: &UpsName, var: &VarName) -> Result<responses::EnumList, Error> {
-    impl_pooled_call!(self.pool, list_enum, ups, var)
+  async fn list_enum<N, V>(self, ups: N, var: V) -> Result<responses::EnumList, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+    V: std::borrow::Borrow<VarName>,
+  {
+    impl_pooled_call!(&self.pool, list_enum, ups.borrow(), var.borrow())
   }
 
-  async fn list_range(self, ups: &UpsName, var: &VarName) -> Result<responses::RangeList, Error> {
-    impl_pooled_call!(self.pool, list_range, ups, var)
+  async fn list_range<N, V>(self, ups: N, var: V) -> Result<responses::RangeList, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+    V: std::borrow::Borrow<VarName>,
+  {
+    impl_pooled_call!(&self.pool, list_range, ups.borrow(), var.borrow())
   }
 
-  async fn list_rw(self, ups: &UpsName) -> Result<responses::RwList, Error> {
-    impl_pooled_call!(self.pool, list_rw, ups)
+  async fn list_rw<N>(self, ups: N) -> Result<responses::RwList, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+  {
+    impl_pooled_call!(&self.pool, list_rw, ups.borrow())
   }
 
   async fn list_ups(self) -> Result<responses::UpsList, Error> {
-    impl_pooled_call!(self.pool, list_ups)
+    impl_pooled_call!(&self.pool, list_ups)
   }
 
-  async fn list_var(self, ups: &UpsName) -> Result<responses::UpsVarList, Error> {
-    impl_pooled_call!(self.pool, list_var, ups)
+  async fn list_var<N>(self, ups: N) -> Result<responses::UpsVarList, Error>
+  where
+    N: std::borrow::Borrow<UpsName>,
+  {
+    impl_pooled_call!(&self.pool, list_var, ups.borrow())
   }
 }
