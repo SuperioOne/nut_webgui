@@ -101,8 +101,16 @@ impl HttpServer {
         get(hypermedia::routes::layout::get_themes),
       )
       .route(
-        "/ups/{ups_name}/command",
-        post(hypermedia::routes::ups::post_command),
+        "/ups/{ups_name}/instcmd",
+        post(hypermedia::routes::ups::post_instcmd),
+      )
+      .route(
+        "/ups/{ups_name}/fsd",
+        post(hypermedia::routes::ups::post_fsd),
+      )
+      .route(
+        "/ups/{ups_name}/rw",
+        patch(hypermedia::routes::ups::patch_rw),
       )
       .route("/", get(hypermedia::routes::home::get))
       .route("/not-found", get(hypermedia::routes::not_found::get))

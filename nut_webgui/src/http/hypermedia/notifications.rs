@@ -1,58 +1,50 @@
-#![allow(dead_code)]
-
+use crate::http::hypermedia::semantic_classes::SemanticType;
 use askama::Template;
-use std::{
-  fmt::{Display, Formatter},
-  time::Duration,
-};
+use core::time::Duration;
+use std::borrow::Cow;
 
-#[derive(Debug)]
-pub enum Notification {
-  Success,
-  Warning,
-  Error,
-  Info,
+#[derive(Template, Debug)]
+#[template(path = "notification.html", ext = "html")]
+pub struct NotificationTemplate<'a> {
+  pub message: Cow<'a, str>,
+  pub ttl: u128,
+  pub semantic_type: SemanticType,
 }
 
-impl Display for Notification {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Notification::Error => f.write_str("error"),
-      Notification::Info => f.write_str("info"),
-      Notification::Success => f.write_str("success"),
-      Notification::Warning => f.write_str("warning"),
+const DEFAULT_DURATION_MS: u128 = 3000;
+
+impl<'a> NotificationTemplate<'a> {
+  #[inline]
+  pub fn set_level(mut self, level: SemanticType) -> Self {
+    self.semantic_type = level;
+    self
+  }
+
+  #[inline]
+  pub fn set_ttl(mut self, ttl: Duration) -> Self {
+    self.ttl = ttl.as_millis();
+    self
+  }
+}
+
+impl<'a> From<&'a str> for NotificationTemplate<'a> {
+  #[inline]
+  fn from(value: &'a str) -> Self {
+    NotificationTemplate {
+      message: Cow::Borrowed(value),
+      ttl: DEFAULT_DURATION_MS,
+      semantic_type: SemanticType::Info,
     }
   }
 }
 
-#[derive(Template)]
-#[template(path = "notification.html", ext = "html")]
-pub struct NotificationTemplate {
-  message: String,
-  ttl: u128,
-  notification_type: Notification,
-}
-
-const DEFAULT_DURATION: Duration = Duration::from_millis(3000);
-
-impl NotificationTemplate {
-  /// Creates notification template with hx-swap-oob
-  /// # Arguments
-  ///
-  /// * `message`: Notification body
-  /// * `notification_type`: Notification level
-  /// * `ttl`: Optional Time to live as milliseconds, Default is 3000ms.
-  ///
-  /// returns: NotificationTemplate
-  pub fn new(
-    message: String,
-    notification_type: Notification,
-    ttl: Option<Duration>,
-  ) -> NotificationTemplate {
+impl From<String> for NotificationTemplate<'_> {
+  #[inline]
+  fn from(value: String) -> Self {
     NotificationTemplate {
-      message,
-      notification_type,
-      ttl: ttl.unwrap_or(DEFAULT_DURATION).as_millis(),
+      message: Cow::Owned(value),
+      ttl: DEFAULT_DURATION_MS,
+      semantic_type: SemanticType::Info,
     }
   }
 }

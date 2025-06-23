@@ -1,0 +1,43 @@
+name: build_rc_images
+on:
+  push:
+    branches:
+      - master
+jobs:
+  publish-binaries:
+    defaults:
+      run:
+        shell: bash
+    runs-on: akashi
+    container:
+      image: gitea-service:80/actions/arch-action-runner-full:latest
+      options: "--security-opt seccomp=unconfined --security-opt apparmor=unconfined --device /dev/fuse:rw"
+      credentials:
+        username:  ${{secrets.REGISTRY_USERNAME}}
+        password:  ${{secrets.REGISTRY_ACCESS_TOKEN}}
+    steps:
+      - uses: http://gitea-service/actions/checkout@v4
+        with:
+          show-progress: false
+          submodules: true
+      - name: Setup rustup targets
+        run: |
+          rustup default stable;
+          rustup target add aarch64-unknown-linux-musl \
+          arm-unknown-linux-musleabi \
+          armv7-unknown-linux-musleabi \
+          x86_64-unknown-linux-musl;
+      - name: Run tests
+        run: make test
+      - name: Build binaries
+        run: >
+          export CARGO_TERM_QUIET=true;
+          make build-all BUILD_CONFIG="build.test.config.json"
+      - name: Build container images
+        run: >
+          make gen-dockerfiles BUILD_CONFIG="build.test.config.json";
+          ./tools/build_images.sh -c "build.test.config.json" -a "bin/dockerfiles/annotations.json" -f "bin/dockerfiles" -r "${REGISTRY_URL}" -u "${REGISTRY_USERNAME}" -p "${REGISTRY_PASSWORD}";
+        env:
+          REGISTRY_URL: ${{secrets.REGISTRY_URL}}
+          REGISTRY_USERNAME: ${{secrets.REGISTRY_USERNAME}}
+          REGISTRY_PASSWORD: ${{secrets.REGISTRY_ACCESS_TOKEN}}

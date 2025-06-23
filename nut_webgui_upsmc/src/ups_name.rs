@@ -6,11 +6,8 @@ pub struct UpsName {
   name: Box<str>,
 }
 
-fn is_ups_name<T>(name: T) -> Result<(), UpsNameParseError>
-where
-  T: AsRef<str>,
-{
-  let name = name.as_ref().as_bytes();
+fn is_ups_name(name: &str) -> Result<(), UpsNameParseError> {
+  let name = name.as_bytes();
 
   if name.is_empty() {
     Err(UpsNameParseError::Empty)

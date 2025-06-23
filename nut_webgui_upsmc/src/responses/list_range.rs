@@ -27,7 +27,7 @@ impl Deserialize for RangeList {
     loop {
       match lexer.peek_as_str() {
         Some("RANGE") => {
-          let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()} {VALUE, name = min} {VALUE, name = max})?;
+          let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()} {NUM_VALUE, name = min} {NUM_VALUE, name = max})?;
           ranges.push(range);
         }
         _ => break,

@@ -18,7 +18,7 @@ pub struct DeviceEntry {
   pub variables: UpsVariables,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum VarDetail {
   String { max_len: usize },
   Number,

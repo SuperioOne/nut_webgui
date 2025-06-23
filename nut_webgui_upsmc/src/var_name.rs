@@ -345,11 +345,8 @@ impl_standard_names!(
 );
 
 #[inline]
-fn is_var_name<T>(name: T) -> Result<(), VarNameParseError>
-where
-  T: AsRef<str>,
-{
-  let name = name.as_ref().as_bytes();
+fn is_var_name(name: &str) -> Result<(), VarNameParseError> {
+  let name = name.as_bytes();
 
   if name.is_empty() {
     return Err(VarNameParseError::Empty);
@@ -381,14 +378,16 @@ impl VarName {
   where
     T: AsRef<str>,
   {
-    if let Ok(name) = StandardName::try_from(name.as_ref()) {
+    let name_str: &str = name.as_ref();
+
+    if let Ok(name) = StandardName::try_from(name_str) {
       Ok(Self {
         name: Repr::Standard(name),
       })
     } else {
-      _ = is_var_name(&name)?;
+      _ = is_var_name(name_str)?;
       Ok(Self {
-        name: Repr::Custom(Box::from(name.as_ref())),
+        name: Repr::Custom(Box::from(name_str)),
       })
     }
   }
@@ -418,7 +417,6 @@ impl VarName {
     }
   }
 
-  #[inline]
   pub fn is_valid_name(name: &str) -> bool {
     is_var_name(name).is_ok()
   }

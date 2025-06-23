@@ -30,9 +30,9 @@ export * from "./components/confirmation_button.js";
 export * from "./components/confirmation_modal.js";
 export * from "./components/search_list.js";
 export * from "./components/gauge.js";
-export * from "./components/notification.js";
 export * from "./components/theme_selector.js";
 export * from "./components/time_display.js";
+export * from "./components/ttl_element.js";
 
 /**
  * @param {string} attr_name
@@ -67,6 +67,7 @@ function create_morph_config(swapStyle) {
 
   if (config) {
     config.callbacks = { beforeAttributeUpdated: attr_preserve };
+    config.restoreFocus = true;
   }
 
   return config;

@@ -39,34 +39,38 @@ pub enum ParseError {
   ExpectedVarToken,
   ExpectedCmdToken,
   ExpectedDoubleQuotedTextToken,
+  InvalidNumber,
   UpsName(UpsNameParseError),
   VarName(VarNameParseError),
   VarType(VarTypeParseError),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum VarTypeParseError {
   Empty,
   InvalidType,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum UpsNameParseError {
   Empty,
   InvalidName,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum VarNameParseError {
   Empty,
   InvalidName,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum CmdParseError {
   Empty,
   InvalidName,
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct NumberParseError;
 
 impl std::fmt::Display for CmdParseError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -101,6 +105,12 @@ impl std::fmt::Display for VarTypeParseError {
       VarTypeParseError::Empty => f.write_str("empty string received"),
       VarTypeParseError::InvalidType => f.write_str("invalid type"),
     }
+  }
+}
+
+impl std::fmt::Display for NumberParseError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str("parse failed not a valid number neither f64 nor i64")
   }
 }
 
@@ -143,6 +153,7 @@ impl std::fmt::Display for ParseError {
       ParseError::ExpectedVarToken => f.write_str("expected var token"),
       ParseError::InvalidIpAddr => f.write_str("invalid ipv4 or ipv6 text"),
       ParseError::InvalidToken => f.write_str("invalid token"),
+      ParseError::InvalidNumber => f.write_str("invalid number value token"),
       ParseError::UpsName(inner) => inner.fmt(f),
       ParseError::VarName(inner) => inner.fmt(f),
       ParseError::VarType(inner) => inner.fmt(f),
@@ -279,4 +290,5 @@ impl std::error::Error for Error {}
 impl std::error::Error for ParseError {}
 impl std::error::Error for UpsNameParseError {}
 impl std::error::Error for VarNameParseError {}
+impl std::error::Error for NumberParseError {}
 impl std::error::Error for VarTypeParseError {}

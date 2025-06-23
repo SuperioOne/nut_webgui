@@ -1,16 +1,5 @@
 use std::borrow::Cow;
 
-// NOTE: https://github.com/askama-rs/askama/pull/435
-
-pub fn escape_id<T: std::fmt::Display>(s: T, _: &dyn askama::Values) -> askama::Result<String> {
-  let s = s.to_string();
-
-  match normalize_id(s.as_str()) {
-    Cow::Borrowed(_) => Ok(s),
-    Cow::Owned(normalized) => Ok(normalized),
-  }
-}
-
 pub fn normalize_id(input: &str) -> Cow<'_, str> {
   let first = input.as_bytes().get(0);
 

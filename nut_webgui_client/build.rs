@@ -2,50 +2,95 @@ use sha2::Digest;
 use std::{
   fs::{File, read_dir},
   io::{Read, Write},
-  path::Path,
+  path::{Path, PathBuf},
   process::Command,
+  str::FromStr,
 };
 
 fn main() {
   // NOTE: Maybe I should ditch nodejs and simply use Tailwind rust crates + RsPack/FarmFe ???
   #[cfg(debug_assertions)]
-  Command::new("node")
-    .args(&["scripts/build.js", "--outdir=target/static"])
-    .status()
-    .unwrap();
+  let target = {
+    Command::new("node")
+      .args(&["scripts/build.js", "--outdir=target/static/debug"])
+      .status()
+      .unwrap();
+
+    PathBuf::from_str("target/static/debug").unwrap()
+  };
 
   #[cfg(not(debug_assertions))]
-  Command::new("node")
-    .args(&["scripts/build.js", "--minify", "--outdir=target/static"])
-    .status()
-    .unwrap();
+  let target = {
+    Command::new("node")
+      .args(&[
+        "scripts/build.js",
+        "--minify",
+        "--outdir=target/static/release",
+      ])
+      .status()
+      .unwrap();
 
-  println!("cargo::rustc-env=NUTWG_CLIENT_CSS_PATH=../target/static/style.css");
+    PathBuf::from_str("target/static/release").unwrap()
+  };
+
+  let css_path = target.join("style.css");
+  println!(
+    "cargo::rustc-env=NUTWG_CLIENT_CSS_PATH={}",
+    PathBuf::from_str("..")
+      .unwrap()
+      .join(&css_path)
+      .to_str()
+      .unwrap()
+  );
   println!("cargo::rustc-env=NUTWG_CLIENT_CSS_NAME=style.css");
   println!(
     "cargo::rustc-env=NUTWG_CLIENT_CSS_SHA256={sha256}",
-    sha256 = calc_sha256("target/static/style.css").unwrap()
+    sha256 = calc_sha256(css_path).unwrap()
   );
 
-  println!("cargo::rustc-env=NUTWG_CLIENT_JS_PATH=../target/static/index.js");
+  let js_path = target.join("index.js");
+  println!(
+    "cargo::rustc-env=NUTWG_CLIENT_JS_PATH={}",
+    PathBuf::from_str("..")
+      .unwrap()
+      .join(&js_path)
+      .to_str()
+      .unwrap()
+  );
   println!("cargo::rustc-env=NUTWG_CLIENT_JS_NAME=index.js");
   println!(
     "cargo::rustc-env=NUTWG_CLIENT_JS_SHA256={sha256}",
-    sha256 = calc_sha256("target/static/index.js").unwrap()
+    sha256 = calc_sha256(js_path).unwrap()
   );
 
-  println!("cargo::rustc-env=NUTWG_CLIENT_ICON_PATH=../target/static/icon.svg");
+  let icon_path = target.join("icon.svg");
+  println!(
+    "cargo::rustc-env=NUTWG_CLIENT_ICON_PATH={}",
+    PathBuf::from_str("..")
+      .unwrap()
+      .join(&icon_path)
+      .to_str()
+      .unwrap()
+  );
   println!("cargo::rustc-env=NUTWG_CLIENT_ICON_NAME=icon.svg");
   println!(
     "cargo::rustc-env=NUTWG_CLIENT_ICON_SHA256={sha256}",
-    sha256 = calc_sha256("target/static/icon.svg").unwrap()
+    sha256 = calc_sha256(icon_path).unwrap()
   );
 
-  println!("cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_PATH=../target/static/feather-sprite.svg");
-  println!("cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_NAME=icon.svg");
+  let sprite_sheet_path = target.join("feather-sprite.svg");
+  println!(
+    "cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_PATH={}",
+    PathBuf::from_str("..")
+      .unwrap()
+      .join(&sprite_sheet_path)
+      .to_str()
+      .unwrap()
+  );
+  println!("cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_NAME=.feather-sprite.svg");
   println!(
     "cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_SHA256={sha256}",
-    sha256 = calc_sha256("target/static/feather-sprite.svg").unwrap()
+    sha256 = calc_sha256(sprite_sheet_path).unwrap()
   );
 
   output_watch_list("src", &["css", "js", "json", "rs", "svg"]).unwrap();

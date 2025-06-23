@@ -150,15 +150,9 @@ where
     Ok(())
   }
 
-  pub async fn detach(mut self) -> Result<(), Error> {
-    _ = self
-      .inner
-      .send::<_, responses::ProtOkDetach>(commands::DetachCommand.serialize())
-      .await?;
-
-    _ = self.inner.close().await;
-
-    Ok(())
+  #[inline]
+  pub fn detach(self) -> impl Future<Output = Result<(), Error>> {
+    self.close()
   }
 
   pub async fn fsd<N>(&mut self, ups: N) -> Result<(), Error>
@@ -205,12 +199,20 @@ where
     Ok(())
   }
 
+  #[inline]
   pub fn is_open(&mut self) -> impl Future<Output = bool> {
     self.inner.is_open()
   }
 
-  pub fn close(self) -> impl Future<Output = Result<(), Error>> {
-    self.inner.close()
+  pub async fn close(mut self) -> Result<(), Error> {
+    _ = self
+      .inner
+      .send::<_, responses::ProtOkDetach>(commands::DetachCommand.serialize())
+      .await?;
+
+    _ = self.inner.close().await?;
+
+    Ok(())
   }
 }
 

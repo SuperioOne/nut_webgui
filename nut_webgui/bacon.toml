@@ -1,0 +1,9 @@
+[jobs.serve]
+command = ["cargo", "run", "--", "--allow-env"]
+need_stdout = true
+background = false
+on_change_strategy = "kill_then_restart"
+kill = ["kill", "-s", "INT"]
+
+[keybindings]
+ctrl-s = "job:serve"

@@ -9,17 +9,65 @@ use std::{borrow::Cow, fmt::Write};
 pub struct ValueDetail<'a> {
   pub value: Cow<'a, Value>,
   pub class: SemanticType,
-  pub unit_sign: Option<char>,
+  pub unit_sign: Option<&'a str>,
 }
 
 // Provides hypermedia specific impls for DeviceEntry struct
 impl DeviceEntry {
+  #[inline]
+  pub fn get_status(&self) -> Option<&str> {
+    match self.variables.get(VarName::UPS_STATUS) {
+      Some(Value::String(v)) => Some(v.as_ref()),
+      _ => None,
+    }
+  }
+
+  #[inline]
+  pub fn get_beeper_status(&self) -> Option<bool> {
+    match self.variables.get(VarName::UPS_BEEPER_STATUS) {
+      Some(Value::String(v)) => Some(v.eq_ignore_ascii_case("enabled")),
+      _ => None,
+    }
+  }
+
+  pub fn get_power_factor(&self) -> Option<f64> {
+    self.variables.get(VarName::INPUT_POWERFACTOR).map_or_else(
+      || {
+        let real_power = self
+          .variables
+          .get(VarName::UPS_REALPOWER_NOMINAL)
+          .map(|v| v.as_lossly_f64())
+          .flatten();
+
+        let power = self
+          .variables
+          .get(VarName::UPS_POWER_NOMINAL)
+          .map(|v| v.as_lossly_f64())
+          .flatten();
+
+        match (real_power, power) {
+          (Some(w), Some(va)) => {
+            let power_factor = w / va;
+
+            if power_factor.is_nan() {
+              None
+            } else {
+              Some(power_factor)
+            }
+          }
+          _ => None,
+        }
+      },
+      |v| v.as_lossly_f64(),
+    )
+  }
+
   pub fn get_ups_temperature(&self) -> Option<ValueDetail<'_>> {
     let temperature = self.variables.get(VarName::UPS_TEMPERATURE)?;
     let unit_sign = if temperature.is_text() {
       None
     } else {
-      Some('℃')
+      Some("℃")
     };
 
     let semantic_class = {
@@ -58,7 +106,7 @@ impl DeviceEntry {
 
   pub fn get_ups_load(&self) -> Option<ValueDetail<'_>> {
     let load = self.variables.get(VarName::UPS_LOAD)?;
-    let unit_sign = if load.is_text() { None } else { Some('%') };
+    let unit_sign = if load.is_text() { None } else { Some("%") };
 
     let semantic_class = {
       match load.as_lossly_i64() {
@@ -76,7 +124,7 @@ impl DeviceEntry {
 
   pub fn get_battery_charge(&self) -> Option<ValueDetail<'_>> {
     let charge = self.variables.get(VarName::BATTERY_CHARGE)?;
-    let unit_sign = if charge.is_text() { None } else { Some('%') };
+    let unit_sign = if charge.is_text() { None } else { Some("%") };
 
     let semantic_class = {
       let warn_level = self
@@ -168,7 +216,7 @@ impl DeviceEntry {
     Some(ValueDetail {
       value: Cow::Owned(Value::from(realpower)),
       class: SemanticType::Info,
-      unit_sign: Some('W'),
+      unit_sign: Some("W"),
     })
   }
 
@@ -204,7 +252,7 @@ impl DeviceEntry {
     Some(ValueDetail {
       value: Cow::Owned(Value::from(power)),
       class: SemanticType::Info,
-      unit_sign: Some('A'),
+      unit_sign: Some("VA"),
     })
   }
 
@@ -241,7 +289,8 @@ impl std::fmt::Display for ValueDetail<'_> {
     self.value.fmt(f)?;
 
     if let Some(sign) = self.unit_sign {
-      f.write_char(sign)?;
+      f.write_char(' ')?;
+      f.write_str(sign)?;
     }
 
     Ok(())
@@ -257,7 +306,8 @@ impl FastWritable for ValueDetail<'_> {
     dest.write_str(self.value.as_str().as_ref())?;
 
     if let Some(sign) = self.unit_sign {
-      dest.write_char(sign)?;
+      dest.write_char(' ')?;
+      dest.write_str(sign)?;
     }
 
     Ok(())

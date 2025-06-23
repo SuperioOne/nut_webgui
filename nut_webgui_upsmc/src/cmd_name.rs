@@ -8,16 +8,8 @@ pub struct CmdName {
   name: Box<str>,
 }
 
-/// Checks if [`&str`] matches to cmdname ABNF grammar.
-///
-/// ```abnf
-/// cmdname = 1*LOWERCASE_ASCII *62( DOT 1*LOWERCASE_ASCII )
-/// ```
-fn is_cmd_name<T>(name: T) -> Result<(), CmdParseError>
-where
-  T: AsRef<str>,
-{
-  let name = name.as_ref().as_bytes();
+fn is_cmd_name(name: &str) -> Result<(), CmdParseError> {
+  let name = name.as_bytes();
 
   if name.is_empty() {
     return Err(CmdParseError::Empty);
@@ -43,7 +35,7 @@ impl CmdName {
   where
     T: AsRef<str>,
   {
-    is_cmd_name(&name)?;
+    _ = is_cmd_name(name.as_ref())?;
 
     Ok(Self::new_unchecked(name))
   }
@@ -67,7 +59,6 @@ impl CmdName {
     &self.name
   }
 
-  #[inline]
   pub fn is_valid_name(name: &str) -> bool {
     is_cmd_name(name).is_ok()
   }

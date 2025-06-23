@@ -3,6 +3,13 @@ use core::{net::AddrParseError, num::ParseIntError};
 use std::ffi::OsString;
 
 #[derive(Debug)]
+pub enum ConfigError {
+  File(TomlConfigError),
+  Environment(EnvConfigError),
+  Arguments(clap::Error),
+}
+
+#[derive(Debug)]
 pub enum TomlConfigError {
   IOError { inner: std::io::Error },
   ParseError { inner: toml::de::Error },
@@ -20,7 +27,8 @@ impl From<toml::de::Error> for TomlConfigError {
   }
 }
 
-impl std::error::Error for TomlConfigError {}
+impl core::error::Error for TomlConfigError {}
+
 impl std::fmt::Display for TomlConfigError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
@@ -38,6 +46,51 @@ pub enum EnvConfigError {
   InvalidLogLevelFormat,
   InvalidAddrFormat { inner: core::net::AddrParseError },
   InvalidUriPath,
+}
+
+impl core::error::Error for EnvConfigError {}
+
+impl std::fmt::Display for EnvConfigError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      EnvConfigError::IOError { inner } => {
+        f.write_fmt(format_args!("env config io error, {}", inner))
+      }
+      EnvConfigError::NonUnicodeVar { variable } => f.write_fmt(format_args!(
+        "non-unicode variable received, {:?}",
+        variable
+      )),
+      EnvConfigError::InvalidNumericFormat { .. } => {
+        f.write_fmt(format_args!("invalid numeric format"))
+      }
+      EnvConfigError::InvalidLogLevelFormat => f.write_fmt(format_args!("invalid log level")),
+      EnvConfigError::InvalidAddrFormat { inner } => {
+        f.write_fmt(format_args!("invalid ip address format, {}", inner))
+      }
+      EnvConfigError::InvalidUriPath => f.write_fmt(format_args!("invalid uri path format")),
+    }
+  }
+}
+
+impl From<EnvConfigError> for ConfigError {
+  #[inline]
+  fn from(value: EnvConfigError) -> Self {
+    Self::Environment(value)
+  }
+}
+
+impl From<TomlConfigError> for ConfigError {
+  #[inline]
+  fn from(value: TomlConfigError) -> Self {
+    Self::File(value)
+  }
+}
+
+impl From<clap::Error> for ConfigError {
+  #[inline]
+  fn from(value: clap::Error) -> Self {
+    Self::Arguments(value)
+  }
 }
 
 impl From<ParseIntError> for EnvConfigError {

@@ -88,7 +88,7 @@ docker run -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass -p 90
 
 A simple JSON-based API is available for integration and automation purposes.
 
-OpenAPI 3.1.0 specification files: [json minimized](./docs/openapi3_spec.json) | [yaml](./docs/openapi3_spec.yaml)
+OpenAPI 3.1.0 specification files: [json minimized](./docs/api_specs/openapi3_spec.json) | [yaml](./docs/api_specs/openapi3_spec.yaml)
 
 ## Probes
 

@@ -316,7 +316,7 @@ data:
     input.frequency: 59.9
     input.voltage: 120.3
     input.voltage.fault: 120.3
-    output.voltage: 120.0
+    output.voltage: 120.0cluster
     ups.beeper.status: enabled
     ups.delay.shutdown: 30
     ups.delay.start: 180
@@ -576,14 +576,16 @@ spec:
   replicas: 1
   selector:
     matchLabels:
+      app.kubernetes.io/component: application
       app.kubernetes.io/name: nut-webgui
       app.kubernetes.io/part-of: nut-test
-      app.kubernetes.io/version: "latest-amd64-v3"
+      app.kubernetes.io/instance: stable-amd64-v3
   template:
     metadata:
       name: nut-webgui
       labels:
         app.kubernetes.io/component: application
+        app.kubernetes.io/instance: stable-amd64-v3
         app.kubernetes.io/name: nut-webgui
         app.kubernetes.io/part-of: nut-test
         app.kubernetes.io/version: "latest-amd64-v3"
@@ -628,27 +630,29 @@ metadata:
   namespace: nut-test
   labels:
     app.kubernetes.io/name: nut-webgui
-    app.kubernetes.io/version: "0.4.0-amd64"
+    app.kubernetes.io/version: "0.4.2-amd64"
     app.kubernetes.io/part-of: nut-test
 spec:
   replicas: 1
   selector:
     matchLabels:
+      app.kubernetes.io/component: application
+      app.kubernetes.io/instance: stable-amd64
       app.kubernetes.io/name: nut-webgui
-      app.kubernetes.io/version: "0.4.0-amd64"
       app.kubernetes.io/part-of: nut-test
   template:
     metadata:
       name: nut-webgui
       labels:
         app.kubernetes.io/component: application
+        app.kubernetes.io/instance: stable-amd64
         app.kubernetes.io/name: nut-webgui
         app.kubernetes.io/part-of: nut-test
-        app.kubernetes.io/version: "0.4.0-amd64"
+        app.kubernetes.io/version: "latest-amd64"
     spec:
       containers:
         - name: nut-webgui
-          image: ghcr.io/superioone/nut_webgui:0.4.0-amd64
+          image: ghcr.io/superioone/nut_webgui:0.4.2
           env:
             - name: UPSD_ADDR
               value: nut-dummy-service
@@ -686,27 +690,29 @@ metadata:
   namespace: nut-test
   labels:
     app.kubernetes.io/name: nut-webgui
-    app.kubernetes.io/version: "0.4.0-amd64"
+    app.kubernetes.io/version: "next-dev"
     app.kubernetes.io/part-of: next-dev
 spec:
   replicas: 1
   selector:
     matchLabels:
+      app.kubernetes.io/component: application
+      app.kubernetes.io/instance: rc-amd64-v3
       app.kubernetes.io/name: nut-webgui
-      app.kubernetes.io/version: "next-dev"
       app.kubernetes.io/part-of: nut-test
   template:
     metadata:
       name: nut-webgui
       labels:
         app.kubernetes.io/component: application
+        app.kubernetes.io/instance: rc-amd64-v3
         app.kubernetes.io/name: nut-webgui
         app.kubernetes.io/part-of: nut-test
-        app.kubernetes.io/version: "next-dev"
+        app.kubernetes.io/version: "latest-amd64-v3"
     spec:
       containers:
         - name: nut-webgui
-          image: gitea.local/smdd/nut_webgui_test:latest
+          image: gitea.local/smdd/nut_webgui-rc:latest-amd64-v3
           env:
             - name: UPSD_ADDR
               value: nut-dummy-service

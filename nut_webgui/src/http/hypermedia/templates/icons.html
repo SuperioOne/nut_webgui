@@ -1,8 +1,7 @@
 {# Macro for inserting Feather Icons: https://feathericons.com/ #}
 {%- macro get_svg(name, size) -%}
-
-<svg class="feather" width="{{size}}" height="{{size}}">
-  <use href="/static/feather-sprite.svg#{{name}}" />
-</svg>
-
+  {%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
+  <svg class="feather" width="{{size}}" height="{{size}}">
+    <use href="{{base_path}}/static/feather-sprite.svg#{{name}}" />
+  </svg>
 {%- endmacro -%}

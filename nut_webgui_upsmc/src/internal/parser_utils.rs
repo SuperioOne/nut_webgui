@@ -75,6 +75,16 @@ pub fn extract_value<'a>(lexer: &'a mut Lexer) -> Result<Value, Error> {
   Ok(value)
 }
 
+pub fn extract_numeric_value<'a>(lexer: &'a mut Lexer) -> Result<Value, Error> {
+  let text = extract_quoted_text(lexer)?;
+  let value = Value::infer_number_from(text).map_err(|_| ErrorKind::ParseError {
+    inner: ParseError::InvalidNumber,
+    position: lexer.get_positon(),
+  })?;
+
+  Ok(value)
+}
+
 pub fn extract_ups_name<'a>(lexer: &'a mut Lexer) -> Result<UpsName, Error> {
   match lexer.next_token()? {
     Some(token @ Token::Text { .. }) => {
@@ -442,6 +452,20 @@ macro_rules! parse_line {
       parse_line!(@internal $lexer, $label, [$($type;$extracted)* $crate::Value;$name], $($rest)*)
     }
   };
+
+  (@internal $lexer:expr, $label:lifetime, [$($type:ty;$extracted:ident)*], {NUM_VALUE, name = $name:ident} $($rest:tt)*) => {
+    {
+      let $name = {
+        match $crate::internal::parser_utils::extract_numeric_value($lexer) {
+          Ok(var) => var,
+          Err(err) => break $label Err(err)
+        }
+      };
+
+      parse_line!(@internal $lexer, $label, [$($type;$extracted)* $crate::Value;$name], $($rest)*)
+    }
+  };
+
 
   (@internal $lexer:expr,$label:lifetime, [],) => {
     {

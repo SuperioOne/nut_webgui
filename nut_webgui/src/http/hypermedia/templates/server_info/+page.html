@@ -1,5 +1,6 @@
 {%- extends "+layout.html" -%}
 {%- import "icons.html" as icons -%}
+{%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
 
 {%- macro list_item(name, value) -%}
 <li class="list-row">
@@ -19,7 +20,7 @@
   <div 
     class="flex flex-col gap-4"
     hx-ext="morph"
-    hx-get="{{base_path | urlencode}}/server/?section=info_cards"
+    hx-get="{{base_path}}/server/?section=info_cards"
     hx-trigger="every 15s"
     hx-swap="morph:innerHTML"
     hx-indicator="#indicator"

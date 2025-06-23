@@ -1,6 +1,5 @@
+use crate::{errors::NumberParseError, internal::escape::escape_nut_str};
 use std::borrow::Cow;
-
-use crate::internal::escape::escape_nut_str;
 
 macro_rules! impl_value_from {
   ($type:ty, $enum:ident) => {
@@ -119,6 +118,7 @@ fn infer_type(input: &str) -> InferredType {
 
 pub trait InferValueFrom<T> {
   fn infer_from(value: T) -> Value;
+  fn infer_number_from(value: T) -> Result<Value, NumberParseError>;
 }
 
 impl InferValueFrom<Box<str>> for Value {
@@ -134,6 +134,11 @@ impl InferValueFrom<Box<str>> for Value {
 
       _ => Self::String(value),
     }
+  }
+
+  #[inline]
+  fn infer_number_from(value: Box<str>) -> Result<Value, NumberParseError> {
+    Self::infer_number_from(value.as_ref())
   }
 }
 
@@ -151,6 +156,11 @@ impl InferValueFrom<String> for Value {
       _ => Self::String(value.into_boxed_str()),
     }
   }
+
+  #[inline]
+  fn infer_number_from(value: String) -> Result<Value, NumberParseError> {
+    Self::infer_number_from(value.as_str())
+  }
 }
 
 impl InferValueFrom<&str> for Value {
@@ -167,6 +177,20 @@ impl InferValueFrom<&str> for Value {
       _ => Self::String(Box::from(value)),
     }
   }
+
+  fn infer_number_from(value: &str) -> Result<Value, NumberParseError> {
+    if value.contains('.') {
+      value
+        .parse::<f64>()
+        .map(|v| Value::from(v))
+        .map_err(|_| NumberParseError)
+    } else {
+      value
+        .parse::<i64>()
+        .map(|v| Value::from(v))
+        .map_err(|_| NumberParseError)
+    }
+  }
 }
 
 impl InferValueFrom<Cow<'_, str>> for Value {
@@ -177,12 +201,17 @@ impl InferValueFrom<Cow<'_, str>> for Value {
       Cow::Owned(v) => Self::infer_from(v),
     }
   }
+
+  #[inline]
+  fn infer_number_from(value: Cow<'_, str>) -> Result<Value, NumberParseError> {
+    Self::infer_number_from(value.as_ref())
+  }
 }
 
 impl std::fmt::Display for Value {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      Value::Float(v) => f.write_fmt(format_args!("{v}")),
+      Value::Float(v) => f.write_fmt(format_args!("{v:.2}")),
       Value::Int(v) => f.write_fmt(format_args!("{v}")),
       Value::String(v) => f.write_str(&v),
     }

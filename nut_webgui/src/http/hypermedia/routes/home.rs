@@ -2,7 +2,10 @@ use crate::{
   device_entry::DeviceEntry,
   http::{
     RouterState,
-    hypermedia::{device_entry_impls::ValueDetail, filters::normalize_id},
+    hypermedia::{
+      device_entry_impls::ValueDetail, error::ErrorPage, filters::normalize_id,
+      utils::RenderWithConfig,
+    },
   },
 };
 use askama::Template;
@@ -67,12 +70,13 @@ pub struct HomeFragmentQuery {
 #[derive(Template)]
 #[template(path = "+page.html", blocks = ["device_table"])]
 struct HomeTemplate<'a> {
-  base_path: &'a str,
-  default_theme: Option<&'a str>,
   devices: Vec<DeviceTableRow<'a>>,
 }
 
-pub async fn get(query: Query<HomeFragmentQuery>, State(rs): State<RouterState>) -> Response {
+pub async fn get(
+  query: Query<HomeFragmentQuery>,
+  State(rs): State<RouterState>,
+) -> Result<Response, ErrorPage<askama::Error>> {
   let state = &rs.state.read().await;
   let mut device_list: Vec<DeviceTableRow> = state
     .devices
@@ -84,12 +88,14 @@ pub async fn get(query: Query<HomeFragmentQuery>, State(rs): State<RouterState>)
 
   let template = HomeTemplate {
     devices: device_list,
-    base_path: rs.config.http_server.base_path.as_str(),
-    default_theme: rs.config.default_theme.as_deref(),
   };
 
-  match query.section.as_deref() {
-    Some("device_table") => Html(template.as_device_table().render().unwrap()).into_response(),
-    _ => Html(template.render().unwrap()).into_response(),
-  }
+  let response = match query.section.as_deref() {
+    Some("device_table") => {
+      Html(template.as_device_table().render_with_config(&rs.config)?).into_response()
+    }
+    _ => Html(template.render_with_config(&rs.config)?).into_response(),
+  };
+
+  Ok(response)
 }

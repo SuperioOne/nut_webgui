@@ -71,8 +71,8 @@ fn uri_path_parser(input: &str) -> Result<UriPath, InvalidPathError> {
 
 impl ServerCliArgs {
   /// Alias for [ServerCliArgs::parse()]
-  pub fn load() -> Self {
-    Self::parse()
+  pub fn load() -> Result<Self, clap::Error> {
+    Self::try_parse()
   }
 }
 

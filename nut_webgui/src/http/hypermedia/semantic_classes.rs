@@ -1,9 +1,44 @@
+use std::fmt::Display;
+
+use askama::FastWritable;
+
 #[derive(Debug, Clone, Copy)]
 pub enum SemanticType {
+  None,
   Info,
   Error,
   Warning,
   Success,
+}
+
+impl Display for SemanticType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      SemanticType::None => Ok(()),
+      SemanticType::Info => f.write_str("Info"),
+      SemanticType::Error => f.write_str("Error"),
+      SemanticType::Warning => f.write_str("Warning"),
+      SemanticType::Success => f.write_str("Success"),
+    }
+  }
+}
+
+impl FastWritable for SemanticType {
+  fn write_into<W: core::fmt::Write + ?Sized>(
+    &self,
+    dest: &mut W,
+    _: &dyn askama::Values,
+  ) -> askama::Result<()> {
+    match self {
+      SemanticType::None => Ok(()),
+      SemanticType::Info => dest.write_str("Info"),
+      SemanticType::Error => dest.write_str("Error"),
+      SemanticType::Warning => dest.write_str("Warning"),
+      SemanticType::Success => dest.write_str("Success"),
+    }?;
+
+    Ok(())
+  }
 }
 
 impl SemanticType {
@@ -25,6 +60,21 @@ impl SemanticType {
   #[inline]
   pub fn as_progress(self) -> &'static str {
     ProgressStyle::from_type(self)
+  }
+
+  #[inline]
+  pub fn as_alert(self) -> &'static str {
+    AlertStyle::from_type(self)
+  }
+
+  #[inline]
+  pub fn as_input(self) -> &'static str {
+    InputStyle::from_type(self)
+  }
+
+  #[inline]
+  pub fn as_select(self) -> &'static str {
+    SelectStyle::from_type(self)
   }
 }
 
@@ -94,6 +144,7 @@ macro_rules! impl_semantic_class {
       #[inline]
       fn from_type(value: SemanticType) -> &'static str {
         match value {
+          SemanticType::None => "",
           SemanticType::Info => $info,
           SemanticType::Error => $error,
           SemanticType::Warning => $warning,
@@ -108,6 +159,9 @@ pub struct TextStyle;
 pub struct BadgeStyle;
 pub struct FillStyle;
 pub struct ProgressStyle;
+pub struct AlertStyle;
+pub struct InputStyle;
+pub struct SelectStyle;
 
 impl_semantic_class!(
   TextStyle,
@@ -147,5 +201,35 @@ impl_semantic_class!(
     success = "progress-success",
     warning = "progress-warning",
     error = "progress-error"
+  }
+);
+
+impl_semantic_class!(
+  AlertStyle,
+  {
+    info = "alert-info",
+    success = "alert-success",
+    warning = "alert-warning",
+    error = "alert-error"
+  }
+);
+
+impl_semantic_class!(
+  InputStyle,
+  {
+    info = "input-info",
+    success = "input-success",
+    warning = "input-warning",
+    error = "input-error"
+  }
+);
+
+impl_semantic_class!(
+  SelectStyle,
+  {
+    info = "select-info",
+    success = "select-success",
+    warning = "select-warning",
+    error = "select-error"
   }
 );

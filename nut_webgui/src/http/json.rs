@@ -1,5 +1,8 @@
 use super::{RouterState, problem_detail::ProblemDetail};
-use crate::{config::UpsdConfig, device_entry::DeviceEntry};
+use crate::{
+  config::UpsdConfig,
+  device_entry::{DeviceEntry, VarDetail},
+};
 use axum::{
   Json,
   extract::{
@@ -163,22 +166,114 @@ pub async fn patch_var(
   _ = {
     let server_state = rs.state.read().await;
 
-    // TODO: current implementations does not check if value type is correct
     match server_state.devices.get(&ups_name) {
-      Some(device) => {
-        if device.rw_variables.contains_key(&body.variable) {
-          Ok(())
-        } else {
-          Err(
-            ProblemDetail::new("Invalid RW variable", StatusCode::BAD_REQUEST).with_detail(
-              format!(
-                "'{var_name}' isn't listed as writeable on device details.",
-                var_name = &body.variable
+      Some(device) => match device.rw_variables.get(&body.variable) {
+        Some(VarDetail::Number) => {
+          if body.value.is_numeric() {
+            Ok(())
+          } else {
+            Err(
+              ProblemDetail::new("Invalid value type", StatusCode::BAD_REQUEST).with_detail(
+                format!(
+                  "'{var_name}' expects a numeric type, but the provided value is not a number.",
+                  var_name = &body.variable
+                ),
+              ),
+            )
+          }
+        }
+        Some(VarDetail::String { max_len }) => {
+          if body.value.is_text() {
+            let value_str = body.value.as_str();
+            let trimmed = value_str.trim();
+
+            if trimmed.is_empty() {
+              Err(
+                ProblemDetail::new("Empty value", StatusCode::BAD_REQUEST).with_detail(format!(
+                  "Value cannot be empty or consist of only whitespaces.",
+                )),
+              )
+            } else if trimmed.len() > *max_len {
+              Err(
+                ProblemDetail::new("Out of range", StatusCode::BAD_REQUEST)
+                  .with_detail(format!("Maximum allowed string length is {}.", max_len)),
+              )
+            } else {
+              Ok(())
+            }
+          } else {
+            Err(
+              ProblemDetail::new("Invalid value type", StatusCode::BAD_REQUEST).with_detail(
+                format!(
+                  "'{var_name}' expects a string type, but the provided value is not a string.",
+                  var_name = &body.variable
+                ),
+              ),
+            )
+          }
+        }
+        Some(VarDetail::Enum { options }) => {
+          if options.contains(&body.value) {
+            Ok(())
+          } else {
+            Err(
+              ProblemDetail::new("Invalid option", StatusCode::BAD_REQUEST).with_detail(format!(
+                "'{var_name}' is an enum type, allowed options: {opts:?}",
+                var_name = &body.variable,
+                opts = options
+                  .iter()
+                  .map(|v| v.as_str())
+                  .collect::<Vec<std::borrow::Cow<'_, str>>>()
+              )),
+            )
+          }
+        }
+        Some(VarDetail::Range { min, max }) => {
+          if body.value.is_numeric() {
+            match (min.as_lossly_f64(), max.as_lossly_f64()) {
+              (Some(min), Some(max)) => {
+                let valuef64 = body.value.as_lossly_f64().unwrap_or(0.0);
+
+                if min <= valuef64 && valuef64 <= max {
+                  Ok(())
+                } else {
+                  Err(
+                    ProblemDetail::new("Out of range", StatusCode::BAD_REQUEST).with_detail(
+                      format!(
+                        "'{var_name}' is not within the acceptable range [{min}, {max}]",
+                        var_name = &body.variable,
+                        min = min,
+                        max = max,
+                      ),
+                    ),
+                  )
+                }
+              }
+              _ => Err(ProblemDetail::new("Malformed driver response", StatusCode::INTERNAL_SERVER_ERROR).with_detail(
+                format!("Cannot process request since the reported min-max values by ups device are not number."),
               ),
             ),
-          )
+            }
+          } else {
+            Err(
+              ProblemDetail::new("Invalid value type", StatusCode::BAD_REQUEST).with_detail(
+                format!(
+                  "'{var_name}' expects a numeric value between {min} and {max}, but the provided value is not a number.",
+                  var_name = &body.variable,
+                  min = min,
+                  max = max,
+                ),
+              ),
+            )
+          }
         }
-      }
+        None => Err(
+          ProblemDetail::new("Invalid RW variable", StatusCode::BAD_REQUEST).with_detail(format!(
+            "'{var_name}' is not a valid writeable variable.",
+            var_name = &body.variable
+          )),
+        ),
+      },
       None => Err(ProblemDetail::new(
         "Device not found",
         StatusCode::NOT_FOUND,
@@ -196,7 +291,7 @@ pub async fn patch_var(
   }?;
 
   info!(
-    message = "set var called",
+    message = "set var request accepted",
     device = %ups_name,
     variable = %body.variable,
     value = %body.value,

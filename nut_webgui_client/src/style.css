@@ -8,7 +8,7 @@
 }
 
 @plugin "daisyui" {
-        themes: light --default, dark --prefersdark, abyss, autumn, business, corporate, dim, dracula, forest, night, nord, sunset, synthwave, winter;
+        themes: light --default, dark --prefersdark, abyss, autumn, business, black, corporate, dim, dracula, forest, night, nord, sunset, synthwave;
 }
 
 @plugin "daisyui/theme" {
@@ -107,6 +107,41 @@
         .border-daisy {
                 border-style: dashed;
                 border-color: color-mix(in oklab, currentColor 10%, #0000);
+        }
+
+        .divide-daisy> :not(:last-child) {
+                border-color: color-mix(in oklab, currentColor 10%, #0000);
+                border-top-width: 0px;
+                border-bottom-width: 1px;
+        }
+
+        /* Based on https://github.com/dudleystorey big party button */
+        .fsd-button {
+                transform: rotate3d(1, 0, 0, 36deg);
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                border: none;
+                color: white;
+                font-size: 2.5rem;
+                background: #d31818;
+                text-shadow: 0 3px 1px rgba(0, 0, 0, .5);
+                box-shadow: 0 8px #640d09, 0 15px 20px #00000059;
+                text-transform: uppercase;
+                transition: .1s all ease-in;
+                outline: none;
+                cursor: pointer;
+                text-align: center;
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        }
+
+
+        .fsd-button:active {
+                padding-top: 3px;
+                transform: translateY(8px) rotate3d(1, 0, 0, 36deg);
+                box-shadow: 0 4px 0 #640d09, 0 8px 6px rgba(0, 0, 0, .45);
         }
 }
 

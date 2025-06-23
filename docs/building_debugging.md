@@ -9,6 +9,7 @@ Required host tools are:
   - node
   - pnpm
   - jq
+  - coreutils/uutils, GNU gettext utilities
 
 Optionally, You need the following packages and Rust targets for cross-compilation.
 

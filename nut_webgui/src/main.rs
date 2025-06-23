@@ -9,6 +9,7 @@ mod uri_path;
 use self::config::{
   ServerConfig, cfg_args::ServerCliArgs, cfg_env::ServerEnvArgs, cfg_toml::ServerTomlArgs,
 };
+use crate::config::error::ConfigError;
 use event::EventChannel;
 use http::HttpServer;
 use nut_webgui_upsmc::clients::NutPoolClient;
@@ -26,11 +27,11 @@ use tokio::{
 };
 use tracing::{debug, error, info, warn};
 
-fn load_configs() -> ServerConfig {
-  let cli_args = ServerCliArgs::load();
+fn load_configs() -> Result<ServerConfig, ConfigError> {
+  let cli_args = ServerCliArgs::load()?;
 
   let env_args = if cli_args.allow_env {
-    ServerEnvArgs::load().unwrap()
+    ServerEnvArgs::load()?
   } else {
     ServerEnvArgs::default()
   };
@@ -41,7 +42,7 @@ fn load_configs() -> ServerConfig {
     .or_else(|| env_args.config_file.as_ref());
 
   let toml_args = if let Some(path) = toml_path {
-    ServerTomlArgs::load(path).unwrap()
+    ServerTomlArgs::load(path)?
   } else {
     ServerTomlArgs::default()
   };
@@ -51,11 +52,11 @@ fn load_configs() -> ServerConfig {
     .layer(env_args)
     .layer(cli_args);
 
-  config
+  Ok(config)
 }
 
 #[tokio::main(flavor = "multi_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn core::error::Error>> {
   let mut sigterm = signal::unix::signal(SignalKind::terminate()).expect("SIGTERM stream failed");
   let mut sigint = signal::unix::signal(SignalKind::interrupt()).expect("SIGINT stream failed");
   let mut sigquit = signal::unix::signal(SignalKind::quit()).expect("SIGQUIT stream failed");
@@ -69,7 +70,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::process::exit(-1);
   }));
 
-  let config = load_configs();
+  let config = match load_configs() {
+    Ok(cfg) => cfg,
+    Err(ConfigError::File(err)) => {
+      eprintln!("invalid file config, reason = {err}");
+      std::process::exit(2);
+    }
+    Err(ConfigError::Environment(err)) => {
+      eprintln!("invalid env config, reason = {err}");
+      std::process::exit(2);
+    }
+    Err(ConfigError::Arguments(err)) => {
+      err.print()?;
+      err.exit();
+    }
+  };
 
   tracing_subscriber::fmt()
     .with_max_level(config.log_level)

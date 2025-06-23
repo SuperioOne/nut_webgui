@@ -1,8 +1,5 @@
 name: test
-on:
-  push:
-    branches:
-      - master
+on: push
 jobs:
   publish-binaries:
     defaults:
@@ -19,10 +16,11 @@ jobs:
         with:
           show-progress: false
           submodules: true
-      - name: Setup rustup targets and pnpm
+      - name: Setup rustup targets
         run: |
-          rustup default stable;
-          corepack enable pnpm;
-          pnpm --version;
+          rustup default stable
+          make init
+      - name: Run checks
+        run: make check
       - name: Run tests
         run: make test

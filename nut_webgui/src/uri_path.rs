@@ -1,7 +1,7 @@
 use askama::FastWritable;
 use serde::{Deserialize, de::Visitor};
 
-const LOOKUP_ASCII_URI: [bool; 128] = {
+static LOOKUP_ASCII_URI: [bool; 128] = {
   let mut table = [false; 128];
   let mut i: isize = 0;
   let table_ptr = table.as_mut_ptr();
@@ -17,6 +17,7 @@ const LOOKUP_ASCII_URI: [bool; 128] = {
       | b')'
       | b'+'
       | b','
+      | b'\''
       | b';'
       | b'='
       // unreserved
@@ -44,7 +45,6 @@ const LOOKUP_ASCII_URI: [bool; 128] = {
   table
 };
 
-/// Checks path for both URI path and Axum 0.7 route syntax.
 /// See also: [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986#section-3.3)
 #[inline]
 fn is_valid_path(path: &str) -> bool {
@@ -149,12 +149,14 @@ impl FastWritable for UriPath {
 impl core::str::FromStr for UriPath {
   type Err = InvalidPathError;
 
+  #[inline]
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     Self::new(s)
   }
 }
 
 impl std::fmt::Display for InvalidPathError {
+  #[inline]
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("incorrect base path format")
   }

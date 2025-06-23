@@ -1,5 +1,5 @@
 // Subset of ASCII to match RFC9271
-const LOOKUP_ASCII_UPS: [bool; 128] = {
+static LOOKUP_ASCII_UPS: [bool; 128] = {
   let mut table = [false; 128];
   let mut i: isize = 0;
   let table_ptr = table.as_mut_ptr();

@@ -1,18 +1,32 @@
 {%- import "icons.html" as icons -%}
+
 <div id="notifications" hx-swap-oob="afterbegin">
-  <nut-notification
-    class="break-words drop-shadow-lg"
-    type="{{notification_type}}"
+  <nut-ttl
+    class="alert break-words drop-shadow-lg {{semantic_type.as_alert()}}"
     ttl="{{ttl}}"
   >
     <div>
-      <h3 class="font-bold uppercase">{{notification_type}}</h3>
+      {%- match semantic_type -%}
+        {%- when SemanticType::Error -%}
+          {%- call icons::get_svg("x-octagon", 16) -%}
+        {%- when SemanticType::Info -%}
+          {%- call icons::get_svg("info", 16) -%}
+        {%- when SemanticType::Warning -%}
+          {%- call icons::get_svg("alert-triangle", 16) -%}
+        {%- when SemanticType::Success -%}
+          {%- call icons::get_svg("check-circle", 16) -%}
+        {%- else -%}
+          {%- call icons::get_svg("alert-circle", 16) -%}
+      {%- endmatch -%}
+    </div>
+    <div>
+      <h3 class="font-bold uppercase">{{semantic_type}}</h3>
       <div>{{message}}</div>
     </div>
-    <div class="nut-notification-trigger">
+    <div class="ttl-trigger">
       <button class="btn btn-circle btn-ghost btn-sm">
         {%- call icons::get_svg("x", 16) -%}
       </button>
     </div>
-  </nut-notification>
+  </nut-ttl>
 </div>

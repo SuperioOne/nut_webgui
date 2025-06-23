@@ -30,16 +30,20 @@ pub struct ServerEnvArgs {
 fn load_from_env(key: &str) -> Result<Option<String>, EnvConfigError> {
   match env::var(key) {
     Ok(value) => {
-      let path = Path::new(&value);
-
-      if path.is_file() {
-        let mut buffer = String::new();
-        let mut fd = File::open(path)?;
-        _ = fd.read_to_string(&mut buffer)?;
-
-        Ok(Some(buffer))
+      if value.is_empty() {
+        Ok(None)
       } else {
-        Ok(Some(value))
+        let path = Path::new(&value);
+
+        if path.is_file() {
+          let mut buffer = String::new();
+          let mut fd = File::open(path)?;
+          _ = fd.read_to_string(&mut buffer)?;
+
+          Ok(Some(buffer))
+        } else {
+          Ok(Some(value))
+        }
       }
     }
     Err(env::VarError::NotUnicode(variable)) => Err(EnvConfigError::NonUnicodeVar { variable }),

@@ -16,15 +16,15 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.8",
+    "@tailwindcss/cli": "^4.1.10",
     "daisyui": "^5.0.43",
     "esbuild": "^0.25.5",
-    "tailwindcss": "^4.1.8",
+    "tailwindcss": "^4.1.10",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "apexcharts": "3.54.1",
-    "htmx.org": "^2.0.4",
+    "htmx.org": "^2.0.5",
     "idiomorph": "^0.7.3"
   }
 }

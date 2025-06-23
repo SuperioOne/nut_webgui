@@ -3,7 +3,6 @@ on:
   push:
     tags:
       - v*
-      - rc-*
 jobs:
   publish-binaries:
     defaults:
@@ -32,22 +31,20 @@ jobs:
           riscv64gc-unknown-linux-gnu \
           x86_64-unknown-linux-gnu \
           x86_64-unknown-linux-musl;
-          corepack enable pnpm;
-          pnpm --version;
       - name: Run tests
         run: make test
       - name: Build binaries and pack
-        run: > 
+        run: >
           export CARGO_TERM_QUIET=true;
-          make build-all && make pack
+          make pack
       - name: Build container images
         run: >
-          make generate-dockerfiles;
+          make gen-dockerfiles;
           source ./bin/annotation.conf;
           MAJOR_MINOR_TAG=$(echo -n "${VERSION}" | awk -F '.' '{print $1"."$2}');
           ALIAS_TAGS="latest ${MAJOR_MINOR_TAG}";
-          ./build_images.sh -a "${ALIAS_TAGS}" -r "${REGISTRY_URL}" -u "${REGISTRY_USERNAME}" -p "${REGISTRY_PASSWORD}";
-        env: 
+          ./tools/build_images.sh -a "${ALIAS_TAGS}" -r "${REGISTRY_URL}" -u "${REGISTRY_USERNAME}" -p "${REGISTRY_PASSWORD}";
+        env:
           REGISTRY_URL: ${{secrets.REGISTRY_URL}}
           REGISTRY_USERNAME: ${{secrets.REGISTRY_USERNAME}}
           REGISTRY_PASSWORD: ${{secrets.REGISTRY_ACCESS_TOKEN}}

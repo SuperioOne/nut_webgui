@@ -1,9 +1,131 @@
+{%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
+{%- let poll_freq = askama::get_value::<u64>("UPSD__POLL_FREQ")? -%}
+
 <div
-  class="flex flex-col gap-6"
-  hx-get="/ups/{{device.name | urlencode_strict}}?tab=grid&section=tabcontent"
+  class="gap-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
+  hx-get="{{base_path}}/ups/{{device.name | urlencode_strict}}?tab=grid&section=tab_content"
   hx-indicator="#indicator"
   hx-swap="morph:innerHTML"
-  hx-trigger="every 5s"
+  hx-trigger="every {{poll_freq}}s"
   hx-target="#tab-content"
 >
+  {%- if let Some(load) = device.get_ups_load() -%}
+    <div class="content-card flex flex-col gap-4">
+      <h3 class="opacity-60 tracking-wide">Ups Load</h3>
+      <nut-gauge class="grow {{load.class.as_fill()}}" value="{{load.value.as_str()}}"></nut-gauge>
+    </div>
+  {%- endif -%}
+
+  {%- if let Some(charge) = device.get_battery_charge() -%}
+    <div class="content-card flex flex-col gap-4">
+      <h3 class="opacity-60 tracking-wide">Battery Charge</h3>
+      <nut-gauge class="grow {{charge.class.as_fill()}}" value="{{charge.value.as_str()}}"></nut-gauge>
+      <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
+        {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_LOW) -%}
+          <p>
+            Shutdown threshold <span class="text-error">{{threshold}}%</span>
+          </p>
+        {%- endif -%}
+        {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_WARNING) -%}
+          <p>
+            Warning threshold <span class="text-warning">{{threshold}}%</span>
+          </p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- if let Some(temperature) = device.get_ups_temperature() -%}
+    <div class="content-card flex flex-col gap-4">
+      <h3 class="opacity-60 tracking-wide">Ups Temperature</h3>
+      <p class="content-center grow py-6 text-6xl text-center {{temperature.class.as_text()}}">
+        {{temperature}}
+      </p>
+    </div>
+  {%- endif -%}
+
+  {%- let real_power = device.get_real_power() -%}
+  {%- let apparent_power = device.get_apparent_power() -%}
+
+  {%- if apparent_power.is_some() || real_power.is_some() -%}
+    <div class="content-card flex flex-col gap-4">
+      <h3 class="opacity-60 tracking-wide">UPS Power</h3>
+      <div class="grow stats stats-vertical">
+        {%- if let Some(apparent_power) = apparent_power -%}
+        <div class="p-2 stat">
+          <div class="stat-title">Apparent Power (VA)</div>
+          <div class="stat-value text-center text-info">{{apparent_power}}</div>
+        </div>
+        {%- endif -%}
+        {%- if let Some(real_power) = real_power -%}
+          <div class="p-2 stat">
+            <div class="stat-title">Real Power (Watt)</div>
+            <div class="stat-value text-center text-info">{{real_power}}</div>
+          </div>
+        {%- endif -%}
+      </div>
+      <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
+        {%- if let Some(nominal_power) = device.variables.get(nut_webgui_upsmc::VarName::UPS_POWER_NOMINAL) -%}
+          <p>
+            Nominal apparent power <span class="text-info">{{nominal_power}} VA</span>
+          </p>
+        {%- endif -%}
+        {%- if let Some(nominal_realpower) = device.variables.get(nut_webgui_upsmc::VarName::UPS_REALPOWER_NOMINAL) -%}
+          <p>
+            Nominal real power <span class="text-info">{{nominal_realpower}} Watt</span>
+          </p>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- if let Some(runtime) = device.get_battery_runtime() -%}
+    <div class="content-card flex flex-col gap-4">
+      <h3 class="opacity-60 tracking-wide">Battery Runtime</h3>
+      <nut-time-display
+        class="content-center grow py-6 text-6xl text-center tooltip tooltip-bottom {{runtime.class.as_text()}}"
+        value="{{runtime.value.as_str()}}"
+        data-tip="{{runtime.value.as_str()}} seconds"
+      >
+      </nut-time-display>
+      <div class="flex flex-col gap-1 justify-end opacity-60">
+        {%- if let Some(runtime_low) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_RUNTIME_LOW) -%}
+          <div class="font-bold text-sm tooltip tooltip-bottom" data-tip="{{runtime_low}} seconds">
+            Shutdown threshold 
+            <nut-time-display class="text-error" value="{{runtime_low.as_str()}}"></nut-time-display>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
+
+  {%- let out_voltage = device.variables.get(nut_webgui_upsmc::VarName::OUTPUT_VOLTAGE) -%}
+  {%- let in_voltage = device.variables.get(nut_webgui_upsmc::VarName::INPUT_VOLTAGE) -%}
+  {%- let batt_voltage = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_VOLTAGE) -%}
+
+  {%- if out_voltage.is_some() || in_voltage.is_some() || batt_voltage.is_some() -%}
+    <div class="content-card flex flex-col gap-4">
+      <h3 class="opacity-60 tracking-wide">Voltages</h3>
+      <div class="grow stats stats-vertical">
+        {%- if let Some(in_voltage) = in_voltage -%}
+        <div class="p-2 stat">
+          <div class="stat-title">Input</div>
+          <div class="stat-value text-center text-info">{{in_voltage}} V</div>
+        </div>
+        {%- endif -%}
+        {%- if let Some(out_voltage) = out_voltage -%}
+          <div class="p-2 stat">
+            <div class="stat-title">Output</div>
+            <div class="stat-value text-center text-info">{{out_voltage}} V</div>
+          </div>
+        {%- endif -%}
+        {%- if let Some(batt_voltage) = batt_voltage -%}
+          <div class="p-2 stat">
+            <div class="stat-title">Battery</div>
+            <div class="stat-value text-center text-info">{{batt_voltage}} V</div>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  {%- endif -%}
 </div>

@@ -1,6 +1,5 @@
-use std::str::SplitAsciiWhitespace;
-
 use super::semantic_classes::SemanticType;
+use std::str::SplitAsciiWhitespace;
 
 #[derive(Debug)]
 pub struct StatusDetail<'a> {
