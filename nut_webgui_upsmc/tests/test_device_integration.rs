@@ -55,6 +55,7 @@ gen_dev_integration_test!(
 (DEV_APC__BACK_UPS_BF_500__newhidups__v2_0_3__r01                                          ,"../nut-ddl/APC/APC__Back-UPS_BF_500__newhidups__2.0.3__01.dev");
 (DEV_APC__BACK_UPS_BK650M2_CH__usbhid_ups__v2_8_0__r01                                     ,"../nut-ddl/APC/APC__Back-UPS_BK650M2-CH__usbhid-ups__2.8.0__01.dev");
 (DEV_APC__BACK_UPS_BR_800__newhidups__v2_0_3__r01                                          ,"../nut-ddl/APC/APC__Back-UPS_BR_800__newhidups__2.0.3__01.dev");
+(DEV_APC__BACK_UPS_BVK750M2___usbhid_ups__v2_8_3_1__r01                                    ,"../nut-ddl/APC/APC__Back-UPS_BVK750M2___usbhid-ups__2.8.3.1__01.dev");
 (DEV_APC__BACK_UPS_CS_350__hidups__v2_0_0__r01                                             ,"../nut-ddl/APC/APC__Back-UPS_CS_350__hidups__2.0.0__01.dev");
 (DEV_APC__BACK_UPS_CS_350__usbhid_ups__v2_4_1__r01                                         ,"../nut-ddl/APC/APC__Back-UPS_CS_350__usbhid-ups__2.4.1__01.dev");
 (DEV_APC__BACK_UPS_CS_500__usbhid_ups__v2_6_0__r01                                         ,"../nut-ddl/APC/APC__Back-UPS_CS_500__usbhid-ups__2.6.0__01.dev");
@@ -523,6 +524,13 @@ gen_dev_integration_test!(
 (DEV_OPTIUPS__VS_575C__powercom__v2_7_1__r01                                               ,"../nut-ddl/OptiUPS/OptiUPS__VS_575C__powercom__2.7.1__01.dev");
 (DEV_ORVALDI_POWER_PROTECTION__750SP__blazer_usb__v2_4_3__r01                              ,"../nut-ddl/Orvaldi_Power_Protection/Orvaldi_Power_Protection__750SP__blazer_usb__2.4.3__01.dev");
 (DEV_PHOENIX_TECHNOLOGIES__PH1200UPSB__bestups__v2_2_2__r01                                ,"../nut-ddl/Phoenix_Technologies/Phoenix_Technologies__PH1200UPSB__bestups__2.2.2__01.dev");
+(DEV_PISUPPLY__PIJUICE_HAT__pijuice__v2_8_0__r01                                           ,"../nut-ddl/PiSupply/PiSupply__PiJuice_HAT__pijuice__2.8.0__01.dev");
+(DEV_PISUPPLY__PIJUICE_HAT__pijuice__v2_8_0__r02                                           ,"../nut-ddl/PiSupply/PiSupply__PiJuice_HAT__pijuice__2.8.0__02.dev");
+(DEV_PISUPPLY__PIJUICE_HAT__pijuice__v2_8_0__r03                                           ,"../nut-ddl/PiSupply/PiSupply__PiJuice_HAT__pijuice__2.8.0__03.dev");
+(DEV_PISUPPLY__PIJUICE_HAT__pijuice__v2_8_0__r04                                           ,"../nut-ddl/PiSupply/PiSupply__PiJuice_HAT__pijuice__2.8.0__04.dev");
+(DEV_PISUPPLY__PIJUICE_HAT__pijuice__v2_8_3__r01                                           ,"../nut-ddl/PiSupply/PiSupply__PiJuice_HAT__pijuice__2.8.3__01.dev");
+(DEV_PISUPPLY__PIJUICE_HAT__pijuice__v2_8_3__r02                                           ,"../nut-ddl/PiSupply/PiSupply__PiJuice_HAT__pijuice__2.8.3__02.dev");
+(DEV_PISUPPLY__PIJUICE_ZERO_PHAT__pijuice__v2_8_0__r01                                     ,"../nut-ddl/PiSupply/PiSupply__PiJuice_Zero_pHAT__pijuice__2.8.0__01.dev");
 (DEV_PLEXUS__500VA__megatec_usb__v2_2_1__r01                                               ,"../nut-ddl/Plexus/Plexus__500VA__megatec_usb__2.2.1__01.dev");
 (DEV_PLEXUS__UPS_1000V__megatec_usb__v2_2_1__r01                                           ,"../nut-ddl/Plexus/Plexus__UPS_1000V__megatec_usb__2.2.1__01.dev");
 (DEV_PLEXUS__UPS_1000V__megatec_usb__v2_2_2__r01                                           ,"../nut-ddl/Plexus/Plexus__UPS_1000V__megatec_usb__2.2.2__01.dev");
@@ -638,6 +646,7 @@ gen_dev_integration_test!(
 (DEV_SWEEX__INTELLIGENT_UPS_1500VA_P220__blazer_usb__v2_6_5__r01                           ,"../nut-ddl/Sweex/Sweex__INTELLIGENT_UPS_1500VA_P220__blazer_usb__2.6.5__01.dev");
 (DEV_SYNDOME__ERA_500VA__blazer_usb__v2_6_4__r01                                           ,"../nut-ddl/Syndome/Syndome__Era_500VA__blazer_usb__2.6.4__01.dev");
 (DEV_SYSGRATION__UPGUARDS_PRO1400__megatec__v2_0_5__r01                                    ,"../nut-ddl/Sysgration/Sysgration__UPGUARDS_Pro1400__megatec__2.0.5__01.dev");
+(DEV_TALEGENT__VITALITY_1KS__blazer_ser__v2_8_3_64__r01                                    ,"../nut-ddl/Talegent/Talegent__Vitality_1KS__blazer_ser__2.8.3.64__01.dev");
 (DEV_TECNOWARE__UPS_ERA_PLUS_1100__blazer_usb__v2_7_4__r01                                 ,"../nut-ddl/Tecnoware/Tecnoware__UPS_ERA_PLUS_1100__blazer_usb__2.7.4__01.dev");
 (DEV_TRIPP_LITE__AVR750U__usbhid_ups__v2_2_2__r01                                          ,"../nut-ddl/Tripp_Lite/Tripp_Lite__AVR750U__usbhid-ups__2.2.2__01.dev");
 (DEV_TRIPP_LITE__AVR900U__usbhid_ups__v2_6_0__r01                                          ,"../nut-ddl/Tripp_Lite/Tripp_Lite__AVR900U__usbhid-ups__2.6.0__01.dev");
@@ -712,6 +721,7 @@ gen_dev_integration_test!(
 (DEV_TRIPP_LITE__UPS__usbhid_ups__v2_6_5__r01                                              ,"../nut-ddl/Tripp_Lite/Tripp_Lite__UPS__usbhid-ups__2.6.5__01.dev");
 (DEV_TRUST__UPS_1000_MANAGEMENT_PW_4105__powermust__v2_0_2__r01                            ,"../nut-ddl/Trust/Trust__UPS_1000_Management_PW-4105__powermust__2.0.2__01.dev");
 (DEV_TRUST__UPS_1000_MANAGEMENT_PW_4105__powermust__v2_0_3__r01                            ,"../nut-ddl/Trust/Trust__UPS_1000_Management_PW-4105__powermust__2.0.3__01.dev");
+(DEV_TS_SHARA__XPRO_UPS_SENOIDAL_1500VA__nutdrv_qx__v2_8_0__r01                            ,"../nut-ddl/TS_Shara/TS_Shara__XPro_UPS_Senoidal_1500VA__nutdrv_qx__2.8.0__01.dev");
 (DEV_TUNCMATIK__DG1200VA__blazer_usb__v2_6_4__r01                                          ,"../nut-ddl/Tuncmatik/Tuncmatik__DG1200VA__blazer_usb__2.6.4__01.dev");
 (DEV_TUNCMATIK__DG1200VA__megatec_usb__v2_4_3__r01                                         ,"../nut-ddl/Tuncmatik/Tuncmatik__DG1200VA__megatec_usb__2.4.3__01.dev");
 (DEV_TUNCMATIK__NEWTECH_PRO_1KVA__blazer_ser__v2_4_1__r01                                  ,"../nut-ddl/Tuncmatik/Tuncmatik__Newtech_Pro_1KVA__blazer_ser__2.4.1__01.dev");

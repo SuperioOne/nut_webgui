@@ -1,3 +1,4 @@
+#!/bin/lua
 require("io")
 
 -- Reads variable list from stdin and generates macro inputs for standard variable names.

@@ -293,20 +293,6 @@ where
       };
     }
 
-    rw_variables.insert(
-      VarName::UPS_BEEPER_STATUS,
-      VarDetail::Enum {
-        options: vec![Value::from("enabled"), Value::from("disabled")],
-      },
-    );
-    rw_variables.insert(
-      VarName::BATTERY_CHARGE,
-      VarDetail::Range {
-        min: Value::from(0),
-        max: Value::from(100),
-      },
-    );
-
     let entry = DeviceEntry {
       attached,
       commands,

@@ -1,3 +1,4 @@
+#!/bin/lua
 require("io")
 
 -- Reads dev paths from stdin and generates macro inputs for integration tests.
