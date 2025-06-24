@@ -93,7 +93,7 @@ impl<'a> Lexer<'a> {
     let buffer_str = &self.buffer;
 
     match token {
-      Token::LF { .. } => Cow::Borrowed("\n"),
+      Token::LF => Cow::Borrowed("\n"),
       Token::Text { start, end, .. } => Cow::Borrowed(&buffer_str[*start..*end]),
       Token::QuotedText { start, end, .. } => {
         let text = &buffer_str[*start..*end];
@@ -137,10 +137,7 @@ impl<'a> Lexer<'a> {
       buffer: self.buffer,
     };
 
-    match tmp_tokenizer.next_token() {
-      Ok(next @ Some(_)) => next,
-      _ => None,
-    }
+    tmp_tokenizer.next_token().unwrap_or_default()
   }
 
   pub fn peek_as_str(&self) -> Option<&str> {
@@ -182,7 +179,7 @@ impl<'a> Lexer<'a> {
   fn read_quoted_text(&mut self) -> Result<(usize, usize), Error> {
     let start = self.state.read_head;
     let mut end = start;
-    let mut buffer_iter = (&self.buffer.as_bytes()[self.state.read_head..]).iter();
+    let mut buffer_iter = self.buffer.as_bytes()[self.state.read_head..].iter();
 
     loop {
       let char = buffer_iter.next();
@@ -204,7 +201,7 @@ impl<'a> Lexer<'a> {
           return Err(
             ErrorKind::ParseError {
               inner: ParseError::ExpectedDoubleQuote,
-              position: self.state.position.clone(),
+              position: self.state.position,
             }
             .into(),
           );
@@ -241,10 +238,7 @@ impl<'a> Lexer<'a> {
 
   #[inline]
   pub fn is_finished(&self) -> bool {
-    match self.peek() {
-      Some(_) => false,
-      None => true,
-    }
+    self.peek().is_none()
   }
 
   pub fn next_token(&mut self) -> Result<Option<Token>, Error> {

@@ -116,7 +116,7 @@ impl std::fmt::Display for NumberParseError {
 
 impl std::fmt::Display for Error {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    (&self.inner).fmt(f)
+    self.inner.fmt(f)
   }
 }
 

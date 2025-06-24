@@ -77,7 +77,7 @@ pub async fn post_command(
   let Json(body) = body?;
   let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
 
-  _ = {
+  {
     let server_state = rs.state.read().await;
 
     match server_state.devices.get(&ups_name) {
@@ -102,7 +102,7 @@ pub async fn post_command(
 
   let mut client = NutAuthClient::connect(addr, user, password).await?;
 
-  _ = {
+  {
     let response = client.instcmd(&ups_name, &body.instcmd).await;
     _ = client.close().await;
 
@@ -125,7 +125,7 @@ pub async fn post_fsd(
   let Path(ups_name) = ups_name?;
   let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
 
-  _ = {
+  {
     let server_state = rs.state.read().await;
     if server_state.devices.contains_key(&ups_name) {
       Ok(())
@@ -139,7 +139,7 @@ pub async fn post_fsd(
 
   let mut client = NutAuthClient::connect(addr, user, password).await?;
 
-  _ = {
+  {
     let response = client.fsd(&ups_name).await;
     _ = client.close().await;
 
@@ -163,7 +163,7 @@ pub async fn patch_var(
   let Json(body) = body?;
   let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
 
-  _ = {
+  {
     let server_state = rs.state.read().await;
 
     match server_state.devices.get(&ups_name) {
@@ -189,9 +189,8 @@ pub async fn patch_var(
 
             if trimmed.is_empty() {
               Err(
-                ProblemDetail::new("Empty value", StatusCode::BAD_REQUEST).with_detail(format!(
-                  "Value cannot be empty or consist of only whitespaces.",
-                )),
+                ProblemDetail::new("Empty value", StatusCode::BAD_REQUEST)
+                  .with_detail("Value cannot be empty or consist of only whitespaces.".to_owned()),
               )
             } else if trimmed.len() > *max_len {
               Err(
@@ -250,7 +249,7 @@ pub async fn patch_var(
                 }
               }
               _ => Err(ProblemDetail::new("Malformed driver response", StatusCode::INTERNAL_SERVER_ERROR).with_detail(
-                format!("Cannot process request since the reported min-max values by ups device are not number."),
+                "Cannot process request since the reported min-max values by ups device are not number.".to_owned(),
               ),
             ),
             }
@@ -283,7 +282,7 @@ pub async fn patch_var(
 
   let mut client = NutAuthClient::connect(addr, user, password).await?;
 
-  _ = {
+  {
     let response = client.set_var(&ups_name, &body.variable, &body.value).await;
     _ = client.close().await;
 

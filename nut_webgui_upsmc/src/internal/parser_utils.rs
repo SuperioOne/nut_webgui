@@ -68,14 +68,14 @@ pub fn extract_quoted_text<'a>(lexer: &'a mut Lexer) -> Result<Cow<'a, str>, Err
   }
 }
 
-pub fn extract_value<'a>(lexer: &'a mut Lexer) -> Result<Value, Error> {
+pub fn extract_value(lexer: &mut Lexer) -> Result<Value, Error> {
   let text = extract_quoted_text(lexer)?;
   let value = Value::infer_from(text);
 
   Ok(value)
 }
 
-pub fn extract_numeric_value<'a>(lexer: &'a mut Lexer) -> Result<Value, Error> {
+pub fn extract_numeric_value(lexer: &mut Lexer) -> Result<Value, Error> {
   let text = extract_quoted_text(lexer)?;
   let value = Value::infer_number_from(text).map_err(|_| ErrorKind::ParseError {
     inner: ParseError::InvalidNumber,
@@ -85,7 +85,7 @@ pub fn extract_numeric_value<'a>(lexer: &'a mut Lexer) -> Result<Value, Error> {
   Ok(value)
 }
 
-pub fn extract_ups_name<'a>(lexer: &'a mut Lexer) -> Result<UpsName, Error> {
+pub fn extract_ups_name(lexer: &mut Lexer) -> Result<UpsName, Error> {
   match lexer.next_token()? {
     Some(token @ Token::Text { .. }) => {
       let name = lexer.extract_from_token(&token);
@@ -125,7 +125,7 @@ pub fn extract_ups_name<'a>(lexer: &'a mut Lexer) -> Result<UpsName, Error> {
   }
 }
 
-pub fn extract_cmd_name<'a>(lexer: &'a mut Lexer) -> Result<CmdName, Error> {
+pub fn extract_cmd_name(lexer: &mut Lexer) -> Result<CmdName, Error> {
   match lexer.next_token()? {
     Some(token @ Token::Text { .. }) => {
       let name = lexer.extract_from_token(&token);
@@ -165,7 +165,7 @@ pub fn extract_cmd_name<'a>(lexer: &'a mut Lexer) -> Result<CmdName, Error> {
   }
 }
 
-pub fn extract_var_name<'a>(lexer: &'a mut Lexer) -> Result<VarName, Error> {
+pub fn extract_var_name(lexer: &mut Lexer) -> Result<VarName, Error> {
   match lexer.next_token()? {
     Some(token @ Token::Text { .. }) => {
       let name = lexer.extract_from_token(&token);
@@ -261,7 +261,7 @@ where
   }
 }
 
-pub fn end_parser<'a>(lexer: &'a mut Lexer) -> Result<(), Error> {
+pub fn end_parser(lexer: &mut Lexer) -> Result<(), Error> {
   match lexer.next_token()? {
     Some(Token::LF) => {
       // Skip all remaining whitespaces,

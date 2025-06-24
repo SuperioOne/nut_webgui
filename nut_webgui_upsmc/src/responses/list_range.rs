@@ -24,17 +24,12 @@ impl Deserialize for RangeList {
       position: lexer.get_positon(),
     })?;
 
-    loop {
-      match lexer.peek_as_str() {
-        Some("RANGE") => {
-          let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()} {NUM_VALUE, name = min} {NUM_VALUE, name = max})?;
-          ranges.push(range);
-        }
-        _ => break,
-      }
+    while let Some("RANGE") = lexer.peek_as_str() {
+      let range = parse_line!(lexer, "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()} {NUM_VALUE, name = min} {NUM_VALUE, name = max})?;
+      ranges.push(range);
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()})?;
+    parse_line!(lexer, "END" "LIST" "RANGE" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()})?;
 
     if lexer.is_finished() {
       Ok(Self {

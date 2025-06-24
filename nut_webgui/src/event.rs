@@ -93,29 +93,29 @@ impl EventBatch {
 
   pub fn send(self, channel: &EventChannel) -> Result<(), ChannelClosedError> {
     if !self.new.is_empty() {
-      _ = channel.send(SystemEvent::DevicesAdded { devices: self.new })?;
+      channel.send(SystemEvent::DevicesAdded { devices: self.new })?;
     }
 
     if !self.removed.is_empty() {
-      _ = channel.send(SystemEvent::DevicesRemoved {
+      channel.send(SystemEvent::DevicesRemoved {
         devices: self.removed,
       })?;
     }
 
     if !self.updated.is_empty() {
-      _ = channel.send(SystemEvent::DevicesUpdated {
+      channel.send(SystemEvent::DevicesUpdated {
         devices: self.updated,
       })?;
     }
 
     if !self.status_changes.is_empty() {
-      _ = channel.send(SystemEvent::DeviceStatusUpdates {
+      channel.send(SystemEvent::DeviceStatusUpdates {
         changes: self.status_changes,
       })?;
     }
 
     if let Some(status) = self.upsd_status {
-      _ = channel.send(SystemEvent::UpsdStatus { status })?;
+      channel.send(SystemEvent::UpsdStatus { status })?;
     }
 
     Ok(())

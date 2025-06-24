@@ -78,7 +78,7 @@ where
   }
 
   pub async fn close(mut self) -> Result<(), Error> {
-    _ = self.writer.shutdown().await?;
+    self.writer.shutdown().await?;
     Ok(())
   }
 
@@ -91,9 +91,9 @@ where
 
   async fn inner_send_raw(&mut self, send: &str) -> Result<String, Error> {
     trace!(message = "tcp message", send = send);
-    const LIST_START: &'static str = "BEGIN LIST";
-    const LIST_END: &'static str = "END LIST";
-    const PROT_ERR: &'static str = "ERR";
+    const LIST_START: &str = "BEGIN LIST";
+    const LIST_END: &str = "END LIST";
+    const PROT_ERR: &str = "ERR";
 
     self.writer.write_all(send.as_bytes()).await?;
     self.writer.flush().await?;
@@ -120,8 +120,8 @@ where
       );
 
       Ok(response_buf)
-    } else if response_buf.starts_with(PROT_ERR) {
-      let prot_err = ProtocolError::from((&response_buf[PROT_ERR.len()..]).trim());
+    } else if let Some(prot_err) = response_buf.strip_prefix(PROT_ERR) {
+      let prot_err = ProtocolError::from(prot_err.trim());
 
       trace!(
         message = "upsd tcp prot error received",

@@ -17,19 +17,13 @@ impl Deserialize for CmdList {
     let mut cmds: Vec<CmdName> = Vec::new();
     let ups_name = parse_line!(lexer, "BEGIN" "LIST" "CMD" {UPS, name = ups_name})?;
 
-    loop {
-      match lexer.peek_as_str() {
-        Some("CMD") => {
-          let cmd_name =
-            parse_line!(lexer, "CMD" {TEXT, cmp_to = &ups_name} {CMD, name = cmd_name})?;
+    while let Some("CMD") = lexer.peek_as_str() {
+      let cmd_name = parse_line!(lexer, "CMD" {TEXT, cmp_to = &ups_name} {CMD, name = cmd_name})?;
 
-          cmds.push(cmd_name);
-        }
-        _ => break,
-      }
+      cmds.push(cmd_name);
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "CMD" {TEXT, cmp_to = &ups_name})?;
+    parse_line!(lexer, "END" "LIST" "CMD" {TEXT, cmp_to = &ups_name})?;
 
     if lexer.is_finished() {
       Ok(Self { ups_name, cmds })

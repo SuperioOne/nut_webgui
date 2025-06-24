@@ -24,10 +24,10 @@ impl core::str::FromStr for VarType {
       "RANGE" => Ok(Self::Range),
       "NUMBER" => Ok(Self::Number),
       text => {
-        const STR_START: &'static str = "STRING:";
+        const STR_START: &str = "STRING:";
 
         if text.len() > STR_START.len() && text.starts_with(STR_START) {
-          match (&text[STR_START.len()..]).parse() {
+          match text[STR_START.len()..].parse() {
             Ok(v) => Ok(Self::String { max_len: v }),
             Err(_) => Err(VarTypeParseError::InvalidType),
           }

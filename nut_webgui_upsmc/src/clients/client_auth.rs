@@ -210,7 +210,7 @@ where
       .send::<_, responses::ProtOkDetach>(commands::DetachCommand.serialize())
       .await?;
 
-    _ = self.inner.close().await?;
+    self.inner.close().await?;
 
     Ok(())
   }

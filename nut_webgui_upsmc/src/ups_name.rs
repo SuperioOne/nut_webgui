@@ -27,7 +27,7 @@ impl UpsName {
   where
     T: AsRef<str>,
   {
-    _ = is_ups_name(name.as_ref())?;
+    is_ups_name(name.as_ref())?;
 
     Ok(Self {
       name: Box::from(name.as_ref()),

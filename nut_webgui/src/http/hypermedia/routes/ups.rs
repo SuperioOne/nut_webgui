@@ -106,11 +106,11 @@ fn get_tab_template<'a>(
         .map(|(name, detail)| {
           let value = device.variables.get(name);
           let input = RwFormTemplate {
-            detail: detail,
+            detail,
             device_name: &device.name,
             message: None,
             semantic: SemanticType::None,
-            value: value,
+            value,
             var_name: name,
             notification: None,
           };

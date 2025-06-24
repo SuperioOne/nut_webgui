@@ -36,14 +36,12 @@ impl DeviceEntry {
         let real_power = self
           .variables
           .get(VarName::UPS_REALPOWER_NOMINAL)
-          .map(|v| v.as_lossly_f64())
-          .flatten();
+          .and_then(|v| v.as_lossly_f64());
 
         let power = self
           .variables
           .get(VarName::UPS_POWER_NOMINAL)
-          .map(|v| v.as_lossly_f64())
-          .flatten();
+          .and_then(|v| v.as_lossly_f64());
 
         match (real_power, power) {
           (Some(w), Some(va)) => {
@@ -71,21 +69,19 @@ impl DeviceEntry {
     };
 
     let semantic_class = {
-      match temperature.as_lossly_i64() {
+      match temperature.as_lossly_f64() {
         Some(v) => {
           let low_temp = self
             .variables
             .get(VarName::UPS_TEMPERATURE_LOW)
-            .map(|v| v.as_lossly_i64())
-            .flatten()
-            .unwrap_or(0);
+            .and_then(|v| v.as_lossly_f64())
+            .unwrap_or(0.0);
 
           let high_temp = self
             .variables
             .get(VarName::UPS_TEMPERATURE_HIGH)
-            .map(|v| v.as_lossly_i64())
-            .flatten()
-            .unwrap_or(60);
+            .and_then(|v| v.as_lossly_f64())
+            .unwrap_or(60.0);
 
           if v <= low_temp || v >= high_temp {
             SemanticType::Error
@@ -130,15 +126,13 @@ impl DeviceEntry {
       let warn_level = self
         .variables
         .get(VarName::BATTERY_CHARGE_WARNING)
-        .map(|v| v.as_lossly_i64())
-        .flatten()
+        .and_then(|v| v.as_lossly_i64())
         .unwrap_or(50);
 
       let danger_level = self
         .variables
         .get(VarName::BATTERY_CHARGE_LOW)
-        .map(|v| v.as_lossly_i64())
-        .flatten()
+        .and_then(|v| v.as_lossly_i64())
         .unwrap_or(25);
 
       match charge.as_lossly_i64() {
@@ -161,8 +155,7 @@ impl DeviceEntry {
       let danger_level = self
         .variables
         .get(VarName::BATTERY_RUNTIME_LOW)
-        .map(|v| v.as_lossly_i64())
-        .flatten()
+        .and_then(|v| v.as_lossly_i64())
         .unwrap_or(60);
 
       match battery_runtime.as_lossly_i64() {
@@ -189,29 +182,27 @@ impl DeviceEntry {
       match self
         .variables
         .get(VarName::UPS_REALPOWER)
-        .map(|v| v.as_lossly_f64())
+        .and_then(|v| v.as_lossly_f64())
       {
         Some(v) => v,
         None => {
           let load = self
             .variables
             .get(VarName::UPS_LOAD)
-            .map(|v| v.as_lossly_f64())
-            .flatten();
+            .and_then(|v| v.as_lossly_f64());
 
           let nominal_realpower = self
             .variables
             .get(VarName::UPS_REALPOWER_NOMINAL)
-            .map(|v| v.as_lossly_f64())
-            .flatten();
+            .and_then(|v| v.as_lossly_f64());
 
           match (load, nominal_realpower) {
             (Some(load), Some(nominal_realpower)) => Some((nominal_realpower * load) / 100.0f64),
             _ => None,
           }
-        }
+        }?,
       }
-    }?;
+    };
 
     Some(ValueDetail {
       value: Cow::Owned(Value::from(realpower)),
@@ -232,14 +223,12 @@ impl DeviceEntry {
           let load = self
             .variables
             .get(VarName::UPS_LOAD)
-            .map(|v| v.as_lossly_f64())
-            .flatten();
+            .and_then(|v| v.as_lossly_f64());
 
           let nominal_power = self
             .variables
             .get(VarName::UPS_POWER_NOMINAL)
-            .map(|v| v.as_lossly_f64())
-            .flatten();
+            .and_then(|v| v.as_lossly_f64());
 
           match (load, nominal_power) {
             (Some(load), Some(nominal_power)) => Some((nominal_power * load) / 100.0f64),

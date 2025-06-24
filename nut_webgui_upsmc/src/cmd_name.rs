@@ -15,7 +15,7 @@ fn is_cmd_name(name: &str) -> Result<(), CmdParseError> {
     return Err(CmdParseError::Empty);
   }
 
-  if let Some(first) = name.get(0) {
+  if let Some(first) = name.first() {
     if !first.is_ascii_alphabetic() {
       return Err(CmdParseError::InvalidName);
     }
@@ -35,7 +35,7 @@ impl CmdName {
   where
     T: AsRef<str>,
   {
-    _ = is_cmd_name(name.as_ref())?;
+    is_cmd_name(name.as_ref())?;
 
     Ok(Self::new_unchecked(name))
   }

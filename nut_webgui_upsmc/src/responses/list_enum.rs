@@ -24,17 +24,12 @@ impl Deserialize for EnumList {
       position: lexer.get_positon(),
     })?;
 
-    loop {
-      match lexer.peek_as_str() {
-        Some("ENUM") => {
-          let value = parse_line!(lexer, "ENUM" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()} {VALUE, name = value})?;
-          values.push(value);
-        }
-        _ => break,
-      }
+    while let Some("ENUM") = lexer.peek_as_str() {
+      let value = parse_line!(lexer, "ENUM" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()} {VALUE, name = value})?;
+      values.push(value);
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "ENUM" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()})?;
+    parse_line!(lexer, "END" "LIST" "ENUM" {TEXT, cmp_to = &ups_name} {TEXT, cmp_to = name.as_str()})?;
 
     if lexer.is_finished() {
       Ok(Self {

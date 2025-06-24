@@ -80,8 +80,8 @@ pub async fn get(
   let state = &rs.state.read().await;
   let mut device_list: Vec<DeviceTableRow> = state
     .devices
-    .iter()
-    .map(|(_, device)| DeviceTableRow::from(device))
+    .values()
+    .map(|device| DeviceTableRow::from(device))
     .collect();
 
   device_list.sort_unstable_by_key(|v| v.name);

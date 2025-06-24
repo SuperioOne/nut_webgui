@@ -23,7 +23,7 @@ impl Deserialize for UpsVarType {
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
     let mut var_types = Vec::new();
 
-    _ = cmp_literal(lexer, "TYPE")?;
+    cmp_literal(lexer, "TYPE")?;
     let ups_name = extract_ups_name(lexer)?;
     let name = extract_var_name(lexer)?;
 

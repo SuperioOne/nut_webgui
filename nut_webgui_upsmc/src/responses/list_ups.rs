@@ -20,21 +20,16 @@ impl Deserialize for UpsList {
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
     let mut devices: Vec<UpsDevice> = Vec::new();
-    _ = parse_line!(lexer, "BEGIN" "LIST" "UPS")?;
+    parse_line!(lexer, "BEGIN" "LIST" "UPS")?;
 
-    loop {
-      match lexer.peek_as_str() {
-        Some("UPS") => {
-          let (ups_name, desc) =
-            parse_line!(lexer, "UPS" {UPS, name = ups_name} {QUOTED_TEXT, name = desc})?;
+    while let Some("UPS") = lexer.peek_as_str() {
+      let (ups_name, desc) =
+        parse_line!(lexer, "UPS" {UPS, name = ups_name} {QUOTED_TEXT, name = desc})?;
 
-          devices.push(UpsDevice { ups_name, desc });
-        }
-        _ => break,
-      }
+      devices.push(UpsDevice { ups_name, desc });
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "UPS")?;
+    parse_line!(lexer, "END" "LIST" "UPS")?;
 
     if lexer.is_finished() {
       Ok(Self { devices })

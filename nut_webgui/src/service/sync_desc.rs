@@ -173,16 +173,12 @@ where
     let (cmds, vars) = join!(cmd_future, var_future);
     let mut results = Vec::with_capacity(cmds.len() + vars.len());
 
-    for cmd_desc in cmds {
-      if let Ok(CmdDesc { desc, cmd, .. }) = cmd_desc {
-        results.push((cmd.into_boxed_str(), desc));
-      }
+    for CmdDesc { cmd, desc, .. } in cmds.into_iter().flatten() {
+      results.push((cmd.into_boxed_str(), desc));
     }
 
-    for var_desc in vars {
-      if let Ok(UpsVarDesc { desc, name, .. }) = var_desc {
-        results.push((name.into_box_str(), desc));
-      }
+    for UpsVarDesc { name, desc, .. } in vars.into_iter().flatten() {
+      results.push((name.into_box_str(), desc));
     }
 
     results

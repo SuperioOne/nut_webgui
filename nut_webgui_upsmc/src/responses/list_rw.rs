@@ -19,23 +19,18 @@ impl Deserialize for RwList {
     let mut variables = UpsVariables::new();
     let ups_name = parse_line!(lexer, "BEGIN" "LIST" "RW" {UPS, name = ups_name})?;
 
-    loop {
-      match lexer.peek_as_str() {
-        Some("RW") => {
-          let (name, value) = parse_line!(lexer, "RW" {TEXT, cmp_to = &ups_name} {VAR, name = var_name} {VALUE, name = value})?;
+    while let Some("RW") = lexer.peek_as_str() {
+      let (name, value) = parse_line!(lexer, "RW" {TEXT, cmp_to = &ups_name} {VAR, name = var_name} {VALUE, name = value})?;
 
-          if let Some(previous) = variables.insert(name, value) {
-            warn!(
-              message = "rw variable repeated more than once in a list response",
-              previous = previous.to_string(),
-            )
-          }
-        }
-        _ => break,
+      if let Some(previous) = variables.insert(name, value) {
+        warn!(
+          message = "rw variable repeated more than once in a list response",
+          previous = previous.to_string(),
+        )
       }
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "RW" {TEXT, cmp_to = &ups_name})?;
+    parse_line!(lexer, "END" "LIST" "RW" {TEXT, cmp_to = &ups_name})?;
 
     if lexer.is_finished() {
       Ok(Self {

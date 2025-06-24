@@ -30,7 +30,6 @@ pub struct HttpServerConfig {
   pub base_path: UriPath,
 }
 
-#[derive(Debug)]
 pub struct UpsdConfig {
   /// Poll frequency in seconds for less critical parameters
   pub poll_freq: u64,
@@ -115,5 +114,40 @@ impl ServerConfig {
     L: ConfigLayer,
   {
     layer.apply_layer(self)
+  }
+}
+
+impl core::fmt::Debug for UpsdConfig {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    #[derive(Debug)]
+    struct _Filtered<'a> {
+      poll_freq: u64,
+      poll_interval: u64,
+      addr: &'a str,
+      port: u16,
+      user: Option<&'static str>,
+      pass: Option<&'static str>,
+      max_conn: NonZeroUsize,
+    }
+
+    let filtered = _Filtered {
+      poll_freq: self.poll_freq,
+      poll_interval: self.poll_interval,
+      addr: self.addr.as_ref(),
+      port: self.port,
+      user: if self.user.is_some() {
+        Some("******")
+      } else {
+        None
+      },
+      pass: if self.pass.is_some() {
+        Some("******")
+      } else {
+        None
+      },
+      max_conn: self.max_conn,
+    };
+
+    core::fmt::Debug::fmt(&filtered, f)
   }
 }

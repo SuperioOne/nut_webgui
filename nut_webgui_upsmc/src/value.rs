@@ -38,8 +38,7 @@ impl Value {
   #[inline]
   pub fn is_numeric(&self) -> bool {
     match self {
-      Value::Float(_) => true,
-      Value::Int(_) => true,
+      Value::Float(_) | Value::Int(_) => true,
       _ => false,
     }
   }
@@ -64,7 +63,7 @@ impl Value {
     match self {
       Value::Float(num) => Cow::Owned(format!("{:.2}", num)),
       Value::Int(num) => Cow::Owned(num.to_string()),
-      Value::String(text) => Cow::Borrowed(&text),
+      Value::String(text) => Cow::Borrowed(text),
     }
   }
 
@@ -165,7 +164,7 @@ impl InferValueFrom<String> for Value {
 
 impl InferValueFrom<&str> for Value {
   fn infer_from(value: &str) -> Value {
-    match infer_type(&value) {
+    match infer_type(value) {
       InferredType::Int => value
         .parse::<i64>()
         .map_or_else(|_| Self::String(Box::from(value)), |v| Self::Int(v)),
@@ -213,7 +212,7 @@ impl std::fmt::Display for Value {
     match self {
       Value::Float(v) => f.write_fmt(format_args!("{v:.2}")),
       Value::Int(v) => f.write_fmt(format_args!("{v}")),
-      Value::String(v) => f.write_str(&v),
+      Value::String(v) => f.write_str(v),
     }
   }
 }

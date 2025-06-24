@@ -352,7 +352,7 @@ fn is_var_name(name: &str) -> Result<(), VarNameParseError> {
     return Err(VarNameParseError::Empty);
   }
 
-  if let Some(first) = name.get(0) {
+  if let Some(first) = name.first() {
     if !first.is_ascii_alphabetic() {
       return Err(VarNameParseError::InvalidName);
     }
@@ -385,7 +385,8 @@ impl VarName {
         name: Repr::Standard(name),
       })
     } else {
-      _ = is_var_name(name_str)?;
+      is_var_name(name_str)?;
+
       Ok(Self {
         name: Repr::Custom(Box::from(name_str)),
       })
@@ -425,7 +426,7 @@ impl VarName {
   pub const fn as_str(&self) -> &str {
     match &self.name {
       Repr::Standard(name) => name.as_str(),
-      Repr::Custom(boxed_name) => &boxed_name,
+      Repr::Custom(boxed_name) => boxed_name,
     }
   }
 }
@@ -435,7 +436,7 @@ impl AsRef<str> for VarName {
   fn as_ref(&self) -> &str {
     match &self.name {
       Repr::Standard(name) => name.as_str(),
-      Repr::Custom(boxed_name) => &boxed_name,
+      Repr::Custom(boxed_name) => boxed_name,
     }
   }
 }
@@ -445,7 +446,7 @@ impl std::fmt::Display for VarName {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match &self.name {
       Repr::Standard(name) => f.write_str(name.as_str()),
-      Repr::Custom(boxed_name) => f.write_str(&boxed_name),
+      Repr::Custom(boxed_name) => f.write_str(boxed_name),
     }
   }
 }
@@ -469,7 +470,8 @@ impl TryFrom<Box<str>> for VarName {
         name: Repr::Standard(name),
       })
     } else {
-      _ = is_var_name(&value)?;
+      is_var_name(&value)?;
+
       Ok(Self {
         name: Repr::Custom(value),
       })
@@ -499,7 +501,8 @@ impl TryFrom<String> for VarName {
         name: Repr::Standard(name),
       })
     } else {
-      _ = is_var_name(&value)?;
+      is_var_name(&value)?;
+
       Ok(Self {
         name: Repr::Custom(value.into_boxed_str()),
       })
@@ -558,7 +561,7 @@ impl Borrow<str> for VarName {
 impl PartialOrd for VarName {
   #[inline]
   fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-    self.as_str().partial_cmp(other.as_str())
+    Some(self.cmp(other))
   }
 }
 

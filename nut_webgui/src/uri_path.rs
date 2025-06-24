@@ -87,7 +87,7 @@ impl UriPath {
 
     if normalized.is_empty() {
       Ok(Self::default())
-    } else if is_valid_path(&normalized) {
+    } else if is_valid_path(normalized) {
       if normalized.starts_with('/') {
         Ok(Self {
           inner: normalized.into(),

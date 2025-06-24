@@ -400,8 +400,8 @@ impl DeviceDiff {
       }
     }
 
-    if local_devices.len() > 0 {
-      result.removed = local_devices.into_iter().map(|(_, v)| v.ups_name).collect();
+    if !local_devices.is_empty() {
+      result.removed = local_devices.into_values().map(|v| v.ups_name).collect();
     }
 
     result

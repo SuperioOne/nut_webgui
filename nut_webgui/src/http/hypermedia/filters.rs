@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 pub fn normalize_id(input: &str) -> Cow<'_, str> {
-  let first = input.as_bytes().get(0);
+  let first = input.as_bytes().first();
 
   let input = if first.is_some_and(|v| v.is_ascii_digit()) {
     let mut prefixed = String::new();
@@ -13,8 +13,7 @@ pub fn normalize_id(input: &str) -> Cow<'_, str> {
     Cow::Borrowed(input)
   };
 
-  let mut iter = input.as_bytes().iter();
-  while let Some(ch) = iter.next() {
+  for ch in input.as_bytes().iter() {
     if !ch.is_ascii_alphanumeric() && *ch != b'_' && *ch != b'-' && *ch != b'.' {
       let escaped = input.replace(
         |input: char| {

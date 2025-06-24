@@ -39,7 +39,7 @@ fn load_configs() -> Result<ServerConfig, ConfigError> {
   let toml_path = cli_args
     .config_file
     .as_ref()
-    .or_else(|| env_args.config_file.as_ref());
+    .or(env_args.config_file.as_ref());
 
   let toml_args = if let Some(path) = toml_path {
     ServerTomlArgs::load(path)?

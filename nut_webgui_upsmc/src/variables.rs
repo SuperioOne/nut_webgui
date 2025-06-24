@@ -6,7 +6,7 @@ use std::collections::HashMap;
 ///
 /// ## Implementation notes:
 /// It simply a wrapper struct for [`HashMap`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct UpsVariables {
   inner: HashMap<VarName, Value>,
 }
@@ -50,6 +50,11 @@ impl UpsVariables {
   #[inline]
   pub fn len(&self) -> usize {
     self.inner.len()
+  }
+
+  #[inline]
+  pub fn is_empty(&self) -> bool {
+    self.inner.is_empty()
   }
 
   #[inline]

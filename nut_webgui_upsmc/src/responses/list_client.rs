@@ -19,23 +19,18 @@ impl Deserialize for ClientList {
     let mut ips: Vec<IpAddr> = Vec::new();
     let ups_name = parse_line!(lexer, "BEGIN" "LIST" "CLIENT" {UPS, name = ups_name})?;
 
-    loop {
-      match lexer.peek_as_str() {
-        Some("CLIENT") => {
-          let ip_text = parse_line!(lexer, "CLIENT" {TEXT, cmp_to = &ups_name} {TEXT, name = ip})?;
+    while let Some("CLIENT") = lexer.peek_as_str() {
+      let ip_text = parse_line!(lexer, "CLIENT" {TEXT, cmp_to = &ups_name} {TEXT, name = ip})?;
 
-          let ip: IpAddr = ip_text.parse().map_err(|_| ErrorKind::ParseError {
-            inner: ParseError::InvalidToken,
-            position: lexer.get_positon(),
-          })?;
+      let ip: IpAddr = ip_text.parse().map_err(|_| ErrorKind::ParseError {
+        inner: ParseError::InvalidToken,
+        position: lexer.get_positon(),
+      })?;
 
-          ips.push(ip);
-        }
-        _ => break,
-      }
+      ips.push(ip);
     }
 
-    _ = parse_line!(lexer, "END" "LIST" "CLIENT" {TEXT, cmp_to = &ups_name})?;
+    parse_line!(lexer, "END" "LIST" "CLIENT" {TEXT, cmp_to = &ups_name})?;
 
     if lexer.is_finished() {
       Ok(Self { ups_name, ips })

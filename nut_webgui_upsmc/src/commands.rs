@@ -19,7 +19,7 @@ impl Serialize for DetachCommand {
   type Output = String;
 
   fn serialize(self) -> Self::Output {
-    format!("LOGOUT\n")
+    "LOGOUT\n".to_owned()
   }
 }
 

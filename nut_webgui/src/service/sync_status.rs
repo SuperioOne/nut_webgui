@@ -164,8 +164,8 @@ where
               entry.last_modified = Utc::now();
 
               changes.push(UpsStatusDetails {
-                new_status: new_status,
-                old_status: old_status,
+                new_status,
+                old_status,
                 name: variable.ups_name,
               });
             }
@@ -218,8 +218,8 @@ where
                 entry.status = new_status;
 
                 events.push_status_change(UpsStatusDetails {
-                  new_status: new_status,
-                  old_status: old_status,
+                  new_status,
+                  old_status,
                   name: var_list.ups_name.clone(),
                 });
               }

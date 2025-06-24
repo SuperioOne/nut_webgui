@@ -133,10 +133,14 @@ impl UpsStatus {
     self.0.count_ones()
   }
 
+  #[inline]
+  pub const fn is_empty(&self) -> bool {
+    self.0 == 0
+  }
+
+  #[inline]
   pub fn iter(&self) -> Iter {
-    Iter {
-      state: self.clone(),
-    }
+    Iter { state: *self }
   }
 }
 
