@@ -1,6 +1,7 @@
 # Docker Compose
 
-# External Host
+## Basic usage
+
 ```
 ┌──────┐
 │ UPS1 ├──┐                                                  ┌─┐
@@ -34,11 +35,17 @@ services:
       LISTEN: "0.0.0.0"
       PORT: "1234"
       LOG_LEVEL: "debug"
+    volumes:                         # (optional) bind config directory to a volume
+      - config-data:/etc/nut_webgui
+
+volumes:
+  config-data:
 
 # Add other services, reverse proxy of your choice etc.
 ```
 
-# Same host
+## Same host
+
 ```
 ┌──────┐
 │ UPS1 ├──┐     Single Server       ┌─┐
@@ -51,7 +58,6 @@ services:
 ┌──────┐  │     └─────────────┘     │S│
 │ UPS3 ├──┘     localhost:3493      └─┘
 └──────┘
-
 ```
 
 **docker-compose.yaml**
@@ -61,7 +67,7 @@ services:
   nutweb:
     image: ghcr.io/superioone/nut_webgui:latest
     restart: always
-    network_mode: host         # Share same host
+    network_mode: host         # Use host network
     environment:
       POLL_FREQ: "60"
       POLL_INTERVAL: "5"
@@ -69,13 +75,16 @@ services:
       UPSD_PORT: "3493"
       UPSD_USER: "admin"
       UPSD_PASS: "test"
-      PORT: "80"               # Outgoing port 
+      PORT: "80"               # Outgoing port
       LOG_LEVEL: "debug"
+
+volumes:
+  config-data:
 ```
 
-# Custom base path
+## With Secrets
 
-Use `BASE_PATH` environment variable if you use path-base routing between multiple services.
+All environment variables support loading values from files.
 
 **docker-compose.yaml**
 ```yaml
@@ -84,42 +93,24 @@ services:
   nutweb:
     image: ghcr.io/superioone/nut_webgui:latest
     restart: always
+    ports:
+      - 9000:9000
     environment:
-      POLL_FREQ: "60"
-      POLL_INTERVAL: "5"
-      UPSD_ADDR: "nut_server_address"
-      UPSD_PORT: "3493"
-      UPSD_USER: "admin"
-      UPSD_PASS: "test"
-      LOG_LEVEL: "debug"
-      BASE_PATH: "services/nut-web"
+      UPSD_USER: "/run/secrets/upsd_username"
+      UPSD_PASS: "/run/secrets/upsd_password"
+      CONFIG_FILE: "/run/secrets/config_file"
+    secrets:
+      - upsd_username
+      - upsd_password
+      - config_file
+
+secrets:
+  upsd_username:
+    file: ./upsd_user.txt
+  upsd_password:
+    file: ./upsd_password.txt
+  config_file:
+    file: ./other_configs.toml
 ```
 
-- Homepage -> `http://<host-name>/services/nut-web/`
-- Health probe -> `http://<host-name>/services/nut-web/probes/health`
-- JSON api -> `http://<host-name>/services/nut-web/api/ups`
 
-## Caddy example config
-
-```
-:80 {
-     reverse_proxy  /services/nut-web/* nutweb:9000
-}
-```
-
-## Nginx example config
-
-```
-events {}
-
-http {
-    server {
-        server_name   acme.com;
-        listen        80;
-
-        location /services/nut-web/ {
-                proxy_pass         http://nutweb:9000;
-        }
-    }
-}
-```

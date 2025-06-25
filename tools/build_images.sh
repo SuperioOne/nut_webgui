@@ -68,25 +68,21 @@ while getopts "hdtu:p:a:c:r:f:" opt; do
         "c")
             ARG_CONFIG_FILE="$OPTARG";
             ;;
-        "h")
-            printf "Usage %s: -a <annotation-file> -c <config-file> [-h] [-d] [-r <registry>] [-t] [-u <username>] [-p <password>]\n" $0
+        ?)
+            printf "Usage %s: -a <annotation-file> -c <config-file> -f <dockerfiles-dir> [-h] [-d] [-r <registry>] [-t] [-u <username>] [-p <password>]\n" $0
             echo ""
             echo "Required Arguments:"
             echo "  -a <annotation-file> : Required. OCI annotations json file."
             echo "  -c <config-file>     : Required. Path to the build configuration file."
-            echo "  -d <dockerfile dir>  : Required. Path to dockerfile directory."
+            echo "  -f <dockerfile dir>  : Required. Path to dockerfile directory."
             echo ""
             echo "Optional Arguments:"
-            echo "  -d                   : Dry-run mode (no image building/pushing)."
+            echo "  -d                   : Dry-run mode (no image building/publishing)."
             echo "  -h                   : Show this help message."
             echo "  -p <password>        : User password for authentication."
             echo "  -r <registry-url>    : Push images and manifest to the target registry."
             echo "  -t                   : Enable TLS verification when pushing. Default is false."
             echo "  -u <username>        : Registry username for authentication."
-            exit 2;
-            ;;
-        ?)
-            printf "Usage %s: -a <annotation-file> -c <config-file> [-h] [-d] [-r <registry>] [-t] [-u <username>] [-p <password>]\nUse '%s --h' for flag details.\n" $0 $0
             exit 2;
             ;;
     esac;

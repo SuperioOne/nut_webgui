@@ -1,3 +1,27 @@
+# v0.5.0 - June 25, 2025
+
+## Added
+- Configuration system that supports CLI arguments, environment variables and TOML config file.
+- Configureable default theme option.
+- Docker/Podman secrets compatible environment variables.
+- Fuzzy search on lists.
+- Pages redesigned to display more information, including battery runtime, attached clients, real/apparent power, and temperature.
+- NUT client implementation with connection pool.
+- Server status page.
+- Support for calling Forced-shutdown from both GUI and API.
+- Support for updating UPS variables from both GUI and API.
+- Variable and command descriptions.
+
+## Changed
+- **(BREAKING)** JSON Data API schemas and endpoints are changed. Review the OpenAPI spec before updating if you rely on `v0.4.2` API.
+- All static content (index.js, icons, and css files) is now part of the executable instead of being in a separate directory.
+- Rust edition updated from 2021 to 2024.
+- UPS info page now uses tabs for better organization.
+- DaisyUI has been updated to version 5 and TailwindCSS to version 4.
+
+## Removed
+- `--static-dir` configuration flag.
+
 # v0.4.2 - May 08, 2025
 
 ## Added

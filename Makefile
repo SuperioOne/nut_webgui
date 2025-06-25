@@ -238,13 +238,13 @@ gen-dockerfiles:
 		> "$(BIN_DIR)/dockerfiles/annotations.json";
 
 .PHONY: test
-test:
+test: init
 	@cd nut_webgui && cargo test
 	@cd nut_webgui_client && cargo test --all-features
 	@cd nut_webgui_upsmc && cargo test --all-features
 
 .PHONY: check
-check:
+check: init
 	@cd nut_webgui && cargo check
 	@cd nut_webgui_client && cargo check --all-features
 	@cd nut_webgui_upsmc && cargo check --all-features

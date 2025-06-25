@@ -7,15 +7,17 @@ Required host tools are:
   - make
   - cargo
   - node
-  - pnpm
+  - pnpm or npm
   - jq
   - coreutils/uutils, GNU gettext utilities
 
-Optionally, You need the following packages and Rust targets for cross-compilation.
+Optionally, host system should have gcc packages and Rust targets for cross-compilation.
 
 Required packages:
   - riscv64-linux-gnu-gcc
   - aarch64-linux-gnu-gcc
+
+> Package names may differ between different distros.
 
 Required Rust targets:
   - aarch64-unknown-linux-gnu
@@ -26,54 +28,71 @@ Required Rust targets:
   - x86_64-unknown-linux-gnu
   - x86_64-unknown-linux-musl
 
-### Building
+Multi-Arch Container Images:
+  - Qemu emulators for each target architecture.
+  - Any OCI compliant image building tool of your choice (Buildah, Docker, Podman).
 
-```shell
+### Building Binaries
+
+> To list all available recipes, use `make help`.
+
+```bash
 make build
 
-# Output dirs ./bin/release/ and ./bin/static
+# Output location ./bin/release/
 ```
 or cross-compile everything (x86-64, ARM64-v8, ARM7, ARM6, RISC-V64)
 
-```shell
+```bash
 make build-all
 
-# Output dirs ./bin/<target-name> and ./bin/static
+# Output location ./bin/<target-name>
 ```
 
-> For more options, check the available recipes inside the [Makefile](../Makefile).
+### Generating dockerfiles
+
+```bash
+make gen-dockerfiles
+# Output location ./bin/dockerfiles
+```
 
 # Development and Testing
 
-Clone the git repository.
+1. Clone the git repository.
 
-```shell
-git clone --recurse-submodules https://github.com/SuperioOne/nut_webgui.git
-```
+    ```shell
+    git clone --recurse-submodules https://github.com/SuperioOne/nut_webgui.git
+    ```
 
-> `--recurse-submodule` flag is required for the UPS validation tests. It pulls 
-> [NUT Device Dumps Library](https://github.com/networkupstools/nut-ddl) as submodule, 
-> which contains known UPS device dumps.
+    > `--recurse-submodule` flag is required for the UPS validation tests. It pulls 
+    > [NUT Device Dumps Library](https://github.com/networkupstools/nut-ddl) as submodule, 
+    > which contains known UPS device dumps.
 
-You can start front-end and back-end server via `./start_dev.sh`. It simply calls
-[`cargo-watch`](https://github.com/watchexec/cargo-watch), esbuild and tailwind.
 
-```shell
-# (Optional) Set your NUT server address, default is localhost.
-export UPSD_ADDR="10.0.0.1"
+2. Use `make init` to initialize client's `node_modules` directory.
 
-# (Optional) set username and password to test INST_CMD.
-export UPSD_USER="user_name"
-export UPSD_PASS="yo"
+3. Run server
+   - Start with bacon:
 
-./start_dev.sh
-```
+      `make watch` can start development server. It simply calls [bacon](https://github.com/Canop/bacon).
 
-## Testing
+      ```bash
+      # (Optional) Set your NUT test server configs.
+      export NUTWG__CONFIG_FILE="test.config.toml"
+      export NUTWG__LOG_LEVEL="trace"
+      export NUTWG__UPSD__ADDRESS="10.0.0.1"
+      export NUTWG__UPSD__USERNAME="cid"
+      export NUTWG__UPSD__PASSWORD="i_am_atomic"
 
-Simply use `make test` command to run all available tests.
+      make watch
+      ```
+    - or simply use Cargo: `cd ./nut_webgui && cargo run`
 
-## Simulating UPS devices with container
+## Tests
+
+`make test` command runs all available tests.
+
+## Simulating UPS devices and NUT server with containers
 
 A basic NUT server container image is available at [tools/dummy_server](../tools/dummy_server) directory. 
 It starts a NUT server, and automatically configures dummy UPS devices with the 
@@ -83,7 +102,7 @@ mounted `.seq` and `.dev` files.
 > - <UPS_NAME>.dev
 > - <UPS_NAME>.seq
 
-```shell
+```bash
 cd tools/dummy_server
 
 # Build dummy_server image
@@ -101,4 +120,3 @@ docker run --rm -p 3493:3493 -v "$(pwd)/example-devices":/nut_devices dummy_serv
 For `dummy-ups` driver details, see [NetworkUpsTools - dummy-ups.](https://networkupstools.org/docs/man/dummy-ups.html)
 
 For `.dev` and `.seq` details, see [nut-ddl.](https://github.com/networkupstools/nut-ddl)
-

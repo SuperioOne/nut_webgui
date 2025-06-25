@@ -1,7 +1,9 @@
 FROM --platform=${PLATFORM} ${BASE_CONTAINER_IMAGE}
-RUN adduser -H -D -g "<nut_web>" nut_webgui
-COPY --chmod=754 --chown=root:nut_webgui ./containers/server_start.sh /usr/local/bin/nut_webgui_server.sh
-COPY --chmod=664 --chown=root:nut_webgui ./containers/config.toml /usr/local/share/nut_webgui/config.toml
+RUN adduser -H -D -g "<nut_webgui>" nut_webgui; \
+        install -d -m 774 -o root -g "nut_webgui" /etc/nut_webgui
 COPY --chmod=750 --chown=root:nut_webgui ${EXE_DIR}/nut_webgui /usr/local/bin/nut_webgui
+COPY --chmod=754 --chown=root:nut_webgui ./containers/server_start.sh /usr/local/bin/nut_webgui_server.sh
+COPY --chmod=774 --chown=root:nut_webgui ./containers/config.toml /etc/nut_webgui/config.toml
+COPY --chmod=774 --chown=root:nut_webgui ./containers/config.toml /usr/local/share/nut_webgui/config.toml
 USER nut_webgui
 CMD ["/usr/local/bin/nut_webgui_server.sh"]

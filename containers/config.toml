@@ -71,9 +71,9 @@
 
 # ------------------------------------------------------------------------------
 # Max Connection: Set the maximum number of simultaneous connections allowed to
-# the UPS daemon service. This limit appl applies only to monitoring; 
-# administrative actions like instcmd, set var, and fsd can create additional
-# short-lived connections.
+# the UPS daemon service. This limit applies only to monitoring; administrative 
+# actions like instcmd, set var, and fsd can create additional short-lived 
+# connections.
 #
 # Default value is 4 connection.
 # ------------------------------------------------------------------------------

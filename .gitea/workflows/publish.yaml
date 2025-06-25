@@ -42,7 +42,13 @@ jobs:
       - name: Build container images
         run: >
           make gen-dockerfiles;
-          ./tools/build_images.sh -c "build.config.json" -a "bin/dockerfiles/annotations.json" -f "bin/dockerfiles" -r "${REGISTRY_URL}" -u "${REGISTRY_USERNAME}" -p "${REGISTRY_PASSWORD}";
+          ./tools/build_images.sh \
+            -c "build.config.json" \
+            -a "bin/dockerfiles/annotations.json" \
+            -f "bin/dockerfiles" \
+            -r "${REGISTRY_URL}" \
+            -u "${REGISTRY_USERNAME}" \
+            -p "${REGISTRY_PASSWORD}";
         env:
           REGISTRY_URL: ${{secrets.REGISTRY_URL}}
           REGISTRY_USERNAME: ${{secrets.REGISTRY_USERNAME}}
