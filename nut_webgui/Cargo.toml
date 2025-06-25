@@ -1,6 +1,6 @@
 [package]
 name = "nut_webgui"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2024"
 
 authors = ["Timur Olur <pm@smdd.dev>"]
@@ -21,17 +21,39 @@ panic = "abort"
 
 [dependencies]
 askama = { version = "0.14", features = ["blocks"] }
-axum = { version = "0.8"}
-chrono = { version = "0.4", default-features = false ,features = ["iana-time-zone", "now", "serde"]}
+axum = { version = "0.8" }
+chrono = { version = "0.4", default-features = false, features = [
+        "iana-time-zone",
+        "now",
+        "serde",
+] }
 clap = { version = "4", features = ["derive"] }
 futures = { version = "0.3" }
-nut_webgui_client = { path = "../nut_webgui_client"}
+nut_webgui_client = { path = "../nut_webgui_client" }
 nut_webgui_upsmc = { path = "../nut_webgui_upsmc", features = ["serde"] }
 serde = { version = "1", features = ["serde_derive"] }
-tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal"] }
-tokio-util = { version = "0.7"}
-toml = { version = "0.8", default-features = false, features = ["parse"]}
+tokio = { version = "1", features = [
+        "macros",
+        "net",
+        "rt-multi-thread",
+        "signal",
+] }
+tokio-util = { version = "0.7" }
+toml = { version = "0.8", default-features = false, features = ["parse"] }
 tower = { version = "0.5" }
-tower-http = { version = "0.6", features = ["compression-br", "compression-deflate", "compression-gzip", "cors", "fs", "normalize-path", "set-header", "timeout", "tower", "trace", "limit", "validate-request"] }
+tower-http = { version = "0.6", features = [
+        "compression-br",
+        "compression-deflate",
+        "compression-gzip",
+        "cors",
+        "fs",
+        "normalize-path",
+        "set-header",
+        "timeout",
+        "tower",
+        "trace",
+        "limit",
+        "validate-request",
+] }
 tracing = "0.1"
 tracing-subscriber = "0.3"

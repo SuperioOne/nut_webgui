@@ -14,7 +14,7 @@ use tokio::{
   net::{TcpStream, ToSocketAddrs},
   time::timeout,
 };
-use tracing::trace;
+use tracing::{error, trace};
 
 pub struct NutClient<S>
 where
@@ -123,8 +123,8 @@ where
     } else if let Some(prot_err) = response_buf.strip_prefix(PROT_ERR) {
       let prot_err = ProtocolError::from(prot_err.trim());
 
-      trace!(
-        message = "upsd tcp prot error received",
+      error!(
+        message = "upsd tcp protocol error received",
         response = &response_buf,
         command = send
       );

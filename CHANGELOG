@@ -1,3 +1,8 @@
+# v0.5.1 - June 25, 2025
+
+## Fixed
+- NUT packages prior to 2022 don't support `PROTVER`. Fallback to the old `NETVER`, since it's widely available.
+
 # v0.5.0 - June 25, 2025
 
 ## Added

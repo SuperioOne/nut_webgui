@@ -1,6 +1,6 @@
 [package]
 name = "nut_webgui_upsmc"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 authors = ["Timur Olur <pm@smdd.dev>"]
@@ -16,11 +16,24 @@ default = []
 serde = ["dep:serde"]
 
 [dev-dependencies]
-tokio = { version = "1", features = ["io-util", "macros", "net", "rt", "rt-multi-thread", "sync", "time" ], default-features = false }
+tokio = { version = "1", features = [
+        "io-util",
+        "macros",
+        "net",
+        "rt",
+        "rt-multi-thread",
+        "sync",
+        "time",
+], default-features = false }
 tokio-test = { version = "0.4" }
 serde_json = { version = "1" }
 
 [dependencies]
 serde = { version = "1", optional = true }
-tokio = { version = "1", features = ["net", "io-util", "sync", "time" ], default-features = false }
+tokio = { version = "1", features = [
+        "net",
+        "io-util",
+        "sync",
+        "time",
+], default-features = false }
 tracing = "0.1"

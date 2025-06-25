@@ -300,6 +300,6 @@ impl Serialize for GetProtVer {
   type Output = &'static str;
 
   fn serialize(self) -> Self::Output {
-    "PROTVER\n"
+    "NETVER\n"
   }
 }

@@ -434,7 +434,7 @@ async fn get_versions() {
   let stream = tokio_test::io::Builder::new()
     .write(b"VER\n")
     .read(DAEMON_VER)
-    .write(b"PROTVER\n")
+    .write(b"NETVER\n")
     .read(PROT_VER)
     .build();
 
