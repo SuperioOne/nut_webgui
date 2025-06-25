@@ -33,7 +33,7 @@ data:
 
 **service.yaml**
 
-```
+```yaml
 apiVersion: v1
 kind: Service
 metadata:

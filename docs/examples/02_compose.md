@@ -77,9 +77,6 @@ services:
       UPSD_PASS: "test"
       PORT: "80"               # Outgoing port
       LOG_LEVEL: "debug"
-
-volumes:
-  config-data:
 ```
 
 ## With Secrets

@@ -1,6 +1,6 @@
 # Custom build configuration
 
-By default, build pipeline *(aka shell scripts glued together)* uses [`build.config.json`](build.config.json) to 
+By default, build pipeline *(aka shell scripts glued together)* uses [`build.config.json`](../build.config.json) to 
 generate dockerfiles and build binaries. You can provide custom configuration to create custom build pipeline.
 
 ## Example: Alpine Linux as base image with ARM only builds
@@ -95,7 +95,7 @@ generate dockerfiles and build binaries. You can provide custom configuration to
     make gen-dockerfiles  BUILD_CONFIG="/path/of/custom.config.json" DOCKER_TEMPLATE="/path/of/custom.docker.template";
     ```
 
-4. (Optional, requires buildah) Build images and manifest locally with [`tools/build_images.sh`](tools/build_images.sh)
+4. (Optional, requires buildah) Build images and manifest locally with [`tools/build_images.sh`](../tools/build_images.sh)
 
     ```bash
     # if your buildah requires sudo access, use it with `sudo -E`
