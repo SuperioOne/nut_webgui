@@ -12,7 +12,7 @@ use nut_webgui_upsmc::{
 };
 use std::{net::ToSocketAddrs, sync::Arc, time::Duration};
 use tokio::{
-  select,
+  join, select,
   sync::RwLock,
   time::{Instant, Interval, MissedTickBehavior, interval},
 };
@@ -197,8 +197,12 @@ where
     }
 
     let responses = join_all(devices.iter().map(|device| async move {
-      let result = self.client.list_var(device).await;
-      (device, result)
+      let (variables, clients) = join!(
+        self.client.list_var(device),
+        self.client.list_client(device)
+      );
+
+      (device, variables, clients)
     }))
     .await;
 
@@ -207,10 +211,10 @@ where
     {
       let mut write_lock = self.state.write().await;
 
-      for (device, result) in responses {
+      for result in responses {
         match result {
-          Ok(var_list) => {
-            if let Some(entry) = write_lock.devices.get_mut(&var_list.ups_name) {
+          (device, Ok(var_list), Ok(clients)) => {
+            if let Some(entry) = write_lock.devices.get_mut(device) {
               if let Some(status_value) = var_list.variables.get(VarName::UPS_STATUS) {
                 let new_status = UpsStatus::from(status_value);
                 let old_status = entry.status;
@@ -220,17 +224,24 @@ where
                 events.push_status_change(UpsStatusDetails {
                   new_status,
                   old_status,
-                  name: var_list.ups_name.clone(),
+                  name: var_list.ups_name,
                 });
               }
 
               entry.variables = var_list.variables;
+              entry.attached = clients.ips;
               entry.last_modified = Utc::now();
-              events.push_updated_device(var_list.ups_name);
+
+              events.push_updated_device(clients.ups_name);
             }
           }
-          Err(err) => {
-            debug!(message = "failed to read ups variables", device = %device, reason = %err)
+          (device, vars_results, clients_result) => {
+            if let Err(err) = vars_results {
+              debug!(message = "failed to read ups variables", device = %device, reason = %err)
+            }
+            if let Err(err) = clients_result {
+              debug!(message = "failed to read ups attached clients", device = %device, reason = %err)
+            }
           }
         }
       }

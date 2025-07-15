@@ -55,38 +55,43 @@ impl std::error::Error for ChannelClosedError {}
 pub struct EventBatch {
   new: Vec<UpsName>,
   removed: Vec<UpsName>,
-  updated: Vec<UpsName>,
   status_changes: Vec<UpsStatusDetails>,
+  updated: Vec<UpsName>,
   upsd_status: Option<DaemonStatus>,
 }
 
 impl EventBatch {
   pub fn new() -> Self {
     Self {
-      upsd_status: None,
       new: Vec::new(),
-      updated: Vec::new(),
       removed: Vec::new(),
       status_changes: Vec::new(),
+      updated: Vec::new(),
+      upsd_status: None,
     }
   }
 
+  #[inline]
   pub fn push_new_device(&mut self, name: UpsName) {
     self.new.push(name);
   }
 
+  #[inline]
   pub fn push_removed_device(&mut self, name: UpsName) {
     self.removed.push(name);
   }
 
+  #[inline]
   pub fn push_updated_device(&mut self, name: UpsName) {
     self.updated.push(name);
   }
 
+  #[inline]
   pub fn push_status_change(&mut self, change: UpsStatusDetails) {
     self.status_changes.push(change);
   }
 
+  #[inline]
   pub fn set_upsd_status(&mut self, status: DaemonStatus) {
     self.upsd_status = Some(status);
   }
