@@ -20,10 +20,9 @@ export class ThemeSelector extends HTMLElement {
   }
 
   connectedCallback() {
-    this.#theme_value = this.getAttribute("theme-key") ?? "default";
     this.role = "button";
-
     this.addEventListener("click", this.update_theme);
+    this.#theme_value = this.getAttribute("theme-key") ?? "default";
   }
 
   disconnectedCallback() {

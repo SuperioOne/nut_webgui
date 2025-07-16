@@ -57,35 +57,25 @@ export default class TimeDisplay extends HTMLElement {
   /** @type{TimeDisplayAttrTypes[]} **/
   static observedAttributes = ["value"];
 
-  /** @type{ShadowRoot | undefined} **/
-  #root;
+  /** @type{ShadowRoot } **/
+  #shadow_root;
 
   constructor() {
     super();
+    this.#shadow_root = this.attachShadow({ mode: "open" });
+    link_host_styles(this.#shadow_root);
   }
 
   connectedCallback() {
-    this.innerHTML = "";
-
-    if (!this.#root) {
-      this.#root = this.attachShadow({ mode: "open" });
-      link_host_styles(this.#root);
-    }
-
     const value = Number(this.getAttribute("value"));
     this.#generate_display(value);
   }
 
   /** @param {number} value  **/
   #generate_display(value) {
-    if (this.#root) {
-      if (isNaN(value)) {
-        this.#root.innerHTML = "[ERR! NaN value]";
-        return;
-      }
-
-      this.#root.innerHTML = get_time_str(Math.floor(value));
-    }
+    this.#shadow_root.innerHTML = isNaN(value)
+      ? "[ERR! NaN value]"
+      : get_time_str(Math.floor(value));
   }
 
   /**

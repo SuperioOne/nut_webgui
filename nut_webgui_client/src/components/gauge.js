@@ -1,118 +1,141 @@
 import { link_host_styles } from "../utils.js";
-import ApexCharts from "apexcharts";
+import {
+  arc as d3_arc,
+  create as d3_create,
+  interpolate as d3_interpolate,
+} from "d3";
 
-/** @import {ApexOptions} from "apexcharts" */
+const START_ANGLE = -Math.PI / 2;
+const END_ANGLE = Math.PI / 2;
+
+/** @import {Selection, Arc, DefaultArcObject} from "d3" */
+
+/**
+ * @param {number} value
+ * @returns {number}
+ * */
+function calc_angle(value) {
+  let rounded = Math.floor(value);
+
+  if (rounded >= 100) {
+    return END_ANGLE;
+  } else if (rounded <= 0) {
+    return START_ANGLE;
+  } else {
+    return (Math.PI * rounded) / 100 + START_ANGLE;
+  }
+}
 
 /**
  * @typedef {"value" | "height" | "width" | "class" } GaugeAtrributes
  */
-
 export default class Gauge extends HTMLElement {
-  /** @type {ApexCharts | undefined} */
-  #chart;
+  /** @type { Selection<SVGTextElement, undefined, null, undefined> | undefined} */
+  #text;
 
-  /** @type {() => void} **/
-  #theme_listener = () => {
-    if (this.#chart) {
-      /** @type {ApexOptions} **/
-      const new_options = {
-        plotOptions: {
-          radialBar: {
-            dataLabels: {
-              value: {
-                color: window.getComputedStyle(this).color,
-              },
-            },
-          },
-        },
-        fill: {
-          colors: [window.getComputedStyle(this).fill],
-        },
-      };
+  /** @type { Selection<SVGPathElement, { endAngle: number; }, null, undefined> | undefined} */
+  #value_track;
 
-      this.#chart.updateOptions(new_options, false, false).catch(console.error);
-    }
-  };
+  /** @type {ShadowRoot} */
+  #shadow_root;
 
-  /** @type {AbortController | undefined} **/
-  #abort_controller;
+  /** @type{Arc<any, DefaultArcObject> | undefined}*/
+  #gauge_arc;
 
   /** @type {GaugeAtrributes[]} */
-  static observedAttributes = ["value", "height", "width", "class"];
+  static observedAttributes = ["value", "class"];
 
   constructor() {
     super();
+    this.#shadow_root = this.attachShadow({ mode: "closed" });
+    link_host_styles(this.#shadow_root);
   }
 
   connectedCallback() {
-    const shadow_root = this.attachShadow({ mode: "closed" });
-    const child = document.createElement("div");
-    shadow_root.replaceChildren(child);
-    link_host_styles(shadow_root);
-
     const value_text = this.getAttribute("value") ?? "0";
-    const height = this.getAttribute("height") ?? "auto";
-    const width = this.getAttribute("width") ?? "100%";
 
     let value_number = Number(value_text);
     value_number = isNaN(value_number) ? 0 : value_number;
 
-    /** @type {ApexOptions} **/
-    const options = {
-      series: [value_number],
-      chart: {
-        height: height,
-        width: width,
-        type: "radialBar",
-        offsetY: -20,
-        sparkline: {
-          enabled: true,
-        },
-      },
-      plotOptions: {
-        radialBar: {
-          hollow: {
-            size: "70",
-            margin: 10,
-          },
-          startAngle: -90,
-          endAngle: 90,
-          track: {
-            background: "#a0a0a0",
-            strokeWidth: "90",
-            margin: 10,
-          },
-          dataLabels: {
-            name: {
-              show: false,
-            },
-            value: {
-              offsetY: -2,
-              fontSize: "2.5rem",
-              color: window.getComputedStyle(this).color,
-            },
-          },
-        },
-      },
-      fill: {
-        type: "solid",
-        colors: [window.getComputedStyle(this).fill],
-        opacity: 0.5,
-      },
-    };
+    const height = Math.min(500, this.clientWidth / 2);
+    const outerRadius = height;
+    const innerRadius = outerRadius * 0.85;
+    const font_size = innerRadius / 3;
 
-    this.#abort_controller = new AbortController();
-    this.#chart = new ApexCharts(child, options);
-    this.#chart.render().catch(console.error);
+    const gauge = d3_create("svg").attr("viewBox", [
+      0,
+      0,
+      this.clientWidth,
+      height,
+    ]);
 
-    document.addEventListener("theme-change", this.#theme_listener, {
-      signal: this.#abort_controller.signal,
-    });
+    const tracks = gauge
+      .append("g")
+      .attr(
+        "transform",
+        `translate(${this.clientWidth / 2}, ${(height + outerRadius) / 2})`,
+      );
+
+    const arc = d3_arc()
+      .outerRadius(outerRadius)
+      .innerRadius(innerRadius)
+      .startAngle(START_ANGLE);
+
+    tracks
+      .append("path")
+      .datum({ endAngle: END_ANGLE })
+      .style("fill", "#00000025")
+      .attr("d", /** @type{any}*/ (arc));
+
+    this.#value_track = tracks
+      .append("path")
+      .datum({ endAngle: calc_angle(value_number) })
+      .attr("d", /** @type{any}*/ (arc));
+
+    this.#text = gauge
+      .append("text")
+      .attr("text-anchor", "middle")
+      .attr("transform", `translate(${this.clientWidth / 2}, ${height})`)
+      .style("font-size", `${font_size}px`)
+      .text(`${value_text}%`);
+
+    this.#gauge_arc = arc;
+
+    let node = gauge.node();
+
+    if (node) {
+      this.#shadow_root.appendChild(node);
+    }
   }
 
-  disconnectedCallback() {
-    this.#chart?.destroy();
-    this.#abort_controller?.abort();
+  /** @param {unknown} value  */
+  set_value(value) {
+    const input_val = Number(value);
+
+    if (Number.isNaN(input_val)) {
+      console.error(`${value} is not a number. Unable to set gauge value`);
+    } else {
+      const new_angle = calc_angle(input_val);
+
+      if (this.#value_track && this.#text && this.#gauge_arc) {
+        const arc = this.#gauge_arc;
+
+        this.#value_track
+          .transition()
+          .duration(500)
+          .attrTween("d", (d) => {
+            const interpolate = d3_interpolate(d.endAngle, new_angle);
+
+            return (t) => {
+              d.endAngle = interpolate(t);
+              return arc(d);
+            };
+          });
+        this.#text.text(`${value}%`);
+      } else {
+        console.error("Cannot set value, gauge nodes are empty.");
+      }
+    }
   }
 
   /**
@@ -121,34 +144,13 @@ export default class Gauge extends HTMLElement {
    * @param {string} new_value
    */
   attributeChangedCallback(name, _old_value, new_value) {
-    if (!this.#chart) return;
+    if (!this.#value_track || !this.#text) {
+      return;
+    }
 
     switch (name) {
       case "value": {
-        const series_value = Number(new_value) ?? 0;
-        this.#chart.updateSeries([series_value], true).catch(console.error);
-        break;
-      }
-      case "height":
-        this.#chart
-          .updateOptions({
-            chart: {
-              height: new_value ?? "auto",
-            },
-          })
-          .catch(console.error);
-        break;
-      case "width":
-        this.#chart
-          .updateOptions({
-            chart: {
-              width: new_value ?? "100%",
-            },
-          })
-          .catch(console.error);
-        break;
-      case "class": {
-        this.#chart.updateOptions({}, false, false).catch(console.error);
+        this.set_value(new_value);
         break;
       }
       default:

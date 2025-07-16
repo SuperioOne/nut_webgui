@@ -27,8 +27,13 @@ export default class ConfirmationModal extends HTMLElement {
   /** @type{HTMLDialogElement | undefined | null} **/
   #dialog;
 
+  /** @type{ShadowRoot } **/
+  #shadow_root;
+
   constructor() {
     super();
+    this.#shadow_root = this.attachShadow({ mode: "open" });
+    link_host_styles(this.#shadow_root);
   }
 
   /**
@@ -82,11 +87,9 @@ export default class ConfirmationModal extends HTMLElement {
   }
 
   connectedCallback() {
-    const shadow_root = this.attachShadow({ mode: "open" });
-    link_host_styles(shadow_root);
-    shadow_root.appendChild(TEMPLATE.content.cloneNode(true));
+    this.#shadow_root.appendChild(TEMPLATE.content.cloneNode(true));
 
-    this.#dialog = this.shadowRoot?.querySelector("dialog");
+    this.#dialog = this.#shadow_root?.querySelector("dialog");
 
     if (this.#dialog) {
       this.#dialog.addEventListener("close", () => {
