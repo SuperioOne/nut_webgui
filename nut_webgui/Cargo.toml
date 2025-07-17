@@ -43,8 +43,6 @@ toml = { version = "0.8", default-features = false, features = ["parse"] }
 tower = { version = "0.5" }
 tower-http = { version = "0.6", features = [
         "compression-br",
-        "compression-deflate",
-        "compression-gzip",
         "cors",
         "fs",
         "normalize-path",

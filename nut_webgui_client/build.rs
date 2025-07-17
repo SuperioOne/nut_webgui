@@ -1,13 +1,15 @@
+use brotli::BrotliCompress;
+use brotli::enc::BrotliEncoderParams;
 use sha2::Digest;
 use std::{
-  fs::{File, read_dir},
-  io::{Read, Write},
+  fs::{File, OpenOptions, canonicalize, read_dir},
+  io::{Cursor, Read, Write},
   path::{Path, PathBuf},
   process::Command,
   str::FromStr,
 };
 
-fn main() {
+fn main() -> Result<(), std::io::Error> {
   // NOTE: Maybe I should ditch nodejs and simply use Tailwind rust crates + RsPack/FarmFe ???
   #[cfg(debug_assertions)]
   let target = {
@@ -33,87 +35,64 @@ fn main() {
     PathBuf::from_str("target/static/release").unwrap()
   };
 
-  let css_path = target.join("style.css");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_CSS_PATH={}",
-    PathBuf::from_str("..")
-      .unwrap()
-      .join(&css_path)
-      .to_str()
-      .unwrap()
-  );
-  println!("cargo::rustc-env=NUTWG_CLIENT_CSS_NAME=style.css");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_CSS_SHA256={sha256}",
-    sha256 = calc_sha256(css_path).unwrap()
-  );
+  create_asset(&target, "NUTWG_CLIENT_CSS", "style.css")?;
+  create_asset(&target, "NUTWG_CLIENT_JS", "index.js")?;
+  create_asset(&target, "NUTWG_CLIENT_ICON", "icon.svg")?;
+  create_asset(&target, "NUTWG_CLIENT_SPRITE_SHEET", "feather-sprite.svg")?;
 
-  let js_path = target.join("index.js");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_JS_PATH={}",
-    PathBuf::from_str("..")
-      .unwrap()
-      .join(&js_path)
-      .to_str()
-      .unwrap()
-  );
-  println!("cargo::rustc-env=NUTWG_CLIENT_JS_NAME=index.js");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_JS_SHA256={sha256}",
-    sha256 = calc_sha256(js_path).unwrap()
-  );
+  output_watch_list("src", &["css", "js", "json", "rs", "svg"])?;
 
-  let icon_path = target.join("icon.svg");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_ICON_PATH={}",
-    PathBuf::from_str("..")
-      .unwrap()
-      .join(&icon_path)
-      .to_str()
-      .unwrap()
-  );
-  println!("cargo::rustc-env=NUTWG_CLIENT_ICON_NAME=icon.svg");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_ICON_SHA256={sha256}",
-    sha256 = calc_sha256(icon_path).unwrap()
-  );
-
-  let sprite_sheet_path = target.join("feather-sprite.svg");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_PATH={}",
-    PathBuf::from_str("..")
-      .unwrap()
-      .join(&sprite_sheet_path)
-      .to_str()
-      .unwrap()
-  );
-  println!("cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_NAME=.feather-sprite.svg");
-  println!(
-    "cargo::rustc-env=NUTWG_CLIENT_SPRITE_SHEET_SHA256={sha256}",
-    sha256 = calc_sha256(sprite_sheet_path).unwrap()
-  );
-
-  output_watch_list("src", &["css", "js", "json", "rs", "svg"]).unwrap();
+  Ok(())
 }
 
-fn calc_sha256<P>(path: P) -> Result<String, std::io::Error>
-where
-  P: AsRef<Path>,
-{
-  let mut fs = File::open(path.as_ref())?;
-  let mut sha256 = sha2::Sha256::new();
-  let mut block = [0_u8; 4096];
+fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(), std::io::Error> {
+  let params = BrotliEncoderParams::default();
 
-  loop {
-    match fs.read(&mut block)? {
-      0 => break,
-      read => {
-        sha256.write_all(&block[..read])?;
-      }
+  let src_dir = {
+    if src_dir.is_relative() {
+      canonicalize(src_dir)?
+    } else {
+      src_dir.to_path_buf()
     }
-  }
+  };
 
+  let file_path = src_dir.join(file_name);
+
+  let mut compressed_path = file_path.clone();
+  compressed_path.set_extension("brotli");
+
+  let mut src = File::open(&file_path)?;
+  let mut opts = OpenOptions::new();
+  opts.create(true).write(true).truncate(true);
+
+  let mut compressed = opts.open(&compressed_path)?;
+
+  let mut content: Vec<u8> = Vec::new();
+  src.read_to_end(&mut content)?;
+
+  let sha256 = calc_sha256(&content)?;
+  let mut reader = Cursor::new(content);
+
+  BrotliCompress(&mut reader, &mut compressed, &params)?;
+
+  println!(
+    "cargo::rustc-env={env_prefix}_PATH={}",
+    compressed_path
+      .to_str()
+      .expect("Not a valid unicode path string")
+  );
+  println!("cargo::rustc-env={env_prefix}_NAME={file_name}");
+  println!("cargo::rustc-env={env_prefix}_SHA256={sha256}",);
+
+  Ok(())
+}
+
+fn calc_sha256(bytes: &[u8]) -> Result<String, std::io::Error> {
+  let mut sha256 = sha2::Sha256::new();
+
+  sha256.write_all(&bytes)?;
   sha256.flush()?;
+
   let digest = sha256.finalize();
 
   Ok(base16ct::lower::encode_string(&digest))
