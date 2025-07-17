@@ -12,14 +12,14 @@
   {%- if let Some(load) = device.get_ups_load() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Ups Load</h3>
-      <nut-gauge class="grow sm:px-8 {{load.class.as_fill()}}" value="{{load.value.as_str()}}"></nut-gauge>
+      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{load.class.as_fill()}}" value="{{load.value.as_str()}}"></nut-gauge>
     </div>
   {%- endif -%}
 
   {%- if let Some(charge) = device.get_battery_charge() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Battery Charge</h3>
-      <nut-gauge class="grow sm:px-8 {{charge.class.as_fill()}}" value="{{charge.value.as_str()}}"></nut-gauge>
+      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{charge.class.as_fill()}}" value="{{charge.value.as_str()}}"></nut-gauge>
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
         {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_LOW) -%}
           <p>
