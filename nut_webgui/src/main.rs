@@ -13,7 +13,7 @@ use self::config::{
 use crate::config::error::ConfigError;
 use event::EventChannel;
 use http::HttpServer;
-use nut_webgui_upsmc::clients::NutPoolClient;
+use nut_webgui_upsmc::clients::{NutPoolClient, NutPoolClientBuilder};
 use service::{
   BackgroundServiceRunner, sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
   sync_status::StatusSyncService,
@@ -97,11 +97,11 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     .await
     .inspect_err(|err| error!(message = "cannot bind tcp socket to listen", reason = %err, listen_port = config.http_server.port))?;
 
-  let client_pool = NutPoolClient::new_with_timeout(
-    config.upsd.get_socket_addr(),
-    config.upsd.max_conn,
-    Duration::from_secs(config.upsd.poll_freq),
-  );
+  let client_pool = NutPoolClientBuilder::new(config.upsd.get_socket_addr())
+    .with_timeout(Duration::from_secs(config.upsd.poll_freq))
+    .with_limit(config.upsd.max_conn)
+    .build();
+
   let event_channel = EventChannel::new(64);
   let server_state = Arc::new(RwLock::new(ServerState {
     remote_state: DaemonState::new(),

@@ -20,10 +20,8 @@ pub trait BackgroundService {
   /// Runs the service with a cancellation token.
   ///
   /// The cancellation token allows shutting down the service gracefully when needed.
-  fn run(
-    &self,
-    token: CancellationToken,
-  ) -> Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>>;
+  fn run(&self, token: CancellationToken)
+  -> Pin<Box<dyn core::future::Future<Output = ()> + Send>>;
 }
 
 /// A runner for managing background services.

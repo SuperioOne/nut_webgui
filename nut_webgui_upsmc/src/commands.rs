@@ -18,6 +18,7 @@ pub struct DetachCommand;
 impl Serialize for DetachCommand {
   type Output = String;
 
+  #[inline]
   fn serialize(self) -> Self::Output {
     "LOGOUT\n".to_owned()
   }
@@ -236,6 +237,7 @@ pub struct ListUps;
 impl Serialize for ListUps {
   type Output = &'static str;
 
+  #[inline]
   fn serialize(self) -> Self::Output {
     "LIST UPS\n"
   }
@@ -289,6 +291,7 @@ pub struct GetDaemonVer;
 impl Serialize for GetDaemonVer {
   type Output = &'static str;
 
+  #[inline]
   fn serialize(self) -> Self::Output {
     "VER\n"
   }
@@ -299,7 +302,19 @@ pub struct GetProtVer;
 impl Serialize for GetProtVer {
   type Output = &'static str;
 
+  #[inline]
   fn serialize(self) -> Self::Output {
     "NETVER\n"
+  }
+}
+
+pub struct StartTls;
+
+impl Serialize for StartTls {
+  type Output = &'static str;
+
+  #[inline]
+  fn serialize(self) -> Self::Output {
+    "STARTTLS\n"
   }
 }

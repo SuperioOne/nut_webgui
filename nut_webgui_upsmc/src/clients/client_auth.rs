@@ -11,14 +11,14 @@ use tokio::{
 
 pub struct NutAuthClient<T>
 where
-  T: AsyncRead + AsyncWrite + Unpin,
+  T: AsyncRead + AsyncWrite + Unpin + Send + Sync,
 {
   inner: NutClient<T>,
 }
 
 impl<T> AsyncNutClient for &mut NutAuthClient<T>
 where
-  T: AsyncRead + AsyncWrite + Unpin,
+  T: AsyncRead + AsyncWrite + Unpin + Send + Sync,
 {
   fn get_cmd_desc<N, C>(
     self,
@@ -138,7 +138,7 @@ where
 
 impl<T> NutAuthClient<T>
 where
-  T: AsyncRead + AsyncWrite + Unpin,
+  T: AsyncRead + AsyncWrite + Unpin + Send + Sync,
 {
   pub async fn attach<N>(&mut self, ups: N) -> Result<(), Error>
   where
@@ -153,6 +153,11 @@ where
   #[inline]
   pub fn detach(self) -> impl Future<Output = Result<(), Error>> {
     self.close()
+  }
+
+  #[inline]
+  pub fn into_inner(self) -> T {
+    self.inner.into_inner()
   }
 
   pub async fn fsd<N>(&mut self, ups: N) -> Result<(), Error>
@@ -232,7 +237,7 @@ impl NutAuthClient<TcpStream> {
 
 impl<T> NutClient<T>
 where
-  T: AsyncRead + AsyncWrite + Unpin,
+  T: AsyncRead + AsyncWrite + Unpin + Send + Sync,
 {
   pub async fn authenticate(
     self,

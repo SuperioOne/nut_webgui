@@ -8,7 +8,7 @@ use nut_webgui_upsmc::{
   clients::{AsyncNutClient, NutPoolClient},
   responses::{CmdDesc, UpsVarDesc},
 };
-use std::{collections::HashSet, net::ToSocketAddrs, sync::Arc};
+use std::{collections::HashSet, sync::Arc};
 use tokio::{
   join, select,
   sync::{RwLock, broadcast::error::RecvError},
@@ -17,21 +17,15 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, warn};
 
-pub struct DescriptionSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+pub struct DescriptionSyncService {
   event_channel: EventChannel,
-  client: NutPoolClient<A>,
+  client: NutPoolClient,
   state: Arc<RwLock<ServerState>>,
 }
 
-impl<A> DescriptionSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl DescriptionSyncService {
   pub fn new(
-    client: NutPoolClient<A>,
+    client: NutPoolClient,
     event_channel: EventChannel,
     state: Arc<RwLock<ServerState>>,
   ) -> Self {
@@ -43,14 +37,11 @@ where
   }
 }
 
-impl<A> BackgroundService for DescriptionSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl BackgroundService for DescriptionSyncService {
   fn run(
     &self,
     token: CancellationToken,
-  ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>> {
+  ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send>> {
     let mut events = self.event_channel.subscribe();
     let client = self.client.clone();
     let state = self.state.clone();
@@ -83,11 +74,8 @@ where
   }
 }
 
-struct DescriptionTask<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
-  client: NutPoolClient<A>,
+struct DescriptionTask {
+  client: NutPoolClient,
   state: Arc<RwLock<ServerState>>,
 }
 
@@ -97,10 +85,7 @@ struct TaskContext {
   vars: Vec<VarName>,
 }
 
-impl<A> DescriptionTask<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl DescriptionTask {
   pub async fn next(&self, devices: Vec<UpsName>) {
     let task_ctx: Vec<TaskContext> = {
       let mut tmp_lookup = HashSet::new();
@@ -163,7 +148,7 @@ where
   }
 
   /// **concurrently** loads requested command and variable descriptions for target ups.
-  async fn load_descs(client: NutPoolClient<A>, ctx: TaskContext) -> Vec<(Box<str>, Box<str>)> {
+  async fn load_descs(client: NutPoolClient, ctx: TaskContext) -> Vec<(Box<str>, Box<str>)> {
     let cmd_future =
       futures::future::join_all(ctx.cmds.iter().map(|v| client.get_cmd_desc(&ctx.name, v)));
 

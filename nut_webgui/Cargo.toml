@@ -30,7 +30,11 @@ chrono = { version = "0.4", default-features = false, features = [
 clap = { version = "4", features = ["derive"] }
 futures = { version = "0.3" }
 nut_webgui_client = { path = "../nut_webgui_client" }
-nut_webgui_upsmc = { path = "../nut_webgui_upsmc", features = ["serde"] }
+nut_webgui_upsmc = { path = "../nut_webgui_upsmc", features = [
+        "serde",
+        "rustls",
+] }
+rustls-platform-verifier = { version = "0.5" }
 serde = { version = "1", features = ["serde_derive"] }
 tokio = { version = "1", features = [
         "macros",
