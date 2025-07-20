@@ -1,4 +1,4 @@
-pub(crate) mod internal;
+pub mod internal;
 
 mod cmd_name;
 mod commands;
@@ -19,3 +19,8 @@ pub use ups_name::*;
 pub use value::*;
 pub use var_name::*;
 pub use var_type::*;
+
+#[cfg(feature = "rustls")]
+pub mod rustls {
+  pub use tokio_rustls::rustls::*;
+}

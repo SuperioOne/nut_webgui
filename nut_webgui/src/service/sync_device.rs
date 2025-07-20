@@ -16,28 +16,22 @@ use nut_webgui_upsmc::{
   responses::UpsDevice,
   ups_status::UpsStatus,
 };
-use std::{collections::HashMap, net::ToSocketAddrs, sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{join, select, sync::RwLock, task::JoinSet, time::interval, try_join};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
 /// Synchronizes device list from UPSD.
-pub struct DeviceSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
-  client: NutPoolClient<A>,
+pub struct DeviceSyncService {
+  client: NutPoolClient,
   event_channel: EventChannel,
   poll_interval: Duration,
   state: Arc<RwLock<ServerState>>,
 }
 
-impl<A> DeviceSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl DeviceSyncService {
   pub fn new(
-    client: NutPoolClient<A>,
+    client: NutPoolClient,
     event_channel: EventChannel,
     state: Arc<RwLock<ServerState>>,
     poll_interval: Duration,
@@ -51,14 +45,11 @@ where
   }
 }
 
-impl<A> BackgroundService for DeviceSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl BackgroundService for DeviceSyncService {
   fn run(
     &self,
     token: CancellationToken,
-  ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>> {
+  ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send>> {
     let client = self.client.clone();
     let event_channel = self.event_channel.clone();
     let poll_interval = self.poll_interval;
@@ -95,19 +86,13 @@ where
   }
 }
 
-struct DeviceSyncTask<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
-  client: NutPoolClient<A>,
+struct DeviceSyncTask {
+  client: NutPoolClient,
   state: Arc<RwLock<ServerState>>,
   event_channel: EventChannel,
 }
 
-impl<A> DeviceSyncTask<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl DeviceSyncTask {
   pub async fn next(&self) -> Result<(), SyncTaskError> {
     let remote_details = try_join!(
       self.client.list_ups(),
@@ -252,7 +237,7 @@ where
   }
 
   async fn load_device_entry(
-    client: NutPoolClient<A>,
+    client: NutPoolClient,
     device: UpsDevice,
   ) -> Result<DeviceEntry, DeviceLoadError> {
     let UpsDevice { ups_name, desc } = device;
@@ -309,7 +294,7 @@ where
   }
 
   async fn load_var_detail(
-    client: NutPoolClient<A>,
+    client: NutPoolClient,
     ups_name: &UpsName,
     var_name: VarName,
   ) -> Result<(VarName, VarDetail), DeviceLoadError> {

@@ -11,7 +11,7 @@ use nut_webgui_upsmc::{
   clients::{AsyncNutClient, NutPoolClient},
   ups_status::UpsStatus,
 };
-use std::{net::ToSocketAddrs, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::{
   join, select,
   sync::RwLock,
@@ -20,23 +20,17 @@ use tokio::{
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, info, warn};
 
-pub struct StatusSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
-  client: NutPoolClient<A>,
+pub struct StatusSyncService {
+  client: NutPoolClient,
   event_channel: EventChannel,
   state: Arc<RwLock<ServerState>>,
   poll_freq: Duration,
   poll_interval: Duration,
 }
 
-impl<A> StatusSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl StatusSyncService {
   pub fn new(
-    client: NutPoolClient<A>,
+    client: NutPoolClient,
     event_channel: EventChannel,
     state: Arc<RwLock<ServerState>>,
     poll_interval: Duration,
@@ -52,14 +46,11 @@ where
   }
 }
 
-impl<A> BackgroundService for StatusSyncService<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl BackgroundService for StatusSyncService {
   fn run(
     &self,
     token: CancellationToken,
-  ) -> std::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send + Sync + 'static>> {
+  ) -> std::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send>> {
     let client = self.client.clone();
     let event_channel = self.event_channel.clone();
     let state = self.state.clone();
@@ -115,19 +106,13 @@ where
   }
 }
 
-struct StatusSyncTask<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
-  client: NutPoolClient<A>,
+struct StatusSyncTask {
+  client: NutPoolClient,
   state: Arc<RwLock<ServerState>>,
   event_channel: EventChannel,
 }
 
-impl<A> StatusSyncTask<A>
-where
-  A: ToSocketAddrs + Send + Sync + 'static,
-{
+impl StatusSyncTask {
   async fn snapshot_device_names(&self) -> Vec<UpsName> {
     let read_lock = self.state.read().await;
     read_lock.devices.keys().cloned().collect()

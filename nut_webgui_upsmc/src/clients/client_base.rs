@@ -1,6 +1,7 @@
-use super::AsyncNutClient;
 use crate::{
-  CmdName, UpsName, VarName, commands,
+  CmdName, UpsName, VarName,
+  clients::AsyncNutClient,
+  commands,
   errors::{Error, ErrorKind, ProtocolError},
   internal::{Deserialize, Serialize, lexer::Lexer},
   responses,
@@ -18,7 +19,7 @@ use tracing::{error, trace};
 
 pub struct NutClient<S>
 where
-  S: AsyncRead + AsyncWrite + Unpin,
+  S: AsyncRead + AsyncWrite + Unpin + Send + Sync,
 {
   reader: BufReader<ReadHalf<S>>,
   writer: WriteHalf<S>,
@@ -43,7 +44,7 @@ impl NutClient<TcpStream> {
 
 impl<S> From<S> for NutClient<S>
 where
-  S: AsyncWrite + AsyncRead + Unpin + 'static,
+  S: AsyncWrite + AsyncRead + Unpin + Send + Sync + 'static,
 {
   fn from(value: S) -> Self {
     Self::new(value)
@@ -52,7 +53,7 @@ where
 
 impl<S> NutClient<S>
 where
-  S: AsyncWrite + AsyncRead + Unpin,
+  S: AsyncWrite + AsyncRead + Send + Sync + Unpin,
 {
   pub fn new(stream: S) -> Self {
     let (reader, writer) = split(stream);
@@ -68,6 +69,14 @@ where
   #[inline]
   pub fn set_timeout(&mut self, timeout: Duration) {
     self.timeout = timeout;
+  }
+
+  pub fn into_inner(self) -> S {
+    let read_half = self.reader.into_inner();
+    let write_half = self.writer;
+
+    // NOTE: no need for `is_pair_of()`
+    read_half.unsplit(write_half)
   }
 
   pub async fn is_open(&mut self) -> bool {
@@ -114,7 +123,7 @@ where
       }
 
       trace!(
-        message = "nut tcp list message received",
+        message = "upsd tcp protocol: list message received",
         response = &response_buf,
         command = send
       );
@@ -124,7 +133,7 @@ where
       let prot_err = ProtocolError::from(prot_err.trim());
 
       error!(
-        message = "upsd tcp protocol error received",
+        message = "upsd tcp protocol: error received",
         response = &response_buf,
         command = send
       );
@@ -132,7 +141,7 @@ where
       Err(prot_err.into())
     } else {
       trace!(
-        message = "nut tcp line message received",
+        message = "upsd tcp protocol: line message received",
         response = &response_buf,
         command = send
       );
@@ -160,7 +169,7 @@ where
 
 impl<S> AsyncNutClient for &mut NutClient<S>
 where
-  S: AsyncRead + AsyncWrite + Unpin,
+  S: AsyncRead + AsyncWrite + Unpin + Send + Sync,
 {
   fn get_cmd_desc<N, C>(
     self,

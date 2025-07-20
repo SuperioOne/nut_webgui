@@ -2,72 +2,75 @@ use core::{
   mem::MaybeUninit,
   num::NonZeroUsize,
   ops::{Deref, DerefMut},
+  pin::Pin,
 };
 use std::{collections::VecDeque, sync::Arc};
-use tokio::sync::{AcquireError, Mutex, Semaphore, SemaphorePermit};
+use tokio::sync::{AcquireError, Mutex, OwnedSemaphorePermit, Semaphore};
+
+pub enum ItemState<T> {
+  Ready(T),
+  Destroy(T),
+}
 
 pub trait ItemAllocator {
-  type Output;
+  type Item;
   type Error;
 
   /// Initializes new item.
-  fn init(&self) -> impl Future<Output = Result<Self::Output, Self::Error>>;
+  fn init(&self) -> Pin<Box<dyn Future<Output = Result<Self::Item, Self::Error>> + Send + '_>>;
 
   /// Custom async deallocation for item.
-  fn dealloc(&self, item: Self::Output) -> impl Future<Output = ()>;
+  fn dealloc(&self, item: Self::Item) -> Pin<Box<dyn Future<Output = ()> + Send + '_>>;
 
   /// Custom hook to reset or modify an existing pool item before creating a [PoolGuard].
   /// If this function returns false, the pool item will be discarded, and a new one will be dispatched
   /// from either the pool or allocator.
-  fn is_valid_state(&self, item: &mut Self::Output) -> impl Future<Output = bool>;
+  fn prealloc_check(
+    &self,
+    item: Self::Item,
+  ) -> Pin<Box<dyn Future<Output = ItemState<Self::Item>> + Send + '_>>;
 }
 
-pub enum ItemPoolError<E>
-where
-  E: Sized,
-{
+pub enum ItemPoolError<E> {
   PoolClosed,
   AllocatorError { inner: E },
 }
 
-impl<E> From<AcquireError> for ItemPoolError<E>
-where
-  E: Sized,
-{
+impl<E> From<AcquireError> for ItemPoolError<E> {
   fn from(_: AcquireError) -> Self {
     Self::PoolClosed
   }
 }
 
 #[derive(Debug)]
-struct InnerPool<T, A>
+struct InnerPool<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
-  items: Mutex<VecDeque<T>>,
-  permits: Semaphore,
   allocator: A,
+  items: Mutex<VecDeque<A::Item>>,
+  permits: Arc<Semaphore>,
 }
 
-pub struct ItemPool<T, A>
+pub struct ItemPool<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
-  inner: Arc<InnerPool<T, A>>,
+  inner: Arc<InnerPool<A>>,
 }
 
-pub struct PoolGuard<'a, T, A>
+pub struct PoolGuard<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
-  pool: Arc<InnerPool<T, A>>,
-  _permit: SemaphorePermit<'a>,
-  item: MaybeUninit<T>,
+  _permit: OwnedSemaphorePermit,
+  item: MaybeUninit<A::Item>,
+  pool: Arc<InnerPool<A>>,
 }
 
-impl<T, A> Clone for ItemPool<T, A>
+impl<A> Clone for ItemPool<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
   fn clone(&self) -> Self {
     Self {
@@ -76,76 +79,87 @@ where
   }
 }
 
-unsafe impl<T, G> Send for ItemPool<T, G> where G: ItemAllocator<Output = T> {}
-unsafe impl<T, G> Sync for ItemPool<T, G> where G: ItemAllocator<Output = T> {}
-
-impl<T, A> PoolGuard<'_, T, A>
+impl<A> PoolGuard<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
   pub async fn release(mut self) {
-    let item: T = unsafe { self.item.assume_init_read() };
+    let item: A::Item = unsafe { self.item.assume_init_read() };
     self.item = MaybeUninit::zeroed();
     self.pool.release(item).await;
   }
+
+  #[inline]
+  pub fn into_inner(mut self) -> A::Item {
+    let item: A::Item = unsafe { self.item.assume_init_read() };
+    self.item = MaybeUninit::zeroed();
+    drop(self._permit);
+
+    item
+  }
 }
 
-impl<T, A> Deref for PoolGuard<'_, T, A>
+impl<A> Deref for PoolGuard<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
-  type Target = T;
+  type Target = A::Item;
 
   fn deref(&self) -> &Self::Target {
     unsafe { self.item.assume_init_ref() }
   }
 }
 
-impl<T, A> DerefMut for PoolGuard<'_, T, A>
+impl<A> DerefMut for PoolGuard<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
   fn deref_mut(&mut self) -> &mut Self::Target {
     unsafe { self.item.assume_init_mut() }
   }
 }
 
-impl<T, A> ItemPool<T, A>
+impl<A> ItemPool<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
   pub fn new(limit: NonZeroUsize, allocator: A) -> Self {
     let limit: usize = limit.into();
 
     Self {
       inner: Arc::new(InnerPool {
+        allocator: allocator,
         items: Mutex::new(VecDeque::with_capacity(limit)),
-        permits: Semaphore::new(limit),
-        allocator,
+        permits: Arc::new(Semaphore::new(limit)),
       }),
     }
   }
 
   /// Returns an item from pool with provided [ItemAllocator::try_check()] function until a valid
   /// item got found or allocator returns new one.
-  pub async fn get_checked(&self) -> Result<PoolGuard<T, A>, ItemPoolError<A::Error>> {
-    let permit = self.inner.permits.acquire().await?;
-    let mut items_lock = self.inner.items.lock().await;
+  pub async fn get_checked(&self) -> Result<PoolGuard<A>, ItemPoolError<A::Error>> {
+    let permit = self.inner.permits.clone().acquire_owned().await?;
 
     loop {
-      match items_lock.pop_front() {
-        Some(mut item) => {
-          if self.inner.allocator.is_valid_state(&mut item).await {
+      let item = {
+        let mut items_lock = self.inner.items.lock().await;
+        items_lock.pop_front()
+      };
+
+      match item {
+        Some(item) => match self.inner.allocator.prealloc_check(item).await {
+          ItemState::Ready(item) => {
             return Ok(PoolGuard {
               _permit: permit,
               item: MaybeUninit::new(item),
               pool: self.inner.clone(),
             });
-          } else {
+          }
+          ItemState::Destroy(item) => {
             _ = self.inner.allocator.dealloc(item).await;
             continue;
           }
-        }
+        },
         None => {
           return match self.inner.allocator.init().await {
             Ok(item) => Ok(PoolGuard {
@@ -161,11 +175,14 @@ where
   }
 
   /// Returns an item from pool without any check. Returned item might be in an invalid state.
-  pub async fn get(&self) -> Result<PoolGuard<T, A>, ItemPoolError<A::Error>> {
-    let permit = self.inner.permits.acquire().await?;
-    let mut items_lock = self.inner.items.lock().await;
+  pub async fn get(&self) -> Result<PoolGuard<A>, ItemPoolError<A::Error>> {
+    let permit = self.inner.permits.clone().acquire_owned().await?;
+    let item = {
+      let mut items_lock = self.inner.items.lock().await;
+      items_lock.pop_front()
+    };
 
-    match items_lock.pop_front() {
+    match item {
       Some(item) => Ok(PoolGuard {
         _permit: permit,
         item: MaybeUninit::new(item),
@@ -196,11 +213,11 @@ where
   }
 }
 
-impl<T, A> InnerPool<T, A>
+impl<A> InnerPool<A>
 where
-  A: ItemAllocator<Output = T>,
+  A: ItemAllocator,
 {
-  async fn release(&self, item: T) {
+  async fn release(&self, item: A::Item) {
     if self.permits.is_closed() {
       self.allocator.dealloc(item).await;
     } else {

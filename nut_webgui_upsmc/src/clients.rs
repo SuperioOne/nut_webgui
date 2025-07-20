@@ -6,14 +6,17 @@ use crate::{
     UpsList, UpsVar, UpsVarDesc, UpsVarList, UpsVarType,
   },
 };
-use core::{borrow::Borrow, future::Future};
+use core::borrow::Borrow;
 mod client_auth;
 mod client_base;
 mod client_pool;
 
+#[cfg(feature = "rustls")]
+mod client_tls;
+
 pub use client_auth::NutAuthClient;
 pub use client_base::NutClient;
-pub use client_pool::NutPoolClient;
+pub use client_pool::{ClientStream, NutPoolClient, NutPoolClientBuilder};
 
 pub trait AsyncNutClient {
   fn get_cmd_desc<N, C>(self, ups: N, cmd: C) -> impl Future<Output = Result<CmdDesc, Error>>

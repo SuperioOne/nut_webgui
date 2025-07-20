@@ -1,5 +1,6 @@
 use crate::uri_path::UriPath;
 use core::net::{IpAddr, Ipv4Addr};
+use serde::{Deserialize, Serialize};
 use std::{num::NonZeroUsize, path::PathBuf};
 use tracing::Level;
 
@@ -30,6 +31,13 @@ pub struct HttpServerConfig {
   pub base_path: UriPath,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UpsdTlsMode {
+  Disabled,
+  Enabled,
+  EnabledSkipVerify,
+}
+
 pub struct UpsdConfig {
   /// Poll frequency in seconds for less critical parameters
   pub poll_freq: u64,
@@ -52,6 +60,9 @@ pub struct UpsdConfig {
 
   /// Maximum allowed connection limit aka pool size
   pub max_conn: NonZeroUsize,
+
+  /// UPSD starts with TLS
+  pub tls_mode: UpsdTlsMode,
 }
 
 impl UpsdConfig {
@@ -86,6 +97,7 @@ impl Default for UpsdConfig {
       poll_freq: 30,
       poll_interval: 2,
       max_conn: unsafe { NonZeroUsize::new_unchecked(4) },
+      tls_mode: UpsdTlsMode::Disabled,
     }
   }
 }
@@ -128,6 +140,7 @@ impl core::fmt::Debug for UpsdConfig {
       user: Option<&'static str>,
       pass: Option<&'static str>,
       max_conn: NonZeroUsize,
+      tls_mode: UpsdTlsMode,
     }
 
     let filtered = _Filtered {
@@ -146,6 +159,7 @@ impl core::fmt::Debug for UpsdConfig {
         None
       },
       max_conn: self.max_conn,
+      tls_mode: self.tls_mode,
     };
 
     core::fmt::Debug::fmt(&filtered, f)
