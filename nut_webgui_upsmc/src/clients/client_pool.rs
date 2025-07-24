@@ -16,6 +16,36 @@ use std::{
 use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::warn;
 
+pub enum ServerAddr {
+  SocketAddr(SocketAddr),
+  Host(String),
+}
+
+impl ToSocketAddrs for ServerAddr {
+  type Iter = std::vec::IntoIter<SocketAddr>;
+
+  fn to_socket_addrs(&self) -> std::io::Result<Self::Iter> {
+    match self {
+      ServerAddr::SocketAddr(socket_addr) => Ok(vec![*socket_addr].into_iter()),
+      ServerAddr::Host(host) => host.to_socket_addrs(),
+    }
+  }
+}
+
+impl From<String> for ServerAddr {
+  #[inline]
+  fn from(value: String) -> Self {
+    Self::Host(value)
+  }
+}
+
+impl From<SocketAddr> for ServerAddr {
+  #[inline]
+  fn from(value: SocketAddr) -> Self {
+    Self::SocketAddr(value)
+  }
+}
+
 impl From<ItemPoolError<Error>> for Error {
   #[inline]
   fn from(value: ItemPoolError<Error>) -> Self {
@@ -33,7 +63,7 @@ struct TlsConfig {
 }
 
 struct ClientAllocator {
-  addr: Arc<String>,
+  addr: Arc<ServerAddr>,
   timeout: Option<Duration>,
 
   #[cfg(feature = "rustls")]
@@ -47,12 +77,14 @@ pub struct NutPoolClientBuilder {
 
 impl NutPoolClientBuilder {
   #[inline]
-  pub fn new(addr: String) -> Self {
+  pub fn new(addr: ServerAddr) -> Self {
     Self {
       limit: NonZeroUsize::new(1).unwrap(),
       allocator: ClientAllocator {
         addr: Arc::new(addr),
         timeout: None,
+
+        #[cfg(feature = "rustls")]
         tls_config: None,
       },
     }
@@ -100,17 +132,29 @@ impl ItemAllocator for ClientAllocator {
     Box::pin(async move {
       let addr_resolutions: Vec<_> = self.addr.to_socket_addrs()?.collect();
       let connection: Box<dyn ClientStream> = {
-        if let Some(tls_config) = &self.tls_config {
-          Box::new(
-            NutClient::connect_with_tls(
-              addr_resolutions.as_slice(),
-              tls_config.srv_name.clone(),
-              tls_config.config.clone(),
+        #[cfg(feature = "rustls")]
+        {
+          if let Some(tls_config) = &self.tls_config {
+            Box::new(
+              NutClient::connect_with_tls(
+                addr_resolutions.as_slice(),
+                tls_config.srv_name.clone(),
+                tls_config.config.clone(),
+              )
+              .await?
+              .into_inner(),
             )
-            .await?
-            .into_inner(),
-          )
-        } else {
+          } else {
+            Box::new(
+              NutClient::connect(addr_resolutions.as_slice())
+                .await?
+                .into_inner(),
+            )
+          }
+        }
+
+        #[cfg(not(feature = "rustls"))]
+        {
           Box::new(
             NutClient::connect(addr_resolutions.as_slice())
               .await?

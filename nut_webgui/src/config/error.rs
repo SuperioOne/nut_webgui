@@ -1,4 +1,4 @@
-use crate::uri_path::InvalidPathError;
+use crate::config::{tls_mode::InvalidTlsModeError, uri_path::InvalidPathError};
 use core::{net::AddrParseError, num::ParseIntError};
 use std::ffi::OsString;
 
@@ -46,6 +46,7 @@ pub enum EnvConfigError {
   InvalidLogLevelFormat,
   InvalidAddrFormat { inner: core::net::AddrParseError },
   InvalidUriPath,
+  InvalidTlsMode,
 }
 
 impl core::error::Error for EnvConfigError {}
@@ -60,14 +61,13 @@ impl std::fmt::Display for EnvConfigError {
         "non-unicode variable received, {:?}",
         variable
       )),
-      EnvConfigError::InvalidNumericFormat { .. } => {
-        f.write_fmt(format_args!("invalid numeric format"))
-      }
-      EnvConfigError::InvalidLogLevelFormat => f.write_fmt(format_args!("invalid log level")),
+      EnvConfigError::InvalidNumericFormat { .. } => f.write_str("invalid numeric format"),
+      EnvConfigError::InvalidLogLevelFormat => f.write_str("invalid log level"),
       EnvConfigError::InvalidAddrFormat { inner } => {
         f.write_fmt(format_args!("invalid ip address format, {}", inner))
       }
-      EnvConfigError::InvalidUriPath => f.write_fmt(format_args!("invalid uri path format")),
+      EnvConfigError::InvalidUriPath => f.write_str("invalid uri path format"),
+      EnvConfigError::InvalidTlsMode => f.write_str("invalid tls mode option"),
     }
   }
 }
@@ -94,20 +94,30 @@ impl From<clap::Error> for ConfigError {
 }
 
 impl From<ParseIntError> for EnvConfigError {
+  #[inline]
   fn from(value: ParseIntError) -> Self {
     Self::InvalidNumericFormat { inner: value }
   }
 }
 
 impl From<InvalidPathError> for EnvConfigError {
+  #[inline]
   fn from(_: InvalidPathError) -> Self {
     Self::InvalidUriPath
   }
 }
 
 impl From<AddrParseError> for EnvConfigError {
+  #[inline]
   fn from(value: AddrParseError) -> Self {
     Self::InvalidAddrFormat { inner: value }
+  }
+}
+
+impl From<InvalidTlsModeError> for EnvConfigError {
+  #[inline]
+  fn from(_value: InvalidTlsModeError) -> Self {
+    Self::InvalidTlsMode
   }
 }
 

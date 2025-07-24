@@ -96,3 +96,14 @@
 # ------------------------------------------------------------------------------
 
 # poll_interval = 2
+
+# ------------------------------------------------------------------------------
+# TLS mode: Configures the TLS option for UPSD connections. Default value is 'disabled'
+#
+# Supported options are:
+#   - disabled : Connects the UPSD server without TLS.
+#   - strict   : Enables TLS. This option requires proper certificate setup.
+#   - skip     : Enables TLS but skips all types of certificate validations.
+# ------------------------------------------------------------------------------
+
+# tls_mode = "disabled"

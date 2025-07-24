@@ -1,5 +1,8 @@
 use super::{ConfigLayer, ServerConfig, macros::override_opt_field};
-use crate::uri_path::{InvalidPathError, UriPath};
+use crate::config::{
+  tls_mode::{InvalidTlsModeError, TlsMode},
+  uri_path::{InvalidPathError, UriPath},
+};
 use clap::Parser;
 use core::net::IpAddr;
 use std::{num::NonZeroUsize, path::PathBuf};
@@ -35,6 +38,10 @@ pub struct ServerCliArgs {
   #[arg(long)]
   pub upsd_pass: Option<Box<str>>,
 
+  /// UPSD connection TLS mode
+  #[arg(long, value_parser =  tls_mode_parser)]
+  pub upsd_tls_mode: Option<TlsMode>,
+
   /// Listen address for HTTP server
   #[arg(short, long)]
   pub listen: Option<IpAddr>,
@@ -64,9 +71,12 @@ pub struct ServerCliArgs {
   pub allow_env: bool,
 }
 
-/// Wrapper fn for clap
 fn uri_path_parser(input: &str) -> Result<UriPath, InvalidPathError> {
   UriPath::new(input)
+}
+
+fn tls_mode_parser(input: &str) -> Result<TlsMode, InvalidTlsModeError> {
+  input.parse()
 }
 
 impl ServerCliArgs {
@@ -83,11 +93,12 @@ impl ConfigLayer for ServerCliArgs {
     override_opt_field!(config.log_level, inner_value: self.log_level);
 
     override_opt_field!(config.upsd.addr, inner_value: self.upsd_addr);
+    override_opt_field!(config.upsd.max_conn, inner_value: self.upsd_max_connection);
     override_opt_field!(config.upsd.pass, self.upsd_pass);
     override_opt_field!(config.upsd.poll_freq, inner_value: self.poll_freq);
     override_opt_field!(config.upsd.poll_interval, inner_value: self.poll_interval);
     override_opt_field!(config.upsd.port, inner_value: self.upsd_port);
-    override_opt_field!(config.upsd.max_conn, inner_value: self.upsd_max_connection);
+    override_opt_field!(config.upsd.tls_mode, inner_value: self.upsd_tls_mode);
     override_opt_field!(config.upsd.user, self.upsd_user);
 
     override_opt_field!(config.http_server.base_path, inner_value:  self.base_path);

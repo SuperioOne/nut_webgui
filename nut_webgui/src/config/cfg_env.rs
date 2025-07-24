@@ -1,5 +1,5 @@
 use super::{ConfigLayer, ServerConfig, error::EnvConfigError};
-use crate::{config::macros::override_opt_field, uri_path::UriPath};
+use crate::config::{TlsMode, UriPath, macros::override_opt_field};
 use core::net::IpAddr;
 use std::{
   env,
@@ -12,6 +12,7 @@ use tracing::Level;
 
 #[derive(Debug, Default)]
 pub struct ServerEnvArgs {
+  pub base_path: Option<UriPath>,
   pub config_file: Option<PathBuf>,
   pub default_theme: Option<Box<str>>,
   pub listen: Option<IpAddr>,
@@ -20,11 +21,11 @@ pub struct ServerEnvArgs {
   pub poll_interval: Option<u64>,
   pub port: Option<u16>,
   pub upsd_addr: Option<Box<str>>,
+  pub upsd_max_conn: Option<NonZeroUsize>,
   pub upsd_pass: Option<Box<str>>,
   pub upsd_port: Option<u16>,
+  pub upsd_tls: Option<TlsMode>,
   pub upsd_user: Option<Box<str>>,
-  pub upsd_max_conn: Option<NonZeroUsize>,
-  pub base_path: Option<UriPath>,
 }
 
 fn load_from_env(key: &str) -> Result<Option<String>, EnvConfigError> {
@@ -94,6 +95,7 @@ impl ServerEnvArgs {
       ("NUTWG__UPSD__POLL_FREQ",        env_config.poll_freq,     u64);
       ("NUTWG__UPSD__POLL_INTERVAL",    env_config.poll_interval, u64);
       ("NUTWG__UPSD__PORT",             env_config.upsd_port,     u16);
+      ("NUTWG__UPSD__TLS_MODE",         env_config.upsd_tls,      TlsMode);
       ("NUTWG__UPSD__USERNAME",         env_config.upsd_user,     boxed_str);
     );
 
@@ -113,6 +115,7 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.upsd.poll_freq, inner_value: self.poll_freq);
     override_opt_field!(config.upsd.poll_interval, inner_value: self.poll_interval);
     override_opt_field!(config.upsd.port, inner_value: self.upsd_port);
+    override_opt_field!(config.upsd.tls_mode, inner_value: self.upsd_tls);
     override_opt_field!(config.upsd.user, self.upsd_user);
 
     override_opt_field!(config.http_server.base_path, inner_value: self.base_path);

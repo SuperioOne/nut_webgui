@@ -1,19 +1,14 @@
-mod config;
-mod device_entry;
-mod diff_utils;
-mod event;
-mod http;
-mod service;
-mod state;
-mod uri_path;
-
 use self::config::{
   ServerConfig, cfg_args::ServerCliArgs, cfg_env::ServerEnvArgs, cfg_toml::ServerTomlArgs,
 };
-use crate::config::error::ConfigError;
+use crate::{config::error::ConfigError, skip_tls_verifier::SkipTlsVerification};
 use event::EventChannel;
 use http::HttpServer;
-use nut_webgui_upsmc::clients::{NutPoolClient, NutPoolClientBuilder};
+use nut_webgui_upsmc::{
+  clients::{NutPoolClient, NutPoolClientBuilder},
+  rustls::{ClientConfig, pki_types::ServerName},
+};
+use rustls_platform_verifier::BuilderVerifierExt;
 use service::{
   BackgroundServiceRunner, sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
   sync_status::StatusSyncService,
@@ -28,6 +23,16 @@ use tokio::{
 };
 use tracing::{debug, error, info, warn};
 
+mod config;
+mod device_entry;
+mod diff_utils;
+mod event;
+mod http;
+mod service;
+mod skip_tls_verifier;
+mod state;
+
+#[inline]
 fn load_configs() -> Result<ServerConfig, ConfigError> {
   let cli_args = ServerCliArgs::load()?;
 
@@ -54,6 +59,42 @@ fn load_configs() -> Result<ServerConfig, ConfigError> {
     .layer(cli_args);
 
   Ok(config)
+}
+
+#[inline]
+fn create_pool(
+  config: &ServerConfig,
+) -> Result<NutPoolClient, Box<dyn core::error::Error + 'static>> {
+  let tls_client_conf = match config.upsd.tls_mode {
+    config::tls_mode::TlsMode::Disabled => None,
+    config::tls_mode::TlsMode::Strict => Some(
+      ClientConfig::builder()
+        .with_platform_verifier()
+        .with_no_client_auth(),
+    ),
+    config::tls_mode::TlsMode::SkipVerify => {
+      let mut config = ClientConfig::builder()
+        .with_platform_verifier()
+        .with_no_client_auth();
+
+      config
+        .dangerous()
+        .set_certificate_verifier(Arc::new(SkipTlsVerification));
+
+      Some(config)
+    }
+  };
+
+  let mut builder = NutPoolClientBuilder::new(config.upsd.get_socket_addr().into())
+    .with_timeout(Duration::from_secs(config.upsd.poll_freq))
+    .with_limit(config.upsd.max_conn);
+
+  if let Some(tls_config) = tls_client_conf {
+    let server_name = ServerName::try_from(config.upsd.addr.as_ref().to_owned())?;
+    builder = builder.with_tls(server_name, Arc::new(tls_config));
+  }
+
+  Ok(builder.build())
 }
 
 #[tokio::main(flavor = "multi_thread")]
@@ -97,11 +138,7 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     .await
     .inspect_err(|err| error!(message = "cannot bind tcp socket to listen", reason = %err, listen_port = config.http_server.port))?;
 
-  let client_pool = NutPoolClientBuilder::new(config.upsd.get_socket_addr())
-    .with_timeout(Duration::from_secs(config.upsd.poll_freq))
-    .with_limit(config.upsd.max_conn)
-    .build();
-
+  let client_pool = create_pool(&config)?;
   let event_channel = EventChannel::new(64);
   let server_state = Arc::new(RwLock::new(ServerState {
     remote_state: DaemonState::new(),
