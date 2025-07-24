@@ -12,7 +12,7 @@ license = "Apache-2.0"
 repository = "https://github.com/SuperioOne/nut_webgui"
 
 [features]
-default = ["rustls"]
+default = []
 serde = ["dep:serde"]
 rustls = ["dep:tokio-rustls"]
 
@@ -26,7 +26,6 @@ tokio = { version = "1", features = [
         "sync",
         "time",
 ], default-features = false }
-rustls-platform-verifier = { version = "*" }
 tokio-test = { version = "0.4" }
 serde_json = { version = "1" }
 

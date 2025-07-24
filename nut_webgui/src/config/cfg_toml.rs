@@ -1,5 +1,5 @@
 use super::{ConfigLayer, ServerConfig, error::TomlConfigError};
-use crate::{config::macros::override_opt_field, uri_path::UriPath};
+use crate::config::{macros::override_opt_field, tls_mode::TlsMode, uri_path::UriPath};
 use core::{net::IpAddr, str};
 use serde::{Deserialize, de::Visitor};
 use std::{fs::File, io::Read, num::NonZeroUsize, path::Path};
@@ -71,6 +71,7 @@ pub struct UpsdConfigSection {
   pub port: Option<u16>,
   pub username: Option<Box<str>>,
   pub max_connection: Option<NonZeroUsize>,
+  pub tls_mode: Option<TlsMode>,
 }
 
 impl ServerTomlArgs {
@@ -100,6 +101,7 @@ impl ConfigLayer for ServerTomlArgs {
     override_opt_field!(config.upsd.poll_freq, inner_value: self.upsd.poll_freq);
     override_opt_field!(config.upsd.poll_interval, inner_value: self.upsd.poll_interval);
     override_opt_field!(config.upsd.port, inner_value: self.upsd.port);
+    override_opt_field!(config.upsd.tls_mode, inner_value :self.upsd.tls_mode);
     override_opt_field!(config.upsd.user, self.upsd.username);
 
     override_opt_field!(config.http_server.base_path, inner_value: self.http_server.base_path);
