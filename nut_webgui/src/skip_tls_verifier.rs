@@ -5,9 +5,9 @@ use nut_webgui_upsmc::rustls::{
 };
 
 #[derive(Debug)]
-pub struct SkipTlsVerification;
+pub struct SkipTlsVerifier;
 
-impl ServerCertVerifier for SkipTlsVerification {
+impl ServerCertVerifier for SkipTlsVerifier {
   fn verify_server_cert(
     &self,
     _end_entity: &CertificateDer<'_>,

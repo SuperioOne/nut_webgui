@@ -3,6 +3,7 @@ set -e
 BIN_LOCATION="/usr/local/bin/nut_webgui"
 DEFAULT_CONFIG="/usr/local/share/nut_webgui/config.toml"
 SYSTEM_CONFIG_DIR="/etc/nut_webgui"
+ROOT_CA_TARGET="/usr/local/ssl/cert.pem"
 
 export NUTWG__CONFIG_FILE="${NUTWG__CONFIG_FILE:-"$CONFIG_FILE"}";
 export NUTWG__DEFAULT_THEME="${NUTWG__DEFAULT_THEME:-"$DEFAULT_THEME"}";
@@ -16,9 +17,14 @@ export NUTWG__UPSD__POLL_FREQ="${NUTWG__UPSD__POLL_FREQ:-"$POLL_FREQ"}";
 export NUTWG__UPSD__POLL_INTERVAL="${NUTWG__UPSD__POLL_INTERVAL:-"$POLL_INTERVAL"}";
 export NUTWG__UPSD__PORT="${NUTWG__UPSD__PORT:-"$UPSD_PORT"}";
 export NUTWG__UPSD__USERNAME="${NUTWG__UPSD__USERNAME:-"$UPSD_USER"}";
+export NUTWG__UPSD__TLS_MODE="${NUTWG__UPSD__TLS_MODE:-"$UPSD_TLS"}";
 
 if test ! -e "$SYSTEM_CONFIG_DIR/config.toml"; then
     install -D -m 664 "$DEFAULT_CONFIG" "$SYSTEM_CONFIG_DIR"
+fi
+
+if test -e "$UPSD_ROOT_CA" -a ! -e "$ROOT_CA_TARGET"; then
+    ln -s "$UPSD_ROOT_CA" "$ROOT_CA_TARGET"
 fi
 
 # If it's still not set, fallback to default config file

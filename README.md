@@ -12,9 +12,12 @@ Light weight web interface for [Network UPS Tools](https://networkupstools.org/)
 
 ## Quickstart
 
-Docker:
 ```shell
-docker run -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass -p 9000:9000 ghcr.io/superioone/nut_webgui:latest
+docker run -p 9000:9000 \
+  -e UPSD_ADDR=10.0.0.1 \
+  -e UPSD_USER=test \
+  -e UPSD_PASS=strongpass \
+  ghcr.io/superioone/nut_webgui:latest
 ```
 
 ## Features
@@ -36,6 +39,7 @@ docker run -e UPSD_ADDR=10.0.0.1 -e UPSD_USER=test -e UPSD_PASS=strongpass -p 90
 - [Kubernetes - EndpointSlice](docs/examples/04_kubernetes_endpointslice.md)
 - [Custom base path for reverse proxy](docs/examples/05_reverse_proxy_base_path.md)
 - [Accessing localhost](docs/examples/06_accessing_localhost.md)
+- [Using NUT with TLS](docs/examples/07_nut_and_tls.md)
 
 ## CPU architecture support
 
@@ -77,6 +81,7 @@ CLI arguments hold the highest priority in configuration settings. You can overr
 * `--upsd-pass`: UPS daemon password.
 * `--upsd-port`: UPS daemon port. Default is `3493`.
 * `--upsd-user`: UPS daemon username.
+* `--upsd-tls-mode`: Configures TLS communication between UPSD and client. Default is `disabled`.
 
 ### Container image environment variables
 
@@ -98,6 +103,8 @@ specifies a file path, the system automatically reads content of that file as a 
 | `UPSD_PASS`, `NUTWG__UPSD__PASSWORD`          | None                           | UPS daemon password.                                               |
 | `UPSD_PORT`, `NUTWG__UPSD__PORT`              | `3493`                         | UPS daemon port.                                                   |
 | `UPSD_USER`, `NUTWG__UPSD__USERNAME`          | None                           | UPS daemon username.                                               |
+| `UPSD_TLS`, `NUTWG__UPSD__TLS_MODE`           | `disabled`                     | Configures TLS communication between UPSD and client.              |
+| `UPSD_ROOT_CA`                                | None                           | Path to the Root CA certificate for TLS.                           |
 
 ### TOML config
 

@@ -38,7 +38,7 @@ pub struct ServerCliArgs {
   #[arg(long)]
   pub upsd_pass: Option<Box<str>>,
 
-  /// UPSD connection TLS mode
+  /// UPSD connection TLS mode.
   #[arg(long, value_parser =  tls_mode_parser)]
   pub upsd_tls_mode: Option<TlsMode>,
 

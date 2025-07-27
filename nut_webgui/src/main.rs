@@ -1,7 +1,7 @@
 use self::config::{
   ServerConfig, cfg_args::ServerCliArgs, cfg_env::ServerEnvArgs, cfg_toml::ServerTomlArgs,
 };
-use crate::{config::error::ConfigError, skip_tls_verifier::SkipTlsVerification};
+use crate::{config::error::ConfigError, skip_tls_verifier::SkipTlsVerifier};
 use event::EventChannel;
 use http::HttpServer;
 use nut_webgui_upsmc::{
@@ -79,7 +79,7 @@ fn create_pool(
 
       config
         .dangerous()
-        .set_certificate_verifier(Arc::new(SkipTlsVerification));
+        .set_certificate_verifier(Arc::new(SkipTlsVerifier));
 
       Some(config)
     }
