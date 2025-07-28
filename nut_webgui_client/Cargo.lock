@@ -106,7 +106,7 @@ checksum = "1171693293099992e19cddea4e8b849964e9846f4acee11b3948bcc337be8776"
 
 [[package]]
 name = "nut_webgui_client"
-version = "0.5.0"
+version = "0.5.2"
 dependencies = [
  "base16ct",
  "brotli",

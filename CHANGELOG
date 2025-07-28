@@ -1,3 +1,12 @@
+# v0.5.2 - July 28, 2025
+
+## Changed
+- Client assets are now pre-compressed with Brotli.
+- Switched to a custom gauge web component. This shaves off additional 0.5 MiB of unnecessary Js from the bundle. (Though still can't beat TempleOS).
+
+## Fixed
+- Attached clients' info does not update after the first initialization.
+
 # v0.5.1 - June 25, 2025
 
 ## Fixed

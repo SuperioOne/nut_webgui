@@ -55,7 +55,7 @@ jobs:
           REGISTRY_PASSWORD: ${{secrets.REGISTRY_ACCESS_TOKEN}}
       - name: Generate release body from changelog
         run: >
-          VERSION="$(cat "./bin/dockerfiles/annotations.json" | jq -r '.version')"
+          VERSION="$(cat "./bin/dockerfiles/annotations.json" | jq -r '.version')";
           cat ./CHANGELOG | awk -v version="^# v${VERSION}" '$0 ~ version {start=1;next}/^# v.*$/{start=0}start' > release_body.txt;
           cat ./release_body.txt;
       - name: Crete draft release with binaries
