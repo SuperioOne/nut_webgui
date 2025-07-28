@@ -1,3 +1,8 @@
+# v0.5.3 - July 28, 2025
+
+## Fixed
+- Compressed assets does not work on some browsers.
+
 # v0.5.2 - July 28, 2025
 
 ## Changed

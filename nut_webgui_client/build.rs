@@ -1,9 +1,7 @@
-use brotli::BrotliCompress;
-use brotli::enc::BrotliEncoderParams;
 use sha2::Digest;
 use std::{
-  fs::{File, OpenOptions, canonicalize, read_dir},
-  io::{Cursor, Read, Write},
+  fs::{File, canonicalize, read_dir},
+  io::{Read, Write},
   path::{Path, PathBuf},
   process::Command,
   str::FromStr,
@@ -46,8 +44,6 @@ fn main() -> Result<(), std::io::Error> {
 }
 
 fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(), std::io::Error> {
-  let params = BrotliEncoderParams::default();
-
   let src_dir = {
     if src_dir.is_relative() {
       canonicalize(src_dir)?
@@ -57,29 +53,14 @@ fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(),
   };
 
   let file_path = src_dir.join(file_name);
-
-  let mut compressed_path = file_path.clone();
-  compressed_path.set_extension("brotli");
-
-  let mut src = File::open(&file_path)?;
-  let mut opts = OpenOptions::new();
-  opts.create(true).write(true).truncate(true);
-
-  let mut compressed = opts.open(&compressed_path)?;
-
   let mut content: Vec<u8> = Vec::new();
-  src.read_to_end(&mut content)?;
+  _ = File::open(&file_path)?.read_to_end(&mut content)?;
 
   let sha256 = calc_sha256(&content)?;
-  let mut reader = Cursor::new(content);
-
-  BrotliCompress(&mut reader, &mut compressed, &params)?;
 
   println!(
     "cargo::rustc-env={env_prefix}_PATH={}",
-    compressed_path
-      .to_str()
-      .expect("Not a valid unicode path string")
+    file_path.to_str().expect("Not a valid unicode path string")
   );
   println!("cargo::rustc-env={env_prefix}_NAME={file_name}");
   println!("cargo::rustc-env={env_prefix}_SHA256={sha256}",);

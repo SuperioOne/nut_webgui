@@ -53,7 +53,7 @@ impl HttpServer {
     } = self;
 
     let middleware = ServiceBuilder::new()
-      .layer(CompressionLayer::new().br(true))
+      .layer(CompressionLayer::new().br(true).gzip(true).deflate(true))
       .layer(RequestBodyLimitLayer::new(65556)) // 64 MiB request payload limit
       .layer(TraceLayer::new_for_http())
       .layer(TimeoutLayer::new(Duration::from_secs(30)))
