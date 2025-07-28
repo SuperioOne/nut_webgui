@@ -18,8 +18,8 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.11",
     "@types/d3": "^7.4.3",
-    "daisyui": "^5.0.46",
-    "esbuild": "^0.25.6",
+    "daisyui": "^5.0.48",
+    "esbuild": "^0.25.8",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3"
   },

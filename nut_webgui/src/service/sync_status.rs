@@ -1,6 +1,7 @@
 use super::BackgroundService;
 use crate::{
-  event::{EventBatch, EventChannel, SystemEvent, UpsStatusDetails},
+  diff_utils::Diff,
+  event::{DeviceStatusChange, EventBatch, EventChannel, SystemEvent},
   state::ServerState,
 };
 use chrono::Utc;
@@ -17,7 +18,7 @@ use tokio::{
   time::{Instant, Interval, MissedTickBehavior, interval},
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
 pub struct StatusSyncService<A>
 where
@@ -147,7 +148,7 @@ where
     }))
     .await;
 
-    let mut changes: Vec<UpsStatusDetails> = Vec::with_capacity(responses.len());
+    let mut changes: Vec<DeviceStatusChange> = Vec::with_capacity(responses.len());
 
     {
       let mut write_lock = self.state.write().await;
@@ -163,11 +164,13 @@ where
               entry.variables.insert(variable.name, variable.value);
               entry.last_modified = Utc::now();
 
-              changes.push(UpsStatusDetails {
-                new_status,
-                old_status,
-                name: variable.ups_name,
-              });
+              if old_status != new_status {
+                changes.push(DeviceStatusChange {
+                  new_status,
+                  old_status,
+                  name: variable.ups_name,
+                });
+              }
             }
           }
           Err(err) => {
@@ -180,7 +183,7 @@ where
     if !changes.is_empty() {
       let send_result = self
         .event_channel
-        .send(SystemEvent::DeviceStatusUpdates { changes });
+        .send(SystemEvent::DeviceStatusChange { changes });
 
       if let Err(err) = send_result {
         warn!(message = "cannot write new system events to channel", reason = %err);
@@ -219,20 +222,36 @@ where
                 let new_status = UpsStatus::from(status_value);
                 let old_status = entry.status;
 
-                entry.status = new_status;
+                if old_status != new_status {
+                  entry.status = new_status;
 
-                events.push_status_change(UpsStatusDetails {
-                  new_status,
-                  old_status,
-                  name: var_list.ups_name,
-                });
+                  events.status_change(var_list.ups_name, old_status, new_status);
+                }
+              }
+
+              let client_diff = entry.attached.as_slice().into_diff(&clients.ips);
+
+              if !client_diff.connected.is_empty() {
+                for client in client_diff.connected.iter() {
+                  info!(message = "new client attached to ups", device = %device, client = %client)
+                }
+
+                events.client_connection(device.clone(), client_diff.connected);
+              }
+
+              if !client_diff.disconnected.is_empty() {
+                for client in client_diff.disconnected.iter() {
+                  info!(message = "client detached from ups", device = %device, client = %client)
+                }
+
+                events.client_disconnect(device.clone(), client_diff.disconnected);
               }
 
               entry.variables = var_list.variables;
               entry.attached = clients.ips;
               entry.last_modified = Utc::now();
 
-              events.push_updated_device(clients.ups_name);
+              events.updated_device(clients.ups_name);
             }
           }
           (device, vars_results, clients_result) => {

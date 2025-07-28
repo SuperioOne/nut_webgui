@@ -4,6 +4,7 @@ use super::{
 };
 use crate::{
   device_entry::{DeviceEntry, VarDetail},
+  diff_utils::Diff,
   event::{EventBatch, EventChannel, SystemEvent},
   state::{DaemonStatus, ServerState},
 };
@@ -126,7 +127,7 @@ where
 
           error!(message = "ups daemon is disconnected", reason = %err);
 
-          _ = self.event_channel.send(SystemEvent::UpsdStatus {
+          _ = self.event_channel.send(SystemEvent::DaemonStatusUpdate {
             status: DaemonStatus::Dead,
           });
         }
@@ -155,7 +156,7 @@ where
     };
 
     let total_device_count = remote.devices.len();
-    let diff = DeviceDiff::new(local_devices, remote.devices);
+    let diff = local_devices.into_diff(remote.devices);
 
     let mut failure_count = 0;
     let mut task_set = JoinSet::new();
@@ -194,7 +195,7 @@ where
         write_lock.remote_state.prot_ver = None;
         write_lock.remote_state.ver = None;
 
-        if let Err(err) = self.event_channel.send(SystemEvent::UpsdStatus {
+        if let Err(err) = self.event_channel.send(SystemEvent::DaemonStatusUpdate {
           status: DaemonStatus::Dead,
         }) {
           warn!(message = "unable to send status event", reason= %err);
@@ -211,7 +212,7 @@ where
       for entry in new_devices.into_iter() {
         info!(message = "device connected", device = %&entry.name);
 
-        events.push_new_device(entry.name.clone());
+        events.new_device(entry.name.clone());
         write_lock.devices.insert(entry.name.clone(), entry);
       }
 
@@ -219,16 +220,16 @@ where
         if let Some(device) = write_lock.devices.get_mut(&entry.ups_name) {
           info!(message = "device details updated", device = %&device.name);
 
-          events.push_updated_device(entry.ups_name);
+          events.updated_device(entry.ups_name);
           device.desc = entry.desc;
         }
       }
 
-      for device_name in diff.removed.into_iter() {
+      for device_name in diff.deleted.into_iter() {
         info!(message = "device disconnected", device=%device_name);
 
         _ = write_lock.devices.remove(&device_name);
-        events.push_removed_device(device_name);
+        events.removed_device(device_name);
       }
 
       if write_lock.remote_state.status != DaemonStatus::Online {
@@ -367,43 +368,5 @@ where
     }
 
     Ok((var_name, VarDetail::String { max_len: 64 }))
-  }
-}
-
-struct DeviceDiff {
-  new: Vec<UpsDevice>,
-  removed: Vec<UpsName>,
-  updated: Vec<UpsDevice>,
-}
-
-impl DeviceDiff {
-  pub fn new<I>(mut local_devices: HashMap<UpsName, UpsDevice>, remote_devices: I) -> Self
-  where
-    I: IntoIterator<Item = UpsDevice>,
-  {
-    let mut result = DeviceDiff {
-      new: Vec::new(),
-      updated: Vec::new(),
-      removed: Vec::new(),
-    };
-
-    for device in remote_devices.into_iter() {
-      match local_devices.remove_entry(&device.ups_name) {
-        Some((_, local_device)) => {
-          if local_device.desc != device.desc {
-            result.updated.push(device);
-          }
-        }
-        None => {
-          result.new.push(device);
-        }
-      }
-    }
-
-    if !local_devices.is_empty() {
-      result.removed = local_devices.into_values().map(|v| v.ups_name).collect();
-    }
-
-    result
   }
 }

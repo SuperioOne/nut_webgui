@@ -62,7 +62,7 @@ where
         select! {
             event = events.recv() => {
               match event {
-                Ok(SystemEvent::DevicesAdded { devices }) => {
+                Ok(SystemEvent::DeviceAddition { devices }) => {
                   task.next(devices).await;
                 },
                 Ok(_) => continue,

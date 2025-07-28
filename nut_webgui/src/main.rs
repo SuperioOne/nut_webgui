@@ -1,5 +1,6 @@
 mod config;
 mod device_entry;
+mod diff_utils;
 mod event;
 mod http;
 mod service;

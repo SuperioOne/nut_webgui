@@ -1,21 +1,31 @@
+use std::net::IpAddr;
+
 use crate::state::DaemonStatus;
 use nut_webgui_upsmc::{UpsName, ups_status::UpsStatus};
 use tokio::sync::broadcast::{Receiver, Sender, channel};
 
 #[derive(Debug, Clone)]
-pub struct UpsStatusDetails {
+pub struct DeviceStatusChange {
   pub name: UpsName,
   pub old_status: UpsStatus,
   pub new_status: UpsStatus,
 }
 
 #[derive(Debug, Clone)]
+pub struct DeviceClientInfo {
+  pub name: UpsName,
+  pub clients: Vec<IpAddr>,
+}
+
+#[derive(Debug, Clone)]
 pub enum SystemEvent {
-  DevicesAdded { devices: Vec<UpsName> },
-  DevicesRemoved { devices: Vec<UpsName> },
-  DevicesUpdated { devices: Vec<UpsName> },
-  DeviceStatusUpdates { changes: Vec<UpsStatusDetails> },
-  UpsdStatus { status: DaemonStatus },
+  DeviceAddition { devices: Vec<UpsName> },
+  DeviceRemoval { devices: Vec<UpsName> },
+  DeviceUpdate { devices: Vec<UpsName> },
+  DeviceStatusChange { changes: Vec<DeviceStatusChange> },
+  DaemonStatusUpdate { status: DaemonStatus },
+  ClientConnection { devices: Vec<DeviceClientInfo> },
+  ClientDisconnection { devices: Vec<DeviceClientInfo> },
 }
 
 #[derive(Debug)]
@@ -55,9 +65,11 @@ impl std::error::Error for ChannelClosedError {}
 pub struct EventBatch {
   new: Vec<UpsName>,
   removed: Vec<UpsName>,
-  status_changes: Vec<UpsStatusDetails>,
+  status_changes: Vec<DeviceStatusChange>,
   updated: Vec<UpsName>,
   upsd_status: Option<DaemonStatus>,
+  disconnections: Vec<DeviceClientInfo>,
+  connections: Vec<DeviceClientInfo>,
 }
 
 impl EventBatch {
@@ -68,27 +80,49 @@ impl EventBatch {
       status_changes: Vec::new(),
       updated: Vec::new(),
       upsd_status: None,
+      disconnections: Vec::new(),
+      connections: Vec::new(),
     }
   }
 
   #[inline]
-  pub fn push_new_device(&mut self, name: UpsName) {
+  pub fn new_device(&mut self, name: UpsName) {
     self.new.push(name);
   }
 
   #[inline]
-  pub fn push_removed_device(&mut self, name: UpsName) {
+  pub fn removed_device(&mut self, name: UpsName) {
     self.removed.push(name);
   }
 
   #[inline]
-  pub fn push_updated_device(&mut self, name: UpsName) {
+  pub fn updated_device(&mut self, name: UpsName) {
     self.updated.push(name);
   }
 
   #[inline]
-  pub fn push_status_change(&mut self, change: UpsStatusDetails) {
-    self.status_changes.push(change);
+  pub fn status_change(&mut self, name: UpsName, old_status: UpsStatus, new_status: UpsStatus) {
+    self.status_changes.push(DeviceStatusChange {
+      name,
+      old_status,
+      new_status,
+    });
+  }
+
+  #[inline]
+  pub fn client_connection(&mut self, name: UpsName, connected: Vec<IpAddr>) {
+    self.connections.push(DeviceClientInfo {
+      name,
+      clients: connected,
+    });
+  }
+
+  #[inline]
+  pub fn client_disconnect(&mut self, name: UpsName, disconnected: Vec<IpAddr>) {
+    self.disconnections.push(DeviceClientInfo {
+      name,
+      clients: disconnected,
+    });
   }
 
   #[inline]
@@ -98,29 +132,41 @@ impl EventBatch {
 
   pub fn send(self, channel: &EventChannel) -> Result<(), ChannelClosedError> {
     if !self.new.is_empty() {
-      channel.send(SystemEvent::DevicesAdded { devices: self.new })?;
+      channel.send(SystemEvent::DeviceAddition { devices: self.new })?;
     }
 
     if !self.removed.is_empty() {
-      channel.send(SystemEvent::DevicesRemoved {
+      channel.send(SystemEvent::DeviceRemoval {
         devices: self.removed,
       })?;
     }
 
     if !self.updated.is_empty() {
-      channel.send(SystemEvent::DevicesUpdated {
+      channel.send(SystemEvent::DeviceUpdate {
         devices: self.updated,
       })?;
     }
 
     if !self.status_changes.is_empty() {
-      channel.send(SystemEvent::DeviceStatusUpdates {
+      channel.send(SystemEvent::DeviceStatusChange {
         changes: self.status_changes,
       })?;
     }
 
+    if !self.disconnections.is_empty() {
+      channel.send(SystemEvent::ClientDisconnection {
+        devices: self.disconnections,
+      })?;
+    }
+
+    if !self.connections.is_empty() {
+      channel.send(SystemEvent::ClientConnection {
+        devices: self.connections,
+      })?;
+    }
+
     if let Some(status) = self.upsd_status {
-      channel.send(SystemEvent::UpsdStatus { status })?;
+      channel.send(SystemEvent::DaemonStatusUpdate { status })?;
     }
 
     Ok(())
