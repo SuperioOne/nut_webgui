@@ -92,7 +92,7 @@ impl Default for UpsdConfig {
       poll_freq: 30,
       poll_interval: 2,
       max_conn: unsafe { NonZeroUsize::new_unchecked(4) },
-      tls_mode: TlsMode::Disabled,
+      tls_mode: TlsMode::Disable,
     }
   }
 }

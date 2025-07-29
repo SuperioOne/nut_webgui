@@ -76,7 +76,7 @@ struct HomeTemplate<'a> {
 pub async fn get(
   query: Query<HomeFragmentQuery>,
   State(rs): State<RouterState>,
-) -> Result<Response, ErrorPage<askama::Error>> {
+) -> Result<Response, ErrorPage> {
   let state = &rs.state.read().await;
   let mut device_list: Vec<DeviceTableRow> = state
     .devices

@@ -285,10 +285,10 @@ impl From<std::io::Error> for Error {
   }
 }
 
-impl std::error::Error for CmdParseError {}
-impl std::error::Error for Error {}
-impl std::error::Error for ParseError {}
-impl std::error::Error for UpsNameParseError {}
-impl std::error::Error for VarNameParseError {}
-impl std::error::Error for NumberParseError {}
-impl std::error::Error for VarTypeParseError {}
+impl core::error::Error for CmdParseError {}
+impl core::error::Error for Error {}
+impl core::error::Error for ParseError {}
+impl core::error::Error for UpsNameParseError {}
+impl core::error::Error for VarNameParseError {}
+impl core::error::Error for NumberParseError {}
+impl core::error::Error for VarTypeParseError {}

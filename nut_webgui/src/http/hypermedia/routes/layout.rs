@@ -14,7 +14,7 @@ struct ThemesTemplate<'a> {
   default_theme: Option<&'a str>,
 }
 
-pub async fn get_themes(rs: State<RouterState>) -> Result<Response, ErrorPage<askama::Error>> {
+pub async fn get_themes(rs: State<RouterState>) -> Result<Response, ErrorPage> {
   let template = ThemesTemplate {
     default_theme: rs.config.default_theme.as_deref(),
   };

@@ -6,27 +6,30 @@ use axum::{
 
 #[derive(Template, Debug)]
 #[template(path = "error.html")]
-pub struct ErrorPage<E>
-where
-  E: core::error::Error,
-{
-  message: E,
+pub struct ErrorPage {
+  message: String,
 }
 
-impl<E> From<E> for ErrorPage<E>
-where
-  E: core::error::Error,
-{
+impl ErrorPage {
   #[inline]
-  fn from(value: E) -> Self {
-    Self { message: value }
+  pub fn new(message: String) -> Self {
+    Self { message }
   }
 }
 
-impl<E> IntoResponse for ErrorPage<E>
+impl<E> From<E> for ErrorPage
 where
-  E: core::error::Error,
+  E: core::error::Error + Sized,
 {
+  #[inline]
+  fn from(value: E) -> Self {
+    Self {
+      message: value.to_string(),
+    }
+  }
+}
+
+impl IntoResponse for ErrorPage {
   fn into_response(self) -> Response {
     match self.render() {
       Ok(html) => (StatusCode::INTERNAL_SERVER_ERROR, Html(html)).into_response(),

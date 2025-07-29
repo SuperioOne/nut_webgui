@@ -13,7 +13,7 @@ use axum::{
 #[template(path = "not_found/+page.html")]
 struct NotFound;
 
-pub async fn get(rs: State<RouterState>) -> Result<Response, ErrorPage<askama::Error>> {
+pub async fn get(rs: State<RouterState>) -> Result<Response, ErrorPage> {
   let response = (
     StatusCode::NOT_FOUND,
     Html(NotFound.render_with_config(&rs.config)?),

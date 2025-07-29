@@ -4,7 +4,7 @@ use std::str::FromStr;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TlsMode {
   /// Disable all TLS configurations.
-  Disabled,
+  Disable,
 
   /// Enables TLS.
   Strict,
@@ -29,7 +29,7 @@ impl core::str::FromStr for TlsMode {
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
     match s.to_ascii_lowercase().as_str() {
-      "disabled" => Ok(Self::Disabled),
+      "disable" => Ok(Self::Disable),
       "skip" => Ok(Self::SkipVerify),
       "strict" => Ok(Self::Strict),
       _ => Err(InvalidTlsModeError),
@@ -40,7 +40,7 @@ impl core::str::FromStr for TlsMode {
 impl TlsMode {
   pub fn as_str(&self) -> &'static str {
     match self {
-      TlsMode::Disabled => "disabled",
+      TlsMode::Disable => "disable",
       TlsMode::Strict => "strict",
       TlsMode::SkipVerify => "skip",
     }

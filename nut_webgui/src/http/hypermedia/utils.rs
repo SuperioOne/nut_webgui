@@ -17,7 +17,7 @@ macro_rules! htmx_swap {
   ($response:expr, $swap:literal) => {{
     let mut response = $response.into_response();
     let headers = response.headers_mut();
-    headers.insert("HX-Reswap", HeaderValue::from_static($swap));
+    headers.insert("HX-Reswap", axum::http::HeaderValue::from_static($swap));
 
     response
   }};

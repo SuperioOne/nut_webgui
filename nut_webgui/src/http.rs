@@ -14,6 +14,7 @@ use hypermedia::routes;
 use middlewares::{
   daemon_status::DaemonStateLayer, validate_content_length::ValidateEmptyContentLength,
 };
+use nut_webgui_upsmc::clients::NutPoolClient;
 use problem_detail::ProblemDetail;
 use std::{sync::Arc, time::Duration};
 use tokio::{net::TcpListener, sync::RwLock};
@@ -24,22 +25,29 @@ use tower_http::{
   trace::TraceLayer, validate_request::ValidateRequestHeaderLayer,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct RouterState {
   config: Arc<ServerConfig>,
   state: Arc<RwLock<ServerState>>,
+  connection_pool: NutPoolClient,
 }
 
 pub struct HttpServer {
   config: ServerConfig,
   server_state: Arc<RwLock<ServerState>>,
+  connection_pool: NutPoolClient,
 }
 
 impl HttpServer {
-  pub fn new(config: ServerConfig, server_state: Arc<RwLock<ServerState>>) -> Self {
+  pub fn new(
+    config: ServerConfig,
+    server_state: Arc<RwLock<ServerState>>,
+    connection_pool: NutPoolClient,
+  ) -> Self {
     Self {
       config,
       server_state,
+      connection_pool,
     }
   }
 
@@ -50,6 +58,7 @@ impl HttpServer {
     let Self {
       server_state,
       config,
+      connection_pool,
     } = self;
 
     let middleware = ServiceBuilder::new()
@@ -102,15 +111,15 @@ impl HttpServer {
       )
       .route(
         "/ups/{ups_name}/instcmd",
-        post(hypermedia::routes::ups::post_instcmd),
+        post(hypermedia::routes::ups::instcmd::post),
       )
       .route(
         "/ups/{ups_name}/fsd",
-        post(hypermedia::routes::ups::post_fsd),
+        post(hypermedia::routes::ups::fsd::post),
       )
       .route(
         "/ups/{ups_name}/rw",
-        patch(hypermedia::routes::ups::patch_rw),
+        patch(hypermedia::routes::ups::rw::patch),
       )
       .route("/", get(hypermedia::routes::home::get))
       .route("/not-found", get(hypermedia::routes::not_found::get))
@@ -122,6 +131,7 @@ impl HttpServer {
     let router_state = RouterState {
       config: shared_config.clone(),
       state: server_state,
+      connection_pool,
     };
 
     let router = Router::new()

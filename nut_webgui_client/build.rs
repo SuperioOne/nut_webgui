@@ -1,6 +1,6 @@
 use sha2::Digest;
 use std::{
-  fs::{File, canonicalize, read_dir},
+  fs::{File, canonicalize},
   io::{Read, Write},
   path::{Path, PathBuf},
   process::Command,
@@ -8,37 +8,40 @@ use std::{
 };
 
 fn main() -> Result<(), std::io::Error> {
-  // NOTE: Maybe I should ditch nodejs and simply use Tailwind rust crates + RsPack/FarmFe ???
-  #[cfg(debug_assertions)]
-  let target = {
-    Command::new("node")
-      .args(&["scripts/build.js", "--outdir=target/static/debug"])
-      .status()
-      .unwrap();
+  let outdir =
+    std::env::var("OUT_DIR").expect("cargo did not set OUT_DIR env variable for build script.");
 
-    PathBuf::from_str("target/static/debug").unwrap()
-  };
+  let profile =
+    std::env::var("PROFILE").expect("cargo did not set PROFILE env variable for build script.");
 
-  #[cfg(not(debug_assertions))]
-  let target = {
+  if profile.eq_ignore_ascii_case("release") {
     Command::new("node")
       .args(&[
         "scripts/build.js",
         "--minify",
-        "--outdir=target/static/release",
+        format!("--outdir={}", &outdir).as_str(),
       ])
       .status()
       .unwrap();
+  } else {
+    Command::new("node")
+      .args(&[
+        "scripts/build.js",
+        &format!("--outdir={}", &outdir).as_str(),
+      ])
+      .status()
+      .unwrap();
+  }
 
-    PathBuf::from_str("target/static/release").unwrap()
-  };
+  let outdir = PathBuf::from_str(&outdir).unwrap();
+  create_asset(&outdir, "NUTWG_CLIENT_CSS", "style.css")?;
+  create_asset(&outdir, "NUTWG_CLIENT_JS", "index.js")?;
+  create_asset(&outdir, "NUTWG_CLIENT_ICON", "icon.svg")?;
+  create_asset(&outdir, "NUTWG_CLIENT_SPRITE_SHEET", "feather-sprite.svg")?;
 
-  create_asset(&target, "NUTWG_CLIENT_CSS", "style.css")?;
-  create_asset(&target, "NUTWG_CLIENT_JS", "index.js")?;
-  create_asset(&target, "NUTWG_CLIENT_ICON", "icon.svg")?;
-  create_asset(&target, "NUTWG_CLIENT_SPRITE_SHEET", "feather-sprite.svg")?;
-
-  output_watch_list("src", &["css", "js", "json", "rs", "svg"])?;
+  println!("cargo::rerun-if-changed=src");
+  println!("cargo::rerun-if-changed=static");
+  println!("cargo::rerun-if-changed=package.json");
 
   Ok(())
 }
@@ -77,30 +80,4 @@ fn calc_sha256(bytes: &[u8]) -> Result<String, std::io::Error> {
   let digest = sha256.finalize();
 
   Ok(base16ct::lower::encode_string(&digest))
-}
-
-fn output_watch_list<P>(path: P, extensions: &[&'static str]) -> Result<(), std::io::Error>
-where
-  P: AsRef<Path>,
-{
-  let dir = read_dir(path.as_ref())?;
-
-  for entry in dir.flatten() {
-    let metadata = entry.metadata()?;
-
-    if metadata.is_file() {
-      if let Some(ext) = entry.path().extension() {
-        for allowed in extensions {
-          if ext.eq_ignore_ascii_case(allowed) {
-            println!("cargo::rerun-if-changed={:?}", entry.path());
-            break;
-          }
-        }
-      }
-    } else if metadata.is_dir() {
-      output_watch_list(entry.path(), extensions)?;
-    }
-  }
-
-  Ok(())
 }
