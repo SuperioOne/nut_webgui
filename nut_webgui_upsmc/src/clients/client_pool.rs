@@ -16,6 +16,7 @@ use std::{
 use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::warn;
 
+#[derive(Debug)]
 pub enum ServerAddr {
   SocketAddr(SocketAddr),
   Host(String),
@@ -57,11 +58,13 @@ impl From<ItemPoolError<Error>> for Error {
 }
 
 #[cfg(feature = "rustls")]
+#[derive(Debug)]
 struct TlsConfig {
   srv_name: tokio_rustls::rustls::pki_types::ServerName<'static>,
   config: Arc<tokio_rustls::rustls::ClientConfig>,
 }
 
+#[derive(Debug)]
 struct ClientAllocator {
   addr: Arc<ServerAddr>,
   timeout: Option<Duration>,

@@ -1,0 +1,19 @@
+[workspace]
+resolver = "3"
+members = ["nut_webgui", "nut_webgui_*"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+strip = "debuginfo"
+panic = "abort"
+
+[workspace.package]
+version = "0.5.4"
+edition = "2024"
+authors = ["Timur Olur <pm@smdd.dev>"]
+documentation = "https://github.com/SuperioOne/nut_webgui"
+homepage = "https://github.com/SuperioOne/nut_webgui"
+keywords = ["nut", "ups", "network-ups-tools", "self-hosted", "management"]
+license = "Apache-2.0"
+repository = "https://github.com/SuperioOne/nut_webgui"

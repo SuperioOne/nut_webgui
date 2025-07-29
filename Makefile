@@ -1,5 +1,5 @@
-PROJECT_NAME     := $(shell cargo metadata --no-deps --frozen --format-version 1 --manifest-path ./nut_webgui/Cargo.toml | jq -r ".packages[0].name")
-PROJECT_VER      := $(shell cargo metadata --no-deps --frozen --format-version 1 --manifest-path ./nut_webgui/Cargo.toml | jq -r ".packages[0].version")
+PROJECT_NAME     := $(shell cargo metadata --no-deps --offline --format-version 1 | jq -r ".packages[0].name")
+PROJECT_VER      := $(shell cargo metadata --no-deps --offline --format-version 1 | jq -r ".packages[0].version")
 BIN_DIR          := ./bin
 NODE_MODULES_DIR := ./nut_webgui_client/node_modules
 DOCKER_TEMPLATE  := ./containers/Dockerfile.template
@@ -12,7 +12,7 @@ DIST_DIR         := $(BIN_DIR)/dist
 BINARY_TARGETS   := $(shell jq -r '.binary[]' "$(BUILD_CONFIG)")
 
 fn_output_path    = $(BIN_DIR)/$(1)/$(PROJECT_NAME)
-fn_target_path    = nut_webgui/target/$(1)/$(PROJECT_NAME)
+fn_target_path    = target/$(1)/$(PROJECT_NAME)
 
 .PHONY: help
 help:
@@ -53,7 +53,7 @@ init:
 .PHONY: build
 build: init $(PROJECT_SRCS)
 	@echo "Building binaries for the current system's architecture."
-	@cd nut_webgui && cargo build --release
+	@cargo build -p nut_webgui --release
 	@install -D $(call fn_target_path,release) $(call fn_output_path,release)
 
 # x86-64 MUSL
@@ -63,9 +63,8 @@ build-x86-64-musl: init $(call fn_output_path,x86-64-musl)
 
 $(call fn_output_path,x86-64-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-unknown-linux-musl"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
-		cargo build --target=x86_64-unknown-linux-musl --release
+	@export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-musl/release) \
 		$(call fn_output_path,x86-64-musl)
 
@@ -76,9 +75,8 @@ build-x86-64-v3-musl: init $(call fn_output_path,x86-64-v3-musl)
 
 $(call fn_output_path,x86-64-v3-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v3-unknown-linux-musl"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v3 -Clinker=rust-lld" && \
-		cargo build --target=x86_64-unknown-linux-musl --release
+	@export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v3 -Clinker=rust-lld" && \
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-musl/release) \
 		$(call fn_output_path,x86-64-v3-musl)
 
@@ -89,9 +87,8 @@ build-x86-64-v4-musl: init $(call fn_output_path,x86-64-v4-musl)
 
 $(call fn_output_path,x86-64-v4-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v4-unknown-linux-musl"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v4 -Clinker=rust-lld" && \
-		cargo build --target=x86_64-unknown-linux-musl --release
+	@export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v4 -Clinker=rust-lld" && \
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-musl/release) \
 		$(call fn_output_path,x86-64-v4-musl)
 
@@ -102,8 +99,7 @@ build-x86-64-gnu: init $(call fn_output_path,x86-64-gnu)
 
 $(call fn_output_path,x86-64-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-unknown-linux-gnu"
-	@cd nut_webgui && \
-		cargo build --target=x86_64-unknown-linux-gnu --release
+	@cargo build -p nut_webgui --target=x86_64-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-gnu/release) \
 		$(call fn_output_path,x86-64-gnu)
 
@@ -114,9 +110,8 @@ build-x86-64-v3-gnu: init $(call fn_output_path,x86-64-v3-gnu)
 
 $(call fn_output_path,x86-64-v3-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v3-unknown-linux-gnu"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Ctarget-cpu=x86-64-v3" && \
-		cargo build --target=x86_64-unknown-linux-gnu --release
+	@export RUSTFLAGS="-Ctarget-cpu=x86-64-v3" && \
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-gnu/release) \
 		$(call fn_output_path,x86-64-v3-gnu)
 
@@ -127,9 +122,8 @@ build-x86-64-v4-gnu: init $(call fn_output_path,x86-64-v4-gnu)
 
 $(call fn_output_path,x86-64-v4-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v4-unknown-linux-gnu"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Ctarget-cpu=x86-64-v4" && \
-		cargo build --target=x86_64-unknown-linux-gnu --release
+	@export RUSTFLAGS="-Ctarget-cpu=x86-64-v4" && \
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,x86_64-unknown-linux-gnu/release) \
 		$(call fn_output_path,x86-64-v4-gnu)
 
@@ -140,9 +134,8 @@ build-aarch64-musl: init $(call fn_output_path,aarch64-musl)
 
 $(call fn_output_path,aarch64-musl) &: $(PROJECT_SRCS)
 	@echo "Building for aarch64-unknown-linux-musl"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
-		cargo build --target=aarch64-unknown-linux-musl --release
+	@export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
+		cargo build -p nut_webgui --target=aarch64-unknown-linux-musl --release
 	@install -D $(call fn_target_path,aarch64-unknown-linux-musl/release) \
 		$(call fn_output_path,aarch64-musl)
 
@@ -153,9 +146,8 @@ build-aarch64-gnu: init $(call fn_output_path,aarch64-gnu)
 
 $(call fn_output_path,aarch64-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for aarch64-unknown-linux-gnu"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clinker=aarch64-linux-gnu-gcc" && \
-		cargo build --target=aarch64-unknown-linux-gnu --release
+	@export RUSTFLAGS="-Clinker=aarch64-linux-gnu-gcc" && \
+		cargo build -p nut_webgui --target=aarch64-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,aarch64-unknown-linux-gnu/release) \
 		$(call fn_output_path,aarch64-gnu)
 
@@ -166,9 +158,9 @@ build-armv7-musleabi: init $(call fn_output_path,armv7-musleabi)
 
 $(call fn_output_path,armv7-musleabi) &: $(PROJECT_SRCS)
 	@echo "Building for armv7-unknown-linux-musleabi"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
-		cargo build --target=armv7-unknown-linux-musleabi --release
+	@export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
+		export CC="clang" && \
+		cargo build -p nut_webgui --target=armv7-unknown-linux-musleabi --release
 	@install -D $(call fn_target_path,armv7-unknown-linux-musleabi/release) \
 		$(call fn_output_path,armv7-musleabi)
 
@@ -179,9 +171,10 @@ build-armv6-musleabi: init $(call fn_output_path,armv6-musleabi)
 
 $(call fn_output_path,armv6-musleabi) &: $(PROJECT_SRCS)
 	@echo "Building for arm-unknown-linux-musleabi"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
-		cargo build --target=arm-unknown-linux-musleabi --release
+	@export RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld" && \
+		export CC="clang" && \
+		export CFLAGS="--target=armv6-unknown-linux-musleabi" && \
+		cargo build -p nut_webgui --target=arm-unknown-linux-musleabi --release
 	@install -D $(call fn_target_path,arm-unknown-linux-musleabi/release) \
 		$(call fn_output_path,armv6-musleabi)
 
@@ -192,9 +185,9 @@ build-riscv64gc-gnu: init $(call fn_output_path,riscv64gc-gnu)
 
 $(call fn_output_path,riscv64gc-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for riscv64gc-unknown-linux-gnu"
-	@cd nut_webgui && \
-		export RUSTFLAGS="-Clinker=riscv64-linux-gnu-gcc -Ctarget-feature=+crt-static" && \
-		cargo build --target=riscv64gc-unknown-linux-gnu --release
+	@export RUSTFLAGS="-Clinker=riscv64-linux-gnu-gcc -Ctarget-feature=+crt-static" && \
+		export CC="riscv64-linux-gnu-gcc" && \
+		cargo build -p nut_webgui --target=riscv64gc-unknown-linux-gnu --release
 	@install -D $(call fn_target_path,riscv64gc-unknown-linux-gnu/release) \
 		$(call fn_output_path,riscv64gc-gnu)
 
@@ -239,22 +232,16 @@ gen-dockerfiles:
 
 .PHONY: test
 test: init
-	@cd nut_webgui && cargo test
-	@cd nut_webgui_client && cargo test --all-features
-	@cd nut_webgui_upsmc && cargo test --all-features
+	@cargo test --all-features
 
 .PHONY: check
 check: init
-	@cd nut_webgui && cargo check
-	@cd nut_webgui_client && cargo check --all-features
-	@cd nut_webgui_upsmc && cargo check --all-features
+	@cargo check --all-features
 
 .PHONY: clean
 clean:
 	@echo "Cleaning artifacts"
-	@cd nut_webgui && cargo clean
-	@cd nut_webgui_upsmc && cargo clean
-	@cd nut_webgui_client && cargo clean
+	@cargo clean
 	@if [ -d "$(BIN_DIR)" ]; then rm -r "$(BIN_DIR)"; fi;
 	@if [ -d "$(NODE_MODULES_DIR)" ]; then rm -r "$(NODE_MODULES_DIR)"; fi;
 	@echo "Clean completed"
@@ -262,7 +249,7 @@ clean:
 .PHONY: watch
 watch: init
 	@if [ $$(which bacon 2>/dev/null) ]; then \
-		bacon --project ./nut_webgui  -j "serve"; \
+		bacon -j "serve"; \
 	else \
 		echo "Cannot find bacon. Watch function relies on bacon utility. See: https://github.com/Canop/bacon"; \
 	fi

@@ -29,7 +29,7 @@ struct ServerInfoTemplate<'a> {
 pub async fn get(
   query: Query<ServerInfoFragmentQuery>,
   State(rs): State<RouterState>,
-) -> Result<Response, ErrorPage<askama::Error>> {
+) -> Result<Response, ErrorPage> {
   let state = &rs.state.read().await;
 
   let template = ServerInfoTemplate {

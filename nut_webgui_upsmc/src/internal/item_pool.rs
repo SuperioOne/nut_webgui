@@ -31,10 +31,25 @@ pub trait ItemAllocator {
   ) -> Pin<Box<dyn Future<Output = ItemState<Self::Item>> + Send + '_>>;
 }
 
+#[derive(Debug)]
 pub enum ItemPoolError<E> {
   PoolClosed,
   AllocatorError { inner: E },
 }
+
+impl<E> core::fmt::Display for ItemPoolError<E>
+where
+  E: core::error::Error,
+{
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    match self {
+      ItemPoolError::PoolClosed => f.write_str("client pool is closed"),
+      ItemPoolError::AllocatorError { inner } => core::fmt::Display::fmt(inner, f),
+    }
+  }
+}
+
+impl<E> core::error::Error for ItemPoolError<E> where E: core::error::Error {}
 
 impl<E> From<AcquireError> for ItemPoolError<E> {
   fn from(_: AcquireError) -> Self {

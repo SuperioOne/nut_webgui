@@ -66,7 +66,7 @@ fn create_pool(
   config: &ServerConfig,
 ) -> Result<NutPoolClient, Box<dyn core::error::Error + 'static>> {
   let tls_client_conf = match config.upsd.tls_mode {
-    config::tls_mode::TlsMode::Disabled => None,
+    config::tls_mode::TlsMode::Disable => None,
     config::tls_mode::TlsMode::Strict => Some(
       ClientConfig::builder()
         .with_platform_verifier()
@@ -174,6 +174,7 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     .add_service(status_sync)
     .start();
 
+  let pool_handle = client_pool.clone();
   let close_signal = async move {
     select! {
     _ = sigterm.recv() => { info!("SIGTERM signal received."); }
@@ -188,10 +189,10 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     }
 
     info!("closing open upsd connections");
-    _ = client_pool.close().await;
+    _ = pool_handle.close().await;
   };
 
-  HttpServer::new(config, server_state)
+  HttpServer::new(config, server_state, client_pool)
     .serve(listener, close_signal)
     .await
     .inspect_err(|err| {

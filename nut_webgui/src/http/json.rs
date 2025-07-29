@@ -12,18 +12,33 @@ use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
 };
-use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName, clients::NutAuthClient};
+use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName};
 use serde::Deserialize;
 use tracing::{info, warn};
 
-macro_rules! require_auth_config {
-  ($config:expr) => {
-    match $config {
-      upsd @ UpsdConfig {
+macro_rules! request_auth_client {
+  ($route_state:expr) => {
+    match &$route_state.config.upsd {
+      UpsdConfig {
         pass: Some(pass),
         user: Some(user),
         ..
-      } => Ok((upsd.get_socket_addr(), user.as_ref(), pass.as_ref())),
+      } => match $route_state.connection_pool.get_client().await {
+        Ok(client) => client
+          .authenticate(user.as_ref(), pass.as_ref())
+          .await
+          .map_err(|err| {
+            ProblemDetail::new("Unable to authenticate", StatusCode::INTERNAL_SERVER_ERROR)
+              .with_detail(err.to_string())
+          }),
+        Err(e) => Err(
+          ProblemDetail::new(
+            "Unable to get UPSD client",
+            StatusCode::INTERNAL_SERVER_ERROR,
+          )
+          .with_detail(e.to_string()),
+        ),
+      },
       _ => Err(
         ProblemDetail::new("Insufficient upsd configuration", StatusCode::UNAUTHORIZED)
           .with_detail("Operation requires valid username and password to be configured.".into()),
@@ -75,7 +90,6 @@ pub async fn post_command(
 ) -> Result<StatusCode, ProblemDetail> {
   let Path(ups_name) = ups_name?;
   let Json(body) = body?;
-  let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
 
   {
     let server_state = rs.state.read().await;
@@ -100,7 +114,7 @@ pub async fn post_command(
     }
   }?;
 
-  let mut client = NutAuthClient::connect(addr, user, password).await?;
+  let mut client = request_auth_client!(rs)?;
 
   {
     let response = client.instcmd(&ups_name, &body.instcmd).await;
@@ -123,7 +137,6 @@ pub async fn post_fsd(
   ups_name: Result<Path<UpsName>, PathRejection>,
 ) -> Result<StatusCode, ProblemDetail> {
   let Path(ups_name) = ups_name?;
-  let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
 
   {
     let server_state = rs.state.read().await;
@@ -137,7 +150,7 @@ pub async fn post_fsd(
     }
   }?;
 
-  let mut client = NutAuthClient::connect(addr, user, password).await?;
+  let mut client = request_auth_client!(rs)?;
 
   {
     let response = client.fsd(&ups_name).await;
@@ -161,7 +174,6 @@ pub async fn patch_var(
 ) -> Result<StatusCode, ProblemDetail> {
   let Path(ups_name) = ups_name?;
   let Json(body) = body?;
-  let (addr, user, password) = require_auth_config!(&rs.config.upsd)?;
 
   {
     let server_state = rs.state.read().await;
@@ -280,7 +292,7 @@ pub async fn patch_var(
     }
   }?;
 
-  let mut client = NutAuthClient::connect(addr, user, password).await?;
+  let mut client = request_auth_client!(rs)?;
 
   {
     let response = client.set_var(&ups_name, &body.variable, &body.value).await;

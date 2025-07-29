@@ -14,8 +14,9 @@ Required host tools are:
 Optionally, host system should have gcc packages and Rust targets for cross-compilation.
 
 Required packages:
-  - riscv64-linux-gnu-gcc
-  - aarch64-linux-gnu-gcc
+  - riscv64-linux-gnu-gcc (RISC-V64)
+  - aarch64-linux-gnu-gcc (AARCH64)
+  - clang (ARMv6, ARMv7)
 
 > Package names may differ between different distros.
 
@@ -41,7 +42,7 @@ make build
 
 # Output location ./bin/release/
 ```
-or cross-compile everything (x86-64, ARM64-v8, ARM7, ARM6, RISC-V64)
+or cross-compile everything (x86-64, AARCH64, ARMv7, ARMv6, RISC-V64)
 
 ```bash
 make build-all
@@ -74,7 +75,7 @@ make gen-dockerfiles
 3. Run server
    - Start with bacon:
 
-      `make watch` can start development server. It simply calls [bacon](https://github.com/Canop/bacon).
+      `make watch` can start development server. It simply calls [bacon -j serve](https://github.com/Canop/bacon).
 
       ```bash
       # (Optional) Set your NUT test server configs.
@@ -86,7 +87,7 @@ make gen-dockerfiles
 
       make watch
       ```
-    - or simply use Cargo: `cd ./nut_webgui && cargo run`
+    - or simply use Cargo: `cargo run -p nut_webgui`
 
 ## Tests
 

@@ -1,7 +1,15 @@
 [package]
 name = "nut_webgui_client"
-version = "0.5.4"
-edition = "2024"
+
+description = "nut_webgui's client-side assets"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [build-dependencies]
 sha2 = "0.10"

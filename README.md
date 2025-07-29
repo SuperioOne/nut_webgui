@@ -43,15 +43,15 @@ docker run -p 9000:9000 \
 
 ## CPU architecture support
 
-| Arch         | Test Hardware           | Notes                                                                                    |
-|--------------|-------------------------|------------------------------------------------------------------------------------------|
-| amd64        | AM4 CPU                 | Works across all amd64 platforms.                                                        |
-| amd64-v3     | AM4 CPU                 | Snake oil level optimizations with AVX. It mostly reduces response compression overhead. |
-| amd64-v4     | Intel® SDE              | Snake oil level optimizations with AVX-512.                                              |
-| arm64        | Raspberry Pi 4 Model B  |                                                                                          |
-| armv7        | Qemu emulation          |                                                                                          |
-| armv6        | Qemu emulation          |                                                                                          |
-| riscv64      | Qemu emulation          |                                                                                          |
+| Arch         | Test Hardware           | Notes                                                                                         |
+|--------------|-------------------------|-----------------------------------------------------------------------------------------------|
+| amd64        | AM4 CPU                 | Works across all amd64 platforms.                                                             |
+| amd64-v3     | AM4 CPU                 | Snake oil level optimizations with AVX. It mostly improves response compression, and TLS.     |
+| amd64-v4     | Intel® SDE              | Snake oil level optimizations with AVX-512. It mostly improves response compression, and TLS. |
+| arm64        | Raspberry Pi 4 Model B  |                                                                                               |
+| armv7        | Qemu emulation          | Uses software floating-point.                                                                 |
+| armv6        | Qemu emulation          | Uses software floating-point.                                                                 |
+| riscv64      | Qemu emulation          |                                                                                               |
 
 > amd64 v3 and v4 variants require certain CPU feature flags to run. If you are a crackhead min-max enjoyer (like me), you can use 
 > `nut_webgui:latest-amd64-v3` and `nut_webgui:latest-amd64-v4` images.
@@ -81,7 +81,7 @@ CLI arguments hold the highest priority in configuration settings. You can overr
 * `--upsd-pass`: UPS daemon password.
 * `--upsd-port`: UPS daemon port. Default is `3493`.
 * `--upsd-user`: UPS daemon username.
-* `--upsd-tls-mode`: Configures TLS communication between UPSD and client. Default is `disabled`.
+* `--upsd-tls-mode`: Configures TLS communication between UPSD and client. Default is `disable`.
 
 ### Container image environment variables
 
@@ -103,7 +103,7 @@ specifies a file path, the system automatically reads content of that file as a 
 | `UPSD_PASS`, `NUTWG__UPSD__PASSWORD`          | None                           | UPS daemon password.                                               |
 | `UPSD_PORT`, `NUTWG__UPSD__PORT`              | `3493`                         | UPS daemon port.                                                   |
 | `UPSD_USER`, `NUTWG__UPSD__USERNAME`          | None                           | UPS daemon username.                                               |
-| `UPSD_TLS`, `NUTWG__UPSD__TLS_MODE`           | `disabled`                     | Configures TLS communication between UPSD and client.              |
+| `UPSD_TLS`, `NUTWG__UPSD__TLS_MODE`           | `disable`                      | Configures TLS communication between UPSD and client.              |
 | `UPSD_ROOT_CA`                                | None                           | Path to the Root CA certificate for TLS.                           |
 
 ### TOML config

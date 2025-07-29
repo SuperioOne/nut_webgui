@@ -1,23 +1,15 @@
 [package]
 name = "nut_webgui"
-version = "0.5.4"
-edition = "2024"
-
-authors = ["Timur Olur <pm@smdd.dev>"]
 description = "Light weight web interface for Network UPS Tools."
-documentation = "https://github.com/SuperioOne/nut_webgui"
-homepage = "https://github.com/SuperioOne/nut_webgui"
-keywords = ["nut", "ups", "network-ups-tools", "self-hosted", "management"]
-license = "Apache-2.0"
-repository = "https://github.com/SuperioOne/nut_webgui"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[profile.release]
-codegen-units = 1
-lto = true
-strip = "debuginfo"
-panic = "abort"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 askama = { version = "0.14", features = ["blocks"] }

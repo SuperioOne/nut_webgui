@@ -1,5 +1,5 @@
 [jobs.serve]
-command = ["cargo", "run", "--", "--allow-env"]
+command = ["cargo", "run", "-p", "nut_webgui", "--", "--allow-env"]
 need_stdout = true
 background = false
 on_change_strategy = "kill_then_restart"
