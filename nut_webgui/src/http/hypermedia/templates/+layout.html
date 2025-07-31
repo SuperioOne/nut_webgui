@@ -13,7 +13,7 @@
       {%- block page_title -%}{%- endblock page_title -%}
     </title>
     <link href="{{base_path}}/static/style.css?h={{nut_webgui_client::CSS.short_hash()}}" rel="stylesheet"/>
-    <link rel="icon" href="{{base_path}}/static/icon.svg" />
+    <link rel="icon" href="{{base_path}}/static/icon.svg?h={{nut_webgui_client::ICON.short_hash()}}" />
 
     {%- if let Ok(theme) = default_theme -%}
       <script>
@@ -46,7 +46,7 @@
               </div>
               <ul
                 tabindex="0"
-                class="menu menu-sm md:h-fit dropdown-content bg-base-100 rounded-box w-64 z-99 mt-3 p-2 shadow">
+                class="bg-base-100 dropdown-content md:h-fit menu menu-sm mt-3 p-2 rounded-box shadow w-64 z-99">
                 <li>
                   <a class="text-lg" href="{{base_path}}/">
                     {%- call icons::get_svg("columns", 18) -%} Devices
@@ -60,11 +60,11 @@
               </ul>
             </div>
             <a class="btn btn-ghost text-xl" href="{{base_path}}/">
-              <img width="32" height="32" src="{{base_path}}/static/icon.svg" alt="icon" />
+              <img width="32" height="32" src="{{base_path}}/static/icon.svg?h={{nut_webgui_client::ICON.short_hash()}}" alt="icon" />
               <span class="hidden mx-1 sm:inline-block">NUT Web Monitor</span>
             </a>
           </div>
-          <div class="navbar-center hidden lg:flex">
+          <div class="hidden lg:flex navbar-center">
             <ul class="menu menu-horizontal px-1">
               <li>
                 <a class="text-lg" href="{{base_path}}/">
@@ -89,7 +89,7 @@
                 class="text-success tooltip tooltip-bottom"
                 data-tip="Updating page"
               >
-                <span class="cursor-default loading loading-md loading-spinner text-info"></span>
+                <span class="loading loading-md loading-spinner text-info"></span>
               </div>
             </div>
             <label
