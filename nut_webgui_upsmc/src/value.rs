@@ -371,7 +371,7 @@ mod serde {
       match self {
         Value::Float(val) => serializer.serialize_f64(*val),
         Value::Int(val) => serializer.serialize_i64(*val),
-        Value::String(val) => serializer.serialize_str(&val),
+        Value::String(val) => serializer.serialize_str(val),
       }
     }
   }

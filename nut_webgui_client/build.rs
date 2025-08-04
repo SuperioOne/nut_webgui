@@ -16,7 +16,7 @@ fn main() -> Result<(), std::io::Error> {
 
   if profile.eq_ignore_ascii_case("release") {
     Command::new("node")
-      .args(&[
+      .args([
         "scripts/build.js",
         "--minify",
         format!("--outdir={}", &outdir).as_str(),
@@ -25,10 +25,7 @@ fn main() -> Result<(), std::io::Error> {
       .unwrap();
   } else {
     Command::new("node")
-      .args(&[
-        "scripts/build.js",
-        &format!("--outdir={}", &outdir).as_str(),
-      ])
+      .args(["scripts/build.js", format!("--outdir={}", &outdir).as_str()])
       .status()
       .unwrap();
   }
@@ -74,7 +71,7 @@ fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(),
 fn calc_sha256(bytes: &[u8]) -> Result<String, std::io::Error> {
   let mut sha256 = sha2::Sha256::new();
 
-  sha256.write_all(&bytes)?;
+  sha256.write_all(bytes)?;
   sha256.flush()?;
 
   let digest = sha256.finalize();

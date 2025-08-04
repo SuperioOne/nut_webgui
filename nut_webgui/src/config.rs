@@ -126,37 +126,15 @@ impl ServerConfig {
 
 impl core::fmt::Debug for UpsdConfig {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    #[derive(Debug)]
-    struct _Filtered<'a> {
-      poll_freq: u64,
-      poll_interval: u64,
-      addr: &'a str,
-      port: u16,
-      user: Option<&'static str>,
-      pass: Option<&'static str>,
-      max_conn: NonZeroUsize,
-      tls_mode: TlsMode,
-    }
-
-    let filtered = _Filtered {
-      poll_freq: self.poll_freq,
-      poll_interval: self.poll_interval,
-      addr: self.addr.as_ref(),
-      port: self.port,
-      user: if self.user.is_some() {
-        Some("******")
-      } else {
-        None
-      },
-      pass: if self.pass.is_some() {
-        Some("******")
-      } else {
-        None
-      },
-      max_conn: self.max_conn,
-      tls_mode: self.tls_mode,
-    };
-
-    core::fmt::Debug::fmt(&filtered, f)
+    f.debug_struct("UpsdConfig")
+      .field("pass", &self.pass.as_ref().map(|_| "******"))
+      .field("user", &self.user.as_ref().map(|_| "******"))
+      .field("addr", &self.addr)
+      .field("port", &self.port)
+      .field("poll_freq", &self.poll_freq)
+      .field("poll_interval", &self.poll_interval)
+      .field("max_conn", &self.max_conn)
+      .field("tls_mode", &self.tls_mode)
+      .finish()
   }
 }

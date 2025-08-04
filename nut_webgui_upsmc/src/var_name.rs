@@ -592,7 +592,7 @@ mod serde {
     {
       match &self.name {
         Repr::Standard(name) => serializer.serialize_str(name.as_str()),
-        Repr::Custom(name) => serializer.serialize_str(&name),
+        Repr::Custom(name) => serializer.serialize_str(name),
       }
     }
   }

@@ -143,7 +143,7 @@ where
 
     Self {
       inner: Arc::new(InnerPool {
-        allocator: allocator,
+        allocator,
         items: Mutex::new(VecDeque::with_capacity(limit)),
         permits: Arc::new(Semaphore::new(limit)),
       }),
