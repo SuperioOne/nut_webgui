@@ -5,7 +5,7 @@ use crate::{config::error::ConfigError, skip_tls_verifier::SkipTlsVerifier};
 use event::EventChannel;
 use http::HttpServer;
 use nut_webgui_upsmc::{
-  clients::{NutPoolClient, NutPoolClientBuilder},
+  client::{NutPoolClient, NutPoolClientBuilder},
   rustls::{ClientConfig, pki_types::ServerName},
 };
 use rustls_platform_verifier::BuilderVerifierExt;

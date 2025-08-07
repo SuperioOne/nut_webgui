@@ -1,6 +1,6 @@
 use core::str::FromStr;
 use nut_webgui_upsmc::CmdName;
-use nut_webgui_upsmc::errors::CmdParseError;
+use nut_webgui_upsmc::error::CmdParseError;
 
 macro_rules! cmd_name_test {
   ($test_name:ident, $name:literal) => {

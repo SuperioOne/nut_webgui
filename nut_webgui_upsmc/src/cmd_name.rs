@@ -1,4 +1,4 @@
-use crate::errors::CmdParseError;
+use crate::error::CmdParseError;
 use crate::internal::ascii_rules::NutAsciiText;
 use core::borrow::Borrow;
 

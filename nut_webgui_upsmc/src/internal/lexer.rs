@@ -1,6 +1,6 @@
 #![allow(unused_assignments)]
 
-use crate::errors::{Error, ErrorKind, ParseError};
+use crate::error::{Error, ErrorKind, ParseError};
 use std::borrow::Cow;
 
 #[derive(Debug, PartialEq)]

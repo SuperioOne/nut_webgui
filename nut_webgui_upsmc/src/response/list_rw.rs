@@ -1,8 +1,8 @@
 use crate::{
   UpsName,
-  errors::{Error, ErrorKind, ParseError},
+  error::{Error, ErrorKind, ParseError},
   internal::{Deserialize, lexer::Lexer, parser_utils::parse_line},
-  variables::UpsVariables,
+  ups_variables::UpsVariables,
 };
 use tracing::warn;
 

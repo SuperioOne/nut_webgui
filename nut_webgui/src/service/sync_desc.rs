@@ -5,8 +5,8 @@ use crate::{
 };
 use nut_webgui_upsmc::{
   CmdName, UpsName, VarName,
-  clients::{AsyncNutClient, NutPoolClient},
-  responses::{CmdDesc, UpsVarDesc},
+  client::{AsyncNutClient, NutPoolClient},
+  response::{CmdDesc, UpsVarDesc},
 };
 use std::{collections::HashSet, sync::Arc};
 use tokio::{

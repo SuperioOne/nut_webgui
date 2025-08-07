@@ -1,4 +1,4 @@
-use crate::errors::VarTypeParseError;
+use crate::error::VarTypeParseError;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum VarType {

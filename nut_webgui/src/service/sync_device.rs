@@ -12,8 +12,8 @@ use chrono::Utc;
 use futures::future::join_all;
 use nut_webgui_upsmc::{
   UpsName, Value, VarName, VarType,
-  clients::{AsyncNutClient, NutPoolClient},
-  responses::UpsDevice,
+  client::{AsyncNutClient, NutPoolClient},
+  response::UpsDevice,
   ups_status::UpsStatus,
 };
 use std::{collections::HashMap, sync::Arc, time::Duration};

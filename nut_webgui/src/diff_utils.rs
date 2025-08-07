@@ -1,4 +1,4 @@
-use nut_webgui_upsmc::{UpsName, responses::UpsDevice};
+use nut_webgui_upsmc::{UpsName, response::UpsDevice};
 use std::{collections::HashMap, net::IpAddr};
 
 pub trait Diff<T> {

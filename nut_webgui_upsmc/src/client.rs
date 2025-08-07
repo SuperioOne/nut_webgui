@@ -1,7 +1,7 @@
 use crate::{
   CmdName, UpsName, VarName,
-  errors::Error,
-  responses::{
+  error::Error,
+  response::{
     ClientList, CmdDesc, CmdList, DaemonVer, EnumList, ProtVer, RangeList, RwList, UpsDesc,
     UpsList, UpsVar, UpsVarDesc, UpsVarList, UpsVarType,
   },

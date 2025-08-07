@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::{
   UpsName, VarName, VarType,
-  errors::{Error, ErrorKind, ParseError},
+  error::{Error, ErrorKind, ParseError},
   internal::{
     Deserialize,
     lexer::{Lexer, Token},

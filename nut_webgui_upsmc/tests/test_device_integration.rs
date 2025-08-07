@@ -9,7 +9,7 @@ macro_rules! gen_dev_integration_test {
           async fn $test_name() {
             use nut_webgui_upsmc::{
               UpsName,
-              clients::{AsyncNutClient, NutClient}
+              client::{AsyncNutClient, NutClient}
             };
 
             let ups_name = UpsName::new_unchecked("UPS_DEVICE");

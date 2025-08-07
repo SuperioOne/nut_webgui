@@ -14,7 +14,7 @@ macro_rules! impl_ok_parser {
     pub struct $name;
 
     impl $crate::internal::Deserialize for $name {
-      type Error = $crate::errors::Error;
+      type Error = $crate::error::Error;
 
       fn deserialize(lexer: &mut $crate::internal::lexer::Lexer) -> Result<Self, Self::Error> {
         use $crate::internal::parser_utils::parse_line;
@@ -25,8 +25,8 @@ macro_rules! impl_ok_parser {
           Ok(Self)
         } else {
           Err(
-            $crate::errors::ErrorKind::ParseError {
-              inner: $crate::errors::ParseError::InvalidToken,
+            $crate::error::ErrorKind::ParseError {
+              inner: $crate::error::ParseError::InvalidToken,
               position: lexer.get_positon(),
             }
             .into(),

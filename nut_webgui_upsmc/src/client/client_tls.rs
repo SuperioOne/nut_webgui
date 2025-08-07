@@ -1,5 +1,5 @@
 use crate::{
-  clients::NutClient, commands::StartTls, errors::Error, internal::Serialize, responses::ProtOkTls,
+  client::NutClient, command::StartTls, error::Error, internal::Serialize, response::ProtOkTls,
 };
 use std::sync::Arc;
 use tokio::net::{TcpStream, ToSocketAddrs};

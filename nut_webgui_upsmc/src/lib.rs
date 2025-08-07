@@ -1,18 +1,18 @@
 pub mod internal;
 
 mod cmd_name;
-mod commands;
+mod command;
 mod ups_name;
 mod value;
 mod var_name;
 mod var_type;
 
-pub mod clients;
-pub mod errors;
-pub mod responses;
+pub mod client;
+pub mod error;
+pub mod response;
 pub mod ups_event;
 pub mod ups_status;
-pub mod variables;
+pub mod ups_variables;
 
 pub use cmd_name::*;
 pub use ups_name::*;

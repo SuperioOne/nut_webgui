@@ -1,7 +1,7 @@
 #![cfg(feature = "serde")]
 
 use nut_webgui_upsmc::{
-  CmdName, UpsName, Value, VarName, ups_status::UpsStatus, variables::UpsVariables,
+  CmdName, UpsName, Value, VarName, ups_status::UpsStatus, ups_variables::UpsVariables,
 };
 
 #[test]

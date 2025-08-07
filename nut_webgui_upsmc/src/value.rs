@@ -1,4 +1,4 @@
-use crate::{errors::NumberParseError, internal::escape::escape_nut_str};
+use crate::{error::NumberParseError, internal::escape::escape_nut_str};
 use std::borrow::Cow;
 
 macro_rules! impl_value_from {

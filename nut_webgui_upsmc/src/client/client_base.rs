@@ -1,10 +1,10 @@
 use crate::{
   CmdName, UpsName, VarName,
-  clients::AsyncNutClient,
-  commands,
-  errors::{Error, ErrorKind, ProtocolError},
+  client::AsyncNutClient,
+  command,
+  error::{Error, ErrorKind, ProtocolError},
   internal::{Deserialize, Serialize, lexer::Lexer},
-  responses,
+  response,
 };
 use core::{borrow::Borrow, time::Duration};
 use tokio::{
@@ -80,7 +80,7 @@ where
   }
 
   pub async fn is_open(&mut self) -> bool {
-    match self.send_raw(commands::GetProtVer.serialize()).await {
+    match self.send_raw(command::GetProtVer.serialize()).await {
       Ok(response) if !response.is_empty() => true,
       _ => false,
     }
@@ -175,171 +175,171 @@ where
     self,
     ups: N,
     cmd: C,
-  ) -> impl Future<Output = Result<responses::CmdDesc, Error>>
+  ) -> impl Future<Output = Result<response::CmdDesc, Error>>
   where
     N: Borrow<UpsName>,
     C: Borrow<CmdName>,
   {
-    let command = commands::GetCmdDesc {
+    let command = command::GetCmdDesc {
       ups: ups.borrow(),
       cmd: cmd.borrow(),
     }
     .serialize();
 
-    self.send::<_, responses::CmdDesc>(command)
+    self.send::<_, response::CmdDesc>(command)
   }
 
-  async fn get_protver(self) -> Result<responses::ProtVer, Error> {
-    let response = self.send_raw(commands::GetProtVer.serialize()).await?;
+  async fn get_protver(self) -> Result<response::ProtVer, Error> {
+    let response = self.send_raw(command::GetProtVer.serialize()).await?;
 
     if response.is_empty() {
       Err(ErrorKind::EmptyResponse.into())
     } else {
-      Ok(responses::ProtVer {
+      Ok(response::ProtVer {
         value: response.trim().to_owned(),
       })
     }
   }
 
-  fn get_ups_desc<N>(self, ups: N) -> impl Future<Output = Result<responses::UpsDesc, Error>>
+  fn get_ups_desc<N>(self, ups: N) -> impl Future<Output = Result<response::UpsDesc, Error>>
   where
     N: Borrow<UpsName>,
   {
-    let command = commands::GetUpsDesc { ups: ups.borrow() }.serialize();
-    self.send::<_, responses::UpsDesc>(command)
+    let command = command::GetUpsDesc { ups: ups.borrow() }.serialize();
+    self.send::<_, response::UpsDesc>(command)
   }
 
-  fn get_var<N, V>(self, ups: N, var: V) -> impl Future<Output = Result<responses::UpsVar, Error>>
+  fn get_var<N, V>(self, ups: N, var: V) -> impl Future<Output = Result<response::UpsVar, Error>>
   where
     N: Borrow<UpsName>,
     V: Borrow<VarName>,
   {
-    let command = commands::GetVar {
+    let command = command::GetVar {
       ups: ups.borrow(),
       var: var.borrow(),
     }
     .serialize();
 
-    self.send::<_, responses::UpsVar>(command)
+    self.send::<_, response::UpsVar>(command)
   }
 
   fn get_var_type<N, V>(
     self,
     ups: N,
     var: V,
-  ) -> impl Future<Output = Result<responses::UpsVarType, Error>>
+  ) -> impl Future<Output = Result<response::UpsVarType, Error>>
   where
     N: Borrow<UpsName>,
     V: Borrow<VarName>,
   {
-    let command = commands::GetVarType {
+    let command = command::GetVarType {
       ups: ups.borrow(),
       var: var.borrow(),
     }
     .serialize();
 
-    self.send::<_, responses::UpsVarType>(command)
+    self.send::<_, response::UpsVarType>(command)
   }
 
   fn get_var_desc<N, V>(
     self,
     ups: N,
     var: V,
-  ) -> impl Future<Output = Result<responses::UpsVarDesc, Error>>
+  ) -> impl Future<Output = Result<response::UpsVarDesc, Error>>
   where
     N: Borrow<UpsName>,
     V: Borrow<VarName>,
   {
-    let command = commands::GetVarDesc {
+    let command = command::GetVarDesc {
       ups: ups.borrow(),
       var: var.borrow(),
     }
     .serialize();
 
-    self.send::<_, responses::UpsVarDesc>(command)
+    self.send::<_, response::UpsVarDesc>(command)
   }
 
-  async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
-    let response = self.send_raw(commands::GetDaemonVer.serialize()).await?;
+  async fn get_ver(self) -> Result<response::DaemonVer, Error> {
+    let response = self.send_raw(command::GetDaemonVer.serialize()).await?;
 
     if response.is_empty() {
       Err(ErrorKind::EmptyResponse.into())
     } else {
-      Ok(responses::DaemonVer {
+      Ok(response::DaemonVer {
         value: response.trim().to_owned(),
       })
     }
   }
 
-  fn list_client<N>(self, ups: N) -> impl Future<Output = Result<responses::ClientList, Error>>
+  fn list_client<N>(self, ups: N) -> impl Future<Output = Result<response::ClientList, Error>>
   where
     N: Borrow<UpsName>,
   {
-    let command = commands::ListClient { ups: ups.borrow() }.serialize();
-    self.send::<_, responses::ClientList>(command)
+    let command = command::ListClient { ups: ups.borrow() }.serialize();
+    self.send::<_, response::ClientList>(command)
   }
 
-  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<responses::CmdList, Error>>
+  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<response::CmdList, Error>>
   where
     N: Borrow<UpsName>,
   {
-    let command = commands::ListCmd { ups: ups.borrow() }.serialize();
-    self.send::<_, responses::CmdList>(command)
+    let command = command::ListCmd { ups: ups.borrow() }.serialize();
+    self.send::<_, response::CmdList>(command)
   }
 
   fn list_enum<N, V>(
     self,
     ups: N,
     var: V,
-  ) -> impl Future<Output = Result<responses::EnumList, Error>>
+  ) -> impl Future<Output = Result<response::EnumList, Error>>
   where
     N: Borrow<UpsName>,
     V: Borrow<VarName>,
   {
-    let command = commands::ListEnum {
+    let command = command::ListEnum {
       ups: ups.borrow(),
       var: var.borrow(),
     }
     .serialize();
 
-    self.send::<_, responses::EnumList>(command)
+    self.send::<_, response::EnumList>(command)
   }
 
   fn list_range<N, V>(
     self,
     ups: N,
     var: V,
-  ) -> impl Future<Output = Result<responses::RangeList, Error>>
+  ) -> impl Future<Output = Result<response::RangeList, Error>>
   where
     N: Borrow<UpsName>,
     V: Borrow<VarName>,
   {
-    let command = commands::ListRange {
+    let command = command::ListRange {
       ups: ups.borrow(),
       var: var.borrow(),
     }
     .serialize();
 
-    self.send::<_, responses::RangeList>(command)
+    self.send::<_, response::RangeList>(command)
   }
 
-  fn list_rw<N>(self, ups: N) -> impl Future<Output = Result<responses::RwList, Error>>
+  fn list_rw<N>(self, ups: N) -> impl Future<Output = Result<response::RwList, Error>>
   where
     N: Borrow<UpsName>,
   {
-    let command = commands::ListRw { ups: ups.borrow() }.serialize();
-    self.send::<_, responses::RwList>(command)
+    let command = command::ListRw { ups: ups.borrow() }.serialize();
+    self.send::<_, response::RwList>(command)
   }
 
-  fn list_ups(self) -> impl Future<Output = Result<responses::UpsList, Error>> {
-    self.send::<_, responses::UpsList>(commands::ListUps.serialize())
+  fn list_ups(self) -> impl Future<Output = Result<response::UpsList, Error>> {
+    self.send::<_, response::UpsList>(command::ListUps.serialize())
   }
 
-  fn list_var<N>(self, ups: N) -> impl Future<Output = Result<responses::UpsVarList, Error>>
+  fn list_var<N>(self, ups: N) -> impl Future<Output = Result<response::UpsVarList, Error>>
   where
     N: Borrow<UpsName>,
   {
-    let command = commands::ListVar { ups: ups.borrow() }.serialize();
-    self.send::<_, responses::UpsVarList>(command)
+    let command = command::ListVar { ups: ups.borrow() }.serialize();
+    self.send::<_, response::UpsVarList>(command)
   }
 }

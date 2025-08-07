@@ -1,5 +1,5 @@
 use super::internal::{Repr, ascii_rules::NutAsciiText};
-use crate::errors::VarNameParseError;
+use crate::error::VarNameParseError;
 use core::borrow::Borrow;
 
 macro_rules! impl_standard_names {

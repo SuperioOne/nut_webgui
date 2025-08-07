@@ -14,7 +14,7 @@ use hypermedia::routes;
 use middlewares::{
   daemon_status::DaemonStateLayer, validate_content_length::ValidateEmptyContentLength,
 };
-use nut_webgui_upsmc::clients::NutPoolClient;
+use nut_webgui_upsmc::client::NutPoolClient;
 use problem_detail::ProblemDetail;
 use std::{sync::Arc, time::Duration};
 use tokio::{net::TcpListener, sync::RwLock};

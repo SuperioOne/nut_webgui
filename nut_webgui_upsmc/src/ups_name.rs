@@ -1,4 +1,4 @@
-use crate::{errors::UpsNameParseError, internal::escape::escape_nut_str};
+use crate::{error::UpsNameParseError, internal::escape::escape_nut_str};
 
 /// UPS name
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

@@ -8,7 +8,7 @@ use chrono::Utc;
 use futures::future::join_all;
 use nut_webgui_upsmc::{
   UpsName, VarName,
-  clients::{AsyncNutClient, NutPoolClient},
+  client::{AsyncNutClient, NutPoolClient},
   ups_status::UpsStatus,
 };
 use std::{sync::Arc, time::Duration};

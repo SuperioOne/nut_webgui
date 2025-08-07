@@ -1,10 +1,10 @@
 use super::AsyncNutClient;
 use crate::{
   CmdName, UpsName, VarName,
-  clients::NutClient,
-  errors::{Error, ErrorKind},
+  client::NutClient,
+  error::{Error, ErrorKind},
   internal::item_pool::{ItemAllocator, ItemPool, ItemPoolError, ItemState},
-  responses,
+  response,
 };
 use core::num::NonZeroUsize;
 use core::time::Duration;
@@ -94,13 +94,13 @@ impl NutPoolClientBuilder {
   }
 
   #[inline]
-  pub fn with_timeout(mut self, timeout: Duration) -> Self {
+  pub const fn with_timeout(mut self, timeout: Duration) -> Self {
     self.allocator.timeout = Some(timeout);
     self
   }
 
   #[inline]
-  pub fn with_limit(mut self, limit: NonZeroUsize) -> Self {
+  pub const fn with_limit(mut self, limit: NonZeroUsize) -> Self {
     self.limit = limit;
     self
   }
@@ -276,7 +276,7 @@ macro_rules! impl_pooled_call {
 }
 
 impl AsyncNutClient for &NutPoolClient {
-  async fn get_cmd_desc<N, C>(self, ups: N, cmd: C) -> Result<responses::CmdDesc, Error>
+  async fn get_cmd_desc<N, C>(self, ups: N, cmd: C) -> Result<response::CmdDesc, Error>
   where
     N: std::borrow::Borrow<UpsName>,
     C: std::borrow::Borrow<CmdName>,
@@ -284,18 +284,18 @@ impl AsyncNutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, get_cmd_desc, ups.borrow(), cmd.borrow())
   }
 
-  async fn get_protver(self) -> Result<responses::ProtVer, Error> {
+  async fn get_protver(self) -> Result<response::ProtVer, Error> {
     impl_pooled_call!(self.pool, get_protver)
   }
 
-  async fn get_ups_desc<N>(self, ups: N) -> Result<responses::UpsDesc, Error>
+  async fn get_ups_desc<N>(self, ups: N) -> Result<response::UpsDesc, Error>
   where
     N: std::borrow::Borrow<UpsName>,
   {
     impl_pooled_call!(self.pool, get_ups_desc, ups.borrow())
   }
 
-  async fn get_var<N, V>(self, ups: N, var: V) -> Result<responses::UpsVar, Error>
+  async fn get_var<N, V>(self, ups: N, var: V) -> Result<response::UpsVar, Error>
   where
     N: std::borrow::Borrow<UpsName>,
     V: std::borrow::Borrow<VarName>,
@@ -303,7 +303,7 @@ impl AsyncNutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, get_var, ups.borrow(), var.borrow())
   }
 
-  async fn get_var_type<N, V>(self, ups: N, var: V) -> Result<responses::UpsVarType, Error>
+  async fn get_var_type<N, V>(self, ups: N, var: V) -> Result<response::UpsVarType, Error>
   where
     N: std::borrow::Borrow<UpsName>,
     V: std::borrow::Borrow<VarName>,
@@ -311,7 +311,7 @@ impl AsyncNutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, get_var_type, ups.borrow(), var.borrow())
   }
 
-  async fn get_var_desc<N, V>(self, ups: N, var: V) -> Result<responses::UpsVarDesc, Error>
+  async fn get_var_desc<N, V>(self, ups: N, var: V) -> Result<response::UpsVarDesc, Error>
   where
     N: std::borrow::Borrow<UpsName>,
     V: std::borrow::Borrow<VarName>,
@@ -319,25 +319,25 @@ impl AsyncNutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, get_var_desc, ups.borrow(), var.borrow())
   }
 
-  async fn get_ver(self) -> Result<responses::DaemonVer, Error> {
+  async fn get_ver(self) -> Result<response::DaemonVer, Error> {
     impl_pooled_call!(self.pool, get_ver)
   }
 
-  async fn list_client<N>(self, ups: N) -> Result<responses::ClientList, Error>
+  async fn list_client<N>(self, ups: N) -> Result<response::ClientList, Error>
   where
     N: std::borrow::Borrow<UpsName>,
   {
     impl_pooled_call!(self.pool, list_client, ups.borrow())
   }
 
-  async fn list_cmd<N>(self, ups: N) -> Result<responses::CmdList, Error>
+  async fn list_cmd<N>(self, ups: N) -> Result<response::CmdList, Error>
   where
     N: std::borrow::Borrow<UpsName>,
   {
     impl_pooled_call!(self.pool, list_cmd, ups.borrow())
   }
 
-  async fn list_enum<N, V>(self, ups: N, var: V) -> Result<responses::EnumList, Error>
+  async fn list_enum<N, V>(self, ups: N, var: V) -> Result<response::EnumList, Error>
   where
     N: std::borrow::Borrow<UpsName>,
     V: std::borrow::Borrow<VarName>,
@@ -345,7 +345,7 @@ impl AsyncNutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, list_enum, ups.borrow(), var.borrow())
   }
 
-  async fn list_range<N, V>(self, ups: N, var: V) -> Result<responses::RangeList, Error>
+  async fn list_range<N, V>(self, ups: N, var: V) -> Result<response::RangeList, Error>
   where
     N: std::borrow::Borrow<UpsName>,
     V: std::borrow::Borrow<VarName>,
@@ -353,18 +353,18 @@ impl AsyncNutClient for &NutPoolClient {
     impl_pooled_call!(self.pool, list_range, ups.borrow(), var.borrow())
   }
 
-  async fn list_rw<N>(self, ups: N) -> Result<responses::RwList, Error>
+  async fn list_rw<N>(self, ups: N) -> Result<response::RwList, Error>
   where
     N: std::borrow::Borrow<UpsName>,
   {
     impl_pooled_call!(self.pool, list_rw, ups.borrow())
   }
 
-  async fn list_ups(self) -> Result<responses::UpsList, Error> {
+  async fn list_ups(self) -> Result<response::UpsList, Error> {
     impl_pooled_call!(self.pool, list_ups)
   }
 
-  async fn list_var<N>(self, ups: N) -> Result<responses::UpsVarList, Error>
+  async fn list_var<N>(self, ups: N) -> Result<response::UpsVarList, Error>
   where
     N: std::borrow::Borrow<UpsName>,
   {

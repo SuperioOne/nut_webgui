@@ -4,7 +4,7 @@ use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
 };
-use nut_webgui_upsmc::errors::{Error, ErrorKind};
+use nut_webgui_upsmc::error::{Error, ErrorKind};
 use serde::{Serialize, ser::SerializeStruct};
 
 /// Generalized Http problem details response. It's based on RFC9457, but it doesn't

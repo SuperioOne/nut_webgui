@@ -1,6 +1,6 @@
 use crate::{
   CmdName, InferValueFrom, UpsName, Value, VarName,
-  errors::{Error, ErrorKind, ParseError},
+  error::{Error, ErrorKind, ParseError},
   internal::lexer::{Lexer, Token},
 };
 use std::borrow::Cow;
@@ -473,7 +473,7 @@ macro_rules! parse_line {
         break $label Err(err);
       }
 
-      Result::<(), $crate::errors::Error>::Ok(())
+      Result::<(), $crate::error::Error>::Ok(())
     }
   };
 
@@ -483,7 +483,7 @@ macro_rules! parse_line {
         break $label Err(err);
       }
 
-      Result::<$type, $crate::errors::Error>::Ok($extracted)
+      Result::<$type, $crate::error::Error>::Ok($extracted)
     }
   };
 
@@ -493,7 +493,7 @@ macro_rules! parse_line {
         break $label Err(err);
       }
 
-      Result::<($type_first, $($type),+), $crate::errors::Error>::Ok(($extracted_first, $($extracted),+))
+      Result::<($type_first, $($type),+), $crate::error::Error>::Ok(($extracted_first, $($extracted),+))
     }
   };
 }

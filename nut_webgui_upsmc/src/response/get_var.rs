@@ -1,24 +1,28 @@
 use crate::{
-  UpsName,
-  errors::{Error, ErrorKind, ParseError},
+  UpsName, Value, VarName,
+  error::{Error, ErrorKind, ParseError},
   internal::{Deserialize, lexer::Lexer, parser_utils::parse_line},
 };
 
 #[derive(Debug)]
-pub struct UpsDesc {
-  pub desc: Box<str>,
+pub struct UpsVar {
+  pub value: Value,
+  pub name: VarName,
   pub ups_name: UpsName,
 }
 
-impl Deserialize for UpsDesc {
+impl Deserialize for UpsVar {
   type Error = Error;
 
   fn deserialize(lexer: &mut Lexer) -> Result<Self, Self::Error> {
-    let (ups_name, desc) =
-      parse_line!(lexer, "UPSDESC" {UPS, name = ups_name} {QUOTED_TEXT, name = desc})?;
+    let (ups_name, name, value) = parse_line!(lexer, "VAR" {UPS, name = ups_name} {VAR, name = var_name} {VALUE, name = value})?;
 
     if lexer.is_finished() {
-      Ok(Self { ups_name, desc })
+      Ok(Self {
+        name,
+        ups_name,
+        value,
+      })
     } else {
       Err(
         ErrorKind::ParseError {
