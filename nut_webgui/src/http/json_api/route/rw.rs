@@ -1,7 +1,9 @@
-use super::{RouterState, problem_detail::ProblemDetail};
 use crate::{
-  config::UpsdConfig,
-  device_entry::{DeviceEntry, VarDetail},
+  device_entry::VarDetail,
+  http::{
+    RouterState,
+    json_api::{problem_detail::ProblemDetail, route::request_auth_client},
+  },
 };
 use axum::{
   Json,
@@ -10,47 +12,10 @@ use axum::{
     rejection::{JsonRejection, PathRejection},
   },
   http::StatusCode,
-  response::{IntoResponse, Response},
 };
-use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName};
+use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::Deserialize;
-use tracing::{info, warn};
-
-macro_rules! request_auth_client {
-  ($route_state:expr) => {
-    match &$route_state.config.upsd {
-      UpsdConfig {
-        pass: Some(pass),
-        user: Some(user),
-        ..
-      } => match $route_state.connection_pool.get_client().await {
-        Ok(client) => client
-          .authenticate(user.as_ref(), pass.as_ref())
-          .await
-          .map_err(|err| {
-            ProblemDetail::new("Unable to authenticate", StatusCode::INTERNAL_SERVER_ERROR)
-              .with_detail(err.to_string())
-          }),
-        Err(e) => Err(
-          ProblemDetail::new(
-            "Unable to get UPSD client",
-            StatusCode::INTERNAL_SERVER_ERROR,
-          )
-          .with_detail(e.to_string()),
-        ),
-      },
-      _ => Err(
-        ProblemDetail::new("Insufficient upsd configuration", StatusCode::UNAUTHORIZED)
-          .with_detail("Operation requires valid username and password to be configured.".into()),
-      ),
-    }
-  };
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CommandRequest {
-  instcmd: CmdName,
-}
+use tracing::info;
 
 #[derive(Debug, Deserialize)]
 pub struct RwRequest {
@@ -58,116 +23,7 @@ pub struct RwRequest {
   value: Value,
 }
 
-pub async fn get_ups_by_name(
-  State(rs): State<RouterState>,
-  ups_name: Result<Path<UpsName>, PathRejection>,
-) -> Result<Response, ProblemDetail> {
-  let Path(ups_name) = ups_name?;
-  let server_state = rs.state.read().await;
-
-  if let Some(ups) = server_state.devices.get(&ups_name) {
-    Ok(Json(ups).into_response())
-  } else {
-    Err(ProblemDetail::new(
-      "Device not found",
-      StatusCode::NOT_FOUND,
-    ))
-  }
-}
-
-pub async fn get_ups_list(State(rs): State<RouterState>) -> Response {
-  let server_state = rs.state.read().await;
-  let mut device_refs: Vec<&DeviceEntry> = server_state.devices.values().collect();
-  device_refs.sort_by(|r, l| r.name.cmp(&l.name));
-
-  Json(device_refs).into_response()
-}
-
-pub async fn post_command(
-  State(rs): State<RouterState>,
-  ups_name: Result<Path<UpsName>, PathRejection>,
-  body: Result<Json<CommandRequest>, JsonRejection>,
-) -> Result<StatusCode, ProblemDetail> {
-  let Path(ups_name) = ups_name?;
-  let Json(body) = body?;
-
-  {
-    let server_state = rs.state.read().await;
-
-    match server_state.devices.get(&ups_name) {
-      Some(device) => {
-        if device.commands.contains(&body.instcmd) {
-          Ok(())
-        } else {
-          Err(
-            ProblemDetail::new("Invalid INSTCMD", StatusCode::BAD_REQUEST).with_detail(format!(
-              "'{cmd_name}' is not listed as supported command on device details.",
-              cmd_name = &body.instcmd
-            )),
-          )
-        }
-      }
-      None => Err(ProblemDetail::new(
-        "Device not found",
-        StatusCode::NOT_FOUND,
-      )),
-    }
-  }?;
-
-  let mut client = request_auth_client!(rs)?;
-
-  {
-    let response = client.instcmd(&ups_name, &body.instcmd).await;
-    _ = client.close().await;
-
-    response
-  }?;
-
-  info!(
-    message = "instcmd called",
-    device = %ups_name,
-    instcmd = %&body.instcmd
-  );
-
-  Ok(StatusCode::ACCEPTED)
-}
-
-pub async fn post_fsd(
-  State(rs): State<RouterState>,
-  ups_name: Result<Path<UpsName>, PathRejection>,
-) -> Result<StatusCode, ProblemDetail> {
-  let Path(ups_name) = ups_name?;
-
-  {
-    let server_state = rs.state.read().await;
-    if server_state.devices.contains_key(&ups_name) {
-      Ok(())
-    } else {
-      Err(ProblemDetail::new(
-        "Device not found",
-        StatusCode::NOT_FOUND,
-      ))
-    }
-  }?;
-
-  let mut client = request_auth_client!(rs)?;
-
-  {
-    let response = client.fsd(&ups_name).await;
-    _ = client.close().await;
-
-    response
-  }?;
-
-  warn!(
-    message = "force shutdown (fsd) called",
-    device = %ups_name,
-  );
-
-  Ok(StatusCode::ACCEPTED)
-}
-
-pub async fn patch_var(
+pub async fn patch(
   State(rs): State<RouterState>,
   ups_name: Result<Path<UpsName>, PathRejection>,
   body: Result<Json<RwRequest>, JsonRejection>,

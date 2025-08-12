@@ -1,5 +1,7 @@
 pub mod home;
 pub mod layout;
+pub mod login;
+pub mod logout;
 pub mod not_found;
 pub mod server_info;
 pub mod static_content;

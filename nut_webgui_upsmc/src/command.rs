@@ -116,23 +116,6 @@ impl Serialize for GetVar<'_, '_> {
   }
 }
 
-pub struct GetType<'a, 'b> {
-  pub ups: &'a UpsName,
-  pub var: &'b VarName,
-}
-
-impl Serialize for GetType<'_, '_> {
-  type Output = String;
-
-  fn serialize(self) -> Self::Output {
-    format!(
-      "GET TYPE {ups_name} {var_name}\n",
-      ups_name = self.ups.as_escaped_str(),
-      var_name = self.var
-    )
-  }
-}
-
 pub struct InstCmd<'a, 'b> {
   pub ups: &'a UpsName,
   pub cmd: &'b CmdName,

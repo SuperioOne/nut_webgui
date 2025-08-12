@@ -1,88 +1,58 @@
-{%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
-{%- import "icons.html" as icons -%}
+{%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
+  {%- import "icons.html" as icons -%}
 
-{%- macro set_value(value_option) -%}
+  {%- macro set_value(value_option) -%}
   {%- if let Some(value) = value_option -%}
-    value="{{value}}"
+  value="{{value}}"
   {%- endif -%}
-{%- endmacro -%}
+  {%- endmacro -%}
 
-{%- macro load_desc(name) -%}
+  {%- macro load_desc(name) -%}
   {%- if let Some(desc) = descriptions.get(name.as_str()) -%}
-    {{desc}}
+  {{desc}}
   {%- endif -%}
-{%- endmacro -%}
+  {%- endmacro -%}
 
-{%- macro is_selected(opt, selected_value) -%}
+  {%- macro is_selected(opt, selected_value) -%}
   {%- if let Some(value) = selected_value -%}
-    {%- if *value == opt -%}
-      selected
-    {%- endif -%}
+  {%- if *value == opt -%}
+  selected
   {%- endif -%}
-{%- endmacro -%}
+  {%- endif -%}
+  {%- endmacro -%}
 
-<form
-  class="flex flex-row"
-  hx-patch="{{base_path}}/ups/{{device_name | urlencode_strict}}/rw"
-  hx-swap="morph"
-  id="form_{{var_name.as_str()}}"
->
-  <fieldset class="grow">
-    <input type="hidden" name="name" value="{{var_name.as_str()}}"/>
-    {%- match detail -%}
+  <form class="flex flex-row" hx-patch="{{base_path}}/ups/{{device_name | urlencode_strict}}/rw" hx-swap="morph"
+    id="form_{{var_name.as_str()}}">
+    <fieldset class="grow">
+      <input type="hidden" name="name" value="{{var_name.as_str()}}" />
+      {%- match detail -%}
       {%- when crate::device_entry::VarDetail::String {max_len} -%}
-        <input
-          class="input rounded-e-none w-full {{semantic.as_input()}}"
-          maxlength="{{max_len}}"
-          minlength="1"
-          name="value"
-          placeholder="Type here"
-          required
-          type="text"
-          {% call set_value(value) %}
-        />
-        <p class="opacity-60 text-xs">max length: {{max_len}}</p>
+      <input class="input rounded-e-none w-full {{semantic.as_input()}}" maxlength="{{max_len}}" minlength="1"
+        name="value" placeholder="Type here" required type="text" {% call set_value(value) %} />
+      <p class="opacity-60 text-xs">max length: {{max_len}}</p>
       {%- when crate::device_entry::VarDetail::Number -%}
-        <input
-          class="input rounded-e-none w-full {{semantic.as_input()}}"
-          name="value"
-          placeholder="Type here"
-          required
-          type="number"
-          {% call set_value(value) %}
-        />
+      <input class="input rounded-e-none w-full {{semantic.as_input()}}" name="value" placeholder="Type here" required
+        type="number" {% call set_value(value) %} />
       {%- when crate::device_entry::VarDetail::Enum {options} -%}
-        <select
-          class="input rounded-e-none w-full {{semantic.as_select()}}"
-          name="value"
-          placeholder="Select a value"
-          required
-        >
-          {%- for opt in options -%}
-            <option value="{{opt}}" {% call is_selected(opt, value) %}>{{opt}}</option>
-          {%- endfor -%}
-        </select>
+      <select class="input rounded-e-none w-full {{semantic.as_select()}}" name="value" placeholder="Select a value"
+        required>
+        {%- for opt in options -%}
+        <option value="{{opt}}" {% call is_selected(opt, value) %}>{{opt}}</option>
+        {%- endfor -%}
+      </select>
       {%- when crate::device_entry::VarDetail::Range {min, max} -%}
-        <input
-          class="input rounded-e-none w-full {{semantic.as_input()}}"
-          max="{{max}}"
-          min="{{min}}"
-          name="value"
-          placeholder="Enter value here"
-          required
-          type="number"
-          {% match max -%}{%- when Value::Float(_) -%} step="0.01" {%- else -%} step="1" {%- endmatch %}
-          {% call set_value(value) %}
-        />
-        <p class="break-normal label">values between {{min}} and {{max}}</p>
-    {%- endmatch -%}
-    {%- if let Some(message) = message -%}
+      <input class="input rounded-e-none w-full {{semantic.as_input()}}" max="{{max}}" min="{{min}}" name="value"
+        placeholder="Enter value here" required type="number" {% match max -%}{%- when Value::Float(_) -%} step="0.01"
+        {%- else -%} step="1" {%- endmatch %} {% call set_value(value) %} />
+      <p class="break-normal label">values between {{min}} and {{max}}</p>
+      {%- endmatch -%}
+      {%- if let Some(message) = message -%}
       <p class="opacity-60 text-xs {{semantic.as_text()}}">{{message}}</p>
-    {%- endif -%}
-  </fieldset>
-  <button class="btn btn-neutral rounded-s-none" type="submit">{%- call icons::get_svg("save", 16) -%} Save</button>
-</form>
+      {%- endif -%}
+    </fieldset>
+    <button class="btn btn-neutral rounded-s-none" type="submit">{%- call icons::get_svg("save", 16) -%} Save</button>
+  </form>
 
-{%- if let Some(notification) = notification -%}
+  {%- if let Some(notification) = notification -%}
   {{notification | safe}}
-{%- endif -%} 
+  {%- endif -%}

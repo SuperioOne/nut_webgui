@@ -1,17 +1,18 @@
 use crate::{
+  auth::user_session::UserSession,
   config::UpsdConfig,
   device_entry::VarDetail,
   htmx_redirect, htmx_swap,
   http::{
     RouterState,
     hypermedia::{
-      error::ErrorPage, notifications::NotificationTemplate, routes::ups::RwFormTemplate,
-      semantic_classes::SemanticType, utils::RenderWithConfig,
+      error::ErrorPage, notification::NotificationTemplate, route::ups::RwFormTemplate,
+      semantic_type::SemanticType, utils::RenderWithConfig,
     },
   },
 };
 use axum::{
-  Form,
+  Extension, Form,
   extract::{Path, State},
   http::StatusCode,
   response::{Html, IntoResponse, Response},
@@ -100,8 +101,11 @@ fn validate_request(request_value: Box<str>, detail: &VarDetail) -> ValidationRe
 pub async fn patch(
   State(rs): State<RouterState>,
   Path(ups_name): Path<UpsName>,
+  session: Option<Extension<UserSession>>,
   Form(request): Form<RwRequest>,
 ) -> Result<Response, ErrorPage> {
+  let session = session.map(|v| v.0);
+
   let (value, detail) = {
     let state = rs.state.read().await;
 
@@ -116,7 +120,7 @@ pub async fn patch(
                 request.name
               ))
               .set_level(SemanticType::Error)
-              .render_with_config(&rs.config)?
+              .render_with_config(&rs.config, session.as_ref())?
             ),
             "none"
           ));
@@ -150,7 +154,7 @@ pub async fn patch(
                   .set_level(SemanticType::Error),
               ),
             }
-            .render_with_config(&rs.config)?,
+            .render_with_config(&rs.config, session.as_ref())?,
           )
           .into_response(),
         );
@@ -176,7 +180,7 @@ pub async fn patch(
           NotificationTemplate::from(
             "No username or password configured for UPS daemon. Server is in read-only mode.",
           )
-          .render_with_config(&rs.config)?
+          .render_with_config(&rs.config, session.as_ref())?
         ),
         "none"
       ));
@@ -226,7 +230,7 @@ pub async fn patch(
           var_name: &request.name,
           notification,
         }
-        .render_with_config(&rs.config)?,
+        .render_with_config(&rs.config, session.as_ref())?,
       )
       .into_response()
     }
@@ -237,7 +241,7 @@ pub async fn patch(
         Html(
           NotificationTemplate::from(format!("client authentication failed, {}", err))
             .set_level(SemanticType::Error)
-            .render_with_config(&rs.config)?,
+            .render_with_config(&rs.config, session.as_ref())?,
         ),
         "none"
       )

@@ -1,6 +1,5 @@
-use std::fmt::Display;
-
 use askama::FastWritable;
+use core::fmt::Display;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SemanticType {
@@ -12,7 +11,7 @@ pub enum SemanticType {
 }
 
 impl Display for SemanticType {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match self {
       SemanticType::None => Ok(()),
       SemanticType::Info => f.write_str("Info"),

@@ -1,5 +1,6 @@
-use super::{ConfigLayer, ServerConfig, macros::override_opt_field};
+use super::{ConfigLayer, ServerConfig, utils::override_opt_field};
 use crate::config::{
+  AuthConfig,
   tls_mode::{InvalidTlsModeError, TlsMode},
   uri_path::{InvalidPathError, UriPath},
 };
@@ -69,6 +70,14 @@ pub struct ServerCliArgs {
   /// Enables config override from environment variables
   #[arg(long, default_value_t = false)]
   pub allow_env: bool,
+
+  /// Private server key
+  #[arg(long)]
+  pub server_key: Option<Box<str>>,
+
+  /// Enables basic auth with users file
+  #[arg(long)]
+  pub with_auth: Option<PathBuf>,
 }
 
 fn uri_path_parser(input: &str) -> Result<UriPath, InvalidPathError> {
@@ -91,6 +100,7 @@ impl ConfigLayer for ServerCliArgs {
     override_opt_field!(config.config_file, self.config_file);
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level);
+    override_opt_field!(config.server_key, inner_value: self.server_key);
 
     override_opt_field!(config.upsd.addr, inner_value: self.upsd_addr);
     override_opt_field!(config.upsd.max_conn, inner_value: self.upsd_max_connection);
@@ -104,6 +114,10 @@ impl ConfigLayer for ServerCliArgs {
     override_opt_field!(config.http_server.base_path, inner_value:  self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);
     override_opt_field!(config.http_server.port, inner_value: self.port);
+
+    if let Some(users_file) = self.with_auth {
+      config.auth = Some(AuthConfig { users_file });
+    }
 
     config
   }

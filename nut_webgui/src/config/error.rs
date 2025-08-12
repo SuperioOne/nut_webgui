@@ -1,6 +1,7 @@
 use crate::config::{tls_mode::InvalidTlsModeError, uri_path::InvalidPathError};
 use core::{net::AddrParseError, num::ParseIntError};
 use std::ffi::OsString;
+use std::str::ParseBoolError;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -47,6 +48,7 @@ pub enum EnvConfigError {
   InvalidAddrFormat { inner: core::net::AddrParseError },
   InvalidUriPath,
   InvalidTlsMode,
+  InvalidBoolFormat,
 }
 
 impl core::error::Error for EnvConfigError {}
@@ -68,6 +70,7 @@ impl std::fmt::Display for EnvConfigError {
       }
       EnvConfigError::InvalidUriPath => f.write_str("invalid uri path format"),
       EnvConfigError::InvalidTlsMode => f.write_str("invalid tls mode option"),
+      EnvConfigError::InvalidBoolFormat => f.write_str("invalid boolean option"),
     }
   }
 }
@@ -111,6 +114,13 @@ impl From<AddrParseError> for EnvConfigError {
   #[inline]
   fn from(value: AddrParseError) -> Self {
     Self::InvalidAddrFormat { inner: value }
+  }
+}
+
+impl From<ParseBoolError> for EnvConfigError {
+  #[inline]
+  fn from(_: ParseBoolError) -> Self {
+    Self::InvalidBoolFormat
   }
 }
 

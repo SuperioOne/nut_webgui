@@ -1,9 +1,10 @@
-pub mod filters;
-pub mod routes;
-pub mod semantic_classes;
+pub mod middleware;
+pub mod route;
 
 mod device_entry_impls;
 mod error;
-mod notifications;
+mod filter;
+mod notification;
+mod semantic_type;
 mod ups_status;
 mod utils;

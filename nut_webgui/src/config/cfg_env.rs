@@ -1,5 +1,5 @@
 use super::{ConfigLayer, ServerConfig, error::EnvConfigError};
-use crate::config::{TlsMode, UriPath, macros::override_opt_field};
+use crate::config::{AuthConfig, TlsMode, UriPath, utils::override_opt_field};
 use core::net::IpAddr;
 use std::{
   env,
@@ -12,6 +12,7 @@ use tracing::Level;
 
 #[derive(Debug, Default)]
 pub struct ServerEnvArgs {
+  pub auth_users_file: Option<PathBuf>,
   pub base_path: Option<UriPath>,
   pub config_file: Option<PathBuf>,
   pub default_theme: Option<Box<str>>,
@@ -20,6 +21,7 @@ pub struct ServerEnvArgs {
   pub poll_freq: Option<u64>,
   pub poll_interval: Option<u64>,
   pub port: Option<u16>,
+  pub server_key: Option<Box<str>>,
   pub upsd_addr: Option<Box<str>>,
   pub upsd_max_conn: Option<NonZeroUsize>,
   pub upsd_pass: Option<Box<str>>,
@@ -81,22 +83,25 @@ impl ServerEnvArgs {
     let mut env_config = Self::default();
 
     load_var!(
-      ("NUTWG__CONFIG_FILE",            env_config.config_file,   path_buf);
-      ("NUTWG__DEFAULT_THEME",          env_config.default_theme, boxed_str);
-      ("NUTWG__LOG_LEVEL",              env_config.log_level,     Level);
+      ("NUTWG__CONFIG_FILE",             env_config.config_file,     path_buf);
+      ("NUTWG__DEFAULT_THEME",           env_config.default_theme,   boxed_str);
+      ("NUTWG__LOG_LEVEL",               env_config.log_level,       Level);
+      ("NUTWG__SERVER_KEY",              env_config.server_key,      boxed_str);
 
-      ("NUTWG__HTTP_SERVER__BASE_PATH", env_config.base_path,     UriPath);
-      ("NUTWG__HTTP_SERVER__LISTEN",    env_config.listen,        IpAddr);
-      ("NUTWG__HTTP_SERVER__PORT",      env_config.port,          u16);
+      ("NUTWG__HTTP_SERVER__BASE_PATH",  env_config.base_path,       UriPath);
+      ("NUTWG__HTTP_SERVER__LISTEN",     env_config.listen,          IpAddr);
+      ("NUTWG__HTTP_SERVER__PORT",       env_config.port,            u16);
 
-      ("NUTWG__UPSD__ADDRESS",          env_config.upsd_addr,     boxed_str);
-      ("NUTWG__UPSD__MAX_CONNECTION",   env_config.upsd_max_conn, NonZeroUsize);
-      ("NUTWG__UPSD__PASSWORD",         env_config.upsd_pass,     boxed_str);
-      ("NUTWG__UPSD__POLL_FREQ",        env_config.poll_freq,     u64);
-      ("NUTWG__UPSD__POLL_INTERVAL",    env_config.poll_interval, u64);
-      ("NUTWG__UPSD__PORT",             env_config.upsd_port,     u16);
-      ("NUTWG__UPSD__TLS_MODE",         env_config.upsd_tls,      TlsMode);
-      ("NUTWG__UPSD__USERNAME",         env_config.upsd_user,     boxed_str);
+      ("NUTWG__AUTH__USERS_FILE",        env_config.auth_users_file, path_buf);
+
+      ("NUTWG__UPSD__ADDRESS",           env_config.upsd_addr,       boxed_str);
+      ("NUTWG__UPSD__MAX_CONNECTION",    env_config.upsd_max_conn,   NonZeroUsize);
+      ("NUTWG__UPSD__PASSWORD",          env_config.upsd_pass,       boxed_str);
+      ("NUTWG__UPSD__POLL_FREQ",         env_config.poll_freq,       u64);
+      ("NUTWG__UPSD__POLL_INTERVAL",     env_config.poll_interval,   u64);
+      ("NUTWG__UPSD__PORT",              env_config.upsd_port,       u16);
+      ("NUTWG__UPSD__TLS_MODE",          env_config.upsd_tls,        TlsMode);
+      ("NUTWG__UPSD__USERNAME",          env_config.upsd_user,       boxed_str);
     );
 
     Ok(env_config)
@@ -108,6 +113,7 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.config_file, self.config_file);
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level);
+    override_opt_field!(config.server_key, inner_value: self.server_key);
 
     override_opt_field!(config.upsd.addr, inner_value: self.upsd_addr);
     override_opt_field!(config.upsd.max_conn, inner_value: self.upsd_max_conn);
@@ -121,6 +127,10 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.http_server.base_path, inner_value: self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);
     override_opt_field!(config.http_server.port, inner_value: self.port);
+
+    if let Some(users_file) = self.auth_users_file {
+      config.auth = Some(AuthConfig { users_file });
+    }
 
     config
   }

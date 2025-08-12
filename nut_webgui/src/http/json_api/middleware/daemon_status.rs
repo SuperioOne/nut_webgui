@@ -1,5 +1,5 @@
 use crate::{
-  http::problem_detail::ProblemDetail,
+  http::json_api::problem_detail::ProblemDetail,
   state::{DaemonStatus, ServerState},
 };
 use axum::{

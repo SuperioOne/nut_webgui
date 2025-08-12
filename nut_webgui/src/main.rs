@@ -1,5 +1,13 @@
-use self::config::{
-  ServerConfig, cfg_args::ServerCliArgs, cfg_env::ServerEnvArgs, cfg_toml::ServerTomlArgs,
+use self::{
+  auth::{
+    AUTH_COOKIE_DURATION,
+    permission::Permissions,
+    user_store::{UserProfile, UserStore},
+  },
+  config::{
+    AuthConfig, ServerConfig, cfg_arg::ServerCliArgs, cfg_env::ServerEnvArgs,
+    cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile,
+  },
 };
 use crate::{config::error::ConfigError, skip_tls_verifier::SkipTlsVerifier};
 use event::EventChannel;
@@ -23,6 +31,7 @@ use tokio::{
 };
 use tracing::{debug, error, info, warn};
 
+mod auth;
 mod config;
 mod device_entry;
 mod diff_utils;
@@ -97,6 +106,32 @@ fn create_pool(
   Ok(builder.build())
 }
 
+#[inline]
+fn create_user_store(
+  config: &ServerConfig,
+) -> Result<Option<Arc<UserStore>>, Box<dyn core::error::Error + 'static>> {
+  match &config.auth {
+    Some(AuthConfig { users_file }) => {
+      let users_file = UsersConfigFile::load(users_file)?;
+      let mut builder = UserStore::builder().with_session_duration(AUTH_COOKIE_DURATION);
+
+      for (username, user_config) in users_file.users.into_iter() {
+        _ = builder.add_user(
+          UserProfile {
+            username,
+            permissions: user_config.permissions.unwrap_or(Permissions::default()),
+          },
+          user_config.password.as_bytes(),
+        );
+      }
+      let user_store = Arc::new(builder.build());
+
+      Ok(Some(user_store))
+    }
+    None => Ok(None),
+  }
+}
+
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn core::error::Error>> {
   let mut sigterm = signal::unix::signal(SignalKind::terminate()).expect("SIGTERM stream failed");
@@ -123,7 +158,6 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
       std::process::exit(2);
     }
     Err(ConfigError::Arguments(err)) => {
-      err.print()?;
       err.exit();
     }
   };
@@ -145,6 +179,7 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     devices: HashMap::new(),
     shared_desc: HashMap::new(),
   }));
+  let user_store = create_user_store(&config)?;
 
   let device_sync = DeviceSyncService::new(
     client_pool.clone(),
@@ -192,7 +227,13 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     _ = pool_handle.close().await;
   };
 
-  HttpServer::new(config, server_state, client_pool)
+  let mut http_server = HttpServer::new(config, server_state, client_pool);
+
+  if let Some(store) = user_store {
+    http_server.set_auth(store);
+  }
+
+  http_server
     .serve(listener, close_signal)
     .await
     .inspect_err(|err| {

@@ -1,0 +1,46 @@
+{%- extends "../+layout.html" -%}
+{%- import "icons.html" as icons -%}
+
+{%- block page_title -%}
+  NUT Web - Login
+{%- endblock page_title -%}
+
+{%- block content -%}
+  {%- let base_path = "" -%}
+  <div class="flex flex-row justify-center">
+    <div class="content-card lg:w-lg md:w-md rounded shadow-md w-full xl:w-xl">
+      <div class="flex flex-row justify-center">
+        <img width="96" height="96" src="{{base_path}}/static/icon.svg?h={{nut_webgui_client::ICON.short_hash()}}" alt="icon" />
+      </div>
+      <h1 class="font-bold text-2xl text-center">NUT Web Monitor</h1>
+
+      {%- block login_form -%}
+        {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
+        <form
+          hx-post="{{base_path}}/login"
+          hx-swap="outerHTML"
+          class="flex flex-col gap-6 p-6"
+        >
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Username</legend>
+            <input name="username" type="text" class="input w-full" required />
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Password</legend>
+            <input name="password" type="password" class="input w-full" required />
+          </fieldset>
+
+          {%- if let Some(error_message) = error_message -%}
+            <div role="alert" class="alert alert-error">
+              {%- call icons::get_svg("info", 16)  -%}
+              <span>{{error_message}}</span>
+            </div>
+          {%- endif -%}
+
+          <button class="btn btn-neutral mt-4 w-full">Login</button>
+        </form>
+      {%- endblock login_form -%}
+    </div>
+  </div>
+{%- endblock -%}

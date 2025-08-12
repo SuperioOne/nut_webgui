@@ -19,5 +19,5 @@ pub async fn get_themes(rs: State<RouterState>) -> Result<Response, ErrorPage> {
     default_theme: rs.config.default_theme.as_deref(),
   };
 
-  Ok(Html(template.render_with_config(&rs.config)?).into_response())
+  Ok(Html(template.render_with_config(&rs.config, None)?).into_response())
 }

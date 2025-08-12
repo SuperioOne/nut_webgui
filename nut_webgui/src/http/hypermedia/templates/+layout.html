@@ -1,6 +1,7 @@
 {%- import "icons.html" as icons -%}
-{%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
-{%- let default_theme = askama::get_value::<Box<str>>("DEFAULT_THEME") -%}
+{%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
+{%- let default_theme = askama::get_value::<&str>("DEFAULT_THEME") -%}
+{%- let username = askama::get_value::<crate::auth::username::Username>("USER_NAME") -%}
 
 <!doctype html>
 <html lang="en" {% if let Ok(theme) = default_theme %} data-theme="{{theme}}" {% else %} data-theme="dark" {% endif %} >
@@ -92,15 +93,66 @@
                 <span class="loading loading-md loading-spinner text-info"></span>
               </div>
             </div>
-            <label
-              class="btn btn-circle btn-ghost drawer-button"
-              for="menu-toggle"
-              hx-get="{{base_path}}/_layout/themes"
-              hx-target="#themes-panel"
-              hx-trigger="click once, pointerenter once"
-            >
-              {%- call icons::get_svg("sliders", 18) -%}
-            </label>
+            {%- if let Ok(username) = username -%}
+              <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="avatar avatar-placeholder btn btn-circle btn-ghost">
+                  <div class="bg-neutral rounded-full text-neutral-content uppercase w-10">
+                    {{username.get_initials()}}
+                  </div>
+                </div>
+                <ul tabindex="0" class="bg-base-100 dropdown-content menu menu-lg mt-3 p-2 rounded-box shadow w-52 z-1">
+                  <li class="menu-title">User: {{username}}</li>
+                  <li>
+                    <a>
+                      {%- call icons::get_svg("sliders", 18) -%} 
+                      <label
+                        class="btn-ghost drawer-button"
+                        for="menu-toggle"
+                        hx-get="{{base_path}}/_layout/themes"
+                        hx-target="#themes-panel"
+                        hx-trigger="click once, pointerenter once"
+                      >
+                        Themes
+                      </label>
+                    </a>
+                  </li>
+                  <li>
+                    <a>
+                      {%- call icons::get_svg("key", 18) -%}
+                      API Keys
+                    </a>
+                  </li>
+                  <li>
+                    <a>
+                      {%- call icons::get_svg("log-out", 18) -%}
+                      <nut-confirm-button
+                        cancel-text="Cancel"
+                        confirm-text="Logout"
+                        hx-post="{{base_path}}/logout"
+                        hx-swap="none"
+                        hx-trigger="logout-confirmed"
+                        message="Are you sure about logout?"
+                        name="logout"
+                        target-event="logout-confirmed"
+                        title="Logout"
+                      >
+                        Logout
+                      </nut-confirm-button>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            {%- else -%}
+              <label
+                class="btn btn-circle btn-ghost drawer-button"
+                for="menu-toggle"
+                hx-get="{{base_path}}/_layout/themes"
+                hx-target="#themes-panel"
+                hx-trigger="click once, pointerenter once"
+              >
+                {%- call icons::get_svg("sliders", 18) -%}
+              </label>
+            {%- endif -%}
           </div>
         </header>
         <div  class="flex flex-row grow justify-center lg:p-16 md:p-14 p-3 w-full">

@@ -1,4 +1,4 @@
-use super::semantic_classes::SemanticType;
+use super::semantic_type::SemanticType;
 use std::str::SplitAsciiWhitespace;
 
 #[derive(Debug)]

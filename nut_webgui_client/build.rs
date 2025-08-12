@@ -38,6 +38,7 @@ fn main() -> Result<(), std::io::Error> {
 
   println!("cargo::rerun-if-changed=src");
   println!("cargo::rerun-if-changed=static");
+  println!("cargo::rerun-if-changed=../nut_webgui/src/http/hypermedia");
   println!("cargo::rerun-if-changed=package.json");
 
   Ok(())

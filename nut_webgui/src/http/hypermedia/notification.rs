@@ -1,4 +1,4 @@
-use crate::http::hypermedia::semantic_classes::SemanticType;
+use crate::http::hypermedia::semantic_type::SemanticType;
 use askama::Template;
 use core::time::Duration;
 use std::borrow::Cow;
@@ -24,6 +24,15 @@ impl<'a> NotificationTemplate<'a> {
   pub fn set_ttl(mut self, ttl: Duration) -> Self {
     self.ttl = ttl.as_millis();
     self
+  }
+
+  #[inline]
+  pub fn new(message: &'a str) -> Self {
+    Self {
+      message: Cow::Borrowed(message),
+      ttl: DEFAULT_DURATION_MS,
+      semantic_type: SemanticType::None,
+    }
   }
 }
 

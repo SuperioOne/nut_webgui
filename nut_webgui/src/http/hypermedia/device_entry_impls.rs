@@ -1,4 +1,4 @@
-use super::semantic_classes::SemanticType;
+use super::semantic_type::SemanticType;
 use crate::device_entry::DeviceEntry;
 use askama::FastWritable;
 use core::ops::Deref;

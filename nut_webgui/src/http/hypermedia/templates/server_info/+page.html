@@ -1,6 +1,6 @@
 {%- extends "+layout.html" -%}
 {%- import "icons.html" as icons -%}
-{%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
+{%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
 
 {%- macro list_item(name, value) -%}
 <li class="list-row">

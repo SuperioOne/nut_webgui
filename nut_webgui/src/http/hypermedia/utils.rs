@@ -1,4 +1,7 @@
-use crate::config::ServerConfig;
+use crate::{
+  auth::{permission::Permissions, user_session::UserSession},
+  config::ServerConfig,
+};
 use askama::Template;
 use std::{any::Any, collections::HashMap};
 
@@ -24,29 +27,39 @@ macro_rules! htmx_swap {
 }
 
 pub trait RenderWithConfig: Template + Sized {
-  fn render_with_config(self, config: &ServerConfig) -> Result<String, askama::Error>;
+  fn render_with_config(
+    self,
+    config: &ServerConfig,
+    user: Option<&UserSession>,
+  ) -> Result<String, askama::Error>;
 }
 
 impl<T> RenderWithConfig for T
 where
   T: Template,
 {
-  fn render_with_config(self, config: &ServerConfig) -> Result<String, askama::Error> {
-    // TODO: I don't like this
+  fn render_with_config(
+    self,
+    config: &ServerConfig,
+    user: Option<&UserSession>,
+  ) -> Result<String, askama::Error> {
+    let mut permissions = Permissions::all();
+    let mut values: HashMap<&'static str, &dyn Any> = HashMap::new();
 
-    let mut values: HashMap<&'static str, Box<dyn Any>> = HashMap::new();
-
-    values.insert("UPSD__POLL_FREQ", Box::new(config.upsd.poll_freq));
-    values.insert("UPSD__POLL_INTERVAL", Box::new(config.upsd.poll_interval));
-    values.insert(
-      "HTTP_SERVER__BASE_PATH",
-      Box::new(config.http_server.base_path.as_str().to_owned()),
-    );
+    values.insert("UPSD__POLL_FREQ", &config.upsd.poll_freq);
+    values.insert("UPSD__POLL_INTERVAL", &config.upsd.poll_interval);
+    values.insert("HTTP_SERVER__BASE_PATH", &config.http_server.base_path);
 
     if let Some(theme) = &config.default_theme {
-      values.insert("DEFAULT_THEME", Box::new(theme.clone()));
+      values.insert("DEFAULT_THEME", theme);
     }
 
+    if let Some(profile) = user {
+      values.insert("USER_NAME", profile.get_username());
+      permissions = profile.get_permissions();
+    }
+
+    values.insert("USER_PERMISSIONS", &permissions);
     self.render_with_values(&values)
   }
 }

@@ -16,6 +16,26 @@
 
 # default_theme = "tokyo-night"
 
+# ------------------------------------------------------------------------------
+# Server Key: Sets server instance's private sign key. The key is used for 
+# issuing and verifiying tokens such as API keys and user sessions.
+#
+# By default system generates random key.
+#
+# This option is mainly intended for multi instance deployments behind a 
+# reverse-proxy. Since nut_webgui is stateless, 
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# Server Key: A private key used by the server instance to sign tokens such as
+# API keys and user sessions. Ensures that multiple instances can validate tokens
+# issued by any other instance in a distributed setup.
+#
+# By default, the system generates a random key.
+# ------------------------------------------------------------------------------
+
+# server_key = "my super duper secret key"
+
 [http_server]
 # ------------------------------------------------------------------------------
 # Base Path: Define the base URL path where the HTTP server will serve content.
@@ -106,3 +126,13 @@
 #               certificate setup.
 #   - skip    : Enables TLS but skips all types of certificate validations.
 # ------------------------------------------------------------------------------
+
+# tls_mode = "strict"
+
+# ------------------------------------------------------------------------------
+# Basic auth: Enables basic authentication
+# TODO: Proper explanation is needed
+# ------------------------------------------------------------------------------
+
+# [auth.basic]
+# users_file = "/etc/nut_webgui/users.toml"

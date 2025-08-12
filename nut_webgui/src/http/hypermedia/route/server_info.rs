@@ -1,4 +1,5 @@
 use crate::{
+  auth::user_session::UserSession,
   config::ServerConfig,
   http::{
     RouterState,
@@ -8,6 +9,7 @@ use crate::{
 };
 use askama::Template;
 use axum::{
+  Extension,
   extract::{Query, State},
   response::{Html, IntoResponse, Response},
 };
@@ -29,6 +31,7 @@ struct ServerInfoTemplate<'a> {
 pub async fn get(
   query: Query<ServerInfoFragmentQuery>,
   State(rs): State<RouterState>,
+  session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
   let state = &rs.state.read().await;
 
@@ -38,11 +41,15 @@ pub async fn get(
     device_count: state.devices.len(),
   };
 
+  let session = session.map(|v| v.0);
   let response = match query.section.as_deref() {
-    Some("info_cards") => {
-      Html(template.as_info_cards().render_with_config(&rs.config)?).into_response()
-    }
-    _ => Html(template.render_with_config(&rs.config)?).into_response(),
+    Some("info_cards") => Html(
+      template
+        .as_info_cards()
+        .render_with_config(&rs.config, session.as_ref())?,
+    )
+    .into_response(),
+    _ => Html(template.render_with_config(&rs.config, session.as_ref())?).into_response(),
   };
 
   Ok(response)

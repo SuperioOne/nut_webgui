@@ -1,13 +1,14 @@
-use crate::config::{tls_mode::TlsMode, uri_path::UriPath};
+use crate::config::{tls_mode::TlsMode, uri_path::UriPath, utils::rand_server_key_256bit};
 use core::net::{IpAddr, Ipv4Addr};
 use std::{num::NonZeroUsize, path::PathBuf};
 use tracing::Level;
 
-mod macros;
+mod utils;
 
-pub mod cfg_args;
+pub mod cfg_arg;
 pub mod cfg_env;
 pub mod cfg_toml;
+pub mod cfg_user;
 pub mod error;
 pub mod tls_mode;
 pub mod uri_path;
@@ -16,14 +17,27 @@ pub trait ConfigLayer {
   fn apply_layer(self, config: ServerConfig) -> ServerConfig;
 }
 
-#[derive(Debug)]
 pub struct ServerConfig {
+  /// Additional config file path
   pub config_file: Option<PathBuf>,
+
+  /// Web GUI default theme
   pub default_theme: Option<Box<str>>,
+
+  /// Logging level
   pub log_level: tracing::Level,
 
+  /// Server instance's private sign key
+  pub server_key: Box<str>,
+
+  /// HTTP server configurations
   pub http_server: HttpServerConfig,
+
+  /// UPSD connection configurations
   pub upsd: UpsdConfig,
+
+  /// Authentication scheme configurations
+  pub auth: Option<AuthConfig>,
 }
 
 #[derive(Debug)]
@@ -60,6 +74,11 @@ pub struct UpsdConfig {
   pub tls_mode: TlsMode,
 }
 
+#[derive(Debug)]
+pub struct AuthConfig {
+  pub users_file: PathBuf,
+}
+
 impl UpsdConfig {
   pub fn get_socket_addr(&self) -> String {
     format!("{address}:{port}", address = self.addr, port = self.port)
@@ -75,8 +94,8 @@ impl HttpServerConfig {
 impl Default for HttpServerConfig {
   fn default() -> Self {
     Self {
-      listen: Ipv4Addr::UNSPECIFIED.into(),
       base_path: UriPath::default(),
+      listen: Ipv4Addr::UNSPECIFIED.into(),
       port: 9000,
     }
   }
@@ -85,14 +104,14 @@ impl Default for HttpServerConfig {
 impl Default for UpsdConfig {
   fn default() -> Self {
     Self {
-      pass: None,
-      user: None,
       addr: "127.0.0.1".into(),
-      port: 3493,
+      max_conn: unsafe { NonZeroUsize::new_unchecked(4) },
+      pass: None,
       poll_freq: 30,
       poll_interval: 2,
-      max_conn: unsafe { NonZeroUsize::new_unchecked(4) },
+      port: 3493,
       tls_mode: TlsMode::Disable,
+      user: None,
     }
   }
 }
@@ -102,9 +121,11 @@ impl Default for ServerConfig {
     Self {
       config_file: None,
       default_theme: None,
-      log_level: Level::INFO,
-      upsd: Default::default(),
       http_server: Default::default(),
+      log_level: Level::INFO,
+      server_key: rand_server_key_256bit().into_boxed_str(),
+      upsd: Default::default(),
+      auth: None,
     }
   }
 }
@@ -135,6 +156,20 @@ impl core::fmt::Debug for UpsdConfig {
       .field("poll_interval", &self.poll_interval)
       .field("max_conn", &self.max_conn)
       .field("tls_mode", &self.tls_mode)
+      .finish()
+  }
+}
+
+impl core::fmt::Debug for ServerConfig {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.debug_struct("ServerConfig")
+      .field("config_file", &self.config_file)
+      .field("default_theme", &self.default_theme)
+      .field("log_level", &self.log_level)
+      .field("server_key", &"******")
+      .field("http_server", &self.http_server)
+      .field("upsd", &self.upsd)
+      .field("auth", &self.auth)
       .finish()
   }
 }

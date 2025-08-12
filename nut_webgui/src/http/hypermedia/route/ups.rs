@@ -1,11 +1,12 @@
 use crate::{
+  auth::user_session::UserSession,
   config::ServerConfig,
   device_entry::{DeviceEntry, VarDetail},
   htmx_redirect,
   http::{
     RouterState,
     hypermedia::{
-      error::ErrorPage, notifications::NotificationTemplate, semantic_classes::SemanticType,
+      error::ErrorPage, notification::NotificationTemplate, semantic_type::SemanticType,
       utils::RenderWithConfig,
     },
   },
@@ -13,6 +14,7 @@ use crate::{
 };
 use askama::Template;
 use axum::{
+  Extension,
   extract::{Path, Query, State},
   http::StatusCode,
   response::{Html, IntoResponse, Redirect, Response},
@@ -132,6 +134,7 @@ fn full_page_response(
   tab_name: TabName,
   state: &ServerState,
   config: &ServerConfig,
+  session: Option<&UserSession>,
 ) -> Result<Response, ErrorPage> {
   let response = if let Some(device) = entry {
     let tab_template = get_tab_template(device, tab_name, state);
@@ -141,7 +144,7 @@ fn full_page_response(
       tab_template,
     };
 
-    Html(template.render_with_config(config)?).into_response()
+    Html(template.render_with_config(config, session)?).into_response()
   } else {
     Redirect::permanent(&format!("{}/not-found", config.http_server.base_path)).into_response()
   };
@@ -154,6 +157,7 @@ fn partial_tab_content(
   tab_name: TabName,
   state: &ServerState,
   config: &ServerConfig,
+  session: Option<&UserSession>,
 ) -> Result<Response, ErrorPage> {
   let response = if let Some(device) = entry {
     let tab_template = get_tab_template(device, tab_name, state);
@@ -163,7 +167,12 @@ fn partial_tab_content(
       tab_template,
     };
 
-    Html(template.as_tab_content().render_with_config(config)?).into_response()
+    Html(
+      template
+        .as_tab_content()
+        .render_with_config(config, session)?,
+    )
+    .into_response()
   } else {
     htmx_redirect!(
       StatusCode::NOT_FOUND,
@@ -178,6 +187,7 @@ fn partial_tab_content(
 fn partial_ups_status(
   entry: Option<&DeviceEntry>,
   config: &ServerConfig,
+  session: Option<&UserSession>,
 ) -> Result<Response, ErrorPage> {
   let response = if let Some(device) = entry {
     let template = UpsPageTemplate {
@@ -185,7 +195,12 @@ fn partial_ups_status(
       tab_template: UpsPageTabTemplate::None,
     };
 
-    Html(template.as_ups_status().render_with_config(config)?).into_response()
+    Html(
+      template
+        .as_ups_status()
+        .render_with_config(config, session)?,
+    )
+    .into_response()
   } else {
     htmx_redirect!(
       StatusCode::NOT_FOUND,
@@ -207,15 +222,19 @@ pub async fn get(
   Path(ups_name): Path<UpsName>,
   query: Query<UpsFragmentQuery>,
   rs: State<RouterState>,
+  session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
   let state = rs.state.read().await;
   let ups_entry = state.devices.get(&ups_name);
   let tab_name = query.tab.unwrap_or(TabName::Grid);
+  let session = session.map(|v| v.0);
 
   match query.section.as_deref() {
-    Some("status") => partial_ups_status(ups_entry, &rs.config),
-    Some("tab_content") => partial_tab_content(ups_entry, tab_name, &state, &rs.config),
-    _ => full_page_response(ups_entry, tab_name, &state, &rs.config),
+    Some("status") => partial_ups_status(ups_entry, &rs.config, session.as_ref()),
+    Some("tab_content") => {
+      partial_tab_content(ups_entry, tab_name, &state, &rs.config, session.as_ref())
+    }
+    _ => full_page_response(ups_entry, tab_name, &state, &rs.config, session.as_ref()),
   }
 }
 

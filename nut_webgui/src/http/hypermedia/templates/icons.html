@@ -1,6 +1,6 @@
 {# Macro for inserting Feather Icons: https://feathericons.com/ #}
 {%- macro get_svg(name, size) -%}
-  {%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
+  {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
   <svg class="feather" width="{{size}}" height="{{size}}">
     <use href="{{base_path}}/static/feather-sprite.svg?h={{nut_webgui_client::SPRITE_SHEET.short_hash()}}#{{name}}" />
   </svg>

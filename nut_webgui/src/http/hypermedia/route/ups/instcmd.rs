@@ -1,16 +1,17 @@
 use crate::{
+  auth::user_session::UserSession,
   config::UpsdConfig,
   htmx_redirect,
   http::{
     RouterState,
     hypermedia::{
-      error::ErrorPage, notifications::NotificationTemplate, semantic_classes::SemanticType,
+      error::ErrorPage, notification::NotificationTemplate, semantic_type::SemanticType,
       utils::RenderWithConfig,
     },
   },
 };
 use axum::{
-  Form,
+  Extension, Form,
   extract::{Path, State},
   http::StatusCode,
   response::{Html, IntoResponse, Response},
@@ -27,6 +28,7 @@ pub struct CommandRequest {
 pub async fn post(
   State(rs): State<RouterState>,
   Path(ups_name): Path<UpsName>,
+  session: Option<Extension<UserSession>>,
   Form(request): Form<CommandRequest>,
 ) -> Result<Response, ErrorPage> {
   {
@@ -43,6 +45,7 @@ pub async fn post(
     }
   };
 
+  let session = session.map(|v| v.0);
   let auth_client = match &rs.config.upsd {
     UpsdConfig {
       pass: Some(pass),
@@ -58,7 +61,7 @@ pub async fn post(
           NotificationTemplate::from(
             "No username or password configured for UPS daemon. Server is in read-only mode.",
           )
-          .render_with_config(&rs.config)?,
+          .render_with_config(&rs.config, session.as_ref())?,
         )
         .into_response(),
       );
@@ -92,5 +95,5 @@ pub async fn post(
     }
   };
 
-  Ok(Html(template.render_with_config(&rs.config)?).into_response())
+  Ok(Html(template.render_with_config(&rs.config, session.as_ref())?).into_response())
 }

@@ -1,7 +1,8 @@
 use super::{ConfigLayer, ServerConfig, error::TomlConfigError};
-use crate::config::{macros::override_opt_field, tls_mode::TlsMode, uri_path::UriPath};
+use crate::config::{AuthConfig, tls_mode::TlsMode, uri_path::UriPath, utils::override_opt_field};
 use core::{net::IpAddr, str};
 use serde::{Deserialize, de::Visitor};
+use std::path::PathBuf;
 use std::{fs::File, io::Read, num::NonZeroUsize, path::Path};
 use tracing::Level;
 
@@ -47,12 +48,14 @@ impl<'de> Deserialize<'de> for LogLevel {
   }
 }
 
-#[derive(Deserialize, Default, Debug)]
+#[derive(Debug, Deserialize, Default)]
 pub struct ServerTomlArgs {
+  pub server_key: Option<Box<str>>,
   pub default_theme: Option<Box<str>>,
   pub log_level: Option<LogLevel>,
-  pub http_server: HttpServerConfigSection,
-  pub upsd: UpsdConfigSection,
+  pub http_server: Option<HttpServerConfigSection>,
+  pub upsd: Option<UpsdConfigSection>,
+  pub auth: Option<AuthConfigSection>,
 }
 
 #[derive(Deserialize, Default, Debug)]
@@ -74,6 +77,11 @@ pub struct UpsdConfigSection {
   pub tls_mode: Option<TlsMode>,
 }
 
+#[derive(Deserialize, Default, Debug)]
+pub struct AuthConfigSection {
+  users_file: PathBuf,
+}
+
 impl ServerTomlArgs {
   pub fn load<P>(path: P) -> Result<Self, TomlConfigError>
   where
@@ -83,7 +91,7 @@ impl ServerTomlArgs {
     let mut buffer = String::new();
     _ = fd.read_to_string(&mut buffer)?;
 
-    let deserializer = toml::Deserializer::new(&buffer);
+    let deserializer = toml::Deserializer::parse(&buffer)?;
     let config = Self::deserialize(deserializer)?;
 
     Ok(config)
@@ -94,19 +102,30 @@ impl ConfigLayer for ServerTomlArgs {
   fn apply_layer(self, mut config: ServerConfig) -> ServerConfig {
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level.map(|val| val.0));
+    override_opt_field!(config.server_key, inner_value: self.server_key);
 
-    override_opt_field!(config.upsd.addr, inner_value: self.upsd.address);
-    override_opt_field!(config.upsd.max_conn, inner_value: self.upsd.max_connection);
-    override_opt_field!(config.upsd.pass, self.upsd.password);
-    override_opt_field!(config.upsd.poll_freq, inner_value: self.upsd.poll_freq);
-    override_opt_field!(config.upsd.poll_interval, inner_value: self.upsd.poll_interval);
-    override_opt_field!(config.upsd.port, inner_value: self.upsd.port);
-    override_opt_field!(config.upsd.tls_mode, inner_value :self.upsd.tls_mode);
-    override_opt_field!(config.upsd.user, self.upsd.username);
+    if let Some(upsd) = self.upsd {
+      override_opt_field!(config.upsd.addr, inner_value: upsd.address);
+      override_opt_field!(config.upsd.max_conn, inner_value: upsd.max_connection);
+      override_opt_field!(config.upsd.pass, upsd.password);
+      override_opt_field!(config.upsd.poll_freq, inner_value: upsd.poll_freq);
+      override_opt_field!(config.upsd.poll_interval, inner_value: upsd.poll_interval);
+      override_opt_field!(config.upsd.port, inner_value: upsd.port);
+      override_opt_field!(config.upsd.tls_mode, inner_value : upsd.tls_mode);
+      override_opt_field!(config.upsd.user, upsd.username);
+    }
 
-    override_opt_field!(config.http_server.base_path, inner_value: self.http_server.base_path);
-    override_opt_field!(config.http_server.listen, inner_value: self.http_server.listen);
-    override_opt_field!(config.http_server.port, inner_value: self.http_server.port);
+    if let Some(http_server) = self.http_server {
+      override_opt_field!(config.http_server.base_path, inner_value: http_server.base_path);
+      override_opt_field!(config.http_server.listen, inner_value: http_server.listen);
+      override_opt_field!(config.http_server.port, inner_value: http_server.port);
+    }
+
+    if let Some(auth) = self.auth {
+      config.auth = Some(AuthConfig {
+        users_file: auth.users_file,
+      })
+    }
 
     config
   }

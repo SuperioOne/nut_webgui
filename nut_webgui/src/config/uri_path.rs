@@ -67,9 +67,15 @@ fn is_valid_path(path: &str) -> bool {
   true
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct UriPath {
   inner: String,
+}
+
+impl core::fmt::Debug for UriPath {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    self.inner.fmt(f)
+  }
 }
 
 #[derive(Debug)]
