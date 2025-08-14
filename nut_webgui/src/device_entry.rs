@@ -1,15 +1,13 @@
 use chrono::{DateTime, Utc};
 use core::net::IpAddr;
-use nut_webgui_upsmc::{
-  CmdName, UpsName, Value, VarName, ups_status::UpsStatus, variables::UpsVariables,
-};
+use nut_webgui_upsmc::{UpsName, Value, VarName, ups_status::UpsStatus, variables::UpsVariables};
 use serde::{Serialize, ser::SerializeStruct};
 use std::collections::HashMap;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 pub struct DeviceEntry {
   pub attached: Vec<IpAddr>,
-  pub commands: Vec<CmdName>,
+  pub commands: Vec<String>,
   pub desc: Box<str>,
   pub last_modified: DateTime<Utc>,
   pub name: UpsName,

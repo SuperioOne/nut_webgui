@@ -1,4 +1,5 @@
 use super::{RouterState, problem_detail::ProblemDetail};
+
 use crate::{
   config::UpsdConfig,
   device_entry::{DeviceEntry, VarDetail},
@@ -49,9 +50,8 @@ pub async fn get_ups_by_name(
 ) -> Result<Response, ProblemDetail> {
   let Path(ups_name) = ups_name?;
   let server_state = rs.state.read().await;
-
   if let Some(ups) = server_state.devices.get(&ups_name) {
-    Ok(Json(ups).into_response())
+    Ok(Json(ups.clone()).into_response())
   } else {
     Err(ProblemDetail::new(
       "Device not found",
@@ -82,7 +82,7 @@ pub async fn post_command(
 
     match server_state.devices.get(&ups_name) {
       Some(device) => {
-        if device.commands.contains(&body.instcmd) {
+        if device.commands.iter().any(|c| c == body.instcmd.as_str()) {
           Ok(())
         } else {
           Err(
