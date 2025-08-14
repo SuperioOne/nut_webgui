@@ -10,6 +10,7 @@ pub struct ValueDetail<'a> {
   pub value: Cow<'a, Value>,
   pub class: SemanticType,
   pub unit_sign: Option<&'a str>,
+  pub approx: bool,
 }
 
 // Provides hypermedia specific impls for DeviceEntry struct
@@ -97,6 +98,7 @@ impl DeviceEntry {
       value: Cow::Borrowed(temperature),
       class: semantic_class,
       unit_sign,
+      approx: false,
     })
   }
 
@@ -115,6 +117,7 @@ impl DeviceEntry {
       value: Cow::Borrowed(load),
       class: semantic_class,
       unit_sign,
+      approx: false,
     })
   }
 
@@ -145,6 +148,7 @@ impl DeviceEntry {
       value: Cow::Borrowed(charge),
       class: semantic_class,
       unit_sign,
+      approx: false,
     })
   }
 
@@ -174,75 +178,80 @@ impl DeviceEntry {
       value: Cow::Borrowed(battery_runtime),
       class: semantic_class,
       unit_sign: None,
+      approx: false,
     })
   }
 
   pub fn get_real_power(&self) -> Option<ValueDetail<'_>> {
-    let realpower = {
-      match self
+    if let Some(v) = self
+      .variables
+      .get(VarName::UPS_REALPOWER)
+      .and_then(|v| v.as_lossly_f64())
+    {
+      Some(ValueDetail {
+        value: Cow::Owned(Value::from(v)),
+        class: SemanticType::Info,
+        unit_sign: Some("W"),
+        approx: false,
+      })
+    } else {
+      let load = self
         .variables
-        .get(VarName::UPS_REALPOWER)
-        .and_then(|v| v.as_lossly_f64())
-      {
-        Some(v) => v,
-        None => {
-          let load = self
-            .variables
-            .get(VarName::UPS_LOAD)
-            .and_then(|v| v.as_lossly_f64());
-
-          let nominal_realpower = self
-            .variables
-            .get(VarName::UPS_REALPOWER_NOMINAL)
-            .and_then(|v| v.as_lossly_f64());
-
-          match (load, nominal_realpower) {
-            (Some(load), Some(nominal_realpower)) => Some((nominal_realpower * load) / 100.0f64),
-            _ => None,
-          }
-        }?,
+        .get(VarName::UPS_LOAD)
+        .and_then(|v| v.as_lossly_f64());
+      let nominal = self
+        .variables
+        .get(VarName::UPS_REALPOWER_NOMINAL)
+        .and_then(|v| v.as_lossly_f64());
+      match (load, nominal) {
+        (Some(load), Some(nominal)) => {
+          let calc = (nominal * load / 100.0).round();
+          Some(ValueDetail {
+            value: Cow::Owned(Value::from(calc)),
+            class: SemanticType::Info,
+            unit_sign: Some("W"),
+            approx: true,
+          })
+        }
+        _ => None,
       }
-    };
-
-    Some(ValueDetail {
-      value: Cow::Owned(Value::from(realpower)),
-      class: SemanticType::Info,
-      unit_sign: Some("W"),
-    })
+    }
   }
 
   pub fn get_apparent_power(&self) -> Option<ValueDetail<'_>> {
-    let power = {
-      match self
+    if let Some(v) = self
+      .variables
+      .get(VarName::UPS_POWER)
+      .and_then(|v| v.as_lossly_f64())
+    {
+      Some(ValueDetail {
+        value: Cow::Owned(Value::from(v)),
+        class: SemanticType::Info,
+        unit_sign: Some("VA"),
+        approx: false,
+      })
+    } else {
+      let load = self
         .variables
-        .get(VarName::UPS_POWER)
-        .map(|v| v.as_lossly_f64())
-      {
-        Some(v) => v,
-        None => {
-          let load = self
-            .variables
-            .get(VarName::UPS_LOAD)
-            .and_then(|v| v.as_lossly_f64());
-
-          let nominal_power = self
-            .variables
-            .get(VarName::UPS_POWER_NOMINAL)
-            .and_then(|v| v.as_lossly_f64());
-
-          match (load, nominal_power) {
-            (Some(load), Some(nominal_power)) => Some((nominal_power * load) / 100.0f64),
-            _ => None,
-          }
+        .get(VarName::UPS_LOAD)
+        .and_then(|v| v.as_lossly_f64());
+      let nominal = self
+        .variables
+        .get(VarName::UPS_POWER_NOMINAL)
+        .and_then(|v| v.as_lossly_f64());
+      match (load, nominal) {
+        (Some(load), Some(nominal)) => {
+          let calc = (nominal * load / 100.0).round();
+          Some(ValueDetail {
+            value: Cow::Owned(Value::from(calc)),
+            class: SemanticType::Info,
+            unit_sign: Some("VA"),
+            approx: true,
+          })
         }
+        _ => None,
       }
-    }?;
-
-    Some(ValueDetail {
-      value: Cow::Owned(Value::from(power)),
-      class: SemanticType::Info,
-      unit_sign: Some("VA"),
-    })
+    }
   }
 
   /// Returns fist matching ups power information

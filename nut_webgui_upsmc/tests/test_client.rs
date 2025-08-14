@@ -178,10 +178,9 @@ async fn list_cmd() {
         let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
         let cmd_list = client.list_cmd(&ups).await.unwrap();
 
-        assert_eq!(cmd_list.ups_name, ups);
-        assert_eq!(cmd_list.cmds.len(), cmd_len);
+        assert_eq!(cmd_list.len(), cmd_len);
 
-        let mut iter = cmd_list.cmds.iter();
+        let mut iter = cmd_list.iter();
 
         $(
           assert_eq!(iter.next().unwrap(), $cmd);

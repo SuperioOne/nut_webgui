@@ -218,7 +218,7 @@ where
     impl_pooled_call!(&self.pool, list_client, ups.borrow())
   }
 
-  async fn list_cmd<N>(self, ups: N) -> Result<responses::CmdList, Error>
+  async fn list_cmd<N>(self, ups: N) -> Result<Vec<String>, Error>
   where
     N: std::borrow::Borrow<UpsName>,
   {

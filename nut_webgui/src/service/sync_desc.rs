@@ -93,7 +93,7 @@ where
 
 struct TaskContext {
   name: UpsName,
-  cmds: Vec<CmdName>,
+  cmds: Vec<String>,
   vars: Vec<VarName>,
 }
 
@@ -110,7 +110,7 @@ where
       for name in devices {
         match read_lock.devices.get(&name) {
           Some(entry) => {
-            let mut cmds: Vec<CmdName> = Vec::new();
+            let mut cmds: Vec<String> = Vec::new();
             let mut vars: Vec<VarName> = Vec::new();
 
             for (var_name, _) in entry.variables.iter() {
@@ -123,9 +123,9 @@ where
             }
 
             for cmd in entry.commands.iter() {
-              let name = cmd.as_str();
-
-              if !read_lock.shared_desc.contains_key(name) && !tmp_lookup.contains(name) {
+              if !read_lock.shared_desc.contains_key(cmd.as_str())
+                && !tmp_lookup.contains(cmd.as_str())
+              {
                 _ = tmp_lookup.insert(cmd.as_str());
                 cmds.push(cmd.clone());
               }
@@ -164,8 +164,13 @@ where
 
   /// **concurrently** loads requested command and variable descriptions for target ups.
   async fn load_descs(client: NutPoolClient<A>, ctx: TaskContext) -> Vec<(Box<str>, Box<str>)> {
-    let cmd_future =
-      futures::future::join_all(ctx.cmds.iter().map(|v| client.get_cmd_desc(&ctx.name, v)));
+    let cmd_future = futures::future::join_all(
+      ctx
+        .cmds
+        .iter()
+        .cloned()
+        .map(|v| client.get_cmd_desc(&ctx.name, CmdName::new_unchecked(v))),
+    );
 
     let var_future =
       futures::future::join_all(ctx.vars.iter().map(|v| client.get_var_desc(&ctx.name, v)));

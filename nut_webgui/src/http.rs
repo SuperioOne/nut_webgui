@@ -72,7 +72,10 @@ impl HttpServer {
       .route("/ups", get(json::get_ups_list))
       .route("/ups/{ups_name}", get(json::get_ups_by_name))
       .route("/ups/{ups_name}", patch(json::patch_var))
-      .route("/ups/{ups_name}/instcmd", post(json::post_command))
+      .route(
+        "/ups/{ups_name}/instcmd",
+        post(json::post_command),
+      )
       .route(
         "/ups/{ups_name}/fsd",
         post(json::post_fsd).layer(ValidateRequestHeaderLayer::custom(

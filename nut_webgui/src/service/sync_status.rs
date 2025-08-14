@@ -93,7 +93,7 @@ where
         match poll_type {
           UpsPollType::Full => {
             select! {
-              _ = task.variable_sync() => {
+              _ = task.state_sync() => {
                 debug!(message = "full device status sync completed");
               }
               _ = token.cancelled() => { break 'MAIN; }
@@ -191,7 +191,7 @@ where
     }
   }
 
-  pub async fn variable_sync(&self) {
+  pub async fn state_sync(&self) {
     let devices = self.snapshot_device_names().await;
 
     if devices.is_empty() {
@@ -200,12 +200,13 @@ where
     }
 
     let responses = join_all(devices.iter().map(|device| async move {
-      let (variables, clients) = join!(
+      let (variables, clients, commands) = join!(
         self.client.list_var(device),
-        self.client.list_client(device)
+        self.client.list_client(device),
+        self.client.list_cmd(device)
       );
 
-      (device, variables, clients)
+      (device, variables, clients, commands)
     }))
     .await;
 
@@ -216,7 +217,7 @@ where
 
       for result in responses {
         match result {
-          (device, Ok(var_list), Ok(clients)) => {
+          (device, Ok(var_list), Ok(clients), Ok(commands)) => {
             if let Some(entry) = write_lock.devices.get_mut(device) {
               if let Some(status_value) = var_list.variables.get(VarName::UPS_STATUS) {
                 let new_status = UpsStatus::from(status_value);
@@ -249,17 +250,21 @@ where
 
               entry.variables = var_list.variables;
               entry.attached = clients.ips;
+              entry.commands = commands;
               entry.last_modified = Utc::now();
 
               events.updated_device(clients.ups_name);
             }
           }
-          (device, vars_results, clients_result) => {
+          (device, vars_results, clients_result, cmds_result) => {
             if let Err(err) = vars_results {
               debug!(message = "failed to read ups variables", device = %device, reason = %err)
             }
             if let Err(err) = clients_result {
               debug!(message = "failed to read ups attached clients", device = %device, reason = %err)
+            }
+            if let Err(err) = cmds_result {
+              debug!(message = "failed to read ups commands", device = %device, reason = %err)
             }
           }
         }
