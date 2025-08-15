@@ -1,4 +1,9 @@
-use super::{RouterState, problem_detail::ProblemDetail};
+use super::{
+  RouterState,
+  commands::{get_cached_commands, update_commands},
+  problem_detail::ProblemDetail,
+};
+
 use crate::{
   config::UpsdConfig,
   device_entry::{DeviceEntry, VarDetail},
@@ -6,10 +11,10 @@ use crate::{
 use axum::{
   Json,
   extract::{
-    Path, State,
+    Path, Query, State,
     rejection::{JsonRejection, PathRejection},
   },
-  http::StatusCode,
+  http::{HeaderValue, StatusCode},
   response::{IntoResponse, Response},
 };
 use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName, clients::NutAuthClient};
@@ -46,12 +51,93 @@ pub struct RwRequest {
 pub async fn get_ups_by_name(
   State(rs): State<RouterState>,
   ups_name: Result<Path<UpsName>, PathRejection>,
+  Query(query): Query<GetUpsQuery>,
 ) -> Result<Response, ProblemDetail> {
   let Path(ups_name) = ups_name?;
+  let force = query.include.as_deref() == Some("commands");
   let server_state = rs.state.read().await;
-
   if let Some(ups) = server_state.devices.get(&ups_name) {
-    Ok(Json(ups).into_response())
+    let (power_w, approx) = {
+      let mut approx = false;
+      let value = if let Some(v) = ups
+        .variables
+        .get(VarName::UPS_REALPOWER)
+        .and_then(|v| v.as_lossly_f64())
+      {
+        Some(v)
+      } else if let Some(v) = ups
+        .variables
+        .get(VarName::UPS_POWER)
+        .and_then(|v| v.as_lossly_f64())
+      {
+        Some(v)
+      } else {
+        let load = ups
+          .variables
+          .get(VarName::UPS_LOAD)
+          .and_then(|v| v.as_lossly_f64());
+        let nominal = ups
+          .variables
+          .get(VarName::UPS_REALPOWER_NOMINAL)
+          .and_then(|v| v.as_lossly_f64())
+          .or_else(|| {
+            ups
+              .variables
+              .get(VarName::UPS_POWER_NOMINAL)
+              .and_then(|v| v.as_lossly_f64())
+          });
+        match (load, nominal) {
+          (Some(load), Some(nominal)) => {
+            approx = true;
+            Some((nominal * load / 100.0).round())
+          }
+          _ => None,
+        }
+      };
+      (value, approx)
+    };
+    let mut value = serde_json::to_value(ups).unwrap();
+    drop(server_state);
+    let (mut cmds, mut stale) = get_cached_commands(&rs, &ups_name).await;
+    let mut source = "cache";
+    let mut error = None;
+    if force || stale {
+      match update_commands(&rs, &ups_name).await {
+        Ok(c) => {
+          cmds = c;
+          stale = false;
+          source = "upsd";
+        }
+        Err(err) => {
+          error = Some(err.title);
+        }
+      }
+    }
+    value["commands"] = serde_json::to_value(&cmds).unwrap();
+    value["power_is_approx"] = approx.into();
+    if let Some(p) = power_w {
+      if let Some(n) = serde_json::Number::from_f64(p) {
+        value["power_w"] = serde_json::Value::Number(n);
+      } else {
+        value["power_w"] = serde_json::Value::Null;
+      }
+    } else {
+      value["power_w"] = serde_json::Value::Null;
+    }
+    let mut response = Json(value).into_response();
+    response.headers_mut().insert(
+      "X-Commands-Stale",
+      HeaderValue::from_static(if stale { "true" } else { "false" }),
+    );
+    response
+      .headers_mut()
+      .insert("X-Commands-Source", HeaderValue::from_static(source));
+    if let Some(e) = error {
+      response
+        .headers_mut()
+        .insert("X-Commands-Error", HeaderValue::from_static(e));
+    }
+    Ok(response)
   } else {
     Err(ProblemDetail::new(
       "Device not found",
@@ -66,6 +152,11 @@ pub async fn get_ups_list(State(rs): State<RouterState>) -> Response {
   device_refs.sort_by(|r, l| r.name.cmp(&l.name));
 
   Json(device_refs).into_response()
+}
+
+#[derive(Default, Deserialize)]
+pub struct GetUpsQuery {
+  include: Option<String>,
 }
 
 pub async fn post_command(
@@ -116,6 +207,27 @@ pub async fn post_command(
   );
 
   Ok(StatusCode::ACCEPTED)
+}
+
+pub async fn get_instcmds(
+  State(rs): State<RouterState>,
+  ups_name: Result<Path<UpsName>, PathRejection>,
+) -> Result<Response, ProblemDetail> {
+  warn!(message = "DEPRECATED endpoint used");
+  if !rs.config.allow_instcmds_list {
+    return Err(ProblemDetail::new(
+      "Target resource not found",
+      StatusCode::NOT_FOUND,
+    ));
+  }
+  let Path(ups_name) = ups_name?;
+  let (cmds, stale) = get_cached_commands(&rs, &ups_name).await;
+  if stale {
+    let cmds = update_commands(&rs, &ups_name).await?;
+    Ok(Json(cmds).into_response())
+  } else {
+    Ok(Json(cmds).into_response())
+  }
 }
 
 pub async fn post_fsd(

@@ -122,12 +122,30 @@ paths:
           allowEmptyValue: false
           schema:
             type: string
+        - name: include
+          in: query
+          description: "Refresh options"
+          required: false
+          schema:
+            type: string
+            enum:
+              - commands
       tags:
         - ups
       operationId: "api_ups_get"
       responses:
         "200":
           description: "UPS device response."
+          headers:
+            X-Commands-Stale:
+              schema:
+                type: string
+            X-Commands-Source:
+              schema:
+                type: string
+            X-Commands-Error:
+              schema:
+                type: string
           content:
             application/json:
               examples:
@@ -163,6 +181,58 @@ paths:
 
   /api/ups/{ups_name}/instcmd:
     description: "Instantiate UPS INSTCMD command."
+    get:
+      deprecated: true
+      parameters:
+        - name: ups_name
+          in: path
+          description: "UPS name"
+          required: true
+          allowEmptyValue: false
+          schema:
+            type: string
+      tags:
+        - ups
+      operationId: "api_ups_instcmd_list"
+      responses:
+        "200":
+          description: "List of instant commands."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InstCmd"
+        "401":
+          description: "Upsd user and password configs are not set."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "403":
+          description: "Access denied."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "404":
+          description: "Ups does not exists."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "500":
+          description: "Server or daemon errors."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "503":
+          description: "Server is not ready to serve."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
     post:
       requestBody:
         description: "Command request body."
@@ -404,13 +474,17 @@ components:
               - type: "number"
               - type: "string"
         commands:
-          type: "array"
+          type: array
           items:
-            type: "string"
+            $ref: "#/components/schemas/InstCmd"
         attached:
           type: "array"
           items:
             type: "string"
+        power_w:
+          type: number
+        power_is_approx:
+          type: boolean
 
     UpsList:
       type: array
@@ -470,6 +544,35 @@ components:
             - "Online"
             - "Dead"
             - "NotReady"
+
+    InstCmd:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        desc:
+          type: string
+
+    InstCmdList:
+      type: object
+      required:
+        - ups
+        - as_user
+        - count
+        - commands
+      properties:
+        ups:
+          type: string
+        as_user:
+          type: string
+        count:
+          type: number
+        commands:
+          type: array
+          items:
+            $ref: "#/components/schemas/InstCmd"
   examples:
     health_200:
       summary: "Server Online"

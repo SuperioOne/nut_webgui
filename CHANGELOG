@@ -1,4 +1,23 @@
+# v0.5.5 - July 30, 2025
+
+## Added
+- Inline commands in /api/ups/{name}.
+
+## Restored
+- GET /api/ups/{name}/instcmd (deprecated).
+
+# v0.5.4 - July 29, 2025
+
+## Changed
+- UPS power is estimated from load and nominal values when direct metrics are missing.
+
+## Added
+- UI marks approximated power readings.
+
 # v0.5.3 - July 28, 2025
+
+## Added
+- GET /api/ups/{ups_name}/instcmd endpoint for listing instant commands.
 
 ## Fixed
 - Compressed assets does not work on some browsers.

@@ -25,6 +25,9 @@ pub struct ServerEnvArgs {
   pub upsd_user: Option<Box<str>>,
   pub upsd_max_conn: Option<NonZeroUsize>,
   pub base_path: Option<UriPath>,
+  pub allow_instcmds_list: Option<bool>,
+  pub dangerous_cmds: Option<Vec<Box<str>>>,
+  pub commands_ttl: Option<u64>,
 }
 
 fn load_from_env(key: &str) -> Result<Option<String>, EnvConfigError> {
@@ -95,7 +98,20 @@ impl ServerEnvArgs {
       ("NUTWG__UPSD__POLL_INTERVAL",    env_config.poll_interval, u64);
       ("NUTWG__UPSD__PORT",             env_config.upsd_port,     u16);
       ("NUTWG__UPSD__USERNAME",         env_config.upsd_user,     boxed_str);
+      ("NUTWGUI_ALLOW_INSTCMDS_LIST",   env_config.allow_instcmds_list, bool);
+      ("NUTWGUI_COMMANDS_TTL",          env_config.commands_ttl,      u64);
     );
+
+    if let Some(value) = load_from_env("NUTWGUI_DANGEROUS_CMDS")? {
+      let trimmed = value.trim_matches(['[', ']']);
+      let cmds = trimmed
+        .split(',')
+        .map(|s| s.trim().trim_matches('"'))
+        .filter(|s| !s.is_empty())
+        .map(Box::from)
+        .collect();
+      env_config.dangerous_cmds = Some(cmds);
+    }
 
     Ok(env_config)
   }
@@ -118,6 +134,9 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.http_server.base_path, inner_value: self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);
     override_opt_field!(config.http_server.port, inner_value: self.port);
+    override_opt_field!(config.allow_instcmds_list, inner_value: self.allow_instcmds_list);
+    override_opt_field!(config.dangerous_cmds, inner_value: self.dangerous_cmds);
+    override_opt_field!(config.commands_ttl, inner_value: self.commands_ttl);
 
     config
   }

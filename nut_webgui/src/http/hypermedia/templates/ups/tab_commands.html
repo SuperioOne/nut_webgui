@@ -1,6 +1,5 @@
 {%- import "icons.html" as icons -%}
 {%- let base_path = askama::get_value::<String>("HTTP_SERVER__BASE_PATH")? -%}
-
 <div class="content-card flex flex-col gap-4">
   <h2 class="opacity-60 text-lg tracking-wide">Commands</h2>
   <label class="input input-ghost input-sm opacity-60 tracking-wide">
@@ -41,16 +40,14 @@
       </div>
     </li>
 
-    {%- for cmd in device.commands -%}
-    <li class="list-row" search-value="{{cmd}}">
+    {%- for cmd in commands -%}
+    <li class="list-row" search-value="{{cmd.id}}">
       <div></div>
       <div class="flex flex-row gap-3 list-col-grow">
         <div class="grow">
-          <p class="break-all font-bold text-primary">
-            {{cmd}}
-          </p>
-          {%- if let Some(desc) = descriptions.get(cmd.as_str()) -%}
-          <p class="font-light list-col-wrap opacity-70 text-xs"> {{desc}} </p>
+          <p class="break-all font-bold text-primary">{{cmd.id}}</p>
+          {%- if let Some(desc) = cmd.desc -%}
+          <p class="font-light list-col-wrap opacity-70 text-xs">{{desc}}</p>
           {%- endif -%}
         </div>
         <form>
@@ -61,11 +58,11 @@
             cancel-text="Cancel"
             class="btn btn-ghost btn-primary"
             confirm-text="Run"
-            message="Are you sure about the run '{{cmd}}' command?"
+            message="Are you sure about the run '{{cmd.id}}' command?"
             name="command"
             target-event="command-confirmed"
             title="Command Confirmation"
-            value="{{cmd}}"
+            value="{{cmd.id}}"
           >
             {%- call icons::get_svg("play", 24) -%}
           </nut-confirm-button>

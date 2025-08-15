@@ -156,6 +156,23 @@ where
       R::deserialize(&mut lexer)
     }
   }
+
+  pub async fn list_instcmds<N>(&mut self, ups: N) -> Result<Vec<crate::InstCmd>, Error>
+  where
+    N: Borrow<UpsName>,
+  {
+    let ups = ups.borrow();
+    let cmds = AsyncNutClient::list_cmd(&mut *self, ups).await?.cmds;
+    let mut output = Vec::with_capacity(cmds.len());
+    for cmd in cmds {
+      let desc = AsyncNutClient::get_cmd_desc(&mut *self, ups, &cmd)
+        .await
+        .map(|d| d.desc.into())
+        .unwrap_or_default();
+      output.push(crate::InstCmd { id: cmd, desc });
+    }
+    Ok(output)
+  }
 }
 
 impl<S> AsyncNutClient for &mut NutClient<S>

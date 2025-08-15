@@ -53,6 +53,7 @@ pub struct ServerTomlArgs {
   pub log_level: Option<LogLevel>,
   pub http_server: HttpServerConfigSection,
   pub upsd: UpsdConfigSection,
+  pub commands_ttl: Option<u64>,
 }
 
 #[derive(Deserialize, Default, Debug)]
@@ -105,6 +106,8 @@ impl ConfigLayer for ServerTomlArgs {
     override_opt_field!(config.http_server.base_path, inner_value: self.http_server.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.http_server.listen);
     override_opt_field!(config.http_server.port, inner_value: self.http_server.port);
+
+    override_opt_field!(config.commands_ttl, inner_value: self.commands_ttl);
 
     config
   }

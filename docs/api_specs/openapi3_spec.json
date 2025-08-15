@@ -183,6 +183,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "commands"
+              ]
+            }
           }
         ],
         "tags": [
@@ -632,7 +643,7 @@
           "commands": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/InstCmd"
             }
           },
           "attached": {
@@ -640,6 +651,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "power_w": {
+            "type": "number"
+          },
+          "power_is_approx": {
+            "type": "boolean"
           }
         }
       },
@@ -728,6 +745,46 @@
               "Dead",
               "NotReady"
             ]
+          }
+        }
+      },
+      "InstCmd": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "desc": {
+            "type": "string"
+          }
+        }
+      },
+      "InstCmdList": {
+        "type": "object",
+        "required": [
+          "ups",
+          "as_user",
+          "count",
+          "commands"
+        ],
+        "properties": {
+          "ups": {
+            "type": "string"
+          },
+          "as_user": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstCmd"
+            }
           }
         }
       }

@@ -1,8 +1,8 @@
 use crate::device_entry::DeviceEntry;
 use chrono::{DateTime, Utc};
-use nut_webgui_upsmc::{CmdName, UpsName, VarName};
+use nut_webgui_upsmc::{CmdName, InstCmd, UpsName, VarName};
 use serde::Serialize;
-use std::{borrow::Borrow, collections::HashMap};
+use std::{borrow::Borrow, collections::HashMap, time::Instant};
 
 #[derive(Debug)]
 pub struct ServerState {
@@ -14,6 +14,9 @@ pub struct ServerState {
 
   /// Shared description table for ups variables
   pub shared_desc: HashMap<DescriptionKey, Box<str>>,
+
+  /// Cached command lists
+  pub commands_cache: HashMap<UpsName, CommandsCacheEntry>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
@@ -82,4 +85,10 @@ impl Borrow<str> for DescriptionKey {
   fn borrow(&self) -> &str {
     &self.inner
   }
+}
+
+#[derive(Debug)]
+pub struct CommandsCacheEntry {
+  pub fetched_at: Instant,
+  pub commands: Vec<InstCmd>,
 }

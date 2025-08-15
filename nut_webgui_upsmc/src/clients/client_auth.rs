@@ -199,6 +199,13 @@ where
     Ok(())
   }
 
+  pub async fn list_instcmds<N>(&mut self, ups: N) -> Result<Vec<crate::InstCmd>, Error>
+  where
+    N: Borrow<UpsName>,
+  {
+    self.inner.list_instcmds(ups).await
+  }
+
   #[inline]
   pub fn is_open(&mut self) -> impl Future<Output = bool> {
     self.inner.is_open()

@@ -98,6 +98,8 @@ specifies a file path, the system automatically reads content of that file as a 
 | `UPSD_PASS`, `NUTWG__UPSD__PASSWORD`          | None                           | UPS daemon password.                                               |
 | `UPSD_PORT`, `NUTWG__UPSD__PORT`              | `3493`                         | UPS daemon port.                                                   |
 | `UPSD_USER`, `NUTWG__UPSD__USERNAME`          | None                           | UPS daemon username.                                               |
+| `NUTWGUI_ALLOW_INSTCMDS_LIST`                 | `true`                         | Enable instant command listing.           |
+| `NUTWGUI_DANGEROUS_CMDS`                      | ["driver.killpower","shutdown.*","load.off"] | Commands requiring confirmation. |
 
 ### TOML config
 
@@ -125,6 +127,15 @@ poll_interval = 2
 
 For more detailed config template see [./containers/config.toml](./containers/config.toml).
 
+### API examples
+
+```
+curl http://localhost:9000/api/ups/stayer/instcmd
+curl -X POST http://localhost:9000/api/ups/stayer/instcmd \
+  -H 'Content-Type: application/json' \
+  -d '{"cmd":"beeper.toggle"}'
+```
+
 > Log level options: `info`, `warn`, `error`, `debug`, `trace`
 
 ## JSON data API
@@ -132,6 +143,10 @@ For more detailed config template see [./containers/config.toml](./containers/co
 A simple JSON-based API is available for integration and automation purposes.
 
 OpenAPI 3.0.0 specification files: [json](docs/api_specs/openapi3_spec.json) | [yaml](docs/api_specs/openapi3_spec.yaml)
+
+## Back-compat
+
+Legacy integrations may keep using `GET /api/ups/{name}/instcmd` but switching to `GET /api/ups/{name}` is recommended.
 
 ## Probes
 

@@ -87,12 +87,12 @@
                       </div>
                       <div class="stat-title">Ups Power</div>
                       <div class="stat-value text-lg">
-                        {%- match row.power -%}
-                          {%- when Some(power) -%}
-                            <div class="text-center w-full {{power.class.as_text()}}">{{power}}</div>
-                          {%- when None -%}
-                            <p class="font-bold opacity-50 text-center">N/A</p>
-                        {%- endmatch -%}
+                          {%- match row.power -%}
+                            {%- when Some(power) -%}
+                              <div class="text-center w-full {{power.class.as_text()}}">{%- if power.approx -%}≈ {% endif -%}{{power}}</div>
+                            {%- when None -%}
+                              <p class="font-bold opacity-50 text-center">N/A</p>
+                          {%- endmatch -%}
                       </div>
                     </div>
                     <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">

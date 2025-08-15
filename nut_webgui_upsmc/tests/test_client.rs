@@ -473,6 +473,30 @@ async fn instcmd() {
 }
 
 #[tokio::test]
+async fn list_instcmds() {
+  const LIST_CMD: &[u8] =
+    b"BEGIN LIST CMD ux\nCMD ux beeper.toggle\nCMD ux driver.reload\nEND LIST CMD ux\n";
+  const DESC1: &[u8] = b"CMDDESC ux beeper.toggle \"Toggle\"\n";
+  const DESC2: &[u8] = b"CMDDESC ux driver.reload \"Reload\"\n";
+  let ups = UpsName::new_unchecked("ux");
+  let stream = tokio_test::io::Builder::new()
+    .write(format!("LIST CMD {ups}\n", ups = &ups).as_bytes())
+    .read(LIST_CMD)
+    .write(format!("GET CMDDESC {ups} beeper.toggle\n", ups = &ups).as_bytes())
+    .read(DESC1)
+    .write(format!("GET CMDDESC {ups} driver.reload\n", ups = &ups).as_bytes())
+    .read(DESC2)
+    .build();
+  let mut client = nut_webgui_upsmc::clients::NutClient::from(stream);
+  let cmds = client.list_instcmds(&ups).await.unwrap();
+  assert_eq!(cmds.len(), 2);
+  assert_eq!(cmds[0].id, CmdName::new_unchecked("beeper.toggle"));
+  assert_eq!(cmds[0].desc, "Toggle");
+  assert_eq!(cmds[1].id, CmdName::new_unchecked("driver.reload"));
+  assert_eq!(cmds[1].desc, "Reload");
+}
+
+#[tokio::test]
 async fn fsd() {
   let ups = nut_webgui_upsmc::UpsName::new_unchecked("home:bx1600mi@localhost:4242");
   let stream = tokio_test::io::Builder::new()
