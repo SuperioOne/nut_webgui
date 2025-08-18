@@ -86,7 +86,7 @@ where
     self.inner.list_client(ups)
   }
 
-  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<Vec<String>, Error>>
+  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<responses::CmdList, Error>>
   where
     N: std::borrow::Borrow<UpsName>,
   {

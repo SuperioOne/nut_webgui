@@ -270,7 +270,7 @@ where
       _ => UpsStatus::default(),
     };
     let attached = clients.map_load_err(&ups_name)?.ips;
-    let commands = commands.map_load_err(&ups_name)?;
+    let commands = commands.map_load_err(&ups_name)?.cmds;
 
     let rw_vars = join_all(
       rw_vars

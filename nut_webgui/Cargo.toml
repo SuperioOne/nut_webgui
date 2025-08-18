@@ -1,6 +1,6 @@
 [package]
 name = "nut_webgui"
-version = "0.5.3"
+version = "0.5.4"
 edition = "2024"
 
 authors = ["Timur Olur <pm@smdd.dev>"]

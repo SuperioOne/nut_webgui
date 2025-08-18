@@ -54,13 +54,13 @@
         {%- if let Some(apparent_power) = apparent_power -%}
         <div class="p-2 stat">
           <div class="stat-title">Apparent Power (VA)</div>
-          <div class="stat-value text-center text-info">{{apparent_power}}</div>
+          <div class="stat-value text-center text-info">{%- if apparent_power.approx -%}≈ {% endif -%}{{apparent_power}}</div>
         </div>
         {%- endif -%}
         {%- if let Some(real_power) = real_power -%}
           <div class="p-2 stat">
             <div class="stat-title">Real Power (Watt)</div>
-            <div class="stat-value text-center text-info">{{real_power}}</div>
+            <div class="stat-value text-center text-info">{%- if real_power.approx -%}≈ {% endif -%}{{real_power}}</div>
           </div>
         {%- endif -%}
       </div>

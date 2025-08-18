@@ -1,3 +1,11 @@
+# v0.5.4 - August 19, 2025
+
+## Added
+- UI now displays power values with an approximately symbol(≈) when the value is not reported by UPSD but derived from load and nominal power variables.
+
+## Fixed
+- UPS instant command list sometimes did not match with UPSD.
+
 # v0.5.3 - July 28, 2025
 
 ## Fixed

@@ -199,13 +199,16 @@ impl DeviceEntry {
         .variables
         .get(VarName::UPS_LOAD)
         .and_then(|v| v.as_lossly_f64());
+
       let nominal = self
         .variables
         .get(VarName::UPS_REALPOWER_NOMINAL)
         .and_then(|v| v.as_lossly_f64());
+
       match (load, nominal) {
         (Some(load), Some(nominal)) => {
           let calc = (nominal * load / 100.0).round();
+
           Some(ValueDetail {
             value: Cow::Owned(Value::from(calc)),
             class: SemanticType::Info,
@@ -235,13 +238,16 @@ impl DeviceEntry {
         .variables
         .get(VarName::UPS_LOAD)
         .and_then(|v| v.as_lossly_f64());
+
       let nominal = self
         .variables
         .get(VarName::UPS_POWER_NOMINAL)
         .and_then(|v| v.as_lossly_f64());
+
       match (load, nominal) {
         (Some(load), Some(nominal)) => {
           let calc = (nominal * load / 100.0).round();
+
           Some(ValueDetail {
             value: Cow::Owned(Value::from(calc)),
             class: SemanticType::Info,

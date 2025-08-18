@@ -270,22 +270,12 @@ where
     self.send::<_, responses::ClientList>(command)
   }
 
-  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<Vec<String>, Error>>
+  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<responses::CmdList, Error>>
   where
     N: Borrow<UpsName>,
   {
     let command = commands::ListCmd { ups: ups.borrow() }.serialize();
-    async move {
-      let mut this = self;
-      let result = this.send::<_, responses::CmdList>(command).await?;
-      Ok(
-        result
-          .cmds
-          .into_iter()
-          .map(|c| c.into_boxed_str().into())
-          .collect(),
-      )
-    }
+    self.send::<_, responses::CmdList>(command)
   }
 
   fn list_enum<N, V>(

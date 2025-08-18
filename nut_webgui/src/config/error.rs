@@ -63,9 +63,7 @@ impl std::fmt::Display for EnvConfigError {
       EnvConfigError::InvalidNumericFormat { .. } => {
         f.write_fmt(format_args!("invalid numeric format"))
       }
-      EnvConfigError::InvalidLogLevelFormat => {
-        f.write_fmt(format_args!("invalid log level"))
-      }
+      EnvConfigError::InvalidLogLevelFormat => f.write_fmt(format_args!("invalid log level")),
       EnvConfigError::InvalidAddrFormat { inner } => {
         f.write_fmt(format_args!("invalid ip address format, {}", inner))
       }
@@ -124,4 +122,3 @@ impl From<std::io::Error> for EnvConfigError {
     Self::IOError { inner: value }
   }
 }
-

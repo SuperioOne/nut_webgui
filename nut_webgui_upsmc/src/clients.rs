@@ -2,8 +2,8 @@ use crate::{
   CmdName, UpsName, VarName,
   errors::Error,
   responses::{
-    ClientList, CmdDesc, DaemonVer, EnumList, ProtVer, RangeList, RwList, UpsDesc, UpsList, UpsVar,
-    UpsVarDesc, UpsVarList, UpsVarType,
+    ClientList, CmdDesc, CmdList, DaemonVer, EnumList, ProtVer, RangeList, RwList, UpsDesc,
+    UpsList, UpsVar, UpsVarDesc, UpsVarList, UpsVarType,
   },
 };
 use core::{borrow::Borrow, future::Future};
@@ -48,7 +48,7 @@ pub trait AsyncNutClient {
   where
     N: Borrow<UpsName>;
 
-  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<Vec<String>, Error>>
+  fn list_cmd<N>(self, ups: N) -> impl Future<Output = Result<CmdList, Error>>
   where
     N: Borrow<UpsName>;
 
