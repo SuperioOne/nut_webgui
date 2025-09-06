@@ -59,7 +59,7 @@ where
       permissions = profile.get_permissions();
     }
 
-    values.insert("USER_PERMISSIONS", &permissions);
+    values.insert("USER_PERMISSION", &permissions);
     self.render_with_values(&values)
   }
 }

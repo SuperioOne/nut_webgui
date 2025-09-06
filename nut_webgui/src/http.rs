@@ -145,7 +145,7 @@ fn create_data_routes(
         ServiceBuilder::new().option_layer(
           auth_user_store
             .as_ref()
-            .map(|_| AuthorizeApiLayer::new(Permissions::SET_VAR)),
+            .map(|_| AuthorizeApiLayer::new(Permissions::SETVAR)),
         ),
       ),
     )
@@ -241,13 +241,15 @@ fn create_hypermedia_routes(
         ServiceBuilder::new().option_layer(
           auth_user_store
             .as_ref()
-            .map(|_| AuthorizeUserLayer::new(config.clone(), Permissions::SET_VAR)),
+            .map(|_| AuthorizeUserLayer::new(config.clone(), Permissions::SETVAR)),
         ),
       ),
     )
     .route("/", get(hypermedia::route::home::get))
     .route("/server", get(hypermedia::route::server_info::get))
-    .route("/ups/{ups_name}", get(hypermedia::route::ups::get));
+    .route("/ups/{ups_name}", get(hypermedia::route::ups::get))
+    .route("/not-found", get(hypermedia::route::not_found::get))
+    .fallback(hypermedia::route::not_found::get);
 
   match auth_user_store {
     Some(store) => hypermedia_api
@@ -257,6 +259,10 @@ fn create_hypermedia_routes(
         AUTH_COOKIE_RENEW,
       ))
       .route("/logout", post(hypermedia::route::logout::post))
+      .route(
+        "/api-keys",
+        get(hypermedia::route::api_key::get).post(hypermedia::route::api_key::post),
+      )
       .layer(UserAuthLayer::new(
         server_key,
         store.clone(),
@@ -268,11 +274,9 @@ fn create_hypermedia_routes(
       ),
     _ => hypermedia_api,
   }
-  .route("/not-found", get(hypermedia::route::not_found::get))
   .route(
     "/_layout/themes",
     get(hypermedia::route::layout::get_themes),
   )
   .nest_service("/static", static_files)
-  .fallback(hypermedia::route::not_found::get)
 }

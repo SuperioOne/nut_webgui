@@ -40,6 +40,7 @@ docker run -p 9000:9000 \
 - [Custom base path for reverse proxy](docs/examples/05_reverse_proxy_base_path.md)
 - [Accessing localhost](docs/examples/06_accessing_localhost.md)
 - [Using NUT with TLS](docs/examples/07_nut_and_tls.md)
+- [Enabling Basic Auth and API Keys](docs/examples/08_basic_auth.md)
 
 ## CPU architecture support
 
@@ -76,35 +77,39 @@ CLI arguments hold the highest priority in configuration settings. You can overr
 * `--poll-freq`: UPS [pollfreq](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `30`.
 * `--poll-interval`: UPS [pollinterval](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `2`.
 * `--port`: Port used by the HTTP server. Default is `9000`.
+* `--server-key`: Private server key value. Default is randomly auto generated value.
 * `--upsd-addr`: UPS daemon address. Default is `localhost`.
 * `--upsd-max-connection`: Allowed maximum connection for UPSD client. Default is `4`.
 * `--upsd-pass`: UPS daemon password.
 * `--upsd-port`: UPS daemon port. Default is `3493`.
-* `--upsd-user`: UPS daemon username.
 * `--upsd-tls-mode`: Configures TLS communication between UPSD and client. Default is `disable`.
+* `--upsd-user`: UPS daemon username.
+* `--with-auth`: Enables basic auth with `user.toml` file.
 
 ### Container image environment variables
 
 Environment variables have the second-highest priority in configuration settings. They can also accept paths as values. When an environment variable 
 specifies a file path, the system automatically reads content of that file as a value.
 
-| Names                                         | Default                        | Description                                                        |
-|-----------------------------------------------|--------------------------------|--------------------------------------------------------------------|
-| `CONFIG_FILE`, `NUTWG__CONFIG_FILE`           | `/etc/nut_webgui/config.toml`  | custom config.toml file path.                                      |
-| `LOG_LEVEL`, `NUTWG__LOG_LEVEL`               | `info`                         | Log level.                                                         |
-| `DEFAULT_THEME`, `NUTWG__DEFAULT_THEME`       | None                           | Web UI default theme.                                              |
-| `BASE_PATH`, `NUTWG__HTTP_SERVER__BASE_PATH`  | `/`                            | Overrides HTTP server base path.                                   |
-| `LISTEN`, `NUTWG__HTTP_SERVER__LISTEN`        | `0.0.0.0`                      | Works across all amd64 platforms.                                  |
-| `PORT`, `NUTWG__HTTP_SERVER__PORT`            | `9000`                         | Works across all amd64 platforms.                                  |
-| `NUTWG__UPSD__MAX_CONNECTION`                 | `4`                            | Allowed maximum connection for UPSD client.                        |
-| `POLL_FREQ`, `NUTWG__UPSD__POLL_FREQ`         | `30`                           | Non-critical ups variables update frequency in seconds.            |
-| `POLL_INTERVAL`, `NUTWG__UPSD__POLL_INTERVAL` | `2`                            | Critical ups variables (`ups.status`) update interval in seconds.  |
-| `UPSD_ADDR`, `NUTWG__UPSD__ADDRESS`           | `localhost`                    | UPS daemon address.                                                |
-| `UPSD_PASS`, `NUTWG__UPSD__PASSWORD`          | None                           | UPS daemon password.                                               |
-| `UPSD_PORT`, `NUTWG__UPSD__PORT`              | `3493`                         | UPS daemon port.                                                   |
-| `UPSD_USER`, `NUTWG__UPSD__USERNAME`          | None                           | UPS daemon username.                                               |
-| `UPSD_TLS`, `NUTWG__UPSD__TLS_MODE`           | `disable`                      | Configures TLS communication between UPSD and client.              |
-| `UPSD_ROOT_CA`                                | None                           | Path to the Root CA certificate for TLS.                           |
+| Names                                         | Aliases        | Default                        | Description                                                        |
+|-----------------------------------------------|----------------|--------------------------------|--------------------------------------------------------------------|
+| `NUTWG__CONFIG_FILE`                          |`CONFIG_FILE`   | `/etc/nut_webgui/config.toml`  | custom config.toml file path.                                      |
+| `NUTWG__DEFAULT_THEME`                        |`DEFAULT_THEME` | None                           | Web UI default theme.                                              |
+| `NUTWG__LOG_LEVEL`                            |`LOG_LEVEL`     | `info`                         | Log level.                                                         |
+| `NUTWG__SERVER_KEY`                           |                | `/etc/nut_webgui/server.key`   | Server sign key used for signing session tokens.                   |
+| `NUTWG__AUTH__USERS_FILE`                     |`USERS_FILE`    | None                           | Enables basic authentication with the provided `users.toml` file.  |
+| `NUTWG__HTTP_SERVER__BASE_PATH`               |`BASE_PATH`     | `/`                            | Overrides HTTP server base path.                                   |
+| `NUTWG__HTTP_SERVER__LISTEN`                  |`LISTEN`        | `0.0.0.0`                      | Works across all amd64 platforms.                                  |
+| `NUTWG__HTTP_SERVER__PORT`                    |`PORT`          | `9000`                         | Works across all amd64 platforms.                                  |
+| `NUTWG__UPSD__ADDRESS`                        |`UPSD_ADDR`     | `localhost`                    | UPS daemon address.                                                |
+| `NUTWG__UPSD__MAX_CONNECTION`                 |                | `4`                            | Allowed maximum connection for UPSD client.                        |
+| `NUTWG__UPSD__PASSWORD`                       |`UPSD_PASS`     | None                           | UPS daemon password.                                               |
+| `NUTWG__UPSD__POLL_FREQ`                      |`POLL_FREQ`     | `30`                           | Non-critical ups variables update frequency in seconds.            |
+| `NUTWG__UPSD__POLL_INTERVAL`                  |`POLL_INTERVAL` | `2`                            | Critical ups variables (`ups.status`) update interval in seconds.  |
+| `NUTWG__UPSD__PORT`                           |`UPSD_PORT`     | `3493`                         | UPS daemon port.                                                   |
+| `NUTWG__UPSD__TLS_MODE`                       |`UPSD_TLS`      | `disable`                      | Configures TLS communication between UPSD and client.              |
+| `NUTWG__UPSD__USERNAME`                       |`UPSD_USER`     | None                           | UPS daemon username.                                               |
+| `UPSD_ROOT_CA`                                |                | None                           | Path to the Root CA certificate for TLS.                           |
 
 ### TOML config
 
@@ -128,6 +133,9 @@ port = 3493
 max_connection = 4
 poll_freq = 30
 poll_interval = 2
+
+[auth]
+users_file = "/etc/nutwebgui/users.toml"
 ```
 
 For more detailed config template see [./containers/config.toml](./containers/config.toml).

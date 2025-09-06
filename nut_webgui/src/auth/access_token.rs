@@ -233,7 +233,7 @@ mod tests {
 
   #[test]
   fn into_from_bytes_pipe() {
-    let permissions = Permissions::SET_VAR | Permissions::INSTCMD;
+    let permissions = Permissions::SETVAR | Permissions::INSTCMD;
 
     let token = AccessToken::builder()
       .with_permissions(permissions)

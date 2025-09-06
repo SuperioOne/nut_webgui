@@ -139,7 +139,7 @@ mod tests {
   fn from_bytes_empty_username() {
     let access_token = AccessToken::builder()
       .with_valid_until(Duration::from_secs(600))
-      .with_permissions(Permissions::SET_VAR | Permissions::FSD | Permissions::INSTCMD)
+      .with_permissions(Permissions::SETVAR | Permissions::FSD | Permissions::INSTCMD)
       .build();
 
     let bytes = access_token.as_bytes();
@@ -155,7 +155,7 @@ mod tests {
     let username = Username::new("test_user").unwrap();
     let access_token = AccessToken::builder()
       .with_valid_until(Duration::from_secs(600))
-      .with_permissions(Permissions::SET_VAR | Permissions::FSD | Permissions::INSTCMD)
+      .with_permissions(Permissions::SETVAR | Permissions::FSD | Permissions::INSTCMD)
       .build();
 
     let session_bytes = UserSession::new(username, access_token).as_bytes();
@@ -168,7 +168,7 @@ mod tests {
     };
 
     assert!(session.access_token.is_active());
-    assert!(session.access_token.has_permission(Permissions::SET_VAR));
+    assert!(session.access_token.has_permission(Permissions::SETVAR));
     assert!(session.access_token.has_permission(Permissions::FSD));
     assert!(session.access_token.has_permission(Permissions::INSTCMD));
     assert_eq!("test_user", session.get_username().as_ref());
@@ -178,7 +178,7 @@ mod tests {
   fn invalid_utf8_username() {
     let access_token = AccessToken::builder()
       .with_valid_until(Duration::from_secs(600))
-      .with_permissions(Permissions::SET_VAR | Permissions::FSD | Permissions::INSTCMD)
+      .with_permissions(Permissions::SETVAR | Permissions::FSD | Permissions::INSTCMD)
       .build();
 
     let mut bytes = access_token.as_bytes();

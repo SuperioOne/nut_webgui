@@ -1,0 +1,68 @@
+{%- extends "../+layout.html" -%}
+
+{%- block page_title -%}
+  NUT Web - API Keys
+{%- endblock page_title -%}
+
+{%- block content -%}
+  <div class="flex flex-row justify-center">
+    <div hx-ext="morph" class="2xl:w-2xl content-card lg:w-lg md:w-md rounded shadow-md w-full xl:w-xl">
+      <h1 class="font-bold text-2xl text-center">Generate API Key</h1>
+
+      {%- block api_key_form -%}
+        {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
+        {%- let permission = askama::get_value::<crate::auth::permission::Permissions>("USER_PERMISSION")? -%}
+        <form
+          id="api-key-form"
+          class="flex flex-col gap-6 p-6"
+          hx-post="{{base_path}}/api-keys"
+          hx-swap="morph:outerHTML"
+        >
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Key Expiration</legend>
+            <nut-duration-input class="input w-full" name="duration" required></nut-duration-input>
+            <p class="label">Select key expiration date</p>
+          </fieldset>
+
+          <nut-bitflag-input name="permissions">
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">Permissions</legend>
+
+              <label class="label">
+                <input type="checkbox" class="checkbox" checked  disabled />
+                Read
+              </label>
+              {%- if permission.has(crate::auth::permission::Permissions::SETVAR) -%}
+                <label class="label">
+                  <input type="checkbox" class="checkbox" value="{{crate::auth::permission::Permissions::SETVAR.as_u8()}}"/>
+                  Set UPS variables
+                </label>
+              {%- endif -%}
+              {%- if permission.has(crate::auth::permission::Permissions::INSTCMD) -%}
+              <label class="label">
+                <input type="checkbox" class="checkbox" value="{{crate::auth::permission::Permissions::INSTCMD.as_u8()}}" />
+                Instant commands
+              </label>
+              {%- endif -%}
+              {%- if permission.has(crate::auth::permission::Permissions::FSD) -%}
+              <label class="label">
+                <input type="checkbox" class="checkbox" value="{{crate::auth::permission::Permissions::FSD.as_u8()}}" />
+                Forced shutdown
+              </label>
+              {%- endif -%}
+            </fieldset>
+          </nut-bitflag-input>
+
+          {%- if let Some(error_message) = error_message -%}
+            <div role="alert" class="alert alert-error">
+              {%- call icons::get_svg("info", 16)  -%}
+              <span>{{error_message}}</span>
+            </div>
+          {%- endif -%}
+
+          <button class="btn btn-primary mt-4 w-full">Generate</button>
+        </form>
+      {%- endblock api_key_form -%}
+    </div>
+  </div>
+{%- endblock -%}

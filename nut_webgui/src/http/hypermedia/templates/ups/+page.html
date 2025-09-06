@@ -83,6 +83,8 @@
     </div>
     <div id="tab-content" class="flex flex-col gap-6" hx-ext="morph">
       {%- block tab_content -%}
+        {%- let permission = askama::get_value::<crate::auth::permission::Permissions>("USER_PERMISSION")? -%}
+
         <div id="tab-control" class="flex flex-row justify-center">
           <div role="tablist" class="md:w-fit tabs tabs-box w-full">
             {%- if let UpsPageTabTemplate::Grid { .. } = tab_template  -%}
@@ -103,16 +105,20 @@
               {%- call tab_button(device.name, tab_name = "clients", title = "Clients", icon = "monitor", is_active = false) -%}
             {%- endif -%}
 
-            {%- if let UpsPageTabTemplate::Commands { .. } = tab_template  -%}
-              {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = true) -%}
-            {%- else -%}
-              {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = false) -%}
+            {%- if permission.has(crate::auth::permission::Permissions::FSD) || permission.has(crate::auth::permission::Permissions::INSTCMD) -%}
+              {%- if let UpsPageTabTemplate::Commands { .. } = tab_template  -%}
+                {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = true) -%}
+              {%- else -%}
+                {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = false) -%}
+              {%- endif -%}
             {%- endif -%}
 
-            {%- if let UpsPageTabTemplate::Rw { .. } = tab_template  -%}
-              {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = true) -%}
-            {%- else -%}
-              {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = false) -%}
+            {%- if permission.has(crate::auth::permission::Permissions::SETVAR) -%}
+              {%- if let UpsPageTabTemplate::Rw { .. } = tab_template  -%}
+                {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = true) -%}
+              {%- else -%}
+                {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = false) -%}
+              {%- endif -%}
             {%- endif -%}
           </div>
         </div>

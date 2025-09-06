@@ -129,10 +129,15 @@
 
 # tls_mode = "strict"
 
+
 # ------------------------------------------------------------------------------
-# Basic auth: Enables basic authentication
-# TODO: Proper explanation is needed
+# Auth section: Enables authentication for both UI (Session) and API (Bearer API Key)
+# Users file  : User configuration toml file for basic authentication.
+#
+# API keys and sessions tokens are validated via `server_key` configuration. Changing
+# server key invalidates all existing sessions and API keys, so make sure it persistent
+# between application restarts and other instances.
 # ------------------------------------------------------------------------------
 
-# [auth.basic]
+# [auth]
 # users_file = "/etc/nut_webgui/users.toml"

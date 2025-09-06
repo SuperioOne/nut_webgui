@@ -39,7 +39,7 @@
     <div class="drawer drawer-end">
       <input id="menu-toggle" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content flex flex-col justify-between min-h-screen">
-        <header class="bg-base-200 navbar shadow-sm">
+        <header class="bg-base-200 navbar px-6 shadow-sm">
           <div class="navbar-start">
             <div class="dropdown">
               <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
@@ -95,50 +95,48 @@
             </div>
             {%- if let Ok(username) = username -%}
               <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="avatar avatar-placeholder btn btn-circle btn-ghost">
-                  <div class="bg-neutral rounded-full text-neutral-content uppercase w-10">
+                <div
+                   tabindex="0"
+                   role="button"
+                   class="avatar avatar-placeholder btn btn-circle btn-ghost"
+                   hx-get="{{base_path}}/_layout/themes"
+                   hx-target="#themes-panel"
+                   hx-trigger="click once, pointerenter once"
+                >
+                  <div class="bg-secondary rounded-full text-secondary-content uppercase w-10">
                     {{username.get_initials()}}
                   </div>
                 </div>
                 <ul tabindex="0" class="bg-base-100 dropdown-content menu menu-lg mt-3 p-2 rounded-box shadow w-52 z-1">
                   <li class="menu-title">User: {{username}}</li>
                   <li>
-                    <a>
-                      {%- call icons::get_svg("sliders", 18) -%} 
-                      <label
-                        class="btn-ghost drawer-button"
-                        for="menu-toggle"
-                        hx-get="{{base_path}}/_layout/themes"
-                        hx-target="#themes-panel"
-                        hx-trigger="click once, pointerenter once"
-                      >
-                        Themes
-                      </label>
-                    </a>
+                    <label class="btn-ghost drawer-button" for="menu-toggle" >
+                      {%- call icons::get_svg("sliders", 18) -%}
+                      Themes
+                    </label>
                   </li>
                   <li>
-                    <a>
+                    <a href="{{base_path}}/api-keys">
                       {%- call icons::get_svg("key", 18) -%}
                       API Keys
                     </a>
                   </li>
                   <li>
-                    <a>
+                    <nut-confirm-button
+                      cancel-text="Cancel"
+                      class="text-error"
+                      confirm-text="Logout"
+                      hx-post="{{base_path}}/logout"
+                      hx-swap="none"
+                      hx-trigger="logout-confirmed"
+                      message="Are you sure about logout?"
+                      name="logout"
+                      target-event="logout-confirmed"
+                      title="Logout"
+                    >
                       {%- call icons::get_svg("log-out", 18) -%}
-                      <nut-confirm-button
-                        cancel-text="Cancel"
-                        confirm-text="Logout"
-                        hx-post="{{base_path}}/logout"
-                        hx-swap="none"
-                        hx-trigger="logout-confirmed"
-                        message="Are you sure about logout?"
-                        name="logout"
-                        target-event="logout-confirmed"
-                        title="Logout"
-                      >
-                        Logout
-                      </nut-confirm-button>
-                    </a>
+                      Logout
+                    </nut-confirm-button>
                   </li>
                 </ul>
               </div>

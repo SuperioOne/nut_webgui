@@ -1,5 +1,6 @@
 {%- import "icons.html" as icons -%}
 {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
+{%- let permission = askama::get_value::<crate::auth::permission::Permissions>("USER_PERMISSION")? -%}
 
   <div class="content-card flex flex-col gap-4">
     <h2 class="opacity-60 text-lg tracking-wide">Commands</h2>
@@ -8,49 +9,70 @@
       <input placeholder="Filter" name="command-filter" maxlength="64" autocomplete="off" />
     </label>
     <nut-search-list for="command-filter" class="list">
-      <li class="list-row" search-value="forced shutdown">
-        <div></div>
-        <div class="flex flex-row gap-3 list-col-grow">
-          <div class="grow">
-            <p class="break-all font-bold text-primary">
-              forced shutdown
-            </p>
-            <p class="font-light list-col-wrap opacity-70 text-error text-xs">
-              Nuclear option. Sets "FSD" flag on UPS. This action is not cancellable.
-            </p>
-          </div>
-          <nut-confirm-button hx-post="{{base_path}}/ups/{{device.name | urlencode_strict}}/fsd" hx-swap="none"
-            hx-trigger="command-confirmed" cancel-text="Cancel"
-            class="flex flex-col fsd-button items-center justify-center" confirm-text="Yes, start forced shutdown"
-            message="Are you sure about the initiate FORCED SHUTDOWN?" name="command" target-event="command-confirmed"
-            title="FSD">
-            {%- call icons::get_svg("power", 32) -%}
-          </nut-confirm-button>
-        </div>
-      </li>
 
-      {%- for cmd in device.commands -%}
-      <li class="list-row" search-value="{{cmd}}">
-        <div></div>
-        <div class="flex flex-row gap-3 list-col-grow">
-          <div class="grow">
-            <p class="break-all font-bold text-primary">
-              {{cmd}}
-            </p>
-            {%- if let Some(desc) = descriptions.get(cmd.as_str()) -%}
-            <p class="font-light list-col-wrap opacity-70 text-xs"> {{desc}} </p>
-            {%- endif -%}
-          </div>
-          <form>
-            <nut-confirm-button hx-post="{{base_path}}/ups/{{device.name | urlencode_strict}}/instcmd" hx-swap="none"
-              hx-trigger="command-confirmed" cancel-text="Cancel" class="btn btn-ghost btn-primary" confirm-text="Run"
-              message="Are you sure about the run '{{cmd}}' command?" name="command" target-event="command-confirmed"
-              title="Command Confirmation" value="{{cmd}}">
-              {%- call icons::get_svg("play", 24) -%}
+      {%- if permission.has(crate::auth::permission::Permissions::FSD) -%}
+        <li class="list-row" search-value="forced shutdown">
+          <div></div>
+          <div class="flex flex-row gap-3 list-col-grow">
+            <div class="grow">
+              <p class="break-all font-bold text-primary">
+                forced shutdown
+              </p>
+              <p class="font-light list-col-wrap opacity-70 text-error text-xs">
+                Nuclear option. Sets "FSD" flag on UPS. This action is not cancellable.
+              </p>
+            </div>
+            <nut-confirm-button
+              hx-post="{{base_path}}/ups/{{device.name | urlencode_strict}}/fsd"
+              hx-swap="none"
+              hx-trigger="command-confirmed"
+              cancel-text="Cancel"
+              class="flex flex-col fsd-button items-center justify-center"
+              confirm-text="Yes, start forced shutdown"
+              message="Are you sure about the initiate FORCED SHUTDOWN?"
+              name="command"
+              target-event="command-confirmed"
+              title="FSD"
+            >
+              {%- call icons::get_svg("power", 32) -%}
             </nut-confirm-button>
-          </form>
-        </div>
-      </li>
-      {%- endfor -%}
+          </div>
+        </li>
+      {%- endif -%}
+
+      {%- if permission.has(crate::auth::permission::Permissions::INSTCMD) -%}
+        {%- for cmd in device.commands -%}
+          <li class="list-row" search-value="{{cmd}}">
+            <div></div>
+            <div class="flex flex-row gap-3 list-col-grow">
+              <div class="grow">
+                <p class="break-all font-bold text-primary">
+                  {{cmd}}
+                </p>
+                {%- if let Some(desc) = descriptions.get(cmd.as_str()) -%}
+                <p class="font-light list-col-wrap opacity-70 text-xs"> {{desc}} </p>
+                {%- endif -%}
+              </div>
+              <form>
+                <nut-confirm-button
+                  hx-post="{{base_path}}/ups/{{device.name | urlencode_strict}}/instcmd"
+                  hx-swap="none"
+                  hx-trigger="command-confirmed"
+                  cancel-text="Cancel"
+                  class="btn btn-ghost btn-primary"
+                  confirm-text="Run"
+                  message="Are you sure about the run '{{cmd}}' command?"
+                  name="command"
+                  target-event="command-confirmed"
+                  title="Command Confirmation"
+                  value="{{cmd}}"
+                >
+                  {%- call icons::get_svg("play", 24) -%}
+                </nut-confirm-button>
+              </form>
+            </div>
+          </li>
+        {%- endfor -%}
+      {%- endif -%}
     </nut-search-list>
   </div>

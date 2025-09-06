@@ -1,3 +1,4 @@
+use core::{num::ParseIntError, str::FromStr};
 use serde::{Deserialize, de, de::Visitor};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -13,11 +14,11 @@ impl Default for Permissions {
 impl Permissions {
   pub const FSD: Permissions = Permissions(1);
   pub const INSTCMD: Permissions = Permissions(2);
-  pub const SET_VAR: Permissions = Permissions(4);
+  pub const SETVAR: Permissions = Permissions(4);
 
   #[inline]
   pub const fn all() -> Self {
-    Self::FSD.set(Self::INSTCMD).set(Self::SET_VAR)
+    Self::FSD.set(Self::INSTCMD).set(Self::SETVAR)
   }
 
   #[inline]
@@ -131,13 +132,23 @@ impl Iterator for Iter {
   }
 }
 
+impl core::str::FromStr for Permissions {
+  type Err = ParseIntError;
+
+  fn from_str(s: &str) -> Result<Self, Self::Err> {
+    Ok(Permissions::from(u8::from_str(s)?))
+  }
+}
+
 struct PermissionVisitor;
 
 impl<'de> Visitor<'de> for PermissionVisitor {
   type Value = Permissions;
 
   fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-    formatter.write_str("expecting sequence of permissions: fsd, instcmd, setvar")
+    formatter.write_str(
+      "expecting sequence of permissions: fsd, instcmd, setvar, or permission flag as number",
+    )
   }
 
   fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
@@ -152,13 +163,41 @@ impl<'de> Visitor<'de> for PermissionVisitor {
       } else if element.eq_ignore_ascii_case("instcmd") {
         permission = permission.set(Permissions::INSTCMD);
       } else if element.eq_ignore_ascii_case("setvar") {
-        permission = permission.set(Permissions::SET_VAR);
+        permission = permission.set(Permissions::SETVAR);
       } else {
         return Err(de::Error::custom("invalid permission type"));
       }
     }
 
     Ok(permission)
+  }
+
+  fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
+  where
+    E: serde::de::Error,
+  {
+    Ok(Permissions::from(v))
+  }
+
+  fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+  where
+    E: serde::de::Error,
+  {
+    Ok(Permissions::from(v as u8))
+  }
+
+  fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
+  where
+    E: serde::de::Error,
+  {
+    Ok(Permissions::from(v as u8))
+  }
+
+  fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+  where
+    E: de::Error,
+  {
+    Permissions::from_str(v).map_err(|err| E::custom(err.to_string()))
   }
 }
 
@@ -167,6 +206,6 @@ impl<'de> Deserialize<'de> for Permissions {
   where
     D: serde::Deserializer<'de>,
   {
-    deserializer.deserialize_seq(PermissionVisitor)
+    deserializer.deserialize_any(PermissionVisitor)
   }
 }

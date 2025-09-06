@@ -46,7 +46,6 @@ export default class ConfirmationButton extends HTMLElement {
   disconnectedCallback() {
     this.#internals.setFormValue(null);
     this.#abort_controller?.abort();
-    this.remove();
   }
 
   connectedCallback() {

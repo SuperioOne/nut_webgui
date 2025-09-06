@@ -1,0 +1,20 @@
+{%- import "icons.html" as icons -%}
+{%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
+
+<div id="success-block" class="flex flex-col gap-6 p-6" >
+  <h2 class="font-bold text-xl">API Key</h2>
+  <div class="bg-black p-2 rounded text-white w-full">
+    <div class="flex flex-row justify-end">
+      <div class="tooltip" data-tip="Copy to clipboard">
+        <nut-clipboard-button class="btn btn-accent btn-outline btn-sm btn-square" content="{{key}}">
+          {%- call icons::get_svg("copy", 20) -%} 
+        </nut-clipboard-button>
+      </div>
+    </div>
+    <div class="font-mono overflow-x-auto px-2 py-4">
+      <pre><code>{{key}}</code></pre>
+    </div>
+  </div>
+  <p class="opacity-75 text-sm">Copy your API key now, it will no longer be visible after this screen is refreshed or closed.</p>
+  <a href="{{base_path}}/api-keys" class="btn btn-block btn-neutral mt-4">Back</a>
+</div>

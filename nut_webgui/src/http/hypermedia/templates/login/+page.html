@@ -6,7 +6,7 @@
 {%- endblock page_title -%}
 
 {%- block content -%}
-  {%- let base_path = "" -%}
+  {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
   <div class="flex flex-row justify-center">
     <div class="content-card lg:w-lg md:w-md rounded shadow-md w-full xl:w-xl">
       <div class="flex flex-row justify-center">
@@ -23,12 +23,12 @@
         >
           <fieldset class="fieldset">
             <legend class="fieldset-legend">Username</legend>
-            <input name="username" type="text" class="input w-full" required />
+            <input name="username" type="text" class="input validator w-full" required />
           </fieldset>
 
           <fieldset class="fieldset">
             <legend class="fieldset-legend">Password</legend>
-            <input name="password" type="password" class="input w-full" required />
+            <input name="password" type="password" class="input validator w-full" required />
           </fieldset>
 
           {%- if let Some(error_message) = error_message -%}
@@ -38,7 +38,7 @@
             </div>
           {%- endif -%}
 
-          <button class="btn btn-neutral mt-4 w-full">Login</button>
+          <button class="btn btn-block btn-primary mt-4">Login</button>
         </form>
       {%- endblock login_form -%}
     </div>

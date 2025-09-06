@@ -26,13 +26,16 @@
 import htmx from "htmx.org";
 import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js";
 
-export * from "./components/confirmation_button.js";
-export * from "./components/confirmation_modal.js";
-export * from "./components/search_list.js";
-export * from "./components/gauge.js";
-export * from "./components/theme_selector.js";
-export * from "./components/time_display.js";
-export * from "./components/ttl_element.js";
+import "./components/bitflag_input.js";
+import "./components/duration_input.js";
+import "./components/confirmation_button.js";
+import "./components/confirmation_modal.js";
+import "./components/gauge.js";
+import "./components/search_list.js";
+import "./components/theme_selector.js";
+import "./components/time_display.js";
+import "./components/ttl_element.js";
+import "./components/clipboard_button.js";
 
 /**
  * @param {string} attr_name

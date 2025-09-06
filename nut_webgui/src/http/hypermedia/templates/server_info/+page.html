@@ -29,6 +29,7 @@
       <div class="content-card flex flex-col gap-4" >
         <h2 class="opacity-60 text-lg tracking-wide">Upsd State</h2>
         <ul class="list">
+          {%- call list_item("nut_webgui version", crate::http::hypermedia::utils::get_app_info().version) -%}
           {%- call list_item("state", state.status) -%}
 
           {%- match state.last_device_sync -%}
@@ -60,6 +61,7 @@
         <h2 class="opacity-60 text-lg tracking-wide">Configs</h2>
         <ul class="list">
           {%- call list_item("log_level", config.log_level) -%}
+          {%- call list_item("server_key", "SET") -%}
 
           {%- match config.default_theme -%}
             {%- when Some(theme) -%}
@@ -73,6 +75,13 @@
               {%- call list_item("config_file", path.display()) -%}
             {%- when None -%}
               {%- call list_item("config_file", "NOT SET") -%}
+          {%- endmatch -%}
+
+          {%- match config.auth -%}
+            {%- when Some(auth_cfg) -%}
+              {%- call list_item("auth.users_file", auth_cfg.users_file.display()) -%}
+            {%- when None -%}
+              {%- call list_item("auth.users_file", "NOT SET") -%}
           {%- endmatch -%}
 
           {%- call list_item("http.listen", config.http_server.listen) -%}
@@ -101,6 +110,7 @@
           {%- call list_item("upsd.max_connection", config.upsd.max_conn) -%}
           {%- call list_item("upsd.poll_interval", config.upsd.poll_interval) -%}
           {%- call list_item("upsd.poll_freq", config.upsd.poll_freq) -%}
+          {%- call list_item("upsd.tls_mode", config.upsd.tls_mode) -%}
         </ul>
       </div>
     {%- endblock info_cards -%}
