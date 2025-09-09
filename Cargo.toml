@@ -9,7 +9,7 @@ strip = "debuginfo"
 panic = "abort"
 
 [workspace.package]
-version = "0.5.4"
+version = "0.6.0"
 edition = "2024"
 authors = ["Timur Olur <pm@smdd.dev>"]
 documentation = "https://github.com/SuperioOne/nut_webgui"

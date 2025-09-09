@@ -5,7 +5,7 @@
   },
   "private": true,
   "name": "nut_webgui_client",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "Bundles all client side web components and dependencies.",
   "scripts": {
     "dev-js": "esbuild ./src/index.js --bundle --outdir=./dist/debug --target=firefox109,chrome108,safari15 --format=iife --watch=forever",
@@ -16,16 +16,16 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.12",
+    "@tailwindcss/cli": "^4.1.13",
     "@types/d3": "^7.4.3",
-    "daisyui": "^5.0.54",
+    "daisyui": "^5.1.9",
     "esbuild": "^0.25.9",
-    "tailwindcss": "^4.1.12",
+    "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
   },
   "dependencies": {
     "d3": "^7.9.0",
-    "htmx.org": "^2.0.6",
+    "htmx.org": "^2.0.7",
     "idiomorph": "^0.7.3"
   }
 }
