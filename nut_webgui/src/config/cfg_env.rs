@@ -68,7 +68,12 @@ macro_rules! load_var {
   };
   (@rule $env_name:literal, $target_field:expr, path_buf) => {
     if let Ok(value) = std::env::var($env_name) {
-      $target_field = Some(std::path::PathBuf::from(value.trim()));
+      let path_str = value.trim();
+      if path_str.is_empty() {
+        $target_field = None;
+      } else {
+        $target_field = Some(std::path::PathBuf::from(path_str));
+      }
     }
   };
     (@rule $env_name:literal, $target_field:expr, $other_type:ty) => {

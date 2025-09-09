@@ -1,6 +1,8 @@
-# Kubernetes - Basic
+# Kubernetes: Basic Deployment
 
-Example topology
+## Topology
+
+The diagram below illustrates a common scenario where the NUT (Network UPS Tools) service is accessible over the network.
 
 ```
  ┌──────┐                                   Kubernetes
@@ -16,10 +18,17 @@ Example topology
  └──────┘
 ```
 
-*This example only provides basic setup. It doesn't provide any [ingress configuration.](https://kubernetes.io/docs/concepts/services-networking/ingress/)*
+This example consists of three main components: a Secret, a Service, and a Deployment.
+
+> **Note:** This is a minimal setup and does not include an [Ingress configuration](https://kubernetes.io/docs/concepts/services-networking/ingress/) for exposing the service outside the cluster. You will need to configure that separately based on your environment.
+
+---
+
+## 1. Secret
+
+First, create a Secret to store sensitive data, such as the username and password for the NUT service. Replace the placeholder values with your actual credentials, encoded in Base64.
 
 **secret.yaml**
-
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -27,12 +36,15 @@ metadata:
   name: nutweb-secret
 type: Opaque
 data:
-  UPSD_USER: Zm9v  # base64 encoded "foo"
-  UPSD_PASS: YmFy  # base64 encoded "bar"
+  UPSD_USER: Zm9v  # "foo" in base64
+  UPSD_PASS: YmFy  # "bar" in base64
 ```
 
-**service.yaml**
+## 2. Service
 
+Next, define a Service to expose the `nut_webgui` deployment within the cluster. This allows other services to communicate with it.
+
+**service.yaml**
 ```yaml
 apiVersion: v1
 kind: Service
@@ -47,8 +59,11 @@ spec:
     targetPort: 9000
 ```
 
-**deployment.yaml**
+## 3. Deployment
 
+Finally, create the Deployment, which defines the desired state for your application. This includes the container image, environment variables, resource limits, and health probes.
+
+**deployment.yaml**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -105,5 +120,15 @@ spec:
             initialDelaySeconds: 5
             failureThreshold: 3
             periodSeconds: 30
+```
+
+## Applying the Configuration
+
+You can apply these manifest files to your cluster:
+
+```bash
+kubectl apply -f secret.yaml
+kubectl apply -f service.yaml
+kubectl apply -f deployment.yaml
 ```
 

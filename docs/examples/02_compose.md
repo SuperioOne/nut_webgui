@@ -1,16 +1,16 @@
-# Docker Compose
+# Docker Compose Examples
 
-## Basic usage
+## Basic Usage
 
 ```
 ┌──────┐
 │ UPS1 ├──┐                                                  ┌─┐
-└──────┘  │     Server A                   Server B          │C│
+└──────┘  │                                                  │C│
           │     ┌─────────────┐            ┌───────────┐     │L│
 ┌──────┐  │     │ NUT Service │    TCP     │  Docker   │     │I│
 │ UPS2 ├──┼────►│             │◄──────────►│  Compose  │◄───►│E│
 └──────┘  │     └─────────────┘            └───────────┘     │N│
-          │       myhost:1234                                │T│
+          │     my-nut-srv:3493                              │T│
 ┌──────┐  │                                                  │S│
 │ UPS3 ├──┘                                                  └─┘
 └──────┘
@@ -24,31 +24,33 @@ services:
     image: ghcr.io/superioone/nut_webgui:latest
     restart: always
     ports:
-      - 80:1234
+      - 80:1234                      # Expose container port 1234 on host port 80
     environment:
       POLL_FREQ: "60"
       POLL_INTERVAL: "5"
-      UPSD_ADDR: "myhost"
-      UPSD_PORT: "1234"
+      UPSD_ADDR: "my-nut-srv"
+      UPSD_PORT: "3493"
       UPSD_USER: "admin"
       UPSD_PASS: "test"
       LISTEN: "0.0.0.0"
-      PORT: "1234"
+      PORT: "1234"                   # Internal port the server listens on
       LOG_LEVEL: "debug"
-    volumes:                         # (optional) bind config directory to a volume
+    volumes:                         # Optional: Mount a volume to persist configuration.
       - config-data:/etc/nut_webgui
 
 volumes:
   config-data:
 
-# Add other services, reverse proxy of your choice etc.
+# You can add other services here, such as a reverse proxy.
 ```
 
-## Same host
+## Same Host
+
+This setup is for when `nut_webgui` and the NUT service are running on the same network space. Using `network_mode: host` allows `nut_webgui` to connect to the NUT service via `localhost`.
 
 ```
 ┌──────┐
-│ UPS1 ├──┐     Single Server       ┌─┐
+│ UPS1 ├──┐                         ┌─┐
 └──────┘  │     ┌─────────────┐     │C│
           │     │   Docker    │     │L│
 ┌──────┐  │     │   Compose   │     │I│
@@ -67,7 +69,7 @@ services:
   nutweb:
     image: ghcr.io/superioone/nut_webgui:latest
     restart: always
-    network_mode: host         # Use host network
+    network_mode: host         # Use the host's network stack.
     environment:
       POLL_FREQ: "60"
       POLL_INTERVAL: "5"
@@ -75,13 +77,13 @@ services:
       UPSD_PORT: "3493"
       UPSD_USER: "admin"
       UPSD_PASS: "test"
-      PORT: "80"               # Outgoing port
+      PORT: "80"               # The container will listen on port 80 of the host.
       LOG_LEVEL: "debug"
 ```
 
-## With Secrets
+## Using Docker Secrets
 
-All environment variables support loading values from files.
+You can use Docker secrets to manage sensitive information like passwords and configuration files. All environment variables support loading their values from files.
 
 **docker-compose.yaml**
 ```yaml

@@ -1,6 +1,8 @@
-# Kubernetes - Endpoint Slices
+# Kubernetes: Connecting with an EndpointSlice
 
-Example topology
+If your NUT (Network UPS Tools) service is running outside the Kubernetes cluster, you can use a `Service` and `EndpointSlice` to make it discoverable within the cluster. This approach allows you to refer to the external service by a local Kubernetes DNS name (e.g., `nut-service`), just as you would with any other service running inside the cluster.
+
+## Topology
 
 ```
  ┌──────┐                                   Kubernetes
@@ -10,14 +12,17 @@ Example topology
  ┌──────┐  │     │ NUT Service │    TCP    ├─────────┤      │         │
  │ UPS2 ├──┼────►│             │◄─────────►│ NODE B  │◄───► │ INGRESS │
  └──────┘  │     └─────────────┘           ├─────────┤      │         │
-           │    192.128.1.12:3493          │ NODE C  │◄───► └─────────┘
+           │    192.168.1.12:3493          │ NODE C  │◄───► └─────────┘
  ┌──────┐  │                               └─────────┘
  │ UPS3 ├──┘
  └──────┘
 ```
 
-**endpoint_slice.yaml**
+## 1. Exposing the External NUT Service
 
+First, create a `Service` without a selector and an `EndpointSlice` that points to the external IP address of your NUT service. This makes the external service available at `nut-service.default.svc.cluster.local` (or simply `nut-service` from within the same namespace).
+
+**nut-external-service.yaml**
 ```yaml
 apiVersion: v1
 kind: Service
@@ -29,13 +34,13 @@ spec:
       protocol: TCP
       port: 3493
       targetPort: 3493
-
 ---
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
 metadata:
   name: nut-service-1
   labels:
+    # This label connects the EndpointSlice to the Service.
     kubernetes.io/service-name: nut-service
 addressType: IPv4
 ports:
@@ -44,12 +49,30 @@ ports:
     port: 3493
 endpoints:
   - addresses:
+      # The external IP address of your NUT service.
       - "192.168.1.12"
-  # Other topology aware routing shenanigans goes here.
+  # You can configure other topology-aware routing features here.
 ```
 
-**service.yaml**
+## 2. Deploying nut_webgui
 
+Now, you can deploy `nut_webgui` and configure it to connect to the NUT service using the Kubernetes service name (`nut-service`) you just created.
+
+The following manifests define the `nut_webgui` Deployment, its Service, and the Secret for its credentials.
+
+**nut-webgui-secret.yaml**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nutweb-secret
+type: Opaque
+data:
+  UPSD_USER: Zm9v  # "foo" in base64
+  UPSD_PASS: YmFy  # "bar" in base64
+```
+
+**nut-webgui-service.yaml**
 ```yaml
 apiVersion: v1
 kind: Service
@@ -64,21 +87,7 @@ spec:
     targetPort: 9000
 ```
 
-**secret.yaml**
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: nutweb-secret
-type: Opaque
-data:
-  UPSD_USER: Zm9v  # base64 encoded "foo"
-  UPSD_PASS: YmFy  # base64 encoded "bar"
-```
-
-**deployment.yaml**
-
+**nut-webgui-deployment.yaml**
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -102,7 +111,8 @@ spec:
                 name: nutweb-secret
           env:
             - name: UPSD_ADDR
-              value: nut-service # uses endpointslice service name to access nut server
+              # Use the Kubernetes service name to connect to the NUT service.
+              value: nut-service
             - name: UPSD_PORT
               value: "3493"
             - name: POLL_FREQ
@@ -135,4 +145,15 @@ spec:
             initialDelaySeconds: 5
             failureThreshold: 3
             periodSeconds: 30
+```
+
+## Applying the Configuration
+
+You can apply these manifest files to your cluster using `kubectl`.
+
+```bash
+kubectl apply -f nut-external-service.yaml
+kubectl apply -f nut-webgui-secret.yaml
+kubectl apply -f nut-webgui-service.yaml
+kubectl apply -f nut-webgui-deployment.yaml
 ```

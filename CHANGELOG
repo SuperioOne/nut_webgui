@@ -1,3 +1,13 @@
+# v0.6.0 - September 10, 2025
+
+## Added
+- Optional authentication system with permissions and multi-user support for both UI and API.
+- TLS support for UPS management client (upsmc), users can now enable secure TCP communication between `nut_webgui` and NUT.
+
+## Fixed
+- CLI options such as `--help` and `--version` print the same stdout message twice.
+- `CONFIG_FILE` environment variable with empty string now treated as `not configured` instead of invalid configuration error.
+
 # v0.5.4 - August 19, 2025
 
 ## Added

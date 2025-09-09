@@ -1,9 +1,8 @@
-use std::time::Duration;
-
 use rand_chacha::{
   ChaCha20Rng,
   rand_core::{RngCore, SeedableRng},
 };
+use std::time::Duration;
 
 pub mod access_token;
 pub mod password_str;
@@ -14,8 +13,8 @@ pub mod user_store;
 pub mod username;
 
 pub const AUTH_COOKIE_NAME: &str = "_nutwg";
-pub const AUTH_COOKIE_DURATION: Duration = Duration::from_secs(3600 * 24 * 14);
-pub const AUTH_COOKIE_RENEW: Duration = Duration::from_secs(3600 * 24);
+pub const AUTH_COOKIE_DURATION: Duration = Duration::from_secs(3600 * 24 * 30);
+pub const AUTH_COOKIE_RENEW: Duration = Duration::from_secs(3600 * 24 * 7);
 
 pub trait BinaryToken: Sized {
   type Error;

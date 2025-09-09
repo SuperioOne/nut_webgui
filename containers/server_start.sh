@@ -6,7 +6,7 @@ SYSTEM_CONFIG_DIR="/etc/nut_webgui"
 ROOT_CA_TARGET="/usr/local/ssl/cert.pem"
 
 function generate_rand_key {
-    cat /dev/urandom | head -c 128 | sha256sum -b -z | head -c 64 -z
+    cat /dev/urandom | head -c 128 | sha256sum -b | head -c 64
 }
 
 # Aliases
@@ -26,13 +26,18 @@ export NUTWG__UPSD__PORT="${NUTWG__UPSD__PORT:-"$UPSD_PORT"}";
 export NUTWG__UPSD__TLS_MODE="${NUTWG__UPSD__TLS_MODE:-"$UPSD_TLS"}";
 export NUTWG__UPSD__USERNAME="${NUTWG__UPSD__USERNAME:-"$UPSD_USER"}";
 
-if test ! -e "$SYSTEM_CONFIG_DIR/config.toml"; then
-    install -D -m 664 "$DEFAULT_CONFIG" "$SYSTEM_CONFIG_DIR"
+if test -z "$NUTWG__SERVER_KEY"; then
+    if test ! -e "$SYSTEM_CONFIG_DIR/server.key"; then
+        generate_rand_key > "$SYSTEM_CONFIG_DIR/server.key";
+    fi
+
+    if test -f "$SYSTEM_CONFIG_DIR/server.key"; then
+        export NUTWG__SERVER_KEY="$SYSTEM_CONFIG_DIR/server.key";
+    fi
 fi
 
-if test -z "$NUTWG__SERVER_KEY" -a ! -e "$SYSTEM_CONFIG_DIR/server.key"; then
-    generate_rand_key > "$SYSTEM_CONFIG_DIR/server.key";
-    export NUTWG__SERVER_KEY="$SYSTEM_CONFIG_DIR/server.key";
+if test ! -e "$SYSTEM_CONFIG_DIR/config.toml"; then
+    install -D -m 664 "$DEFAULT_CONFIG" "$SYSTEM_CONFIG_DIR"
 fi
 
 if test -e "$UPSD_ROOT_CA" -a ! -e "$ROOT_CA_TARGET"; then

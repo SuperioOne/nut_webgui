@@ -17,16 +17,6 @@
 # default_theme = "tokyo-night"
 
 # ------------------------------------------------------------------------------
-# Server Key: Sets server instance's private sign key. The key is used for 
-# issuing and verifiying tokens such as API keys and user sessions.
-#
-# By default system generates random key.
-#
-# This option is mainly intended for multi instance deployments behind a 
-# reverse-proxy. Since nut_webgui is stateless, 
-# ------------------------------------------------------------------------------
-
-# ------------------------------------------------------------------------------
 # Server Key: A private key used by the server instance to sign tokens such as
 # API keys and user sessions. Ensures that multiple instances can validate tokens
 # issued by any other instance in a distributed setup.
