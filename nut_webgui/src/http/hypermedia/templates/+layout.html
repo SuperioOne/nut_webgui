@@ -1,6 +1,6 @@
 {%- import "icons.html" as icons -%}
 {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
-{%- let default_theme = askama::get_value::<&str>("DEFAULT_THEME") -%}
+{%- let default_theme = askama::get_value::<Box<str>>("DEFAULT_THEME") -%}
 {%- let username = askama::get_value::<crate::auth::username::Username>("USER_NAME") -%}
 
 <!doctype html>

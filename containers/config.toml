@@ -16,16 +16,6 @@
 
 # default_theme = "tokyo-night"
 
-# ------------------------------------------------------------------------------
-# Server Key: A private key used by the server instance to sign tokens such as
-# API keys and user sessions. Ensures that multiple instances can validate tokens
-# issued by any other instance in a distributed setup.
-#
-# By default, the system generates a random key.
-# ------------------------------------------------------------------------------
-
-# server_key = "my super duper secret key"
-
 [http_server]
 # ------------------------------------------------------------------------------
 # Base Path: Define the base URL path where the HTTP server will serve content.
@@ -122,10 +112,6 @@
 # ------------------------------------------------------------------------------
 # Auth section: Enables authentication for both UI and API
 # Users file  : User configuration TOML file for basic authentication.
-#
-# API keys and session tokens are validated via the `server_key` configuration.
-# Changing the server key invalidates all existing sessions and API keys, so
-# ensure it is persisted between application restarts.
 # ------------------------------------------------------------------------------
 
 # [auth]

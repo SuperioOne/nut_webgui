@@ -50,7 +50,6 @@ impl<'de> Deserialize<'de> for LogLevel {
 
 #[derive(Debug, Deserialize, Default)]
 pub struct ServerTomlArgs {
-  pub server_key: Option<Box<str>>,
   pub default_theme: Option<Box<str>>,
   pub log_level: Option<LogLevel>,
   pub http_server: Option<HttpServerConfigSection>,
@@ -102,7 +101,6 @@ impl ConfigLayer for ServerTomlArgs {
   fn apply_layer(self, mut config: ServerConfig) -> ServerConfig {
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level.map(|val| val.0));
-    override_opt_field!(config.server_key, inner_value: self.server_key);
 
     if let Some(upsd) = self.upsd {
       override_opt_field!(config.upsd.addr, inner_value: upsd.address);

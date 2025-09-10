@@ -2,7 +2,7 @@ name: build_rc_images
 on:
   push:
     branches:
-      - master
+      - dev_next
 jobs:
   publish-binaries:
     defaults:
@@ -13,8 +13,8 @@ jobs:
       image: gitea-service:80/actions/arch-action-runner-full:latest
       options: "--security-opt seccomp=unconfined --security-opt apparmor=unconfined --device /dev/fuse:rw"
       credentials:
-        username:  ${{secrets.REGISTRY_USERNAME}}
-        password:  ${{secrets.REGISTRY_ACCESS_TOKEN}}
+        username: ${{secrets.REGISTRY_USERNAME}}
+        password: ${{secrets.REGISTRY_ACCESS_TOKEN}}
     steps:
       - uses: http://gitea-service/actions/checkout@v4
         with:
