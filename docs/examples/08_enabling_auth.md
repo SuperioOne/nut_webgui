@@ -23,7 +23,7 @@ permissions = ["setvar", "instcmd", "fsd"]  # Optional: Grant additional permiss
 password = "passw0rd"
 
 [spear-of-democracy]
-password = "⇩⇧⇨⇧⇦⇨"                         # No pesky character limit
+password = "⇩⇧⇨⇧⇦⇨"                         # Passwords do not have any character limit.
 permissions = ["instcmd"]
 
 [sector-g-admin]
@@ -80,7 +80,7 @@ volumes:
 # ...
 ```
 
-For multi-instance deployments (e.g., behind a load balancer), all instances must use the same server key. You can achieve this by providing a custom key via an environment variable, file, secret, or the main configuration file.
+For multi-instance deployments (e.g., behind a load balancer), all instances must use the same server key. You can achieve this by providing a custom key via an environment variable, file/secret.
 
 The example below shows how to provide a key for a replicated service.
 

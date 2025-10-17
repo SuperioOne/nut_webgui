@@ -126,7 +126,7 @@ port = 3493
 max_connection = 4
 poll_freq = 30
 poll_interval = 2
-tls_mode = "disabled"
+tls_mode = "disable"
 
 [auth]
 users_file = "/etc/nut_webgui/users.toml"
