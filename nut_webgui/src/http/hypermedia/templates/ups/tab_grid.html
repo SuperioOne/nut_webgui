@@ -3,7 +3,7 @@
 
 <div
   class="gap-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-  hx-get="{{base_path}}/ups/{{device.name | urlencode_strict}}?tab=grid&section=tab_content"
+  hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?tab=grid&section=tab_content"
   hx-indicator="#indicator"
   hx-swap="morph:innerHTML"
   hx-trigger="every {{poll_freq}}s"
@@ -12,14 +12,14 @@
   {%- if let Some(load) = device.get_ups_load() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Ups Load</h3>
-      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{load.class.as_fill()}}" value="{{load.value.as_str()}}"></nut-gauge>
+      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{load.get_semantic_type().as_fill()}}" value="{{load.get_raw_value()}}"></nut-gauge>
     </div>
   {%- endif -%}
 
   {%- if let Some(charge) = device.get_battery_charge() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Battery Charge</h3>
-      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{charge.class.as_fill()}}" value="{{charge.value.as_str()}}"></nut-gauge>
+      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{charge.get_semantic_type().as_fill()}}" value="{{charge.get_raw_value()}}"></nut-gauge>
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
         {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_LOW) -%}
           <p>
@@ -38,7 +38,7 @@
   {%- if let Some(temperature) = device.get_ups_temperature() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Ups Temperature</h3>
-      <p class="content-center grow py-6 text-6xl text-center {{temperature.class.as_text()}}">
+      <p class="content-center grow py-6 text-6xl text-center {{temperature.get_semantic_type().as_text()}}">
         {{temperature}}
       </p>
     </div>
@@ -54,13 +54,13 @@
         {%- if let Some(apparent_power) = apparent_power -%}
         <div class="p-2 stat">
           <div class="stat-title">Apparent Power (VA)</div>
-          <div class="stat-value text-center text-info">{%- if apparent_power.approx -%}≈ {% endif -%}{{apparent_power}}</div>
+          <div class="stat-value text-center text-info">{{apparent_power}}</div>
         </div>
         {%- endif -%}
         {%- if let Some(real_power) = real_power -%}
           <div class="p-2 stat">
             <div class="stat-title">Real Power (Watt)</div>
-            <div class="stat-value text-center text-info">{%- if real_power.approx -%}≈ {% endif -%}{{real_power}}</div>
+            <div class="stat-value text-center text-info">{{real_power}}</div>
           </div>
         {%- endif -%}
       </div>
@@ -83,9 +83,9 @@
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Battery Runtime</h3>
       <nut-time-display
-        class="content-center grow py-6 text-6xl text-center tooltip tooltip-bottom {{runtime.class.as_text()}}"
-        value="{{runtime.value.as_str()}}"
-        data-tip="{{runtime.value.as_str()}} seconds"
+        class="content-center grow py-6 text-6xl text-center tooltip tooltip-bottom {{runtime.get_semantic_type().as_text()}}"
+        value="{{runtime.get_raw_value()}}"
+        data-tip="{{runtime}}"
       >
       </nut-time-display>
       <div class="flex flex-col gap-1 justify-end opacity-60">

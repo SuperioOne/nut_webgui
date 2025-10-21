@@ -23,7 +23,7 @@
               </p>
             </div>
             <nut-confirm-button
-              hx-post="{{base_path}}/ups/{{device.name | urlencode_strict}}/fsd"
+              hx-post="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}/fsd"
               hx-swap="none"
               hx-trigger="command-confirmed"
               cancel-text="Cancel"
@@ -55,7 +55,7 @@
               </div>
               <form>
                 <nut-confirm-button
-                  hx-post="{{base_path}}/ups/{{device.name | urlencode_strict}}/instcmd"
+                  hx-post="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}/instcmd"
                   hx-swap="none"
                   hx-trigger="command-confirmed"
                   cancel-text="Cancel"

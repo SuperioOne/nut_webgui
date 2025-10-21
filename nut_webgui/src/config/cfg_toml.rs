@@ -1,18 +1,26 @@
-use super::{ConfigLayer, ServerConfig, error::TomlConfigError};
-use crate::config::{AuthConfig, tls_mode::TlsMode, uri_path::UriPath, utils::override_opt_field};
+use crate::config::{
+  AuthConfig, ConfigLayer, DEFAULT_UPSD_KEY, ServerConfig, UpsdConfig, error::TomlConfigError,
+  tls_mode::TlsMode, uri_path::UriPath, utils::override_opt_field,
+};
 use core::{net::IpAddr, str};
 use serde::{Deserialize, de::Visitor};
-use std::path::PathBuf;
-use std::{fs::File, io::Read, num::NonZeroUsize, path::Path};
-use tracing::Level;
+use std::{
+  collections::HashMap,
+  fs::File,
+  io::Read,
+  num::NonZeroUsize,
+  path::{Path, PathBuf},
+};
+use toml::Table;
+use tracing::{level_filters::LevelFilter, warn};
 
 #[derive(Debug)]
-pub struct LogLevel(tracing::Level);
+pub struct LogLevel(LevelFilter);
 
 struct TracingLevelVisitor;
 
-impl From<tracing::Level> for LogLevel {
-  fn from(value: tracing::Level) -> Self {
+impl From<tracing::level_filters::LevelFilter> for LogLevel {
+  fn from(value: tracing::level_filters::LevelFilter) -> Self {
     Self(value)
   }
 }
@@ -29,11 +37,11 @@ impl<'de> Visitor<'de> for TracingLevelVisitor {
     E: serde::de::Error,
   {
     match v.to_ascii_lowercase().as_ref() {
-      "debug" => Ok(Level::DEBUG.into()),
-      "error" => Ok(Level::ERROR.into()),
-      "warn" => Ok(Level::WARN.into()),
-      "info" => Ok(Level::INFO.into()),
-      "trace" => Ok(Level::TRACE.into()),
+      "debug" => Ok(LevelFilter::DEBUG.into()),
+      "error" => Ok(LevelFilter::ERROR.into()),
+      "warn" => Ok(LevelFilter::WARN.into()),
+      "info" => Ok(LevelFilter::INFO.into()),
+      "trace" => Ok(LevelFilter::TRACE.into()),
       _ => Err(E::custom(format!("unsupported log level variant: {v}"))),
     }
   }
@@ -48,12 +56,45 @@ impl<'de> Deserialize<'de> for LogLevel {
   }
 }
 
+#[deprecated(
+  since = "0.7.0",
+  note = "Old configuration files will be supported until the next major version (v0.8.0)"
+)]
 #[derive(Debug, Deserialize, Default)]
-pub struct ServerTomlArgs {
+pub struct LegacyServerTomlArgs {
   pub default_theme: Option<Box<str>>,
   pub log_level: Option<LogLevel>,
   pub http_server: Option<HttpServerConfigSection>,
   pub upsd: Option<UpsdConfigSection>,
+  pub auth: Option<AuthConfigSection>,
+}
+
+impl From<LegacyServerTomlArgs> for ServerTomlArgs {
+  fn from(value: LegacyServerTomlArgs) -> Self {
+    let mut upsd = HashMap::new();
+
+    if let Some(upsd_section) = value.upsd {
+      upsd.insert(Box::from(DEFAULT_UPSD_KEY), upsd_section);
+    }
+
+    Self {
+      default_theme: value.default_theme,
+      auth: value.auth,
+      log_level: value.log_level,
+      version: "1".into(),
+      http_server: value.http_server,
+      upsd: Some(upsd),
+    }
+  }
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct ServerTomlArgs {
+  pub version: Box<str>,
+  pub default_theme: Option<Box<str>>,
+  pub log_level: Option<LogLevel>,
+  pub http_server: Option<HttpServerConfigSection>,
+  pub upsd: Option<HashMap<Box<str>, UpsdConfigSection>>,
   pub auth: Option<AuthConfigSection>,
 }
 
@@ -91,9 +132,23 @@ impl ServerTomlArgs {
     _ = fd.read_to_string(&mut buffer)?;
 
     let deserializer = toml::Deserializer::parse(&buffer)?;
-    let config = Self::deserialize(deserializer)?;
+    let root = Table::deserialize(deserializer)?;
 
-    Ok(config)
+    match root.get("version") {
+      Some(toml::Value::String(version)) if version == "1" => {
+        let config = root.try_into::<ServerTomlArgs>()?;
+        Ok(config)
+      }
+      None => {
+        let legacy_config = root.try_into::<LegacyServerTomlArgs>()?;
+        warn!(
+          message = "Old config file format detected. Compatibility will be removed in future release (v0.8.0); consider updating your configuration format."
+        );
+
+        Ok(legacy_config.into())
+      }
+      _ => Err(TomlConfigError::InvalidVersion),
+    }
   }
 }
 
@@ -102,15 +157,23 @@ impl ConfigLayer for ServerTomlArgs {
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level.map(|val| val.0));
 
-    if let Some(upsd) = self.upsd {
-      override_opt_field!(config.upsd.addr, inner_value: upsd.address);
-      override_opt_field!(config.upsd.max_conn, inner_value: upsd.max_connection);
-      override_opt_field!(config.upsd.pass, upsd.password);
-      override_opt_field!(config.upsd.poll_freq, inner_value: upsd.poll_freq);
-      override_opt_field!(config.upsd.poll_interval, inner_value: upsd.poll_interval);
-      override_opt_field!(config.upsd.port, inner_value: upsd.port);
-      override_opt_field!(config.upsd.tls_mode, inner_value : upsd.tls_mode);
-      override_opt_field!(config.upsd.user, upsd.username);
+    if let Some(upsd_section) = self.upsd
+      && !upsd_section.is_empty()
+    {
+      for (key, val) in upsd_section.into_iter() {
+        let mut upsd_cfg = UpsdConfig::default();
+
+        override_opt_field!(upsd_cfg.addr, inner_value: val.address);
+        override_opt_field!(upsd_cfg.max_conn, inner_value: val.max_connection);
+        override_opt_field!(upsd_cfg.pass, val.password);
+        override_opt_field!(upsd_cfg.poll_freq, inner_value: val.poll_freq);
+        override_opt_field!(upsd_cfg.poll_interval, inner_value: val.poll_interval);
+        override_opt_field!(upsd_cfg.port, inner_value: val.port);
+        override_opt_field!(upsd_cfg.tls_mode, inner_value : val.tls_mode);
+        override_opt_field!(upsd_cfg.user, val.username);
+
+        config.upsd.insert(key, upsd_cfg);
+      }
     }
 
     if let Some(http_server) = self.http_server {

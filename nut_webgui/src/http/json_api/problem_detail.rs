@@ -150,3 +150,13 @@ impl From<JsonRejection> for ProblemDetail {
     }
   }
 }
+
+impl From<serde_json::error::Error> for ProblemDetail {
+  fn from(err: serde_json::error::Error) -> Self {
+    ProblemDetail {
+      title: "Json error",
+      detail: Some(err.to_string()),
+      status: StatusCode::INTERNAL_SERVER_ERROR,
+    }
+  }
+}

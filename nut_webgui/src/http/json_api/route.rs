@@ -1,18 +1,19 @@
 pub mod fsd;
 pub mod instcmd;
+pub mod namespace;
 pub mod not_found;
 pub mod rw;
 pub mod ups;
 pub mod ups_list;
 
 macro_rules! request_auth_client {
-  ($route_state:expr) => {
-    match &$route_state.config.upsd {
+  ($upsd_state:expr) => {
+    match &$upsd_state.config {
       $crate::config::UpsdConfig {
         pass: Some(pass),
         user: Some(user),
         ..
-      } => match $route_state.connection_pool.get_client().await {
+      } => match $upsd_state.connection_pool.get_client().await {
         Ok(client) => client
           .authenticate(user.as_ref(), pass.as_ref())
           .await
@@ -42,4 +43,17 @@ macro_rules! request_auth_client {
   };
 }
 
+macro_rules! extract_upsd {
+  ($state:expr, $namespace:expr) => {
+    match $state.upsd_servers.get(&$namespace) {
+      Some(upsd) => Ok(upsd),
+      None => Err(ProblemDetail::new(
+        "Upsd namespace does not exists",
+        axum::http::StatusCode::NOT_FOUND,
+      )),
+    }
+  };
+}
+
+pub(super) use extract_upsd;
 pub(super) use request_auth_client;

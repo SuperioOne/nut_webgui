@@ -1,11 +1,10 @@
+use std::sync::Arc;
+
 use crate::{
   auth::user_session::UserSession,
-  config::ServerConfig,
-  http::{
-    RouterState,
-    hypermedia::{error::ErrorPage, utils::RenderWithConfig},
-  },
-  state::DaemonState,
+  config::{ServerConfig, UpsdConfig},
+  http::hypermedia::{error::ErrorPage, utils::RenderWithConfig},
+  state::{DaemonState, ServerState},
 };
 use askama::Template;
 use axum::{
@@ -22,34 +21,51 @@ pub struct ServerInfoFragmentQuery {
 
 #[derive(Template)]
 #[template(path = "server_info/+page.html", blocks = ["info_cards"])]
-struct ServerInfoTemplate<'a> {
-  device_count: usize,
-  config: &'a ServerConfig,
+struct ServerInfoPageTemplate<'a> {
+  server_config: &'a ServerConfig,
+  upsd_html: Vec<String>,
+}
+
+#[derive(Template)]
+#[template(path = "server_info/upsd_info.html")]
+struct UpsdInfoTemplate<'a> {
+  config: &'a UpsdConfig,
   state: &'a DaemonState,
 }
 
 pub async fn get(
   query: Query<ServerInfoFragmentQuery>,
-  State(rs): State<RouterState>,
+  State(state): State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
-  let state = &rs.state.read().await;
+  let mut upsd_html = Vec::new();
+  let session = session.map(|v| v.0);
 
-  let template = ServerInfoTemplate {
-    config: &rs.config,
-    state: &state.remote_state,
-    device_count: state.devices.len(),
+  for upsd in state.upsd_servers.values() {
+    let daemon_state = upsd.daemon_state.read().await;
+
+    let upsd_info = UpsdInfoTemplate {
+      state: &daemon_state,
+      config: &upsd.config,
+    }
+    .render_with_config(&state.config, session.as_ref())?;
+
+    upsd_html.push(upsd_info);
+  }
+
+  let template = ServerInfoPageTemplate {
+    server_config: &state.config,
+    upsd_html,
   };
 
-  let session = session.map(|v| v.0);
   let response = match query.section.as_deref() {
     Some("info_cards") => Html(
       template
         .as_info_cards()
-        .render_with_config(&rs.config, session.as_ref())?,
+        .render_with_config(&state.config, session.as_ref())?,
     )
     .into_response(),
-    _ => Html(template.render_with_config(&rs.config, session.as_ref())?).into_response(),
+    _ => Html(template.render_with_config(&state.config, session.as_ref())?).into_response(),
   };
 
   Ok(response)

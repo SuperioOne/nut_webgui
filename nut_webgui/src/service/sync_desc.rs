@@ -1,6 +1,6 @@
-use super::BackgroundService;
 use crate::{
   event::{EventChannel, SystemEvent},
+  service::BackgroundService,
   state::ServerState,
 };
 use nut_webgui_upsmc::{
@@ -9,28 +9,18 @@ use nut_webgui_upsmc::{
   response::{CmdDesc, UpsVarDesc},
 };
 use std::{collections::HashSet, sync::Arc};
-use tokio::{
-  join, select,
-  sync::{RwLock, broadcast::error::RecvError},
-  task::JoinSet,
-};
+use tokio::{join, select, sync::broadcast::error::RecvError, task::JoinSet};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, warn};
 
 pub struct DescriptionSyncService {
   event_channel: EventChannel,
-  client: NutPoolClient,
-  state: Arc<RwLock<ServerState>>,
+  state: Arc<ServerState>,
 }
 
 impl DescriptionSyncService {
-  pub fn new(
-    client: NutPoolClient,
-    event_channel: EventChannel,
-    state: Arc<RwLock<ServerState>>,
-  ) -> Self {
+  pub fn new(event_channel: EventChannel, state: Arc<ServerState>) -> Self {
     Self {
-      client,
       state,
       event_channel,
     }
@@ -43,23 +33,25 @@ impl BackgroundService for DescriptionSyncService {
     token: CancellationToken,
   ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send>> {
     let mut events = self.event_channel.subscribe();
-    let client = self.client.clone();
     let state = self.state.clone();
 
     Box::pin(async move {
-      let task = DescriptionTask { state, client };
+      let task = DescriptionTask { state };
 
       'MAIN: loop {
         select! {
             event = events.recv() => {
               match event {
-                Ok(SystemEvent::DeviceAddition { devices }) => {
-                  task.next(devices).await;
+                Ok(SystemEvent::DeviceAddition { devices, namespace }) => {
+                  task.next(devices, namespace).await;
                 },
                 Ok(_) => continue,
                 Err(RecvError::Closed) => break 'MAIN,
                 Err(RecvError::Lagged(lagged)) => {
-                  warn!(message = "description service can't keep up with system events", lagged_event_count=lagged)
+                  warn!(
+                    message = "description service can't keep up with system events",
+                    lagged_event_count = lagged
+                  )
                 }
               }
             }
@@ -75,8 +67,7 @@ impl BackgroundService for DescriptionSyncService {
 }
 
 struct DescriptionTask {
-  client: NutPoolClient,
-  state: Arc<RwLock<ServerState>>,
+  state: Arc<ServerState>,
 }
 
 struct TaskContext {
@@ -86,14 +77,27 @@ struct TaskContext {
 }
 
 impl DescriptionTask {
-  pub async fn next(&self, devices: Vec<UpsName>) {
+  pub async fn next(&self, devices: Vec<UpsName>, namespace: Box<str>) {
+    let upsd_state = match self.state.upsd_servers.get(&namespace) {
+      Some(upsd) => upsd,
+      None => {
+        warn!(
+          message = "cannot sync descriptions, namespace does not exists",
+          namespace = %namespace
+        );
+
+        return;
+      }
+    };
+
     let task_ctx: Vec<TaskContext> = {
       let mut tmp_lookup = HashSet::new();
-      let mut ctxs = Vec::with_capacity(devices.len());
-      let read_lock = self.state.read().await;
+      let mut ctxs = Vec::new();
+      let upsd_lock = upsd_state.daemon_state.read().await;
+      let shared_desc_lock = self.state.shared_desc.read().await;
 
       for name in devices {
-        match read_lock.devices.get(&name) {
+        match upsd_lock.devices.get(&name) {
           Some(entry) => {
             let mut cmds: Vec<CmdName> = Vec::new();
             let mut vars: Vec<VarName> = Vec::new();
@@ -101,7 +105,7 @@ impl DescriptionTask {
             for (var_name, _) in entry.variables.iter() {
               let name = var_name.as_str();
 
-              if !read_lock.shared_desc.contains_key(name) && !tmp_lookup.contains(name) {
+              if !shared_desc_lock.contains_key(name) && !tmp_lookup.contains(name) {
                 _ = tmp_lookup.insert(var_name.as_str());
                 vars.push(var_name.clone());
               }
@@ -110,7 +114,7 @@ impl DescriptionTask {
             for cmd in entry.commands.iter() {
               let name = cmd.as_str();
 
-              if !read_lock.shared_desc.contains_key(name) && !tmp_lookup.contains(name) {
+              if !shared_desc_lock.contains_key(name) && !tmp_lookup.contains(name) {
                 _ = tmp_lookup.insert(cmd.as_str());
                 cmds.push(cmd.clone());
               }
@@ -123,6 +127,7 @@ impl DescriptionTask {
           None => {
             debug!(
               message = "ignoring description sync, device is already removed from server state",
+              namespace = %namespace,
               device_name = %name
             );
           }
@@ -132,18 +137,20 @@ impl DescriptionTask {
       ctxs
     };
 
-    let mut task_set = JoinSet::new();
+    if !task_ctx.is_empty() {
+      let mut task_set = JoinSet::new();
 
-    for ctx in task_ctx {
-      let nut_client = self.client.clone();
-      task_set.spawn(Self::load_descs(nut_client, ctx));
-    }
+      for ctx in task_ctx {
+        let nut_client = upsd_state.connection_pool.clone();
+        task_set.spawn(Self::load_descs(nut_client, ctx));
+      }
 
-    let results = task_set.join_all().await;
-    let mut write_lock = self.state.write().await;
+      let results = task_set.join_all().await;
+      let mut shared_desc_lock = self.state.shared_desc.write().await;
 
-    for (k, v) in results.into_iter().flatten() {
-      _ = write_lock.shared_desc.insert(k.into(), v)
+      for (k, v) in results.into_iter().flatten() {
+        _ = shared_desc_lock.insert(k.into(), v)
+      }
     }
   }
 

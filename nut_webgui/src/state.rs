@@ -1,53 +1,86 @@
-use crate::device_entry::DeviceEntry;
+use crate::{
+  auth::user_store::UserStore,
+  config::{ServerConfig, UpsdConfig},
+  device_entry::DeviceEntry,
+};
 use chrono::{DateTime, Utc};
-use nut_webgui_upsmc::{CmdName, UpsName, VarName};
+use nut_webgui_upsmc::{CmdName, UpsName, VarName, client::NutPoolClient};
 use serde::Serialize;
-use std::{borrow::Borrow, collections::HashMap};
+use std::{borrow::Borrow, collections::HashMap, sync::Arc};
+use tokio::sync::RwLock;
 
-#[derive(Debug)]
+/// Server internal state.
 pub struct ServerState {
+  /// Connected UPSD servers
+  pub upsd_servers: HashMap<Box<str>, Arc<UpsdState>>,
+
+  /// Shared description table for ups variables and commands.
+  pub shared_desc: RwLock<HashMap<DescriptionKey, Box<str>>>,
+
+  /// Server configurations
+  pub config: Arc<ServerConfig>,
+
+  /// Optional user store for authentication
+  pub auth_user_store: Option<Arc<UserStore>>,
+}
+
+/// Individial UPSD connection state.
+pub struct UpsdState {
+  /// Daemon state
+  pub daemon_state: RwLock<DaemonState>,
+
+  /// Daemon connection pool
+  pub connection_pool: NutPoolClient,
+
+  /// Daemon config
+  pub config: UpsdConfig,
+
+  /// Upsd namespace
+  pub namespace: Box<str>,
+}
+
+pub struct DaemonState {
   /// Ups devices
   pub devices: HashMap<UpsName, DeviceEntry>,
 
-  /// NUT daemon sync/connection state
-  pub remote_state: DaemonState,
+  /// Last device sync timestamp
+  pub last_device_sync: Option<DateTime<Utc>>,
 
-  /// Shared description table for ups variables
-  pub shared_desc: HashMap<DescriptionKey, Box<str>>,
+  /// Daemon connection status
+  pub status: ConnectionStatus,
+
+  /// Daemon protocol version
+  pub prot_ver: Option<Box<str>>,
+
+  /// Daemon server version
+  pub ver: Option<Box<str>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize)]
-pub enum DaemonStatus {
+pub enum ConnectionStatus {
   Dead,
   Online,
   NotReady,
 }
 
-impl std::fmt::Display for DaemonStatus {
+impl std::fmt::Display for ConnectionStatus {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      DaemonStatus::Dead => f.write_str("Dead"),
-      DaemonStatus::Online => f.write_str("Online"),
-      DaemonStatus::NotReady => f.write_str("Not Ready"),
+      ConnectionStatus::Dead => f.write_str("Dead"),
+      ConnectionStatus::Online => f.write_str("Online"),
+      ConnectionStatus::NotReady => f.write_str("Not Ready"),
     }
   }
 }
 
-#[derive(Debug)]
-pub struct DaemonState {
-  pub last_device_sync: Option<DateTime<Utc>>,
-  pub status: DaemonStatus,
-  pub prot_ver: Option<Box<str>>,
-  pub ver: Option<Box<str>>,
-}
-
 impl DaemonState {
-  pub const fn new() -> DaemonState {
+  pub fn new() -> DaemonState {
     DaemonState {
+      devices: HashMap::new(),
       last_device_sync: None,
-      status: DaemonStatus::NotReady,
-      ver: None,
       prot_ver: None,
+      status: ConnectionStatus::NotReady,
+      ver: None,
     }
   }
 }

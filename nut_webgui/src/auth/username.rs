@@ -90,7 +90,7 @@ impl FastWritable for Username {
   fn write_into<W: core::fmt::Write + ?Sized>(
     &self,
     dest: &mut W,
-    values: &dyn askama::Values,
+    _: &dyn askama::Values,
   ) -> askama::Result<()> {
     dest.write_str(&self.0)?;
     Ok(())

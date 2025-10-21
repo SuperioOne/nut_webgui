@@ -1,12 +1,12 @@
-use super::{
-  BackgroundService,
-  error::{DeviceLoadError, IntoLoadError, SyncTaskError},
-};
 use crate::{
   device_entry::{DeviceEntry, VarDetail},
   diff_utils::Diff,
   event::{EventBatch, EventChannel, SystemEvent},
-  state::{DaemonStatus, ServerState},
+  service::{
+    BackgroundService,
+    error::{DeviceLoadError, IntoLoadError, SyncTaskError},
+  },
+  state::{ConnectionStatus, UpsdState},
 };
 use chrono::Utc;
 use futures::future::join_all;
@@ -17,29 +17,20 @@ use nut_webgui_upsmc::{
   ups_status::UpsStatus,
 };
 use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::{join, select, sync::RwLock, task::JoinSet, time::interval, try_join};
+use tokio::{join, select, task::JoinSet, time::interval, try_join};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
 /// Synchronizes device list from UPSD.
 pub struct DeviceSyncService {
-  client: NutPoolClient,
   event_channel: EventChannel,
-  poll_interval: Duration,
-  state: Arc<RwLock<ServerState>>,
+  state: Arc<UpsdState>,
 }
 
 impl DeviceSyncService {
-  pub fn new(
-    client: NutPoolClient,
-    event_channel: EventChannel,
-    state: Arc<RwLock<ServerState>>,
-    poll_interval: Duration,
-  ) -> Self {
+  pub fn new(event_channel: EventChannel, state: Arc<UpsdState>) -> Self {
     Self {
-      client,
       event_channel,
-      poll_interval,
       state,
     }
   }
@@ -50,70 +41,89 @@ impl BackgroundService for DeviceSyncService {
     &self,
     token: CancellationToken,
   ) -> core::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send>> {
-    let client = self.client.clone();
     let event_channel = self.event_channel.clone();
-    let poll_interval = self.poll_interval;
     let state = self.state.clone();
 
     Box::pin(async move {
+      let namespace = state.namespace.clone();
+      let mut interval = interval(Duration::from_secs(state.config.poll_interval));
+      interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+
       let task = DeviceSyncTask {
         state,
-        client,
         event_channel,
       };
-      let mut interval = interval(poll_interval);
-      interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
       'MAIN: loop {
         select! {
-          _ = interval.tick() => debug!(message = "starting remote device sync"),
+          _ = interval.tick() => {
+            debug!(
+              message = "starting remote device sync",
+              namespace = %namespace
+            );
+          },
           _ = token.cancelled() =>  { break 'MAIN; }
         };
 
         select! {
           v = task.next() => {
             match v {
-              Ok(_) => debug!(message = "remote device sync completed") ,
-              Err(err) => error!(message = "remote device sync failed", reason=%err)
+              Ok(_) => {
+                debug!(
+                  message = "remote device sync completed",
+                  namespace = %namespace
+                );
+              },
+              Err(err) => {
+                error!(
+                  message = "remote device sync failed",
+                  namespace = %namespace,
+                  reason = %err
+                );
+              }
             }
           }
           _ = token.cancelled() =>  { break 'MAIN; }
         };
       }
 
-      debug!(message = "device sync task stopped");
+      debug!(
+        message = "device sync task stopped",
+        namespace = %namespace,
+      );
     })
   }
 }
 
 struct DeviceSyncTask {
-  client: NutPoolClient,
-  state: Arc<RwLock<ServerState>>,
+  state: Arc<UpsdState>,
   event_channel: EventChannel,
 }
 
 impl DeviceSyncTask {
   pub async fn next(&self) -> Result<(), SyncTaskError> {
-    let remote_details = try_join!(
-      self.client.list_ups(),
-      self.client.get_protver(),
-      self.client.get_ver(),
-    );
+    let client = &self.state.connection_pool;
+    let remote_details = try_join!(client.list_ups(), client.get_protver(), client.get_ver(),);
 
     let (remote, prot_ver, ver) = match remote_details {
       Ok(res) => Ok(res),
       Err(err) => {
-        let mut write_lock = self.state.write().await;
+        let mut write_lock = self.state.daemon_state.write().await;
 
-        if write_lock.remote_state.status != DaemonStatus::Dead {
-          write_lock.remote_state.status = DaemonStatus::Dead;
-          write_lock.remote_state.prot_ver = None;
-          write_lock.remote_state.ver = None;
+        if write_lock.status != ConnectionStatus::Dead {
+          write_lock.status = ConnectionStatus::Dead;
+          write_lock.prot_ver = None;
+          write_lock.ver = None;
 
-          error!(message = "ups daemon is disconnected", reason = %err);
+          error!(
+            message = "ups daemon is disconnected",
+            namespace = %self.state.namespace,
+            reason = %err
+          );
 
           _ = self.event_channel.send(SystemEvent::DaemonStatusUpdate {
-            status: DaemonStatus::Dead,
+            status: ConnectionStatus::Dead,
+            namespace: Box::from(self.state.namespace.as_ref()),
           });
         }
 
@@ -124,7 +134,7 @@ impl DeviceSyncTask {
     }?;
 
     let local_devices: HashMap<_, _> = {
-      let state_lock = self.state.read().await;
+      let state_lock = self.state.daemon_state.read().await;
       state_lock
         .devices
         .iter()
@@ -147,7 +157,7 @@ impl DeviceSyncTask {
     let mut task_set = JoinSet::new();
 
     for device in diff.new.into_iter() {
-      let client = self.client.clone();
+      let client = self.state.connection_pool.clone();
       task_set.spawn(Self::load_device_entry(client, device));
     }
 
@@ -158,44 +168,63 @@ impl DeviceSyncTask {
         Ok(Ok(device)) => new_devices.push(device),
         Ok(Err(err)) => {
           failure_count += 1;
-          error!(message = "unable to get device details from nut upsd", reason = %err.inner, device = %err.name)
+          error!(
+            message = "unable to get device details from nut upsd",
+            namespace = %self.state.namespace,
+            device = %err.name,
+            reason = %err.inner
+          );
         }
         Err(err) => {
           failure_count += 1;
-          error!(message = "cannot join device load task", reason = %err)
+          error!(
+            message = "cannot join device load task",
+            namespace = %self.state.namespace,
+            reason = %err
+          )
         }
       }
     }
 
-    let mut write_lock = self.state.write().await;
+    let mut write_lock = self.state.daemon_state.write().await;
 
     if failure_count >= total_device_count {
-      if write_lock.remote_state.status != DaemonStatus::Dead {
+      if write_lock.status != ConnectionStatus::Dead {
         error!(
           message = "ups daemon is disconnected",
+          namespace = %self.state.namespace,
           reason = "received device list but unable to load device details"
         );
 
-        write_lock.remote_state.status = DaemonStatus::Dead;
-        write_lock.remote_state.prot_ver = None;
-        write_lock.remote_state.ver = None;
+        write_lock.status = ConnectionStatus::Dead;
+        write_lock.prot_ver = None;
+        write_lock.ver = None;
 
         if let Err(err) = self.event_channel.send(SystemEvent::DaemonStatusUpdate {
-          status: DaemonStatus::Dead,
+          status: ConnectionStatus::Dead,
+          namespace: Box::from(self.state.namespace.as_ref()),
         }) {
-          warn!(message = "unable to send status event", reason= %err);
+          warn!(
+            message = "unable to send status event",
+            namespace = %self.state.namespace,
+            reason = %err
+          );
         }
       }
 
       write_lock.devices.clear();
-      write_lock.remote_state.last_device_sync = Some(Utc::now());
+      write_lock.last_device_sync = Some(Utc::now());
 
       Err(SyncTaskError::DeviceLoadFailed)
     } else {
-      let mut events = EventBatch::new();
+      let mut events = EventBatch::new(self.state.namespace.as_ref());
 
       for entry in new_devices.into_iter() {
-        info!(message = "device connected", device = %&entry.name);
+        info!(
+          message = "device connected",
+          namespace = %self.state.namespace,
+          device = %entry.name
+        );
 
         events.new_device(entry.name.clone());
         write_lock.devices.insert(entry.name.clone(), entry);
@@ -203,7 +232,11 @@ impl DeviceSyncTask {
 
       for entry in diff.updated.into_iter() {
         if let Some(device) = write_lock.devices.get_mut(&entry.ups_name) {
-          info!(message = "device details updated", device = %&device.name);
+          info!(
+            message = "device details updated",
+            namespace = %self.state.namespace,
+            device = %device.name
+          );
 
           events.updated_device(entry.ups_name);
           device.desc = entry.desc;
@@ -211,25 +244,36 @@ impl DeviceSyncTask {
       }
 
       for device_name in diff.deleted.into_iter() {
-        info!(message = "device disconnected", device=%device_name);
+        info!(
+          message = "device disconnected",
+          namespace = %self.state.namespace,
+          device = %device_name
+        );
 
         _ = write_lock.devices.remove(&device_name);
         events.removed_device(device_name);
       }
 
-      if write_lock.remote_state.status != DaemonStatus::Online {
-        info!(message = "ups daemon is online");
+      if write_lock.status != ConnectionStatus::Online {
+        info!(
+          message = "ups daemon is online",
+          namespace = %self.state.namespace
+        );
 
-        write_lock.remote_state.status = DaemonStatus::Online;
-        events.set_upsd_status(DaemonStatus::Online);
+        write_lock.status = ConnectionStatus::Online;
+        events.set_upsd_status(ConnectionStatus::Online);
       }
 
-      write_lock.remote_state.last_device_sync = Some(Utc::now());
-      write_lock.remote_state.prot_ver = Some(prot_ver.value.into_boxed_str());
-      write_lock.remote_state.ver = Some(ver.value.into_boxed_str());
+      write_lock.last_device_sync = Some(Utc::now());
+      write_lock.prot_ver = Some(prot_ver.value.into_boxed_str());
+      write_lock.ver = Some(ver.value.into_boxed_str());
 
       if let Err(err) = events.send(&self.event_channel) {
-        warn!(message = "unable to send events", reason= %err);
+        warn!(
+          message = "unable to send events",
+          namespace = %self.state.namespace,
+          reason = %err
+        );
       }
 
       Ok(())
@@ -274,7 +318,11 @@ impl DeviceSyncTask {
           _ = rw_variables.insert(var_name, detail);
         }
         Err(err) => {
-          warn!(message = "failed to get RW variable type details, variable will be displayed as read-only", device = %err.name, reason = %err.inner );
+          warn!(
+            message = "failed to get RW variable type details, variable will be displayed as read-only",
+            device = %err.name,
+            reason = %err.inner
+          );
         }
       };
     }
@@ -313,7 +361,11 @@ impl DeviceSyncTask {
             .map_load_err(ups_name)?;
 
           if enum_list.values.is_empty() {
-            warn!(message = "nut driver reports variable type as enum, but it does not provide any enum option", var_name = %var_name, device = %ups_name);
+            warn!(
+              message = "nut driver reports variable type as enum, but it does not provide any enum option",
+              var_name = %var_name,
+              device = %ups_name
+            );
           }
 
           return Ok((
@@ -332,7 +384,12 @@ impl DeviceSyncTask {
           return match range_list.ranges.pop() {
             Some((min, max)) => Ok((range_list.name, VarDetail::Range { min, max })),
             None => {
-              warn!(message = "nut driver reports variable type as range, but it does not provide any range information", var_name = %var_name, device = %ups_name);
+              warn!(
+                message = "nut driver reports variable type as range, but it does not provide any range information",
+                var_name = %var_name,
+                device = %ups_name
+              );
+
               Ok((
                 range_list.name,
                 VarDetail::Range {

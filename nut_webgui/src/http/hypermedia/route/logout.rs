@@ -1,16 +1,14 @@
-use crate::{
-  auth::AUTH_COOKIE_NAME,
-  http::{RouterState, hypermedia::error::ErrorPage},
-};
+use crate::{auth::AUTH_COOKIE_NAME, http::hypermedia::error::ErrorPage, state::ServerState};
 use axum::{
   extract::State,
-  http::{HeaderMap, HeaderName, HeaderValue, StatusCode, header},
-  response::{IntoResponse, Response},
+  http::{HeaderValue, header},
+  response::{IntoResponse, Redirect, Response},
 };
 use cookie::{Cookie, SameSite, time::OffsetDateTime};
+use std::sync::Arc;
 
-pub async fn post(rs: State<RouterState>) -> Result<Response, ErrorPage> {
-  let redirect_path = format!("{}/", rs.config.http_server.base_path);
+pub async fn post(state: State<Arc<ServerState>>) -> Result<Response, ErrorPage> {
+  let redirect_path = format!("{}/", state.config.http_server.base_path);
 
   let cookie = Cookie::build((AUTH_COOKIE_NAME, ""))
     .http_only(true)
@@ -19,16 +17,12 @@ pub async fn post(rs: State<RouterState>) -> Result<Response, ErrorPage> {
     .expires(OffsetDateTime::from_unix_timestamp(0)?)
     .build();
 
-  let mut headers = HeaderMap::new();
+  let mut response = Redirect::to(&redirect_path).into_response();
 
-  headers.insert(
+  response.headers_mut().insert(
     header::SET_COOKIE,
     HeaderValue::from_str(&cookie.to_string())?,
   );
-  headers.insert(
-    HeaderName::from_static("hx-redirect"),
-    HeaderValue::from_str(&redirect_path)?,
-  );
 
-  Ok((StatusCode::OK, headers).into_response())
+  Ok(response)
 }

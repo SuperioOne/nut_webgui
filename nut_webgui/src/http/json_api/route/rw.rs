@@ -1,9 +1,10 @@
 use crate::{
   device_entry::VarDetail,
-  http::{
-    RouterState,
-    json_api::{problem_detail::ProblemDetail, route::request_auth_client},
+  http::json_api::{
+    problem_detail::ProblemDetail,
+    route::{extract_upsd, request_auth_client},
   },
+  state::ServerState,
 };
 use axum::{
   Json,
@@ -15,6 +16,7 @@ use axum::{
 };
 use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::Deserialize;
+use std::sync::Arc;
 use tracing::info;
 
 #[derive(Debug, Deserialize)]
@@ -24,17 +26,16 @@ pub struct RwRequest {
 }
 
 pub async fn patch(
-  State(rs): State<RouterState>,
-  ups_name: Result<Path<UpsName>, PathRejection>,
+  State(state): State<Arc<ServerState>>,
+  paths: Result<Path<(Box<str>, UpsName)>, PathRejection>,
   body: Result<Json<RwRequest>, JsonRejection>,
 ) -> Result<StatusCode, ProblemDetail> {
-  let Path(ups_name) = ups_name?;
+  let Path((namespace, ups_name)) = paths?;
   let Json(body) = body?;
+  let upsd = extract_upsd!(state, namespace)?;
 
   {
-    let server_state = rs.state.read().await;
-
-    match server_state.devices.get(&ups_name) {
+    match upsd.daemon_state.read().await.devices.get(&ups_name) {
       Some(device) => match device.rw_variables.get(&body.variable) {
         Some(VarDetail::Number) => {
           if body.value.is_numeric() {
@@ -148,7 +149,7 @@ pub async fn patch(
     }
   }?;
 
-  let mut client = request_auth_client!(rs)?;
+  let mut client = request_auth_client!(upsd)?;
 
   {
     let response = client.set_var(&ups_name, &body.variable, &body.value).await;
@@ -159,6 +160,7 @@ pub async fn patch(
 
   info!(
     message = "set var request accepted",
+    namespace = %namespace,
     device = %ups_name,
     variable = %body.variable,
     value = %body.value,

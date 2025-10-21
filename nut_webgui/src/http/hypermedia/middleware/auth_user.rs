@@ -1,5 +1,8 @@
-use crate::auth::{
-  AUTH_COOKIE_NAME, signed_token::SignedToken, user_session::UserSession, user_store::UserStore,
+use crate::{
+  auth::{
+    AUTH_COOKIE_NAME, signed_token::SignedToken, user_session::UserSession, user_store::UserStore,
+  },
+  config::ServerConfig,
 };
 use axum::{
   http::{HeaderMap, HeaderName, Request, StatusCode},
@@ -12,15 +15,19 @@ use tower::{Layer, Service};
 
 #[derive(Clone)]
 pub struct UserAuthLayer {
-  server_key: Arc<[u8]>,
+  config: Arc<ServerConfig>,
   user_store: Arc<UserStore>,
   login_redirect: String,
 }
 
 impl UserAuthLayer {
-  pub fn new(server_key: Arc<[u8]>, user_store: Arc<UserStore>, login_redirect: String) -> Self {
+  pub fn new(
+    config: Arc<ServerConfig>,
+    user_store: Arc<UserStore>,
+    login_redirect: String,
+  ) -> Self {
     Self {
-      server_key,
+      config,
       user_store,
       login_redirect,
     }
@@ -30,7 +37,7 @@ impl UserAuthLayer {
 #[derive(Clone)]
 pub struct UserAuthService<S> {
   inner: S,
-  server_key: Arc<[u8]>,
+  config: Arc<ServerConfig>,
   user_store: Arc<UserStore>,
   login_redirect: String,
 }
@@ -42,7 +49,7 @@ impl<S> Layer<S> for UserAuthLayer {
     Self::Service {
       inner,
       login_redirect: self.login_redirect.clone(),
-      server_key: self.server_key.clone(),
+      config: self.config.clone(),
       user_store: self.user_store.clone(),
     }
   }
@@ -113,7 +120,7 @@ impl<S> UserAuthService<S> {
           .decode(value.as_bytes())
           .map_err(|_| InvalidCookieValue)?;
 
-        let user_session: UserSession = SignedToken::new(&self.server_key)
+        let user_session: UserSession = SignedToken::new(self.config.server_key.as_bytes())
           .from_bytes(&bytes)
           .map_err(|_| InvalidCookieValue)?;
 

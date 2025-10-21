@@ -1,7 +1,8 @@
 use crate::config::{tls_mode::TlsMode, uri_path::UriPath, utils::rand_server_key_256bit};
 use core::net::{IpAddr, Ipv4Addr};
+use std::collections::HashMap;
 use std::{num::NonZeroUsize, path::PathBuf};
-use tracing::Level;
+use tracing::level_filters::LevelFilter;
 
 mod utils;
 
@@ -12,6 +13,13 @@ pub mod cfg_user;
 pub mod error;
 pub mod tls_mode;
 pub mod uri_path;
+
+#[inline]
+pub fn default_upsd_key() -> Box<str> {
+  Box::from("default")
+}
+
+pub const DEFAULT_UPSD_KEY: &str = "default";
 
 pub trait ConfigLayer {
   fn apply_layer(self, config: ServerConfig) -> ServerConfig;
@@ -25,7 +33,7 @@ pub struct ServerConfig {
   pub default_theme: Option<Box<str>>,
 
   /// Logging level
-  pub log_level: tracing::Level,
+  pub log_level: LevelFilter,
 
   /// Server instance's private sign key
   pub server_key: Box<str>,
@@ -34,7 +42,7 @@ pub struct ServerConfig {
   pub http_server: HttpServerConfig,
 
   /// UPSD connection configurations
-  pub upsd: UpsdConfig,
+  pub upsd: HashMap<Box<str>, UpsdConfig>,
 
   /// Authentication scheme configurations
   pub auth: Option<AuthConfig>,
@@ -47,6 +55,7 @@ pub struct HttpServerConfig {
   pub base_path: UriPath,
 }
 
+#[derive(Clone)]
 pub struct UpsdConfig {
   /// Poll frequency in seconds for less critical parameters
   pub poll_freq: u64,
@@ -104,7 +113,7 @@ impl Default for HttpServerConfig {
 impl Default for UpsdConfig {
   fn default() -> Self {
     Self {
-      addr: "127.0.0.1".into(),
+      addr: "localhost".into(),
       max_conn: unsafe { NonZeroUsize::new_unchecked(4) },
       pass: None,
       poll_freq: 30,
@@ -122,7 +131,7 @@ impl Default for ServerConfig {
       config_file: None,
       default_theme: None,
       http_server: Default::default(),
-      log_level: Level::INFO,
+      log_level: LevelFilter::INFO,
       server_key: rand_server_key_256bit().into_boxed_str(),
       upsd: Default::default(),
       auth: None,

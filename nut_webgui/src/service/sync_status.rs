@@ -1,47 +1,30 @@
-use super::BackgroundService;
 use crate::{
   diff_utils::Diff,
   event::{DeviceStatusChange, EventBatch, EventChannel, SystemEvent},
-  state::ServerState,
+  service::BackgroundService,
+  state::UpsdState,
 };
 use chrono::Utc;
 use futures::future::join_all;
-use nut_webgui_upsmc::{
-  UpsName, VarName,
-  client::{AsyncNutClient, NutPoolClient},
-  ups_status::UpsStatus,
-};
+use nut_webgui_upsmc::{UpsName, VarName, client::AsyncNutClient, ups_status::UpsStatus};
 use std::{sync::Arc, time::Duration};
 use tokio::{
   join, select,
-  sync::RwLock,
   time::{Instant, Interval, MissedTickBehavior, interval},
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, info, warn};
 
 pub struct StatusSyncService {
-  client: NutPoolClient,
   event_channel: EventChannel,
-  state: Arc<RwLock<ServerState>>,
-  poll_freq: Duration,
-  poll_interval: Duration,
+  state: Arc<UpsdState>,
 }
 
 impl StatusSyncService {
-  pub fn new(
-    client: NutPoolClient,
-    event_channel: EventChannel,
-    state: Arc<RwLock<ServerState>>,
-    poll_interval: Duration,
-    poll_freq: Duration,
-  ) -> Self {
+  pub fn new(event_channel: EventChannel, state: Arc<UpsdState>) -> Self {
     Self {
-      client,
       state,
       event_channel,
-      poll_interval,
-      poll_freq,
     }
   }
 }
@@ -51,21 +34,21 @@ impl BackgroundService for StatusSyncService {
     &self,
     token: CancellationToken,
   ) -> std::pin::Pin<Box<dyn core::future::Future<Output = ()> + Send>> {
-    let client = self.client.clone();
     let event_channel = self.event_channel.clone();
     let state = self.state.clone();
-    let poll_freq = self.poll_freq;
-    let poll_interval = {
-      if self.poll_interval >= self.poll_freq {
-        self.poll_freq
-      } else {
-        self.poll_interval
-      }
-    };
 
     Box::pin(async move {
+      let namespace = state.namespace.clone();
+      let poll_freq = Duration::from_secs(state.config.poll_freq);
+      let poll_interval = {
+        if state.config.poll_interval >= state.config.poll_freq {
+          Duration::from_secs(state.config.poll_freq)
+        } else {
+          Duration::from_secs(state.config.poll_interval)
+        }
+      };
+
       let task = StatusSyncTask {
-        client,
         event_channel,
         state,
       };
@@ -75,7 +58,12 @@ impl BackgroundService for StatusSyncService {
       'MAIN: loop {
         let poll_type = select! {
           poll_type = interval.tick() => {
-            debug!(message = "starting device status sync", poll_type=%poll_type);
+            debug!(
+              message = "starting device status sync",
+              namespace = %namespace,
+              poll_type = %poll_type
+            );
+
             poll_type
           }
           _ = token.cancelled() => { break 'MAIN; }
@@ -85,7 +73,10 @@ impl BackgroundService for StatusSyncService {
           UpsPollType::Full => {
             select! {
               _ = task.state_sync() => {
-                debug!(message = "full device status sync completed");
+                debug!(
+                  message = "full device status sync completed",
+                  namespace = %namespace
+                );
               }
               _ = token.cancelled() => { break 'MAIN; }
             };
@@ -93,7 +84,10 @@ impl BackgroundService for StatusSyncService {
           UpsPollType::Partial => {
             select! {
               _ = task.status_sync() => {
-                debug!(message = "partial device status sync completed");
+                debug!(
+                  message = "partial device status sync completed",
+                  namespace = %namespace
+                );
               }
               _ = token.cancelled() => { break 'MAIN; }
             };
@@ -101,20 +95,22 @@ impl BackgroundService for StatusSyncService {
         }
       }
 
-      debug!(message = "device status sync stopped");
+      debug!(
+        message = "device status sync stopped",
+        namespace = %namespace
+      );
     })
   }
 }
 
 struct StatusSyncTask {
-  client: NutPoolClient,
-  state: Arc<RwLock<ServerState>>,
+  state: Arc<UpsdState>,
   event_channel: EventChannel,
 }
 
 impl StatusSyncTask {
   async fn snapshot_device_names(&self) -> Vec<UpsName> {
-    let read_lock = self.state.read().await;
+    let read_lock = self.state.daemon_state.read().await;
     read_lock.devices.keys().cloned().collect()
   }
 
@@ -123,12 +119,19 @@ impl StatusSyncTask {
     let devices = self.snapshot_device_names().await;
 
     if devices.is_empty() {
-      debug!(message = "no device available, nothing to sync");
+      debug!(
+        message = "no device available, nothing to sync",
+        namespace = %self.state.namespace
+      );
       return;
     }
 
     let responses = join_all(devices.iter().map(|device| async move {
-      let result = self.client.get_var(device, VarName::UPS_STATUS).await;
+      let result = self
+        .state
+        .connection_pool
+        .get_var(device, VarName::UPS_STATUS)
+        .await;
       (device, result)
     }))
     .await;
@@ -136,7 +139,7 @@ impl StatusSyncTask {
     let mut changes: Vec<DeviceStatusChange> = Vec::with_capacity(responses.len());
 
     {
-      let mut write_lock = self.state.write().await;
+      let mut write_lock = self.state.daemon_state.write().await;
 
       for (device, result) in responses {
         match result {
@@ -159,19 +162,28 @@ impl StatusSyncTask {
             }
           }
           Err(err) => {
-            debug!(message = "failed to read ups status", device = %device, reason = %err)
+            debug!(
+              message = "failed to read ups status",
+              namespace = %self.state.namespace,
+              device = %device, reason = %err
+            );
           }
         }
       }
     }
 
     if !changes.is_empty() {
-      let send_result = self
-        .event_channel
-        .send(SystemEvent::DeviceStatusChange { changes });
+      let send_result = self.event_channel.send(SystemEvent::DeviceStatusChange {
+        changes,
+        namespace: Box::from(self.state.namespace.as_ref()),
+      });
 
       if let Err(err) = send_result {
-        warn!(message = "cannot write new system events to channel", reason = %err);
+        warn!(
+          message = "cannot write new system events to channel",
+          namespace = %self.state.namespace,
+          reason = %err
+        );
       }
     }
   }
@@ -180,25 +192,29 @@ impl StatusSyncTask {
     let devices = self.snapshot_device_names().await;
 
     if devices.is_empty() {
-      debug!(message = "no device available, nothing to sync");
+      debug!(
+        message = "no device available, nothing to sync",
+        namespace = %self.state.namespace
+      );
+
       return;
     }
 
     let responses = join_all(devices.iter().map(|device| async move {
       let (variables, clients, commands) = join!(
-        self.client.list_var(device),
-        self.client.list_client(device),
-        self.client.list_cmd(device)
+        self.state.connection_pool.list_var(device),
+        self.state.connection_pool.list_client(device),
+        self.state.connection_pool.list_cmd(device)
       );
 
       (device, variables, clients, commands)
     }))
     .await;
 
-    let mut events = EventBatch::new();
+    let mut events = EventBatch::new(self.state.namespace.as_ref());
 
     {
-      let mut write_lock = self.state.write().await;
+      let mut write_lock = self.state.daemon_state.write().await;
 
       for result in responses {
         match result {
@@ -219,7 +235,12 @@ impl StatusSyncTask {
 
               if !client_diff.connected.is_empty() {
                 for client in client_diff.connected.iter() {
-                  info!(message = "new client attached to ups", device = %device, client = %client)
+                  info!(
+                    message = "new client attached to ups",
+                    namespace = %self.state.namespace,
+                    device = %device,
+                    client = %client
+                  );
                 }
 
                 events.client_connection(device.clone(), client_diff.connected);
@@ -227,7 +248,12 @@ impl StatusSyncTask {
 
               if !client_diff.disconnected.is_empty() {
                 for client in client_diff.disconnected.iter() {
-                  info!(message = "client detached from ups", device = %device, client = %client)
+                  info!(
+                    message = "client detached from ups",
+                    namespace = %self.state.namespace,
+                    device = %device,
+                    client = %client
+                  );
                 }
 
                 events.client_disconnect(device.clone(), client_diff.disconnected);
@@ -243,13 +269,28 @@ impl StatusSyncTask {
           }
           (device, vars_results, clients_result, cmds_result) => {
             if let Err(err) = vars_results {
-              debug!(message = "failed to read ups variables", device = %device, reason = %err)
+              debug!(
+                message = "failed to read ups variables",
+                namespace = %self.state.namespace,
+                device = %device,
+                reason = %err
+              );
             }
             if let Err(err) = clients_result {
-              debug!(message = "failed to read ups attached clients", device = %device, reason = %err)
+              debug!(
+                message = "failed to read ups attached clients",
+                namespace = %self.state.namespace,
+                device = %device,
+                reason = %err
+              );
             }
             if let Err(err) = cmds_result {
-              debug!(message = "failed to read ups commands", device = %device, reason = %err)
+              debug!(
+                message = "failed to read ups commands",
+                namespace = %self.state.namespace,
+                device = %device,
+                reason = %err
+              );
             }
           }
         }
@@ -257,7 +298,11 @@ impl StatusSyncTask {
     }
 
     if let Err(err) = events.send(&self.event_channel) {
-      warn!(message = "cannot write new system events to channel", reason = %err);
+      warn!(
+        message = "cannot write new system events to channel",
+        namespace = %self.state.namespace,
+        reason = %err
+      );
     }
   }
 }

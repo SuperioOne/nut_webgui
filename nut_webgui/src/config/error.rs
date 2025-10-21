@@ -14,6 +14,7 @@ pub enum ConfigError {
 pub enum TomlConfigError {
   IOError { inner: std::io::Error },
   ParseError { inner: toml::de::Error },
+  InvalidVersion,
 }
 
 impl From<std::io::Error> for TomlConfigError {
@@ -35,6 +36,7 @@ impl std::fmt::Display for TomlConfigError {
     match self {
       TomlConfigError::IOError { inner } => std::fmt::Display::fmt(&inner, f),
       TomlConfigError::ParseError { inner } => std::fmt::Display::fmt(&inner, f),
+      TomlConfigError::InvalidVersion => f.write_str("unknown config toml version"),
     }
   }
 }
@@ -131,8 +133,8 @@ impl From<InvalidTlsModeError> for EnvConfigError {
   }
 }
 
-impl From<tracing::metadata::ParseLevelError> for EnvConfigError {
-  fn from(_: tracing::metadata::ParseLevelError) -> Self {
+impl From<tracing::metadata::ParseLevelFilterError> for EnvConfigError {
+  fn from(_: tracing::metadata::ParseLevelFilterError) -> Self {
     Self::InvalidLogLevelFormat
   }
 }

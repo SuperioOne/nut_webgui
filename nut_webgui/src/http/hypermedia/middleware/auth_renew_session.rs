@@ -1,5 +1,8 @@
-use crate::auth::{
-  AUTH_COOKIE_NAME, signed_token::SignedToken, user_session::UserSession, user_store::UserStore,
+use crate::{
+  auth::{
+    AUTH_COOKIE_NAME, signed_token::SignedToken, user_session::UserSession, user_store::UserStore,
+  },
+  config::ServerConfig,
 };
 use axum::{
   http::{HeaderValue, Request, header},
@@ -13,15 +16,19 @@ use tracing::warn;
 
 #[derive(Clone)]
 pub struct RenewSessionLayer {
-  server_key: Arc<[u8]>,
+  config: Arc<ServerConfig>,
   user_store: Arc<UserStore>,
   renew_duration: Duration,
 }
 
 impl RenewSessionLayer {
-  pub fn new(server_key: Arc<[u8]>, user_store: Arc<UserStore>, renew_duration: Duration) -> Self {
+  pub fn new(
+    config: Arc<ServerConfig>,
+    user_store: Arc<UserStore>,
+    renew_duration: Duration,
+  ) -> Self {
     Self {
-      server_key,
+      config,
       user_store,
       renew_duration,
     }
@@ -31,7 +38,7 @@ impl RenewSessionLayer {
 #[derive(Clone)]
 pub struct RenewSessionService<S> {
   inner: S,
-  server_key: Arc<[u8]>,
+  config: Arc<ServerConfig>,
   user_store: Arc<UserStore>,
   renew_duration: Duration,
 }
@@ -42,7 +49,7 @@ impl<S> Layer<S> for RenewSessionLayer {
   fn layer(&self, inner: S) -> Self::Service {
     Self::Service {
       inner,
-      server_key: self.server_key.clone(),
+      config: self.config.clone(),
       user_store: self.user_store.clone(),
       renew_duration: self.renew_duration,
     }
@@ -72,8 +79,8 @@ where
     {
       match self.user_store.renew_session(session.get_username()) {
         Ok(new_session) => {
-          let signed_bytes =
-            SignedToken::<UserSession>::new(&self.server_key).sign_token(&new_session);
+          let signed_bytes = SignedToken::<UserSession>::new(self.config.server_key.as_bytes())
+            .sign_token(&new_session);
 
           let ttl = new_session.ttl();
           let cookie = Cookie::build((AUTH_COOKIE_NAME, BASE64_STANDARD.encode(&signed_bytes)))

@@ -1,5 +1,6 @@
 use crate::{
   auth::{access_token::AccessToken, signed_token::SignedToken},
+  config::ServerConfig,
   http::json_api::problem_detail::ProblemDetail,
 };
 use axum::{
@@ -12,19 +13,19 @@ use tower::{Layer, Service};
 
 #[derive(Clone)]
 pub struct ApiAuthLayer {
-  server_key: Arc<[u8]>,
+  config: Arc<ServerConfig>,
 }
 
 impl ApiAuthLayer {
-  pub fn new(server_key: Arc<[u8]>) -> Self {
-    Self { server_key }
+  pub fn new(config: Arc<ServerConfig>) -> Self {
+    Self { config }
   }
 }
 
 #[derive(Clone)]
 pub struct ApiAuthService<S> {
   inner: S,
-  server_key: Arc<[u8]>,
+  config: Arc<ServerConfig>,
 }
 
 impl<S> Layer<S> for ApiAuthLayer {
@@ -33,7 +34,7 @@ impl<S> Layer<S> for ApiAuthLayer {
   fn layer(&self, inner: S) -> Self::Service {
     Self::Service {
       inner,
-      server_key: self.server_key.clone(),
+      config: self.config.clone(),
     }
   }
 }
@@ -112,7 +113,7 @@ impl<S> ApiAuthService<S> {
           .decode(token.trim().as_bytes())
           .map_err(|_| InvalidAuthHeaderValue)?;
 
-        let access_token: AccessToken = SignedToken::new(&self.server_key)
+        let access_token: AccessToken = SignedToken::new(self.config.server_key.as_bytes())
           .from_bytes(&bytes)
           .map_err(|_| InvalidAuthHeaderValue)?;
 

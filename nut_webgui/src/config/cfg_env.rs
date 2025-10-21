@@ -1,5 +1,7 @@
 use super::{ConfigLayer, ServerConfig, error::EnvConfigError};
-use crate::config::{AuthConfig, TlsMode, UriPath, utils::override_opt_field};
+use crate::config::{
+  AuthConfig, DEFAULT_UPSD_KEY, TlsMode, UpsdConfig, UriPath, utils::override_opt_field,
+};
 use core::net::IpAddr;
 use std::{
   env,
@@ -8,7 +10,7 @@ use std::{
   num::NonZeroUsize,
   path::{Path, PathBuf},
 };
-use tracing::Level;
+use tracing::level_filters::LevelFilter;
 
 #[derive(Debug, Default)]
 pub struct ServerEnvArgs {
@@ -17,7 +19,7 @@ pub struct ServerEnvArgs {
   pub config_file: Option<PathBuf>,
   pub default_theme: Option<Box<str>>,
   pub listen: Option<IpAddr>,
-  pub log_level: Option<tracing::Level>,
+  pub log_level: Option<tracing::level_filters::LevelFilter>,
   pub poll_freq: Option<u64>,
   pub poll_interval: Option<u64>,
   pub port: Option<u16>,
@@ -90,7 +92,7 @@ impl ServerEnvArgs {
     load_var!(
       ("NUTWG__CONFIG_FILE",             env_config.config_file,     path_buf);
       ("NUTWG__DEFAULT_THEME",           env_config.default_theme,   boxed_str);
-      ("NUTWG__LOG_LEVEL",               env_config.log_level,       Level);
+      ("NUTWG__LOG_LEVEL",               env_config.log_level,       LevelFilter);
       ("NUTWG__SERVER_KEY",              env_config.server_key,      boxed_str);
 
       ("NUTWG__HTTP_SERVER__BASE_PATH",  env_config.base_path,       UriPath);
@@ -120,14 +122,22 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.log_level, inner_value: self.log_level);
     override_opt_field!(config.server_key, inner_value: self.server_key);
 
-    override_opt_field!(config.upsd.addr, inner_value: self.upsd_addr);
-    override_opt_field!(config.upsd.max_conn, inner_value: self.upsd_max_conn);
-    override_opt_field!(config.upsd.pass, self.upsd_pass);
-    override_opt_field!(config.upsd.poll_freq, inner_value: self.poll_freq);
-    override_opt_field!(config.upsd.poll_interval, inner_value: self.poll_interval);
-    override_opt_field!(config.upsd.port, inner_value: self.upsd_port);
-    override_opt_field!(config.upsd.tls_mode, inner_value: self.upsd_tls);
-    override_opt_field!(config.upsd.user, self.upsd_user);
+    if self.upsd_addr.is_some() {
+      config
+        .upsd
+        .insert(Box::from(DEFAULT_UPSD_KEY), UpsdConfig::default());
+    }
+
+    if let Some(default_upsd) = config.upsd.get_mut(DEFAULT_UPSD_KEY) {
+      override_opt_field!(default_upsd.addr, inner_value: self.upsd_addr);
+      override_opt_field!(default_upsd.max_conn, inner_value: self.upsd_max_conn);
+      override_opt_field!(default_upsd.pass, self.upsd_pass);
+      override_opt_field!(default_upsd.poll_freq, inner_value: self.poll_freq);
+      override_opt_field!(default_upsd.poll_interval, inner_value: self.poll_interval);
+      override_opt_field!(default_upsd.port, inner_value: self.upsd_port);
+      override_opt_field!(default_upsd.tls_mode, inner_value: self.upsd_tls);
+      override_opt_field!(default_upsd.user, self.upsd_user);
+    }
 
     override_opt_field!(config.http_server.base_path, inner_value: self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);

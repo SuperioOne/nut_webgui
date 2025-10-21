@@ -1,6 +1,6 @@
 use std::net::IpAddr;
 
-use crate::state::DaemonStatus;
+use crate::state::ConnectionStatus;
 use nut_webgui_upsmc::{UpsName, ups_status::UpsStatus};
 use tokio::sync::broadcast::{Receiver, Sender, channel};
 
@@ -19,13 +19,34 @@ pub struct DeviceClientInfo {
 
 #[derive(Debug, Clone)]
 pub enum SystemEvent {
-  DeviceAddition { devices: Vec<UpsName> },
-  DeviceRemoval { devices: Vec<UpsName> },
-  DeviceUpdate { devices: Vec<UpsName> },
-  DeviceStatusChange { changes: Vec<DeviceStatusChange> },
-  DaemonStatusUpdate { status: DaemonStatus },
-  ClientConnection { devices: Vec<DeviceClientInfo> },
-  ClientDisconnection { devices: Vec<DeviceClientInfo> },
+  DeviceAddition {
+    devices: Vec<UpsName>,
+    namespace: Box<str>,
+  },
+  DeviceRemoval {
+    devices: Vec<UpsName>,
+    namespace: Box<str>,
+  },
+  DeviceUpdate {
+    devices: Vec<UpsName>,
+    namespace: Box<str>,
+  },
+  DeviceStatusChange {
+    changes: Vec<DeviceStatusChange>,
+    namespace: Box<str>,
+  },
+  DaemonStatusUpdate {
+    status: ConnectionStatus,
+    namespace: Box<str>,
+  },
+  ClientConnection {
+    devices: Vec<DeviceClientInfo>,
+    namespace: Box<str>,
+  },
+  ClientDisconnection {
+    devices: Vec<DeviceClientInfo>,
+    namespace: Box<str>,
+  },
 }
 
 #[derive(Debug)]
@@ -62,19 +83,21 @@ impl std::fmt::Display for ChannelClosedError {
 
 impl std::error::Error for ChannelClosedError {}
 
-pub struct EventBatch {
+pub struct EventBatch<'a> {
+  namespace: &'a str,
+  upsd_status: Option<ConnectionStatus>,
   new: Vec<UpsName>,
   removed: Vec<UpsName>,
   status_changes: Vec<DeviceStatusChange>,
   updated: Vec<UpsName>,
-  upsd_status: Option<DaemonStatus>,
   disconnections: Vec<DeviceClientInfo>,
   connections: Vec<DeviceClientInfo>,
 }
 
-impl EventBatch {
-  pub fn new() -> Self {
+impl<'a> EventBatch<'a> {
+  pub fn new(namespace: &'a str) -> Self {
     Self {
+      namespace,
       new: Vec::new(),
       removed: Vec::new(),
       status_changes: Vec::new(),
@@ -126,47 +149,58 @@ impl EventBatch {
   }
 
   #[inline]
-  pub fn set_upsd_status(&mut self, status: DaemonStatus) {
+  pub fn set_upsd_status(&mut self, status: ConnectionStatus) {
     self.upsd_status = Some(status);
   }
 
   pub fn send(self, channel: &EventChannel) -> Result<(), ChannelClosedError> {
     if !self.new.is_empty() {
-      channel.send(SystemEvent::DeviceAddition { devices: self.new })?;
+      channel.send(SystemEvent::DeviceAddition {
+        devices: self.new,
+        namespace: self.namespace.into(),
+      })?;
     }
 
     if !self.removed.is_empty() {
       channel.send(SystemEvent::DeviceRemoval {
         devices: self.removed,
+        namespace: self.namespace.into(),
       })?;
     }
 
     if !self.updated.is_empty() {
       channel.send(SystemEvent::DeviceUpdate {
         devices: self.updated,
+        namespace: self.namespace.into(),
       })?;
     }
 
     if !self.status_changes.is_empty() {
       channel.send(SystemEvent::DeviceStatusChange {
         changes: self.status_changes,
+        namespace: self.namespace.into(),
       })?;
     }
 
     if !self.disconnections.is_empty() {
       channel.send(SystemEvent::ClientDisconnection {
         devices: self.disconnections,
+        namespace: self.namespace.into(),
       })?;
     }
 
     if !self.connections.is_empty() {
       channel.send(SystemEvent::ClientConnection {
         devices: self.connections,
+        namespace: self.namespace.into(),
       })?;
     }
 
     if let Some(status) = self.upsd_status {
-      channel.send(SystemEvent::DaemonStatusUpdate { status })?;
+      channel.send(SystemEvent::DaemonStatusUpdate {
+        status,
+        namespace: self.namespace.into(),
+      })?;
     }
 
     Ok(())

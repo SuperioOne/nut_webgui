@@ -1,27 +1,27 @@
-use self::{
+use crate::{
   auth::{
     AUTH_COOKIE_DURATION,
     permission::Permissions,
     user_store::{UserProfile, UserStore},
   },
   config::{
-    AuthConfig, ServerConfig, cfg_arg::ServerCliArgs, cfg_env::ServerEnvArgs,
-    cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile,
+    AuthConfig, ServerConfig, UpsdConfig, cfg_arg::ServerCliArgs, cfg_env::ServerEnvArgs,
+    cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile, error::ConfigError,
   },
+  event::EventChannel,
+  http::HttpServer,
+  service::{
+    BackgroundServiceRunner, sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
+    sync_status::StatusSyncService,
+  },
+  skip_tls_verifier::SkipTlsVerifier,
+  state::{DaemonState, ServerState, UpsdState},
 };
-use crate::{config::error::ConfigError, skip_tls_verifier::SkipTlsVerifier};
-use event::EventChannel;
-use http::HttpServer;
 use nut_webgui_upsmc::{
   client::{NutPoolClient, NutPoolClientBuilder},
   rustls::{ClientConfig, pki_types::ServerName},
 };
 use rustls_platform_verifier::BuilderVerifierExt;
-use service::{
-  BackgroundServiceRunner, sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
-  sync_status::StatusSyncService,
-};
-use state::{DaemonState, ServerState};
 use std::{collections::HashMap, panic, sync::Arc, time::Duration};
 use tokio::{
   net::TcpListener,
@@ -29,7 +29,8 @@ use tokio::{
   signal::{self, unix::SignalKind},
   sync::RwLock,
 };
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, level_filters::LevelFilter, warn};
+use tracing_subscriber::{prelude::*, reload};
 
 mod auth;
 mod config;
@@ -72,9 +73,9 @@ fn load_configs() -> Result<ServerConfig, ConfigError> {
 
 #[inline]
 fn create_pool(
-  config: &ServerConfig,
+  config: &UpsdConfig,
 ) -> Result<NutPoolClient, Box<dyn core::error::Error + 'static>> {
-  let tls_client_conf = match config.upsd.tls_mode {
+  let tls_client_conf = match config.tls_mode {
     config::tls_mode::TlsMode::Disable => None,
     config::tls_mode::TlsMode::Strict => Some(
       ClientConfig::builder()
@@ -94,12 +95,12 @@ fn create_pool(
     }
   };
 
-  let mut builder = NutPoolClientBuilder::new(config.upsd.get_socket_addr().into())
-    .with_timeout(Duration::from_secs(config.upsd.poll_freq))
-    .with_limit(config.upsd.max_conn);
+  let mut builder = NutPoolClientBuilder::new(config.get_socket_addr().into())
+    .with_timeout(Duration::from_secs(config.poll_freq))
+    .with_limit(config.max_conn);
 
   if let Some(tls_config) = tls_client_conf {
-    let server_name = ServerName::try_from(config.upsd.addr.as_ref().to_owned())?;
+    let server_name = ServerName::try_from(config.addr.as_ref().to_owned())?;
     builder = builder.with_tls(server_name, Arc::new(tls_config));
   }
 
@@ -134,6 +135,13 @@ fn create_user_store(
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn core::error::Error>> {
+  let (filter, log_level_handle) = reload::Layer::new(LevelFilter::INFO);
+
+  tracing_subscriber::registry()
+    .with(filter)
+    .with(tracing_subscriber::fmt::Layer::default())
+    .init();
+
   let mut sigterm = signal::unix::signal(SignalKind::terminate()).expect("SIGTERM stream failed");
   let mut sigint = signal::unix::signal(SignalKind::interrupt()).expect("SIGINT stream failed");
   let mut sigquit = signal::unix::signal(SignalKind::quit()).expect("SIGQUIT stream failed");
@@ -148,7 +156,7 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
   }));
 
   let config = match load_configs() {
-    Ok(cfg) => cfg,
+    Ok(cfg) => Arc::new(cfg),
     Err(ConfigError::File(err)) => {
       eprintln!("invalid file config, reason = {err}");
       std::process::exit(2);
@@ -162,76 +170,76 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     }
   };
 
-  tracing_subscriber::fmt()
-    .with_max_level(config.log_level)
-    .init();
+  if config.log_level != LevelFilter::INFO {
+    log_level_handle.modify(|filter| *filter = config.log_level)?;
+  }
 
   debug!(message = "server initialized", config = ?config);
 
   let listener = TcpListener::bind(config.http_server.get_listen_addr())
     .await
-    .inspect_err(|err| error!(message = "cannot bind tcp socket to listen", reason = %err, listen_port = config.http_server.port))?;
+    .inspect_err(|err| {
+      error!(
+        message     = "cannot bind tcp socket to listen",
+        reason      = %err,
+        listen_port = config.http_server.port
+      );
+    })?;
 
-  let client_pool = create_pool(&config)?;
-  let event_channel = EventChannel::new(64);
-  let server_state = Arc::new(RwLock::new(ServerState {
-    remote_state: DaemonState::new(),
-    devices: HashMap::new(),
-    shared_desc: HashMap::new(),
-  }));
+  let event_channel = EventChannel::new(256);
   let user_store = create_user_store(&config)?;
 
-  let device_sync = DeviceSyncService::new(
-    client_pool.clone(),
-    event_channel.clone(),
-    server_state.clone(),
-    Duration::from_secs(config.upsd.poll_freq),
-  );
+  let mut upsd_servers = HashMap::new();
 
-  let desc_sync = DescriptionSyncService::new(
-    client_pool.clone(),
-    event_channel.clone(),
-    server_state.clone(),
-  );
+  for (name, upsd_cfg) in config.upsd.iter() {
+    let upsd_state = UpsdState {
+      config: upsd_cfg.clone(),
+      daemon_state: RwLock::new(DaemonState::new()),
+      connection_pool: create_pool(upsd_cfg)?,
+      namespace: name.clone(),
+    };
 
-  let status_sync = StatusSyncService::new(
-    client_pool.clone(),
-    event_channel.clone(),
-    server_state.clone(),
-    Duration::from_secs(config.upsd.poll_interval),
-    Duration::from_secs(config.upsd.poll_freq),
-  );
+    upsd_servers.insert(name.clone(), Arc::new(upsd_state));
+  }
 
-  let bg_services = BackgroundServiceRunner::new()
+  let server_state = Arc::new(ServerState {
+    upsd_servers,
+    config: config,
+    shared_desc: RwLock::new(HashMap::new()),
+    auth_user_store: user_store,
+  });
+
+  let desc_sync = DescriptionSyncService::new(event_channel.clone(), server_state.clone());
+  let mut bg_services = BackgroundServiceRunner::new()
     .with_max_timeout(Duration::from_secs(10))
-    .add_service(device_sync)
-    .add_service(desc_sync)
-    .add_service(status_sync)
-    .start();
+    .add_service(desc_sync);
 
-  let pool_handle = client_pool.clone();
+  for (name, upsd_state) in server_state.upsd_servers.iter() {
+    debug!(
+      message = "adding background services for upsd config",
+      group_name = &name
+    );
+
+    let device_sync = DeviceSyncService::new(event_channel.clone(), upsd_state.clone());
+    let status_sync = StatusSyncService::new(event_channel.clone(), upsd_state.clone());
+
+    bg_services = bg_services
+      .add_service(device_sync)
+      .add_service(status_sync);
+  }
+
+  debug!(message = "starting background services");
+  let service_runner = bg_services.start();
+
   let close_signal = async move {
     select! {
     _ = sigterm.recv() => { info!("SIGTERM signal received."); }
     _ = sigquit.recv() => { info!("SIGQUIT signal received."); }
     _ = sigint.recv() => { info!("SIGINT signal received."); }
     };
-
-    info!("shutting down background services");
-
-    if let Err(err) = bg_services.stop().await {
-      warn!(message = "some services are not shutdown properly", reason=%err)
-    }
-
-    info!("closing open upsd connections");
-    _ = pool_handle.close().await;
   };
 
-  let mut http_server = HttpServer::new(config, server_state, client_pool);
-
-  if let Some(store) = user_store {
-    http_server.set_auth(store);
-  }
+  let http_server = HttpServer::new(server_state.clone());
 
   http_server
     .serve(listener, close_signal)
@@ -241,6 +249,24 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     })?;
 
   info!(message = "http server is closed");
+  info!(message = "shutting down background services");
+
+  if let Err(err) = service_runner.stop().await {
+    warn!(
+      message = "some services are not shutdown properly",
+      reason = %err
+    );
+  }
+
+  info!("closing upsd client connections");
+
+  if let Some(state) = Arc::into_inner(server_state) {
+    for upsd in state.upsd_servers.into_values() {
+      if let Some(upsd_state) = Arc::into_inner(upsd) {
+        upsd_state.connection_pool.close().await;
+      }
+    }
+  }
 
   Ok(())
 }

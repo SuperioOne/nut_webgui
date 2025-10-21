@@ -1,13 +1,13 @@
 use crate::{
   auth::user_session::UserSession,
-  device_entry::DeviceEntry,
-  http::{
-    RouterState,
-    hypermedia::{
-      device_entry_impls::ValueDetail, error::ErrorPage, filter::normalize_id,
-      utils::RenderWithConfig,
+  http::hypermedia::{
+    error::ErrorPage,
+    units::{
+      ApparentPower, Approx, Celcius, OneOf, Percentage, RealPower, RemainingSeconds, UnitDisplay,
     },
+    utils::{RenderWithConfig, normalize_id},
   },
+  state::ServerState,
 };
 use askama::Template;
 use axum::{
@@ -17,51 +17,21 @@ use axum::{
 };
 use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::Deserialize;
-use std::borrow::Cow;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct DeviceTableRow<'a> {
-  id: Cow<'a, str>,
-  attached: usize,
-  charge: Option<ValueDetail<'a>>,
-  desc: &'a str,
-  load: Option<ValueDetail<'a>>,
-  name: &'a UpsName,
-  runtime: Option<ValueDetail<'a>>,
+  id: String,
   status: Option<&'a str>,
-  temperature: Option<ValueDetail<'a>>,
-  power: Option<ValueDetail<'a>>,
-}
-
-impl<'a> From<&'a DeviceEntry> for DeviceTableRow<'a> {
-  #[inline]
-  fn from(device: &'a DeviceEntry) -> Self {
-    let charge = device.get_battery_charge();
-    let load = device.get_ups_load();
-    let runtime = device.get_battery_runtime();
-    let temperature = device.get_ups_temperature();
-    let power = device.get_power();
-
-    let status = {
-      match device.variables.get(VarName::UPS_STATUS) {
-        Some(Value::String(v)) => Some(v.as_ref()),
-        _ => None,
-      }
-    };
-
-    DeviceTableRow {
-      id: normalize_id(device.name.as_str()),
-      attached: device.attached.len(),
-      charge,
-      desc: device.desc.as_ref(),
-      load,
-      name: &device.name,
-      runtime,
-      status,
-      temperature,
-      power,
-    }
-  }
+  attached: usize,
+  charge: Option<Percentage>,
+  desc: &'a str,
+  load: Option<Percentage>,
+  name: &'a UpsName,
+  power: Option<OneOf<ApparentPower, Approx<ApparentPower>>>,
+  real_power: Option<OneOf<RealPower, Approx<RealPower>>>,
+  runtime: Option<RemainingSeconds>,
+  temperature: Option<Celcius>,
 }
 
 #[derive(Deserialize)]
@@ -69,39 +39,94 @@ pub struct HomeFragmentQuery {
   section: Option<String>,
 }
 
+struct RenderedRows<'a> {
+  html: String,
+  namespace: &'a str,
+}
+
 #[derive(Template)]
 #[template(path = "+page.html", blocks = ["device_table"])]
 struct HomeTemplate<'a> {
+  rows_html: Vec<RenderedRows<'a>>,
+}
+
+#[derive(Template)]
+#[template(path = "table_rows.html")]
+struct TableRowsTemplate<'a> {
   devices: Vec<DeviceTableRow<'a>>,
+  namespace: &'a str,
 }
 
 pub async fn get(
   query: Query<HomeFragmentQuery>,
-  State(rs): State<RouterState>,
+  State(state): State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
-  let state = &rs.state.read().await;
-  let mut device_list: Vec<DeviceTableRow> = state
-    .devices
-    .values()
-    .map(|device| DeviceTableRow::from(device))
-    .collect();
+  let session = session.map(|v| v.0);
+  let mut rendered_rows = Vec::with_capacity(state.upsd_servers.len());
 
-  device_list.sort_unstable_by_key(|v| v.name);
+  for upsd in state.upsd_servers.values() {
+    let daemon_state = upsd.daemon_state.read().await;
+
+    let mut devices: Vec<DeviceTableRow> = daemon_state
+      .devices
+      .values()
+      .map(|device| {
+        let status = {
+          match device.variables.get(VarName::UPS_STATUS) {
+            Some(Value::String(v)) => Some(v.as_ref()),
+            _ => None,
+          }
+        };
+
+        DeviceTableRow {
+          id: format!(
+            "{}{}",
+            normalize_id(device.name.as_str()),
+            normalize_id(&upsd.namespace)
+          ),
+          status,
+          attached: device.attached.len(),
+          charge: device.get_battery_charge(),
+          desc: device.desc.as_ref(),
+          load: device.get_ups_load(),
+          name: &device.name,
+          power: device.get_apparent_power(),
+          real_power: device.get_real_power(),
+          runtime: device.get_battery_runtime(),
+          temperature: device.get_ups_temperature(),
+        }
+      })
+      .collect();
+
+    devices.sort_unstable_by_key(|v| v.name);
+
+    let rows = TableRowsTemplate {
+      devices,
+      namespace: upsd.namespace.as_ref(),
+    }
+    .render_with_config(&state.config, session.as_ref())?;
+
+    rendered_rows.push(RenderedRows {
+      html: rows,
+      namespace: upsd.namespace.as_ref(),
+    });
+  }
+
+  rendered_rows.sort_unstable_by_key(|v| v.namespace);
 
   let template = HomeTemplate {
-    devices: device_list,
+    rows_html: rendered_rows,
   };
 
-  let session = session.map(|v| v.0);
   let response = match query.section.as_deref() {
     Some("device_table") => Html(
       template
         .as_device_table()
-        .render_with_config(&rs.config, session.as_ref())?,
+        .render_with_config(&state.config, session.as_ref())?,
     )
     .into_response(),
-    _ => Html(template.render_with_config(&rs.config, session.as_ref())?).into_response(),
+    _ => Html(template.render_with_config(&state.config, session.as_ref())?).into_response(),
   };
 
   Ok(response)

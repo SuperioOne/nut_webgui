@@ -3,10 +3,8 @@ use crate::{
     AUTH_COOKIE_NAME, password_str::PasswordStr, signed_token::SignedToken,
     user_session::UserSession, username::Username,
   },
-  http::{
-    RouterState,
-    hypermedia::{error::ErrorPage, utils::RenderWithConfig},
-  },
+  http::hypermedia::{error::ErrorPage, utils::RenderWithConfig},
+  state::ServerState,
 };
 use askama::Template;
 use axum::{
@@ -18,6 +16,7 @@ use axum::{
 use base64::{Engine, prelude::BASE64_STANDARD};
 use cookie::{Cookie, SameSite};
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Template, Default)]
 #[template(path = "login/+page.html", ext= "html", blocks = ["login_form"])]
@@ -26,21 +25,21 @@ struct LoginTemplate<'a> {
 }
 
 pub async fn get(
-  rs: State<RouterState>,
+  state: State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
-  let redirect_path = format!("{}/", rs.config.http_server.base_path);
+  let redirect_path = format!("{}/", state.config.http_server.base_path);
 
   if let Some(session) = session.map(|v| v.0)
     && session.is_active()
-    && rs
+    && state
       .auth_user_store
       .as_ref()
       .is_some_and(|s| s.contains_user(session.get_username()))
   {
     Ok(Redirect::to(&redirect_path).into_response())
   } else {
-    let template = LoginTemplate::default().render_with_config(&rs.config, None)?;
+    let template = LoginTemplate::default().render_with_config(&state.config, None)?;
     Ok(Html(template).into_response())
   }
 }
@@ -52,7 +51,7 @@ pub struct LoginForm {
 }
 
 pub async fn post(
-  rs: State<RouterState>,
+  state: State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
   login_form: Result<Form<LoginForm>, FormRejection>,
 ) -> Result<Response, ErrorPage> {
@@ -68,29 +67,29 @@ pub async fn post(
         Html(
           template
             .as_login_form()
-            .render_with_config(&rs.config, None)?,
+            .render_with_config(&state.config, None)?,
         )
         .into_response(),
       );
     }
   };
 
-  let redirect_path = format!("{}/", rs.config.http_server.base_path);
+  let redirect_path = format!("{}/", state.config.http_server.base_path);
   if let Some(session) = session.map(|v| v.0)
     && session.is_active()
-    && rs
+    && state
       .auth_user_store
       .as_ref()
       .is_some_and(|s| s.contains_user(session.get_username()))
   {
     Ok(Redirect::to(&redirect_path).into_response())
   } else {
-    match rs.auth_user_store.as_ref() {
+    match state.auth_user_store.as_ref() {
       Some(store) => match store.login_user(&login_form.username, &login_form.password) {
         Ok(session) => {
           let ttl = session.ttl();
-          let signed_bytes =
-            SignedToken::<UserSession>::new(rs.config.server_key.as_bytes()).sign_token(&session);
+          let signed_bytes = SignedToken::<UserSession>::new(state.config.server_key.as_bytes())
+            .sign_token(&session);
 
           let cookie = Cookie::build((AUTH_COOKIE_NAME, BASE64_STANDARD.encode(signed_bytes)))
             .http_only(true)
@@ -120,7 +119,7 @@ pub async fn post(
             Html(
               template
                 .as_login_form()
-                .render_with_config(&rs.config, None)?,
+                .render_with_config(&state.config, None)?,
             )
             .into_response(),
           )

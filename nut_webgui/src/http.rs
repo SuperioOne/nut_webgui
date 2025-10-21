@@ -3,8 +3,7 @@ mod json_api;
 mod probe;
 
 use crate::{
-  auth::{AUTH_COOKIE_RENEW, permission::Permissions, user_store::UserStore},
-  config::ServerConfig,
+  auth::{AUTH_COOKIE_RENEW, permission::Permissions},
   http::{
     hypermedia::middleware::{
       auth_renew_session::RenewSessionLayer, auth_user::UserAuthLayer,
@@ -22,9 +21,8 @@ use axum::{
   http::{HeaderValue, StatusCode, header},
   routing::{get, patch, post},
 };
-use nut_webgui_upsmc::client::NutPoolClient;
 use std::{sync::Arc, time::Duration};
-use tokio::{net::TcpListener, sync::RwLock};
+use tokio::net::TcpListener;
 use tower::{Layer, ServiceBuilder};
 use tower_http::{
   compression::CompressionLayer, cors::CorsLayer, limit::RequestBodyLimitLayer,
@@ -32,64 +30,24 @@ use tower_http::{
   trace::TraceLayer, validate_request::ValidateRequestHeaderLayer,
 };
 
-#[derive(Clone)]
-struct RouterState {
-  config: Arc<ServerConfig>,
-  state: Arc<RwLock<ServerState>>,
-  connection_pool: NutPoolClient,
-  auth_user_store: Option<Arc<UserStore>>,
-}
+use self::hypermedia::middleware::htmx_redirect::HtmxRedirectLayer;
 
 pub struct HttpServer {
-  config: ServerConfig,
-  server_state: Arc<RwLock<ServerState>>,
-  connection_pool: NutPoolClient,
-  auth_user_store: Option<Arc<UserStore>>,
+  server_state: Arc<ServerState>,
 }
 
 impl HttpServer {
-  pub fn new(
-    config: ServerConfig,
-    server_state: Arc<RwLock<ServerState>>,
-    connection_pool: NutPoolClient,
-  ) -> Self {
-    Self {
-      config,
-      server_state,
-      connection_pool,
-      auth_user_store: None,
-    }
-  }
-
-  #[inline]
-  pub fn set_auth(&mut self, store: Arc<UserStore>) {
-    self.auth_user_store = Some(store);
+  pub fn new(server_state: Arc<ServerState>) -> Self {
+    Self { server_state }
   }
 
   pub async fn serve<F>(self, listener: TcpListener, close_signal: F) -> Result<(), std::io::Error>
   where
     F: Future<Output = ()> + Send + 'static,
   {
-    let Self {
-      server_state,
-      config,
-      connection_pool,
-      auth_user_store,
-    } = self;
-
-    let server_key: Arc<[u8]> = Arc::from(config.server_key.as_bytes());
-    let shared_config = Arc::new(config);
-
-    let data_api = create_data_routes(&auth_user_store, server_key.clone(), server_state.clone());
-    let hypermedia_api =
-      create_hypermedia_routes(&auth_user_store, server_key, shared_config.clone());
-
-    let router_state = RouterState {
-      auth_user_store,
-      config: shared_config.clone(),
-      state: server_state,
-      connection_pool,
-    };
+    let Self { server_state } = self;
+    let data_api = create_data_routes(server_state.clone());
+    let hypermedia_api = create_hypermedia_routes(server_state.clone());
 
     let middleware = ServiceBuilder::new()
       .layer(TraceLayer::new_for_http())
@@ -104,6 +62,11 @@ impl HttpServer {
     let probes = Router::new()
       .route("/health", get(probe::get_health))
       .route("/readiness", get(probe::get_readiness))
+      .route("/{namespace}/health", get(probe::get_namespace_health))
+      .route(
+        "/{namespace}/readiness",
+        get(probe::get_namespace_readiness),
+      )
       .fallback(|| async { StatusCode::NOT_FOUND })
       .layer(CorsLayer::permissive());
 
@@ -112,13 +75,13 @@ impl HttpServer {
       .nest("/probes", probes)
       .merge(hypermedia_api)
       .layer(middleware)
-      .with_state(router_state);
+      .with_state(server_state.clone());
 
-    let router = if shared_config.http_server.base_path.is_empty() {
+    let router = if server_state.config.http_server.base_path.is_empty() {
       router.into_service()
     } else {
       Router::new()
-        .nest(shared_config.http_server.base_path.as_str(), router)
+        .nest(server_state.config.http_server.base_path.as_str(), router)
         .into_service()
     };
 
@@ -131,40 +94,40 @@ impl HttpServer {
 }
 
 #[inline]
-fn create_data_routes(
-  auth_user_store: &Option<Arc<UserStore>>,
-  server_key: Arc<[u8]>,
-  server_state: Arc<RwLock<ServerState>>,
-) -> Router<RouterState> {
+fn create_data_routes(server_state: Arc<ServerState>) -> Router<Arc<ServerState>> {
   let data_api = Router::new()
-    .route("/ups", get(json_api::route::ups_list::get))
-    .route("/ups/{ups_name}", get(json_api::route::ups::get))
+    .route("/", get(json_api::route::namespace::get))
+    .route("/{namespace}", get(json_api::route::ups_list::get))
+    .route("/{namespace}/{ups_name}", get(json_api::route::ups::get))
     .route(
-      "/ups/{ups_name}",
+      "/{namespace}/{ups_name}",
       patch(json_api::route::rw::patch).route_layer(
         ServiceBuilder::new().option_layer(
-          auth_user_store
+          server_state
+            .auth_user_store
             .as_ref()
             .map(|_| AuthorizeApiLayer::new(Permissions::SETVAR)),
         ),
       ),
     )
     .route(
-      "/ups/{ups_name}/instcmd",
+      "/{namespace}/{ups_name}/instcmd",
       post(json_api::route::instcmd::post).route_layer(
         ServiceBuilder::new().option_layer(
-          auth_user_store
+          server_state
+            .auth_user_store
             .as_ref()
             .map(|_| AuthorizeApiLayer::new(Permissions::INSTCMD)),
         ),
       ),
     )
     .route(
-      "/ups/{ups_name}/fsd",
+      "/{namespace}/{ups_name}/fsd",
       post(json_api::route::fsd::post).route_layer(
         ServiceBuilder::new()
           .option_layer(
-            auth_user_store
+            server_state
+              .auth_user_store
               .as_ref()
               .map(|_| AuthorizeApiLayer::new(Permissions::FSD)),
           )
@@ -179,9 +142,10 @@ fn create_data_routes(
         .layer(CorsLayer::permissive())
         .layer(ValidateRequestHeaderLayer::accept("application/json"))
         .option_layer(
-          auth_user_store
+          server_state
+            .auth_user_store
             .as_ref()
-            .map(|_| ApiAuthLayer::new(server_key)),
+            .map(|_| ApiAuthLayer::new(server_state.config.clone())),
         )
         .layer(DaemonStateLayer::new(server_state)),
     );
@@ -190,11 +154,7 @@ fn create_data_routes(
 }
 
 #[inline]
-fn create_hypermedia_routes(
-  auth_user_store: &Option<Arc<UserStore>>,
-  server_key: Arc<[u8]>,
-  config: Arc<ServerConfig>,
-) -> Router<RouterState> {
+fn create_hypermedia_routes(server_state: Arc<ServerState>) -> Router<Arc<ServerState>> {
   let static_files = Router::new()
     .route(
       "/style.css",
@@ -215,46 +175,52 @@ fn create_hypermedia_routes(
     .fallback(|| async { StatusCode::NOT_FOUND });
 
   let hypermedia_api = Router::new()
-    .route(
-      "/ups/{ups_name}/instcmd",
-      post(hypermedia::route::ups::instcmd::post).route_layer(
-        ServiceBuilder::new().option_layer(
-          auth_user_store
-            .as_ref()
-            .map(|_| AuthorizeUserLayer::new(config.clone(), Permissions::INSTCMD)),
-        ),
-      ),
-    )
-    .route(
-      "/ups/{ups_name}/fsd",
-      post(hypermedia::route::ups::fsd::post).route_layer(
-        ServiceBuilder::new().option_layer(
-          auth_user_store
-            .as_ref()
-            .map(|_| AuthorizeUserLayer::new(config.clone(), Permissions::FSD)),
-        ),
-      ),
-    )
-    .route(
-      "/ups/{ups_name}/rw",
-      patch(hypermedia::route::ups::rw::patch).route_layer(
-        ServiceBuilder::new().option_layer(
-          auth_user_store
-            .as_ref()
-            .map(|_| AuthorizeUserLayer::new(config.clone(), Permissions::SETVAR)),
-        ),
-      ),
-    )
     .route("/", get(hypermedia::route::home::get))
     .route("/server", get(hypermedia::route::server_info::get))
-    .route("/ups/{ups_name}", get(hypermedia::route::ups::get))
+    .route(
+      "/ups/{namespace}/{ups_name}",
+      get(hypermedia::route::ups::get),
+    )
+    .route(
+      "/ups/{namespace}/{ups_name}/instcmd",
+      post(hypermedia::route::ups::instcmd::post).route_layer(
+        ServiceBuilder::new().option_layer(
+          server_state
+            .auth_user_store
+            .as_ref()
+            .map(|_| AuthorizeUserLayer::new(server_state.config.clone(), Permissions::INSTCMD)),
+        ),
+      ),
+    )
+    .route(
+      "/ups/{namespace}/{ups_name}/fsd",
+      post(hypermedia::route::ups::fsd::post).route_layer(
+        ServiceBuilder::new().option_layer(
+          server_state
+            .auth_user_store
+            .as_ref()
+            .map(|_| AuthorizeUserLayer::new(server_state.config.clone(), Permissions::FSD)),
+        ),
+      ),
+    )
+    .route(
+      "/ups/{namespace}/{ups_name}/rw",
+      patch(hypermedia::route::ups::rw::patch).route_layer(
+        ServiceBuilder::new().option_layer(
+          server_state
+            .auth_user_store
+            .as_ref()
+            .map(|_| AuthorizeUserLayer::new(server_state.config.clone(), Permissions::SETVAR)),
+        ),
+      ),
+    )
     .route("/not-found", get(hypermedia::route::not_found::get))
     .fallback(hypermedia::route::not_found::get);
 
-  match auth_user_store {
+  match server_state.auth_user_store.as_ref() {
     Some(store) => hypermedia_api
       .layer(RenewSessionLayer::new(
-        server_key.clone(),
+        server_state.config.clone(),
         store.clone(),
         AUTH_COOKIE_RENEW,
       ))
@@ -264,9 +230,9 @@ fn create_hypermedia_routes(
         get(hypermedia::route::api_key::get).post(hypermedia::route::api_key::post),
       )
       .layer(UserAuthLayer::new(
-        server_key,
+        server_state.config.clone(),
         store.clone(),
-        format!("{}/login", config.http_server.base_path),
+        format!("{}/login", server_state.config.http_server.base_path),
       ))
       .route(
         "/login",
@@ -278,5 +244,6 @@ fn create_hypermedia_routes(
     "/_layout/themes",
     get(hypermedia::route::layout::get_themes),
   )
+  .layer(HtmxRedirectLayer::new())
   .nest_service("/static", static_files)
 }

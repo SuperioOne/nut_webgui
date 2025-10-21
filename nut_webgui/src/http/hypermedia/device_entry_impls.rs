@@ -1,17 +1,13 @@
-use super::semantic_type::SemanticType;
-use crate::device_entry::DeviceEntry;
-use askama::FastWritable;
-use core::ops::Deref;
+use crate::{
+  device_entry::DeviceEntry,
+  http::hypermedia::{
+    semantic_type::SemanticType,
+    units::{
+      ApparentPower, Approx, Celcius, OneOf, Percentage, RealPower, RemainingSeconds, UnitDisplay,
+    },
+  },
+};
 use nut_webgui_upsmc::{Value, VarName};
-use std::{borrow::Cow, fmt::Write};
-
-#[derive(Debug)]
-pub struct ValueDetail<'a> {
-  pub value: Cow<'a, Value>,
-  pub class: SemanticType,
-  pub unit_sign: Option<&'a str>,
-  pub approx: bool,
-}
 
 // Provides hypermedia specific impls for DeviceEntry struct
 impl DeviceEntry {
@@ -61,259 +57,149 @@ impl DeviceEntry {
     )
   }
 
-  pub fn get_ups_temperature(&self) -> Option<ValueDetail<'_>> {
-    let temperature = self.variables.get(VarName::UPS_TEMPERATURE)?;
-    let unit_sign = if temperature.is_text() {
-      None
-    } else {
-      Some("℃")
-    };
+  pub fn get_ups_temperature(&self) -> Option<Celcius> {
+    let temp_var = self.variables.get(VarName::UPS_TEMPERATURE)?;
 
-    let semantic_class = {
-      match temperature.as_lossly_f64() {
-        Some(v) => {
-          let low_temp = self
-            .variables
-            .get(VarName::UPS_TEMPERATURE_LOW)
-            .and_then(|v| v.as_lossly_f64())
-            .unwrap_or(0.0);
+    match Celcius::try_from(temp_var) {
+      Ok(mut value) => {
+        let low_temp = self
+          .variables
+          .get(VarName::UPS_TEMPERATURE_LOW)
+          .and_then(|v| v.as_lossly_f64())
+          .unwrap_or(0.0);
 
-          let high_temp = self
-            .variables
-            .get(VarName::UPS_TEMPERATURE_HIGH)
-            .and_then(|v| v.as_lossly_f64())
-            .unwrap_or(60.0);
+        let high_temp = self
+          .variables
+          .get(VarName::UPS_TEMPERATURE_HIGH)
+          .and_then(|v| v.as_lossly_f64())
+          .unwrap_or(60.0);
 
-          if v <= low_temp || v >= high_temp {
-            SemanticType::Error
-          } else {
-            SemanticType::Success
-          }
-        }
-        _ => SemanticType::Info,
+        value.set_semantic_type(SemanticType::from_range(
+          value.get_raw_value(),
+          low_temp,
+          high_temp,
+        ));
+
+        Some(value)
       }
-    };
-
-    Some(ValueDetail {
-      value: Cow::Borrowed(temperature),
-      class: semantic_class,
-      unit_sign,
-      approx: false,
-    })
+      Err(_) => None,
+    }
   }
 
-  pub fn get_ups_load(&self) -> Option<ValueDetail<'_>> {
-    let load = self.variables.get(VarName::UPS_LOAD)?;
-    let unit_sign = if load.is_text() { None } else { Some("%") };
+  pub fn get_ups_load(&self) -> Option<Percentage> {
+    let load_var = self.variables.get(VarName::UPS_LOAD)?;
 
-    let semantic_class = {
-      match load.as_lossly_i64() {
-        Some(v) => SemanticType::from_range(v, 45, 75),
-        _ => SemanticType::Info,
+    match Percentage::try_from(load_var) {
+      Ok(mut value) => {
+        value.set_semantic_type(SemanticType::from_range(value.get_raw_value(), 45.0, 75.0));
+
+        Some(value)
       }
-    };
-
-    Some(ValueDetail {
-      value: Cow::Borrowed(load),
-      class: semantic_class,
-      unit_sign,
-      approx: false,
-    })
+      Err(_) => None,
+    }
   }
 
-  pub fn get_battery_charge(&self) -> Option<ValueDetail<'_>> {
-    let charge = self.variables.get(VarName::BATTERY_CHARGE)?;
-    let unit_sign = if charge.is_text() { None } else { Some("%") };
+  pub fn get_battery_charge(&self) -> Option<Percentage> {
+    let charge_var = self.variables.get(VarName::BATTERY_CHARGE)?;
 
-    let semantic_class = {
-      let warn_level = self
-        .variables
-        .get(VarName::BATTERY_CHARGE_WARNING)
-        .and_then(|v| v.as_lossly_i64())
-        .unwrap_or(50);
+    match Percentage::try_from(charge_var) {
+      Ok(mut value) => {
+        let warn_level = self
+          .variables
+          .get(VarName::BATTERY_CHARGE_WARNING)
+          .and_then(|v| v.as_lossly_f64())
+          .unwrap_or(50.0);
 
-      let danger_level = self
-        .variables
-        .get(VarName::BATTERY_CHARGE_LOW)
-        .and_then(|v| v.as_lossly_i64())
-        .unwrap_or(25);
+        let danger_level = self
+          .variables
+          .get(VarName::BATTERY_CHARGE_LOW)
+          .and_then(|v| v.as_lossly_f64())
+          .unwrap_or(25.0);
 
-      match charge.as_lossly_i64() {
-        Some(v) => SemanticType::from_range_inverted(v, danger_level, warn_level),
-        _ => SemanticType::Info,
+        value.set_semantic_type(SemanticType::from_range_inverted(
+          value.get_raw_value(),
+          danger_level,
+          warn_level,
+        ));
+
+        Some(value)
       }
-    };
-
-    Some(ValueDetail {
-      value: Cow::Borrowed(charge),
-      class: semantic_class,
-      unit_sign,
-      approx: false,
-    })
+      Err(_) => None,
+    }
   }
 
-  pub fn get_battery_runtime(&self) -> Option<ValueDetail<'_>> {
+  pub fn get_battery_runtime(&self) -> Option<RemainingSeconds> {
     let battery_runtime = self.variables.get(VarName::BATTERY_RUNTIME)?;
 
-    let semantic_class = {
-      let danger_level = self
-        .variables
-        .get(VarName::BATTERY_RUNTIME_LOW)
-        .and_then(|v| v.as_lossly_i64())
-        .unwrap_or(60);
+    match RemainingSeconds::try_from(battery_runtime) {
+      Ok(mut value) => {
+        let danger_level = self
+          .variables
+          .get(VarName::BATTERY_RUNTIME_LOW)
+          .and_then(|v| v.as_lossly_i64())
+          .unwrap_or(60);
 
-      match battery_runtime.as_lossly_i64() {
-        Some(v) => {
-          if v < danger_level {
-            SemanticType::Error
-          } else {
-            SemanticType::Success
-          }
+        if value.get_raw_value() < danger_level {
+          value.set_semantic_type(SemanticType::Error);
+        } else {
+          value.set_semantic_type(SemanticType::Success);
         }
-        _ => SemanticType::Info,
-      }
-    };
 
-    Some(ValueDetail {
-      value: Cow::Borrowed(battery_runtime),
-      class: semantic_class,
-      unit_sign: None,
-      approx: false,
-    })
+        Some(value)
+      }
+      Err(_) => None,
+    }
   }
 
-  pub fn get_real_power(&self) -> Option<ValueDetail<'_>> {
-    if let Some(v) = self
+  fn get_approx_real_power(&self) -> Option<Approx<RealPower>> {
+    let load = self
       .variables
-      .get(VarName::UPS_REALPOWER)
-      .and_then(|v| v.as_lossly_f64())
-    {
-      Some(ValueDetail {
-        value: Cow::Owned(Value::from(v)),
-        class: SemanticType::Info,
-        unit_sign: Some("W"),
-        approx: false,
-      })
-    } else {
-      let load = self
-        .variables
-        .get(VarName::UPS_LOAD)
-        .and_then(|v| v.as_lossly_f64());
+      .get(VarName::UPS_LOAD)
+      .and_then(|v| v.as_lossly_f64())?;
 
-      let nominal = self
-        .variables
-        .get(VarName::UPS_REALPOWER_NOMINAL)
-        .and_then(|v| v.as_lossly_f64());
-
-      match (load, nominal) {
-        (Some(load), Some(nominal)) => {
-          let calc = (nominal * load / 100.0).round();
-
-          Some(ValueDetail {
-            value: Cow::Owned(Value::from(calc)),
-            class: SemanticType::Info,
-            unit_sign: Some("W"),
-            approx: true,
-          })
-        }
-        _ => None,
-      }
-    }
-  }
-
-  pub fn get_apparent_power(&self) -> Option<ValueDetail<'_>> {
-    if let Some(v) = self
+    let nominal_power = self
       .variables
-      .get(VarName::UPS_POWER)
-      .and_then(|v| v.as_lossly_f64())
+      .get(VarName::UPS_REALPOWER_NOMINAL)
+      .and_then(|v| v.as_lossly_f64())?;
+
+    let calc = (nominal_power * load / 100.0).round();
+
+    Some(RealPower::from(calc).into())
+  }
+
+  fn get_approx_apparent_power(&self) -> Option<Approx<ApparentPower>> {
+    let load = self
+      .variables
+      .get(VarName::UPS_LOAD)
+      .and_then(|v| v.as_lossly_f64())?;
+
+    let nominal = self
+      .variables
+      .get(VarName::UPS_POWER_NOMINAL)
+      .and_then(|v| v.as_lossly_f64())?;
+
+    let calc = (nominal * load / 100.0).round();
+
+    Some(ApparentPower::from(calc).into())
+  }
+
+  pub fn get_real_power(&self) -> Option<OneOf<RealPower, Approx<RealPower>>> {
+    if let Some(real_power) = self.variables.get(VarName::UPS_REALPOWER)
+      && let Ok(value) = RealPower::try_from(real_power)
     {
-      Some(ValueDetail {
-        value: Cow::Owned(Value::from(v)),
-        class: SemanticType::Info,
-        unit_sign: Some("VA"),
-        approx: false,
-      })
+      Some(OneOf::T1(value))
     } else {
-      let load = self
-        .variables
-        .get(VarName::UPS_LOAD)
-        .and_then(|v| v.as_lossly_f64());
-
-      let nominal = self
-        .variables
-        .get(VarName::UPS_POWER_NOMINAL)
-        .and_then(|v| v.as_lossly_f64());
-
-      match (load, nominal) {
-        (Some(load), Some(nominal)) => {
-          let calc = (nominal * load / 100.0).round();
-
-          Some(ValueDetail {
-            value: Cow::Owned(Value::from(calc)),
-            class: SemanticType::Info,
-            unit_sign: Some("VA"),
-            approx: true,
-          })
-        }
-        _ => None,
-      }
+      self.get_approx_real_power().map(|v| OneOf::T2(v))
     }
   }
 
-  /// Returns fist matching ups power information
-  ///
-  /// Priority order:
-  /// - ups.realpower
-  /// - ups.power
-  /// - calculated realpower based on ups.realpower.nominal
-  /// - calculated apparent power based on ups.power.nominal
-  pub fn get_power(&self) -> Option<ValueDetail<'_>> {
-    if self.variables.contains_key(VarName::UPS_REALPOWER) {
-      self.get_real_power()
-    } else if self.variables.contains_key(VarName::UPS_POWER) {
-      self.get_apparent_power()
+  pub fn get_apparent_power(&self) -> Option<OneOf<ApparentPower, Approx<ApparentPower>>> {
+    if let Some(power) = self.variables.get(VarName::UPS_POWER)
+      && let Ok(value) = ApparentPower::try_from(power)
+    {
+      Some(OneOf::T1(value))
     } else {
-      // Fallback to calculted values
-      self.get_real_power().or_else(|| self.get_apparent_power())
+      self.get_approx_apparent_power().map(|v| OneOf::T2(v))
     }
-  }
-}
-
-impl Deref for ValueDetail<'_> {
-  type Target = Value;
-
-  #[inline]
-  fn deref(&self) -> &Self::Target {
-    self.value.deref()
-  }
-}
-
-impl std::fmt::Display for ValueDetail<'_> {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    self.value.fmt(f)?;
-
-    if let Some(sign) = self.unit_sign {
-      f.write_char(' ')?;
-      f.write_str(sign)?;
-    }
-
-    Ok(())
-  }
-}
-
-impl FastWritable for ValueDetail<'_> {
-  fn write_into<W: core::fmt::Write + ?Sized>(
-    &self,
-    dest: &mut W,
-    _: &dyn askama::Values,
-  ) -> askama::Result<()> {
-    dest.write_str(self.value.as_str().as_ref())?;
-
-    if let Some(sign) = self.unit_sign {
-      dest.write_char(' ')?;
-      dest.write_str(sign)?;
-    }
-
-    Ok(())
   }
 }

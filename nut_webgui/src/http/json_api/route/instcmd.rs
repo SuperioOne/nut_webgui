@@ -1,6 +1,9 @@
-use crate::http::{
-  RouterState,
-  json_api::{problem_detail::ProblemDetail, route::request_auth_client},
+use crate::{
+  http::json_api::{
+    problem_detail::ProblemDetail,
+    route::{extract_upsd, request_auth_client},
+  },
+  state::ServerState,
 };
 use axum::{
   Json,
@@ -12,6 +15,7 @@ use axum::{
 };
 use nut_webgui_upsmc::{CmdName, UpsName};
 use serde::Deserialize;
+use std::sync::Arc;
 use tracing::info;
 
 #[derive(Debug, Deserialize)]
@@ -20,17 +24,16 @@ pub struct InstcmdRequest {
 }
 
 pub async fn post(
-  State(rs): State<RouterState>,
-  ups_name: Result<Path<UpsName>, PathRejection>,
+  State(state): State<Arc<ServerState>>,
+  paths: Result<Path<(Box<str>, UpsName)>, PathRejection>,
   body: Result<Json<InstcmdRequest>, JsonRejection>,
 ) -> Result<StatusCode, ProblemDetail> {
-  let Path(ups_name) = ups_name?;
+  let Path((namespace, ups_name)) = paths?;
   let Json(body) = body?;
+  let upsd = extract_upsd!(state, namespace)?;
 
   {
-    let server_state = rs.state.read().await;
-
-    match server_state.devices.get(&ups_name) {
+    match upsd.daemon_state.read().await.devices.get(&ups_name) {
       Some(device) => {
         if device.commands.contains(&body.instcmd) {
           Ok(())
@@ -50,7 +53,7 @@ pub async fn post(
     }
   }?;
 
-  let mut client = request_auth_client!(rs)?;
+  let mut client = request_auth_client!(upsd)?;
 
   {
     let response = client.instcmd(&ups_name, &body.instcmd).await;
@@ -61,6 +64,7 @@ pub async fn post(
 
   info!(
     message = "instcmd called",
+    namespace = %namespace,
     device = %ups_name,
     instcmd = %&body.instcmd
   );

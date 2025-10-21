@@ -1,5 +1,5 @@
 {%- extends "../+layout.html" -%}
-{%- import "icons.html" as icons -%}pagepage
+{%- import "icons.html" as icons -%}
 
 {%- block page_title -%}
   NUT Web - {{device.name}}
@@ -14,12 +14,12 @@
     {%- else -%}
       class="tab"
     {%- endif %}
-    hx-get="{{base_path}}/ups/{{name | urlencode_strict}}?tab={{tab_name}}&section=tab_content"
+    hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{name | urlencode_strict}}?tab={{tab_name}}&section=tab_content"
     hx-indicator="#indicator"
     hx-target="#tab-content"
     hx-swap="innerHTML"
     hx-trigger="click"
-    hx-push-url="{{base_path}}/ups/{{name | urlencode_strict}}?tab={{tab_name}}"
+    hx-push-url="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{name | urlencode_strict}}?tab={{tab_name}}"
   >
     {%- call icons::get_svg(icon, 14) -%}
     <span class="mx-2">{{title}}</span>
@@ -33,7 +33,7 @@
   <div class="flex flex-col gap-6">
     <div class="content-card flex flex-row flex-wrap gap-2 justify-between">
       <div class="basis-full md:basis-auto md:text-start text-center">
-        <h1 class="font-bold leading-8 text-primary text-xl">{{device.name}}</h1>
+        <h1 class="font-bold leading-8 text-primary text-xl">{{device.name}}<span class="font-light opacity-70">@{{namespace}}</span></h1>
         {%- if let Some(mfr) = device.variables.get(nut_webgui_upsmc::VarName::UPS_MFR) -%}
           <p class="font-light leading-6 text-secondary">{{mfr}}</p>
         {%- endif -%}
@@ -48,7 +48,7 @@
           <div
             class="flex flex-row flex-wrap gap-1 justify-center"
             hx-ext="morph"
-            hx-get="{{base_path}}/ups/{{device.name | urlencode_strict}}?section=status"
+            hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?section=status"
             hx-indicator="#indicator"
             hx-swap="morph:innerHTML"
             hx-trigger="every {{poll_interval}}s"

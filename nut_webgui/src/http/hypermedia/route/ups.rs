@@ -1,14 +1,13 @@
 use crate::{
   auth::user_session::UserSession,
-  config::ServerConfig,
+  config::UpsdConfig,
   device_entry::{DeviceEntry, VarDetail},
-  htmx_redirect,
-  http::{
-    RouterState,
-    hypermedia::{
-      error::ErrorPage, notification::NotificationTemplate, semantic_type::SemanticType,
-      utils::RenderWithConfig,
-    },
+  http::hypermedia::{
+    error::ErrorPage,
+    notification::NotificationTemplate,
+    semantic_type::SemanticType,
+    units::UnitDisplay,
+    utils::{RenderWithConfig, redirect_not_found},
   },
   state::{DescriptionKey, ServerState},
 };
@@ -16,12 +15,15 @@ use askama::Template;
 use axum::{
   Extension,
   extract::{Path, Query, State},
-  http::StatusCode,
-  response::{Html, IntoResponse, Redirect, Response},
+  response::{Html, IntoResponse, Response},
 };
 use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::{Deserialize, de::Visitor};
-use std::collections::{BTreeMap, HashMap};
+use std::{
+  collections::{BTreeMap, HashMap},
+  sync::Arc,
+};
+use tokio::sync::RwLockReadGuard;
 
 pub mod fsd;
 pub mod instcmd;
@@ -31,7 +33,9 @@ pub mod rw;
 #[template(path = "ups/+page.html", ext = "html", blocks = ["ups_status", "tab_content"])]
 struct UpsPageTemplate<'a> {
   device: &'a DeviceEntry,
+  namespace: &'a str,
   tab_template: UpsPageTabTemplate<'a>,
+  upsd_config: &'a UpsdConfig,
 }
 
 #[derive(Template, Debug)]
@@ -42,6 +46,7 @@ pub struct RwFormTemplate<'a> {
   pub semantic: SemanticType,
   pub value: Option<&'a Value>,
   pub device_name: &'a UpsName,
+  pub namespace: &'a str,
   pub var_name: &'a VarName,
   pub notification: Option<NotificationTemplate<'a>>,
 }
@@ -53,51 +58,65 @@ enum UpsPageTabTemplate<'a> {
 
   #[template(path = "ups/tab_commands.html")]
   Commands {
+    descriptions: RwLockReadGuard<'a, HashMap<DescriptionKey, Box<str>>>,
     device: &'a DeviceEntry,
-    descriptions: &'a HashMap<DescriptionKey, Box<str>>,
+    namespace: &'a str,
   },
 
   #[template(path = "ups/tab_variables.html")]
   Variables {
-    variables: Vec<(&'a VarName, &'a Value)>,
-    descriptions: &'a HashMap<DescriptionKey, Box<str>>,
+    descriptions: RwLockReadGuard<'a, HashMap<DescriptionKey, Box<str>>>,
     name: &'a UpsName,
+    namespace: &'a str,
+    variables: Vec<(&'a VarName, &'a Value)>,
   },
 
   #[template(path = "ups/tab_grid.html")]
-  Grid { device: &'a DeviceEntry },
+  Grid {
+    device: &'a DeviceEntry,
+    namespace: &'a str,
+  },
 
   #[template(path = "ups/tab_rw.html")]
   Rw {
-    name: &'a UpsName,
+    descriptions: RwLockReadGuard<'a, HashMap<DescriptionKey, Box<str>>>,
     inputs: BTreeMap<VarName, RwFormTemplate<'a>>,
-    descriptions: &'a HashMap<DescriptionKey, Box<str>>,
+    name: &'a UpsName,
   },
 
   #[template(path = "ups/tab_clients.html")]
   Clients { device: &'a DeviceEntry },
 }
 
-fn get_tab_template<'a>(
-  device: &'a DeviceEntry,
+async fn get_tab_template<'a>(
   tab_name: TabName,
-  state: &'a ServerState,
+  namespace: &'a str,
+  device: &'a DeviceEntry,
+  server_state: &'a ServerState,
 ) -> UpsPageTabTemplate<'a> {
   match tab_name {
     TabName::Variables => {
       let mut variables: Vec<_> = device.variables.iter().collect();
       variables.sort_unstable_by_key(|(k, _)| *k);
 
+      let descriptions = server_state.shared_desc.read().await;
+
       UpsPageTabTemplate::Variables {
+        namespace,
         variables,
         name: &device.name,
-        descriptions: &state.shared_desc,
+        descriptions,
       }
     }
-    TabName::Commands => UpsPageTabTemplate::Commands {
-      device,
-      descriptions: &state.shared_desc,
-    },
+    TabName::Commands => {
+      let descriptions = server_state.shared_desc.read().await;
+
+      UpsPageTabTemplate::Commands {
+        descriptions,
+        device,
+        namespace,
+      }
+    }
     TabName::Clients => UpsPageTabTemplate::Clients { device },
     TabName::Rw => {
       let inputs = device
@@ -109,107 +128,27 @@ fn get_tab_template<'a>(
             detail,
             device_name: &device.name,
             message: None,
+            notification: None,
             semantic: SemanticType::None,
             value,
+            namespace,
             var_name: name,
-            notification: None,
           };
 
           (name.clone(), input)
         })
         .collect();
 
+      let descriptions = server_state.shared_desc.read().await;
+
       UpsPageTabTemplate::Rw {
+        descriptions,
         inputs,
         name: &device.name,
-        descriptions: &state.shared_desc,
       }
     }
-    _ => UpsPageTabTemplate::Grid { device },
+    _ => UpsPageTabTemplate::Grid { device, namespace },
   }
-}
-
-fn full_page_response(
-  entry: Option<&DeviceEntry>,
-  tab_name: TabName,
-  state: &ServerState,
-  config: &ServerConfig,
-  session: Option<&UserSession>,
-) -> Result<Response, ErrorPage> {
-  let response = if let Some(device) = entry {
-    let tab_template = get_tab_template(device, tab_name, state);
-
-    let template = UpsPageTemplate {
-      device,
-      tab_template,
-    };
-
-    Html(template.render_with_config(config, session)?).into_response()
-  } else {
-    Redirect::permanent(&format!("{}/not-found", config.http_server.base_path)).into_response()
-  };
-
-  Ok(response)
-}
-
-fn partial_tab_content(
-  entry: Option<&DeviceEntry>,
-  tab_name: TabName,
-  state: &ServerState,
-  config: &ServerConfig,
-  session: Option<&UserSession>,
-) -> Result<Response, ErrorPage> {
-  let response = if let Some(device) = entry {
-    let tab_template = get_tab_template(device, tab_name, state);
-
-    let template = UpsPageTemplate {
-      device,
-      tab_template,
-    };
-
-    Html(
-      template
-        .as_tab_content()
-        .render_with_config(config, session)?,
-    )
-    .into_response()
-  } else {
-    htmx_redirect!(
-      StatusCode::NOT_FOUND,
-      format!("{}/not-found", config.http_server.base_path)
-    )
-    .into_response()
-  };
-
-  Ok(response)
-}
-
-fn partial_ups_status(
-  entry: Option<&DeviceEntry>,
-  config: &ServerConfig,
-  session: Option<&UserSession>,
-) -> Result<Response, ErrorPage> {
-  let response = if let Some(device) = entry {
-    let template = UpsPageTemplate {
-      device,
-      tab_template: UpsPageTabTemplate::None,
-    };
-
-    Html(
-      template
-        .as_ups_status()
-        .render_with_config(config, session)?,
-    )
-    .into_response()
-  } else {
-    htmx_redirect!(
-      StatusCode::NOT_FOUND,
-      format!("{}/not-found", config.http_server.base_path)
-    )
-    .into_response()
-  };
-
-  Ok(response)
 }
 
 #[derive(Deserialize)]
@@ -219,23 +158,57 @@ pub struct UpsFragmentQuery {
 }
 
 pub async fn get(
-  Path(ups_name): Path<UpsName>,
+  Path((namespace, ups_name)): Path<(Box<str>, UpsName)>,
   query: Query<UpsFragmentQuery>,
-  rs: State<RouterState>,
+  state: State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
-  let state = rs.state.read().await;
-  let ups_entry = state.devices.get(&ups_name);
+  let upsd = match state.upsd_servers.get(&namespace) {
+    Some(upsd) => upsd,
+    None => return Ok(redirect_not_found!(&state)),
+  };
+
+  let daemon_state = upsd.daemon_state.read().await;
+  let device = match daemon_state.devices.get(&ups_name) {
+    Some(ups) => ups,
+    None => return Ok(redirect_not_found!(&state)),
+  };
+
   let tab_name = query.tab.unwrap_or(TabName::Grid);
   let session = session.map(|v| v.0);
 
-  match query.section.as_deref() {
-    Some("status") => partial_ups_status(ups_entry, &rs.config, session.as_ref()),
+  let mut template = UpsPageTemplate {
+    device,
+    tab_template: UpsPageTabTemplate::None,
+    upsd_config: &upsd.config,
+    namespace: &namespace,
+  };
+
+  let response = match query.section.as_deref() {
+    Some("status") => Html(
+      template
+        .as_ups_status()
+        .render_with_config(&state.config, session.as_ref())?,
+    )
+    .into_response(),
     Some("tab_content") => {
-      partial_tab_content(ups_entry, tab_name, &state, &rs.config, session.as_ref())
+      template.tab_template = get_tab_template(tab_name, &namespace, device, &state).await;
+
+      Html(
+        template
+          .as_tab_content()
+          .render_with_config(&state.config, session.as_ref())?,
+      )
+      .into_response()
     }
-    _ => full_page_response(ups_entry, tab_name, &state, &rs.config, session.as_ref()),
-  }
+    _ => {
+      template.tab_template = get_tab_template(tab_name, &namespace, device, &state).await;
+
+      Html(template.render_with_config(&state.config, session.as_ref())?).into_response()
+    }
+  };
+
+  Ok(response)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
