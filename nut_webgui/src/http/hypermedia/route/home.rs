@@ -81,7 +81,7 @@ pub async fn get(
 
         DeviceTableRow {
           id: format!(
-            "{}{}",
+            "{}@{}",
             normalize_id(device.name.as_str()),
             normalize_id(&upsd.namespace)
           ),

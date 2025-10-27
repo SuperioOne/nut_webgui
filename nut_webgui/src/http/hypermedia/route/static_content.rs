@@ -1,4 +1,5 @@
 use axum::{
+  body::Body,
   http::{HeaderMap, HeaderValue, StatusCode, header},
   response::IntoResponse,
 };
@@ -17,7 +18,11 @@ pub async fn get_javascript() -> impl IntoResponse {
     ),
   ]);
 
-  (StatusCode::OK, headers, nut_webgui_client::JS.bytes)
+  (
+    StatusCode::OK,
+    headers,
+    Body::from(nut_webgui_client::JS.bytes),
+  )
 }
 
 pub async fn get_css() -> impl IntoResponse {
@@ -32,7 +37,11 @@ pub async fn get_css() -> impl IntoResponse {
     ),
   ]);
 
-  (StatusCode::OK, headers, nut_webgui_client::CSS.bytes)
+  (
+    StatusCode::OK,
+    headers,
+    Body::from(nut_webgui_client::CSS.bytes),
+  )
 }
 
 pub async fn get_icon() -> impl IntoResponse {
@@ -47,7 +56,11 @@ pub async fn get_icon() -> impl IntoResponse {
     ),
   ]);
 
-  (StatusCode::OK, headers, nut_webgui_client::ICON.bytes)
+  (
+    StatusCode::OK,
+    headers,
+    Body::from(nut_webgui_client::ICON.bytes),
+  )
 }
 
 pub async fn get_sprite_sheet() -> impl IntoResponse {
@@ -65,6 +78,6 @@ pub async fn get_sprite_sheet() -> impl IntoResponse {
   (
     StatusCode::OK,
     headers,
-    nut_webgui_client::SPRITE_SHEET.bytes,
+    Body::from(nut_webgui_client::SPRITE_SHEET.bytes),
   )
 }

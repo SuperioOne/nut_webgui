@@ -31,7 +31,7 @@ nut_webgui_upsmc = { path = "../nut_webgui_upsmc", features = [
         "serde",
 ] }
 rand_chacha = { version = "0.9", features = ["os_rng"] }
-rustls-platform-verifier = { version = "0.5" }
+rustls-platform-verifier = { version = "0.6" }
 serde = { version = "1", features = ["serde_derive"] }
 serde_json = { version = "1", features = ["raw_value"] }
 sha2 = { version = "0.10" }
@@ -50,7 +50,6 @@ toml = { version = "0.9", default-features = false, features = [
 ] }
 tower = { version = "0.5" }
 tower-http = { version = "0.6", features = [
-        "compression-br",
         "compression-deflate",
         "compression-gzip",
         "cors",

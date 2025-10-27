@@ -85,7 +85,10 @@ enum UpsPageTabTemplate<'a> {
   },
 
   #[template(path = "ups/tab_clients.html")]
-  Clients { device: &'a DeviceEntry },
+  Clients {
+    device: &'a DeviceEntry,
+    namespace: &'a str,
+  },
 }
 
 async fn get_tab_template<'a>(
@@ -117,7 +120,7 @@ async fn get_tab_template<'a>(
         namespace,
       }
     }
-    TabName::Clients => UpsPageTabTemplate::Clients { device },
+    TabName::Clients => UpsPageTabTemplate::Clients { device, namespace },
     TabName::Rw => {
       let inputs = device
         .rw_variables

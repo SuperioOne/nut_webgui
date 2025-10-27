@@ -57,14 +57,14 @@ impl HttpServer {
         HeaderValue::from_static("no-cache, max-age=0"),
       ))
       .layer(TimeoutLayer::new(Duration::from_secs(30)))
-      .layer(CompressionLayer::new().br(true).gzip(true).deflate(true));
+      .layer(CompressionLayer::new().gzip(true).deflate(true));
 
     let probes = Router::new()
       .route("/health", get(probe::get_health))
       .route("/readiness", get(probe::get_readiness))
-      .route("/{namespace}/health", get(probe::get_namespace_health))
+      .route("/health/{namespace}", get(probe::get_namespace_health))
       .route(
-        "/{namespace}/readiness",
+        "/readiness/{namespace}",
         get(probe::get_namespace_readiness),
       )
       .fallback(|| async { StatusCode::NOT_FOUND })

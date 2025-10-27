@@ -79,12 +79,12 @@ fn create_pool(
     config::tls_mode::TlsMode::Disable => None,
     config::tls_mode::TlsMode::Strict => Some(
       ClientConfig::builder()
-        .with_platform_verifier()
+        .with_platform_verifier()?
         .with_no_client_auth(),
     ),
     config::tls_mode::TlsMode::SkipVerify => {
       let mut config = ClientConfig::builder()
-        .with_platform_verifier()
+        .with_platform_verifier()?
         .with_no_client_auth();
 
       config
