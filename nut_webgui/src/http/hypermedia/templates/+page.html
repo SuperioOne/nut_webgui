@@ -23,9 +23,9 @@
     <div
       hx-ext="morph"
       hx-get="{{base_path}}/?section=device_table"
-      hx-trigger="every 10s"
-      hx-swap="morph:innerHTML"
       hx-indicator="#indicator"
+      hx-swap="morph:innerHTML"
+      hx-trigger="every 15s"
     >
       {%- block device_table -%}
         {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}

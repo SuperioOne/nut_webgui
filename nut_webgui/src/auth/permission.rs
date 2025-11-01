@@ -1,5 +1,6 @@
 use core::{num::ParseIntError, str::FromStr};
 use serde::{Deserialize, de, de::Visitor};
+use std::fmt::Write;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Permissions(u8);
@@ -12,8 +13,13 @@ impl Default for Permissions {
 }
 
 impl Permissions {
+  /// User can set forced shutdown flag on UPS
   pub const FSD: Permissions = Permissions(1);
+
+  /// User can call instant command on UPS
   pub const INSTCMD: Permissions = Permissions(2);
+
+  /// User can modify RW variables on UPS
   pub const SETVAR: Permissions = Permissions(4);
 
   #[inline]
@@ -54,6 +60,15 @@ impl Permissions {
   #[inline]
   pub const fn as_u8(&self) -> u8 {
     self.0
+  }
+
+  pub const fn as_str(&self) -> &'static str {
+    match *self {
+      Self::FSD => "fsd",
+      Self::INSTCMD => "instcmd",
+      Self::SETVAR => "setvar",
+      _ => "unknown permission",
+    }
   }
 }
 
@@ -207,5 +222,50 @@ impl<'de> Deserialize<'de> for Permissions {
     D: serde::Deserializer<'de>,
   {
     deserializer.deserialize_any(PermissionVisitor)
+  }
+}
+
+impl askama::FastWritable for Permissions {
+  fn write_into<W: core::fmt::Write + ?Sized>(
+    &self,
+    dest: &mut W,
+    _: &dyn askama::Values,
+  ) -> askama::Result<()> {
+    if self.len() > 1 {
+      let mut iter = self.iter().peekable();
+
+      while let Some(value) = iter.next() {
+        dest.write_str(value.as_str())?;
+
+        if iter.peek().is_some() {
+          dest.write_char(' ')?;
+        }
+      }
+
+      Ok(())
+    } else {
+      dest.write_str((*self).as_str())?;
+      Ok(())
+    }
+  }
+}
+
+impl std::fmt::Display for Permissions {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    if self.len() > 1 {
+      let mut iter = self.iter().peekable();
+
+      while let Some(value) = iter.next() {
+        f.write_str(value.as_str())?;
+
+        if iter.peek().is_some() {
+          f.write_char(' ')?;
+        }
+      }
+
+      Ok(())
+    } else {
+      f.write_str((*self).as_str())
+    }
   }
 }

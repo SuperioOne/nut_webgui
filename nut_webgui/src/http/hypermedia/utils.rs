@@ -5,7 +5,6 @@ use crate::{
 use askama::Template;
 use std::{any::Any, borrow::Cow, collections::HashMap};
 
-#[macro_export]
 macro_rules! htmx_swap {
   ($response:expr, $swap:literal) => {{
     let mut response = $response.into_response();
@@ -26,6 +25,7 @@ macro_rules! redirect_not_found {
   };
 }
 
+pub(super) use htmx_swap;
 pub(super) use redirect_not_found;
 
 pub fn normalize_id(input: &str) -> Cow<'_, str> {
@@ -77,8 +77,6 @@ where
     let mut permissions = Permissions::all();
     let mut values: HashMap<&'static str, &dyn Any> = HashMap::new();
 
-    values.insert("UPSD__POLL_FREQ", &30_u64);
-    values.insert("UPSD__POLL_INTERVAL", &3_u64);
     values.insert("HTTP_SERVER__BASE_PATH", &config.http_server.base_path);
 
     if let Some(theme) = &config.default_theme {
@@ -98,10 +96,14 @@ where
 #[derive(Debug)]
 pub struct AppDetails {
   pub version: &'static str,
+  pub license: &'static str,
+  pub repository: &'static str,
 }
 
 pub const fn get_app_info() -> AppDetails {
   AppDetails {
     version: env!("CARGO_PKG_VERSION"),
+    license: env!("CARGO_PKG_LICENSE"),
+    repository: env!("CARGO_PKG_REPOSITORY"),
   }
 }

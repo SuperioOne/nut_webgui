@@ -1,4 +1,5 @@
 use crate::Value;
+use std::fmt::Write;
 
 // Implements repetitive traits and const values
 macro_rules! impl_status {
@@ -47,7 +48,7 @@ macro_rules! impl_status {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct UpsStatus(u32);
 
-// NOTE: networkupstools may have more options like ECO (deprecated), FANFAIL, OVERHEAT etc.
+// NOTE: networkupstools may have more options like ECO, FANFAIL, OVERHEAT etc.
 // Current implementation follows RFC version and ignores any other status texts.
 impl_status!(
 (ALARM,           "ALARM");
@@ -74,8 +75,17 @@ impl_status!(
 impl std::fmt::Display for UpsStatus {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     if self.len() > 1 {
-      let parts: Vec<&str> = self.iter().map(|v| get_state_str(v)).collect();
-      f.write_str(&parts.join(" "))
+      let mut iter = self.iter().peekable();
+
+      while let Some(value) = iter.next() {
+        f.write_str(get_state_str(value))?;
+
+        if iter.peek().is_some() {
+          f.write_char(' ')?;
+        }
+      }
+
+      Ok(())
     } else {
       f.write_str(get_state_str(*self))
     }

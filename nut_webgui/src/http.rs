@@ -176,7 +176,8 @@ fn create_hypermedia_routes(server_state: Arc<ServerState>) -> Router<Arc<Server
 
   let hypermedia_api = Router::new()
     .route("/", get(hypermedia::route::home::get))
-    .route("/server", get(hypermedia::route::server_info::get))
+    .route("/connection", get(hypermedia::route::connection::get))
+    .route("/system", get(hypermedia::route::system::get))
     .route(
       "/ups/{namespace}/{ups_name}",
       get(hypermedia::route::ups::get),

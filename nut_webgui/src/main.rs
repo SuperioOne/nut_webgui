@@ -6,7 +6,8 @@ use crate::{
   },
   config::{
     AuthConfig, ServerConfig, UpsdConfig, cfg_arg::ServerCliArgs, cfg_env::ServerEnvArgs,
-    cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile, error::ConfigError,
+    cfg_fallback::FallbackArgs, cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile,
+    error::ConfigError,
   },
   event::EventChannel,
   http::HttpServer,
@@ -66,7 +67,8 @@ fn load_configs() -> Result<ServerConfig, ConfigError> {
   let config = ServerConfig::new()
     .layer(toml_args)
     .layer(env_args)
-    .layer(cli_args);
+    .layer(cli_args)
+    .layer(FallbackArgs);
 
   Ok(config)
 }
@@ -180,8 +182,8 @@ async fn main() -> Result<(), Box<dyn core::error::Error>> {
     .await
     .inspect_err(|err| {
       error!(
-        message     = "cannot bind tcp socket to listen",
-        reason      = %err,
+        message = "cannot bind tcp socket to listen",
+        reason = %err,
         listen_port = config.http_server.port
       );
     })?;

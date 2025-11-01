@@ -3,14 +3,13 @@ use crate::{
     access_token::AccessToken, permission::Permissions, signed_token::SignedToken,
     user_session::UserSession,
   },
-  htmx_swap,
   http::{
     ServerState,
     hypermedia::{
       error::ErrorPage,
       notification::NotificationTemplate,
       semantic_type::SemanticType,
-      utils::{RenderWithConfig, redirect_not_found},
+      utils::{RenderWithConfig, htmx_swap, redirect_not_found},
     },
   },
 };

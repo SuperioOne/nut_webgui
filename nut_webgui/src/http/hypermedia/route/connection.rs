@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
   auth::user_session::UserSession,
-  config::{ServerConfig, UpsdConfig},
+  config::UpsdConfig,
   http::hypermedia::{error::ErrorPage, utils::RenderWithConfig},
   state::{DaemonState, ServerState},
 };
@@ -15,26 +15,31 @@ use axum::{
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct ServerInfoFragmentQuery {
+pub struct ConnectionFragmentQuery {
   section: Option<String>,
 }
 
-#[derive(Template)]
-#[template(path = "server_info/+page.html", blocks = ["info_cards"])]
-struct ServerInfoPageTemplate<'a> {
-  server_config: &'a ServerConfig,
-  upsd_html: Vec<String>,
+struct RenderedUpsdInfo<'a> {
+  html: String,
+  name: &'a str,
 }
 
 #[derive(Template)]
-#[template(path = "server_info/upsd_info.html")]
+#[template(path = "connection/+page.html", blocks = ["info_cards"])]
+struct ConnectionPageTemplate<'a> {
+  upsd_html: Vec<RenderedUpsdInfo<'a>>,
+}
+
+#[derive(Template)]
+#[template(path = "connection/upsd_info.html")]
 struct UpsdInfoTemplate<'a> {
   config: &'a UpsdConfig,
   state: &'a DaemonState,
+  name: &'a str,
 }
 
 pub async fn get(
-  query: Query<ServerInfoFragmentQuery>,
+  query: Query<ConnectionFragmentQuery>,
   State(state): State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
@@ -44,19 +49,22 @@ pub async fn get(
   for upsd in state.upsd_servers.values() {
     let daemon_state = upsd.daemon_state.read().await;
 
-    let upsd_info = UpsdInfoTemplate {
+    let html = UpsdInfoTemplate {
       state: &daemon_state,
       config: &upsd.config,
+      name: &upsd.namespace,
     }
     .render_with_config(&state.config, session.as_ref())?;
 
-    upsd_html.push(upsd_info);
+    upsd_html.push(RenderedUpsdInfo {
+      html,
+      name: &upsd.namespace,
+    });
   }
 
-  let template = ServerInfoPageTemplate {
-    server_config: &state.config,
-    upsd_html,
-  };
+  upsd_html.sort_unstable_by_key(|v| v.name);
+
+  let template = ConnectionPageTemplate { upsd_html };
 
   let response = match query.section.as_deref() {
     Some("info_cards") => Html(

@@ -2,13 +2,12 @@ use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
   device_entry::VarDetail,
-  htmx_swap,
   http::hypermedia::{
     error::ErrorPage,
     notification::NotificationTemplate,
     route::ups::RwFormTemplate,
     semantic_type::SemanticType,
-    utils::{RenderWithConfig, redirect_not_found},
+    utils::{RenderWithConfig, htmx_swap, redirect_not_found},
   },
   state::ServerState,
 };

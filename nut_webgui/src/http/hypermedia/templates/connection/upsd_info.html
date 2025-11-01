@@ -1,0 +1,161 @@
+{%- import "icons.html" as icons -%}
+
+<div class="content-card flex flex-col gap-4" >
+  <div class="flex flex-row items-center justify-between">
+    <hgroup class="grow">
+      <div class="flex flex-row gap-2 items-center text-primary">
+        <span>{%- call icons::get_svg("server", 20) -%}</span>
+        <h1 class="text-xl">{{name}}</h1>
+      </div>
+      <p class="opacity-50 text-sm">
+        <span class="text-secondary">{{config.addr}}</span><span class="text-secondary">:{{config.port}}</span>
+      </p>
+    </hgroup>
+    <div class="flex flex-col gap-1 items-center">
+      {%- match state.status -%}
+        {%- when crate::state::ConnectionStatus::Online -%}
+            <div class="status status-success status-xl"></div>
+            <p class="opacity-50 text-center text-sm text-success uppercase">{{state.status}}</p>
+        {%- when crate::state::ConnectionStatus::Dead -%}
+          <div class="*:[grid-area:1/1] inline-grid">
+            <div class="animate-ping status status-error status-xl"></div>
+            <div class="status status-error status-xl"></div>
+          </div>
+          <p class="opacity-50 text-center text-error text-sm uppercase">{{state.status}}</p>
+        {%- when crate::state::ConnectionStatus::NotReady -%}
+          <div class="*:[grid-area:1/1] inline-grid">
+            <div class="animate-ping status status-warning status-xl"></div>
+            <div class="status status-warning status-xl"></div>
+          </div>
+          <p class="opacity-50 text-center text-sm text-warning uppercase">{{state.status}}</p>
+      {%- endmatch -%}
+    </div>
+  </div>
+  <div>
+    <div class="stats stats-vertical w-full">
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("clock",18) -%}
+        </div>
+        <div class="stat-title">Last Sync</div>
+        <div class="stat-value text-sm">
+          {%- match state.last_device_sync -%}
+            {%- when Some(date) -%}
+              {{date.format("%Y-%m-%d %H:%M:%S")}} UTC
+            {%- when None -%}
+              Never
+          {%- endmatch -%}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("tool",18) -%}
+        </div>
+        <div class="stat-title">Protocol Version</div>
+        <div class="stat-value text-sm">
+          {%- match state.prot_ver -%}
+            {%- when Some(value) -%}
+              {{value}}
+            {%- when None -%}
+              -
+          {%- endmatch -%}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("package",18) -%}
+        </div>
+        <div class="stat-title">UPSD Version</div>
+        <div class="stat-value text-sm text-wrap">
+          {%- match state.ver -%}
+            {%- when Some(value) -%}
+              {{value}}
+            {%- when None -%}
+              -
+          {%- endmatch -%}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("hard-drive",18) -%}
+        </div>
+        <div class="stat-title">UPS Devices</div>
+        <div class="stat-value text-sm">
+          {{state.devices.len()}}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("refresh-cw",18) -%}
+        </div>
+        <div class="stat-title">Poll Interval (seconds)</div>
+        <div class="stat-value text-sm">
+          {{config.poll_interval}}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("refresh-cw",18) -%}
+        </div>
+        <div class="stat-title">Poll Frequency (seconds)</div>
+        <div class="stat-value text-sm">
+          {{config.poll_freq}}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("lock",18) -%}
+        </div>
+        <div class="stat-title">TLS Mode</div>
+        <div class="stat-value text-sm">
+          {{config.tls_mode}}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("layers",18) -%}
+        </div>
+        <div class="stat-title">Connection Pool Size</div>
+        <div class="stat-value text-sm">
+          {{config.max_conn}}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("user",18) -%}
+        </div>
+        <div class="stat-title">Username</div>
+        <div class="stat-value text-sm">
+          {%- if config.user.is_some() -%}
+            <span class="text-success">SET</span>
+          {%- else -%}
+            <span class="text-warning">NOT SET</span>
+          {%- endif -%}
+        </div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          {%- call icons::get_svg("key",18) -%}
+        </div>
+        <div class="stat-title">Password</div>
+        <div class="stat-value text-sm">
+          {%- if config.pass.is_some() -%}
+            <span class="text-success">SET</span>
+          {%- else -%}
+            <span class="text-warning">NOT SET</span>
+          {%- endif -%}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

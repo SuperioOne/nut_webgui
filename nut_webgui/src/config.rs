@@ -1,23 +1,18 @@
 use crate::config::{tls_mode::TlsMode, uri_path::UriPath, utils::rand_server_key_256bit};
 use core::net::{IpAddr, Ipv4Addr};
-use std::collections::HashMap;
-use std::{num::NonZeroUsize, path::PathBuf};
+use std::{collections::HashMap, num::NonZeroUsize, path::PathBuf};
 use tracing::level_filters::LevelFilter;
 
 mod utils;
 
 pub mod cfg_arg;
 pub mod cfg_env;
+pub mod cfg_fallback;
 pub mod cfg_toml;
 pub mod cfg_user;
 pub mod error;
 pub mod tls_mode;
 pub mod uri_path;
-
-#[inline]
-pub fn default_upsd_key() -> Box<str> {
-  Box::from("default")
-}
 
 pub const DEFAULT_UPSD_KEY: &str = "default";
 

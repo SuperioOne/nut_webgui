@@ -69,12 +69,14 @@ enum UpsPageTabTemplate<'a> {
     name: &'a UpsName,
     namespace: &'a str,
     variables: Vec<(&'a VarName, &'a Value)>,
+    upsd_config: &'a UpsdConfig,
   },
 
   #[template(path = "ups/tab_grid.html")]
   Grid {
     device: &'a DeviceEntry,
     namespace: &'a str,
+    upsd_config: &'a UpsdConfig,
   },
 
   #[template(path = "ups/tab_rw.html")]
@@ -88,6 +90,7 @@ enum UpsPageTabTemplate<'a> {
   Clients {
     device: &'a DeviceEntry,
     namespace: &'a str,
+    upsd_config: &'a UpsdConfig,
   },
 }
 
@@ -96,6 +99,7 @@ async fn get_tab_template<'a>(
   namespace: &'a str,
   device: &'a DeviceEntry,
   server_state: &'a ServerState,
+  upsd_config: &'a UpsdConfig,
 ) -> UpsPageTabTemplate<'a> {
   match tab_name {
     TabName::Variables => {
@@ -109,6 +113,7 @@ async fn get_tab_template<'a>(
         variables,
         name: &device.name,
         descriptions,
+        upsd_config,
       }
     }
     TabName::Commands => {
@@ -120,7 +125,11 @@ async fn get_tab_template<'a>(
         namespace,
       }
     }
-    TabName::Clients => UpsPageTabTemplate::Clients { device, namespace },
+    TabName::Clients => UpsPageTabTemplate::Clients {
+      device,
+      namespace,
+      upsd_config,
+    },
     TabName::Rw => {
       let inputs = device
         .rw_variables
@@ -150,7 +159,11 @@ async fn get_tab_template<'a>(
         name: &device.name,
       }
     }
-    _ => UpsPageTabTemplate::Grid { device, namespace },
+    _ => UpsPageTabTemplate::Grid {
+      device,
+      namespace,
+      upsd_config,
+    },
   }
 }
 
@@ -195,7 +208,8 @@ pub async fn get(
     )
     .into_response(),
     Some("tab_content") => {
-      template.tab_template = get_tab_template(tab_name, &namespace, device, &state).await;
+      template.tab_template =
+        get_tab_template(tab_name, &namespace, device, &state, &upsd.config).await;
 
       Html(
         template
@@ -205,7 +219,8 @@ pub async fn get(
       .into_response()
     }
     _ => {
-      template.tab_template = get_tab_template(tab_name, &namespace, device, &state).await;
+      template.tab_template =
+        get_tab_template(tab_name, &namespace, device, &state, &upsd.config).await;
 
       Html(template.render_with_config(&state.config, session.as_ref())?).into_response()
     }

@@ -3,8 +3,10 @@ use crate::auth::{
   user_session::UserSession, username::Username,
 };
 use core::borrow::Borrow;
-use rand_chacha::ChaCha20Rng;
-use rand_chacha::rand_core::{RngCore, SeedableRng};
+use rand_chacha::{
+  ChaCha20Rng,
+  rand_core::{RngCore, SeedableRng},
+};
 use scrypt::Params;
 use std::{collections::HashMap, time::Duration};
 
@@ -109,6 +111,13 @@ impl UserStore {
   {
     self.inner.contains_key(username.borrow())
   }
+
+  #[inline]
+  pub fn iter(&self) -> Iter<'_> {
+    Iter {
+      inner_iter: self.inner.iter(),
+    }
+  }
 }
 
 pub struct UserStoreBuilder {
@@ -175,6 +184,18 @@ impl UserStoreBuilder {
         .session_duration
         .unwrap_or(Duration::from_secs(WEEK_IN_SECS)),
     }
+  }
+}
+
+pub struct Iter<'a> {
+  inner_iter: std::collections::hash_map::Iter<'a, Username, User>,
+}
+
+impl<'a> Iterator for Iter<'a> {
+  type Item = &'a UserProfile;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    self.inner_iter.next().map(|(_, user)| &user.profile)
   }
 }
 

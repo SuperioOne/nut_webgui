@@ -142,7 +142,7 @@ impl ServerTomlArgs {
       None => {
         let legacy_config = root.try_into::<LegacyServerTomlArgs>()?;
         warn!(
-          message = "Old config file format detected. Compatibility will be removed in future release (v0.8.0); consider updating your configuration format."
+          message = "Old config file format detected. Compatibility will be removed in future release (v0.8.0); consider updating your configuration file."
         );
 
         Ok(legacy_config.into())

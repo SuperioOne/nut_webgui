@@ -1,0 +1,119 @@
+{%- extends "+layout.html" -%}
+{%- import "icons.html" as icons -%}
+
+{%- macro list_item(name, value) -%}
+<li class="list-row">
+  <div></div>
+  <div class="gap-3 grid grid-cols-2 list-col-grows">
+    <p class="break-all font-bold text-primary"> {{name}} </p>
+    <p> {{ value }} </p>
+  </div>
+</li>
+{%- endmacro -%}
+
+{%- block page_title -%}
+  NUT Web - System Info
+{%- endblock page_title -%}
+
+{%- block content -%}
+  <div class="flex flex-col gap-6">
+    <h1 class="font-bold opacity-60 text-xl tracking-wide">Server Info</h1>
+    <div id="server-info" class="content-card overflow-x-auto">
+      <table class="table table-fixed">
+        <tbody>
+            <tr>
+              <td class="font-bold text-primary">Application version</td>
+              <td>{{app_info.version}}</td>
+            </tr>
+            <tr>
+              <td class="font-bold text-primary">License</td>
+              <td>{{app_info.license}}</td>
+            </tr>
+            <tr>
+              <td class="font-bold text-primary">Log level</td>
+              <td class="uppercase">{{config.log_level}}</td>
+            </tr>
+            <tr>
+              <td class="font-bold text-primary">Config file</td>
+              <td>
+                {%- if let Some(config_file) = config.config_file -%}
+                  {{config_file.display()}}
+                {%- else -%}
+                   NONE
+                {%- endif -%}
+              </td>
+            </tr>
+            <tr>
+              <td class="font-bold text-primary">Authentication</td>
+              <td>
+                <div>
+                  {%- if let Some(auth) = config.auth -%}
+                    <p class="text-success">Enabled</p>
+                    <p>{{auth.users_file.display()}}</p>
+                  {%- else -%}
+                    <span class="text-info">Disabled</span>
+                  {%- endif -%}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="font-bold text-primary">Listen address</td>
+              <td>{{config.http_server.listen}}</td>
+            </tr>
+            <tr>
+              <td class="font-bold text-primary">Listen port</td>
+              <td>{{config.http_server.port}}</td>
+            </tr>
+            <tr>
+              <td class="font-bold text-primary">Base path</td>
+              <td>
+                {%- if config.http_server.base_path.is_empty() -%}
+                  /
+                {%- else -%}
+                  {{base_path}}
+                {%- endif -%}
+              </td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {%- if let Some(users) = users -%}
+      <h1 class="font-bold opacity-60 text-xl tracking-wide">User Info</h1>
+      <div id="users-info" class="content-card overflow-x-auto">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Permissions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {%- for user in users.iter() -%}
+              <tr>
+                <td>
+                  <div class="flex gap-3 items-center">
+                    <div class="avatar avatar-placeholder">
+                      <div class="bg-primary rounded-full text-primary-content w-10">
+                        <span class="text-lg uppercase">{{user.username.get_initials()}}</span>
+                      </div>
+                    </div>
+                    <div class="font-bold opacity-60">{{user.username}}</div>
+                  </div>
+                </td>
+                <td>
+                  <div class="flex flex-row flex-wrap gap-1">
+                    {%- for permission in user.permissions.iter() -%}
+                      <div class="badge badge-outline badge-secondary badge-sm font-semibold uppercase">{{permission}}</div>
+                    {%- endfor -%}
+                  </div>
+                </td>
+              </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endblock content -%}
+

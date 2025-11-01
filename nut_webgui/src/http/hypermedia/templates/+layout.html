@@ -47,15 +47,21 @@
               </div>
               <ul
                 tabindex="0"
-                class="bg-base-100 dropdown-content md:h-fit menu menu-sm mt-3 p-2 rounded-box shadow w-64 z-99">
+                class="bg-base-200 dropdown-content md:h-fit menu mt-4 p-2 rounded-box shadow-lg w-64 z-99"
+              >
                 <li>
                   <a class="text-lg" href="{{base_path}}/">
                     {%- call icons::get_svg("columns", 18) -%} Devices
                   </a>
                 </li>
                 <li>
-                  <a class="text-lg" href="{{base_path}}/server">
-                    {%- call icons::get_svg("server", 18) -%} Server
+                  <a class="text-lg" href="{{base_path}}/connection">
+                    {%- call icons::get_svg("activity", 18) -%} Connections
+                  </a>
+                </li>
+                <li>
+                  <a class="text-lg" href="{{base_path}}/system">
+                    {%- call icons::get_svg("info", 18) -%} System
                   </a>
                 </li>
               </ul>
@@ -73,8 +79,13 @@
                 </a>
               </li>
               <li>
-                <a class="text-lg" href="{{base_path}}/server">
-                  {%- call icons::get_svg("server", 18) -%} Server
+                <a class="text-lg" href="{{base_path}}/connection">
+                  {%- call icons::get_svg("activity", 18) -%} Connections
+                </a>
+              </li>
+              <li>
+                <a class="text-lg" href="{{base_path}}/system">
+                  {%- call icons::get_svg("info", 18) -%} System
                 </a>
               </li>
             </ul>
@@ -107,7 +118,7 @@
                     {{username.get_initials()}}
                   </div>
                 </div>
-                <ul tabindex="0" class="bg-base-100 dropdown-content menu menu-lg mt-3 p-2 rounded-box shadow w-52 z-1">
+                <ul tabindex="0" class="bg-base-200 dropdown-content menu menu-lg mt-5 p-2 rounded-box shadow-lg w-52 z-1">
                   <li class="menu-title">User: {{username}}</li>
                   <li>
                     <label class="btn-ghost drawer-button" for="menu-toggle" >
@@ -163,7 +174,7 @@
             {%- let app_info = crate::http::hypermedia::utils::get_app_info() -%}
             <a
               class="font-light link text-xs"
-              href="https://github.com/SuperioOne/nut_webgui/releases/tag/v{{app_info.version}}"
+              href="{{app_info.repository}}/releases/tag/v{{app_info.version}}"
             >
               <span>Version: {{app_info.version}}</span>
             </a>
