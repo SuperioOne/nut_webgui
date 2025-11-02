@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::state::{ConnectionStatus, ServerState};
 use axum::{
   Json,
@@ -8,6 +6,7 @@ use axum::{
   response::{IntoResponse, Response},
 };
 use serde::Serialize;
+use std::sync::Arc;
 
 #[derive(Serialize)]
 pub struct HealthResponse<T, S>
@@ -88,7 +87,7 @@ pub async fn get_namespace_health(
         (StatusCode::INTERNAL_SERVER_ERROR, response).into_response()
       }
     }
-    None => (StatusCode::BAD_REQUEST).into_response(),
+    None => (StatusCode::NOT_FOUND).into_response(),
   }
 }
 
@@ -106,6 +105,6 @@ pub async fn get_namespace_readiness(
         (StatusCode::SERVICE_UNAVAILABLE, "NOT READY").into_response()
       }
     }
-    None => (StatusCode::BAD_REQUEST, "UPSD NAMESPACE NOT EXIST").into_response(),
+    None => (StatusCode::NOT_FOUND, "UPSD NAMESPACE NOT EXIST").into_response(),
   }
 }

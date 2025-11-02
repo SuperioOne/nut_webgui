@@ -7,7 +7,7 @@ use crate::{
   http::{
     hypermedia::middleware::{
       auth_renew_session::RenewSessionLayer, auth_user::UserAuthLayer,
-      authorize_user::AuthorizeUserLayer,
+      authorize_user::AuthorizeUserLayer, htmx_redirect::HtmxRedirectLayer,
     },
     json_api::middleware::{
       auth_api::ApiAuthLayer, authorize_api::AuthorizeApiLayer, daemon_status::DaemonStateLayer,
@@ -29,8 +29,6 @@ use tower_http::{
   normalize_path::NormalizePathLayer, set_header::SetResponseHeaderLayer, timeout::TimeoutLayer,
   trace::TraceLayer, validate_request::ValidateRequestHeaderLayer,
 };
-
-use self::hypermedia::middleware::htmx_redirect::HtmxRedirectLayer;
 
 pub struct HttpServer {
   server_state: Arc<ServerState>,

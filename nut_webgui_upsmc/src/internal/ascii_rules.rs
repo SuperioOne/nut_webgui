@@ -22,21 +22,12 @@ static LOOKUP_ASCII_UPS: [bool; 128] = {
 };
 
 pub trait NutAsciiText {
-  fn is_ascii_nut_cmd(&self) -> bool;
-  fn is_ascii_nut_var(&self) -> bool;
+  fn is_ascii_rfc9271(&self) -> bool;
 }
 
 impl NutAsciiText for u8 {
   #[inline]
-  fn is_ascii_nut_cmd(&self) -> bool {
-    match LOOKUP_ASCII_UPS.get((*self) as usize) {
-      Some(true) => true,
-      _ => false,
-    }
-  }
-
-  #[inline]
-  fn is_ascii_nut_var(&self) -> bool {
+  fn is_ascii_rfc9271(&self) -> bool {
     match LOOKUP_ASCII_UPS.get((*self) as usize) {
       Some(true) => true,
       _ => false,

@@ -118,8 +118,15 @@
           {%- call icons::get_svg("lock",18) -%}
         </div>
         <div class="stat-title">TLS Mode</div>
-        <div class="stat-value text-sm">
-          {{config.tls_mode}}
+        <div class="stat-value text-sm uppercase">
+          {%- match config.tls_mode -%}
+            {%- when crate::config::tls_mode::TlsMode::Disable -%}
+              <span class="text-info">{{config.tls_mode}}</span>
+            {%- when crate::config::tls_mode::TlsMode::Strict -%}
+              <span class="text-success">{{config.tls_mode}}</span>
+            {%- when crate::config::tls_mode::TlsMode::SkipVerify -%}
+              <span class="text-error">{{config.tls_mode}}</span>
+          {%- endmatch -%}
         </div>
       </div>
 

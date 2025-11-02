@@ -15,14 +15,14 @@ fn is_cmd_name(name: &str) -> Result<(), CmdParseError> {
     return Err(CmdParseError::Empty);
   }
 
-  if let Some(first) = name.first() {
-    if !first.is_ascii_alphabetic() {
-      return Err(CmdParseError::InvalidName);
-    }
+  if let Some(first) = name.first()
+    && !first.is_ascii_alphabetic()
+  {
+    return Err(CmdParseError::InvalidName);
   }
 
   for byte in name.iter() {
-    if !byte.is_ascii_nut_cmd() {
+    if !byte.is_ascii_rfc9271() {
       return Err(CmdParseError::InvalidName);
     }
   }

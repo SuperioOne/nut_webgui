@@ -5,7 +5,7 @@
   },
   "private": true,
   "name": "nut_webgui_client",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Bundles all client side web components and dependencies.",
   "scripts": {
     "dev-js": "esbuild ./src/index.js --bundle --outdir=./dist/debug --target=firefox109,chrome108,safari15 --format=iife --watch=forever",
@@ -19,7 +19,7 @@
     "@tailwindcss/cli": "^4.1.16",
     "@types/d3": "^7.4.3",
     "daisyui": "^5.4.2",
-    "esbuild": "^0.25.11",
+    "esbuild": "^0.25.12",
     "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3"
   },

@@ -27,36 +27,6 @@ impl DeviceEntry {
     }
   }
 
-  pub fn get_power_factor(&self) -> Option<f64> {
-    self.variables.get(VarName::INPUT_POWERFACTOR).map_or_else(
-      || {
-        let real_power = self
-          .variables
-          .get(VarName::UPS_REALPOWER_NOMINAL)
-          .and_then(|v| v.as_lossly_f64());
-
-        let power = self
-          .variables
-          .get(VarName::UPS_POWER_NOMINAL)
-          .and_then(|v| v.as_lossly_f64());
-
-        match (real_power, power) {
-          (Some(w), Some(va)) => {
-            let power_factor = w / va;
-
-            if power_factor.is_nan() {
-              None
-            } else {
-              Some(power_factor)
-            }
-          }
-          _ => None,
-        }
-      },
-      |v| v.as_lossly_f64(),
-    )
-  }
-
   pub fn get_ups_temperature(&self) -> Option<Celcius> {
     let temp_var = self.variables.get(VarName::UPS_TEMPERATURE)?;
 
