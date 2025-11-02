@@ -94,8 +94,8 @@
                 <td>
                   <div class="flex gap-3 items-center">
                     <div class="avatar avatar-placeholder">
-                      <div class="bg-primary rounded-full text-primary-content w-10">
-                        <span class="text-lg uppercase">{{user.username.get_initials()}}</span>
+                      <div class="bg-secondary rounded-full text-secondary-content uppercase w-10">
+                        {{user.username.get_initials()}}
                       </div>
                     </div>
                     <div class="font-bold opacity-60">{{user.username}}</div>
@@ -104,7 +104,7 @@
                 <td>
                   <div class="flex flex-row flex-wrap gap-1">
                     {%- for permission in user.permissions.iter() -%}
-                      <div class="badge badge-outline badge-secondary badge-sm font-semibold uppercase">{{permission}}</div>
+                      <div class="badge badge-outline badge-primary badge-sm font-semibold uppercase">{{permission}}</div>
                     {%- endfor -%}
                   </div>
                 </td>

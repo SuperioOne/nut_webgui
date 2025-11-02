@@ -1,14 +1,19 @@
 {%- import "icons.html" as icons -%}
+{%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
 
 <div class="content-card flex flex-col gap-4" >
   <div class="flex flex-row items-center justify-between">
     <hgroup class="grow">
       <div class="flex flex-row gap-2 items-center text-primary">
         <span>{%- call icons::get_svg("server", 20) -%}</span>
-        <h1 class="text-xl">{{name}}</h1>
+        <h1 class="text-xl">
+          <a class="link" href="{{base_path}}/?namespace={{name | urlencode_strict}}">
+            {{name}}
+          </a>
+        </h1>
       </div>
       <p class="opacity-50 text-sm">
-        <span class="text-secondary">{{config.addr}}</span><span class="text-secondary">:{{config.port}}</span>
+        <span class="text-secondary">{{config.addr}}</span><span class="text-primary">:{{config.port}}</span>
       </p>
     </hgroup>
     <div class="flex flex-col gap-1 items-center">

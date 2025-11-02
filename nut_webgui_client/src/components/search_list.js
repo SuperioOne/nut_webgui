@@ -202,6 +202,12 @@ export default class SearchList extends HTMLElement {
     target_input.addEventListener("keydown", debounced_listener, {
       signal: this.#abort_controller.signal,
     });
+
+    /// Initial search if input has value
+    if (target_input.value && target_input.value.trim().length > 0) {
+      this.#search_term = target_input.value;
+      this.#search(target_input.value);
+    }
   }
 }
 
