@@ -1,7 +1,6 @@
-pub mod internal;
-
 mod cmd_name;
 mod command;
+mod internal;
 mod ups_name;
 mod value;
 mod var_name;

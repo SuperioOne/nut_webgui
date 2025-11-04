@@ -24,6 +24,7 @@ pub struct ServerEnvArgs {
   pub poll_interval: Option<u64>,
   pub port: Option<u16>,
   pub server_key: Option<Box<str>>,
+  pub upsd_name: Option<Box<str>>,
   pub upsd_addr: Option<Box<str>>,
   pub upsd_max_conn: Option<NonZeroUsize>,
   pub upsd_pass: Option<Box<str>>,
@@ -101,6 +102,7 @@ impl ServerEnvArgs {
 
       ("NUTWG__AUTH__USERS_FILE",        env_config.auth_users_file, path_buf);
 
+      ("NUTWG__UPSD__NAME",              env_config.upsd_name,       boxed_str);
       ("NUTWG__UPSD__ADDRESS",           env_config.upsd_addr,       boxed_str);
       ("NUTWG__UPSD__MAX_CONNECTION",    env_config.upsd_max_conn,   NonZeroUsize);
       ("NUTWG__UPSD__PASSWORD",          env_config.upsd_pass,       boxed_str);
@@ -122,13 +124,29 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.log_level, inner_value: self.log_level);
     override_opt_field!(config.server_key, inner_value: self.server_key);
 
-    if self.upsd_addr.is_some() {
-      config
-        .upsd
-        .insert(Box::from(DEFAULT_UPSD_KEY), UpsdConfig::default());
+    override_opt_field!(config.http_server.base_path, inner_value: self.base_path);
+    override_opt_field!(config.http_server.listen, inner_value: self.listen);
+    override_opt_field!(config.http_server.port, inner_value: self.port);
+
+    if let Some(users_file) = self.auth_users_file {
+      config.auth = Some(AuthConfig { users_file });
     }
 
-    if let Some(default_upsd) = config.upsd.get_mut(DEFAULT_UPSD_KEY) {
+    if self.upsd_addr.is_some() {
+      let namespace = self
+        .upsd_name
+        .as_ref()
+        .map_or_else(|| Box::from(DEFAULT_UPSD_KEY), |v| v.clone());
+
+      config.upsd.insert(namespace, UpsdConfig::default());
+    }
+
+    let key: &str = self
+      .upsd_name
+      .as_ref()
+      .map_or(DEFAULT_UPSD_KEY, |v| v.as_ref());
+
+    if let Some(default_upsd) = config.upsd.get_mut(key) {
       override_opt_field!(default_upsd.addr, inner_value: self.upsd_addr);
       override_opt_field!(default_upsd.max_conn, inner_value: self.upsd_max_conn);
       override_opt_field!(default_upsd.pass, self.upsd_pass);
@@ -137,14 +155,6 @@ impl ConfigLayer for ServerEnvArgs {
       override_opt_field!(default_upsd.port, inner_value: self.upsd_port);
       override_opt_field!(default_upsd.tls_mode, inner_value: self.upsd_tls);
       override_opt_field!(default_upsd.user, self.upsd_user);
-    }
-
-    override_opt_field!(config.http_server.base_path, inner_value: self.base_path);
-    override_opt_field!(config.http_server.listen, inner_value: self.listen);
-    override_opt_field!(config.http_server.port, inner_value: self.port);
-
-    if let Some(users_file) = self.auth_users_file {
-      config.auth = Some(AuthConfig { users_file });
     }
 
     config

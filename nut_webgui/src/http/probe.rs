@@ -1,69 +1,73 @@
 use crate::state::{ConnectionStatus, ServerState};
 use axum::{
-  Json,
   extract::{Path, State},
   http::StatusCode,
   response::{IntoResponse, Response},
 };
-use serde::Serialize;
 use std::sync::Arc;
 
-#[derive(Serialize)]
-pub struct HealthResponse<T, S>
-where
-  T: Serialize,
-  S: Serialize,
-{
-  last_device_sync: T,
-  upsd_port: u16,
-  upsd_server: S,
-  upsd_status: ConnectionStatus,
+pub enum HealthStatus {
+  Degraded,
+  Ok,
+  Dead,
 }
 
-pub async fn get_health(State(state): State<Arc<ServerState>>) -> Response {
+pub enum Readiness {
+  Ready,
+  NotReady,
+}
+
+impl IntoResponse for HealthStatus {
+  fn into_response(self) -> Response {
+    match self {
+      HealthStatus::Degraded => (StatusCode::OK, "DEGRADED"),
+      HealthStatus::Ok => (StatusCode::OK, "OK"),
+      HealthStatus::Dead => (StatusCode::INTERNAL_SERVER_ERROR, "DEAD"),
+    }
+    .into_response()
+  }
+}
+
+impl IntoResponse for Readiness {
+  fn into_response(self) -> Response {
+    match self {
+      Readiness::Ready => (StatusCode::OK, "READY"),
+      Readiness::NotReady => (StatusCode::OK, "NOT-READY"),
+    }
+    .into_response()
+  }
+}
+
+pub async fn get_health(State(state): State<Arc<ServerState>>) -> HealthStatus {
   let mut active_count: usize = 0;
-  let mut health_status = Vec::with_capacity(state.upsd_servers.len());
 
   for upsd in state.upsd_servers.values() {
     let daemon_state = upsd.daemon_state.read().await;
-
-    let upsd_health = HealthResponse {
-      last_device_sync: daemon_state.last_device_sync.clone(),
-      upsd_port: upsd.config.port,
-      upsd_server: upsd.config.addr.as_ref(),
-      upsd_status: daemon_state.status,
-    };
-
-    health_status.push(upsd_health);
 
     if daemon_state.status != ConnectionStatus::Dead {
       active_count += 1;
     }
   }
 
-  if active_count > 0 {
-    (StatusCode::OK, Json(health_status)).into_response()
+  if active_count == state.upsd_servers.len() {
+    HealthStatus::Ok
+  } else if active_count > 0 {
+    HealthStatus::Degraded
   } else {
-    (StatusCode::INTERNAL_SERVER_ERROR, Json(health_status)).into_response()
+    HealthStatus::Dead
   }
 }
 
-pub async fn get_readiness(State(state): State<Arc<ServerState>>) -> Response {
-  let mut ready_count: usize = 0;
-
+pub async fn get_readiness(State(state): State<Arc<ServerState>>) -> Readiness {
   for upsd in state.upsd_servers.values() {
     let daemon_state = upsd.daemon_state.read().await;
 
     if daemon_state.status == ConnectionStatus::Online {
-      ready_count += 1;
+      return Readiness::Ready;
     }
   }
 
-  if ready_count > 0 {
-    (StatusCode::OK, "READY").into_response()
-  } else {
-    (StatusCode::SERVICE_UNAVAILABLE, "NOT READY").into_response()
-  }
+  Readiness::NotReady
 }
 
 pub async fn get_namespace_health(
@@ -74,20 +78,15 @@ pub async fn get_namespace_health(
     Some(upsd_state) => {
       let daemon_state = upsd_state.daemon_state.read().await;
 
-      let response = Json(HealthResponse {
-        last_device_sync: daemon_state.last_device_sync.as_ref(),
-        upsd_port: upsd_state.config.port,
-        upsd_server: &upsd_state.config.addr,
-        upsd_status: daemon_state.status,
-      });
-
-      if response.upsd_status != ConnectionStatus::Dead {
-        (StatusCode::OK, response).into_response()
+      let status = if daemon_state.status != ConnectionStatus::Dead {
+        HealthStatus::Ok
       } else {
-        (StatusCode::INTERNAL_SERVER_ERROR, response).into_response()
-      }
+        HealthStatus::Dead
+      };
+
+      status.into_response()
     }
-    None => (StatusCode::NOT_FOUND).into_response(),
+    None => (StatusCode::NOT_FOUND, "UPSD NAMESPACE DOES NOT EXIST").into_response(),
   }
 }
 
@@ -99,12 +98,14 @@ pub async fn get_namespace_readiness(
     Some(upsd_state) => {
       let daemon_state = upsd_state.daemon_state.read().await;
 
-      if daemon_state.status == ConnectionStatus::Online {
-        (StatusCode::OK, "READY").into_response()
+      let status = if daemon_state.status == ConnectionStatus::Online {
+        Readiness::Ready
       } else {
-        (StatusCode::SERVICE_UNAVAILABLE, "NOT READY").into_response()
-      }
+        Readiness::NotReady
+      };
+
+      status.into_response()
     }
-    None => (StatusCode::NOT_FOUND, "UPSD NAMESPACE NOT EXIST").into_response(),
+    None => (StatusCode::NOT_FOUND, "UPSD NAMESPACE DOES NOT EXIST").into_response(),
   }
 }

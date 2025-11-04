@@ -94,11 +94,15 @@ impl HttpServer {
 #[inline]
 fn create_data_routes(server_state: Arc<ServerState>) -> Router<Arc<ServerState>> {
   let data_api = Router::new()
-    .route("/", get(json_api::route::namespace::get))
-    .route("/{namespace}", get(json_api::route::ups_list::get))
-    .route("/{namespace}/{ups_name}", get(json_api::route::ups::get))
+    .route("/", get(json_api::route::namespace::get_list))
+    .route("/{namespace}", get(json_api::route::namespace::get))
+    .route("/{namespace}/devices", get(json_api::route::ups_list::get))
     .route(
-      "/{namespace}/{ups_name}",
+      "/{namespace}/devices/{ups_name}",
+      get(json_api::route::ups::get),
+    )
+    .route(
+      "/{namespace}/devices/{ups_name}",
       patch(json_api::route::rw::patch).route_layer(
         ServiceBuilder::new().option_layer(
           server_state
@@ -109,7 +113,7 @@ fn create_data_routes(server_state: Arc<ServerState>) -> Router<Arc<ServerState>
       ),
     )
     .route(
-      "/{namespace}/{ups_name}/instcmd",
+      "/{namespace}/devices/{ups_name}/instcmd",
       post(json_api::route::instcmd::post).route_layer(
         ServiceBuilder::new().option_layer(
           server_state
@@ -120,7 +124,7 @@ fn create_data_routes(server_state: Arc<ServerState>) -> Router<Arc<ServerState>
       ),
     )
     .route(
-      "/{namespace}/{ups_name}/fsd",
+      "/{namespace}/devices/{ups_name}/fsd",
       post(json_api::route::fsd::post).route_layer(
         ServiceBuilder::new()
           .option_layer(
