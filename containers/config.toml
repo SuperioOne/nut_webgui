@@ -1,118 +1,128 @@
-# ------------------------------------------------------------------------------
-# Log Level: Configure the logging verbosity.
-# Possible values include "info", "debug", "warn", "error" or "trace"
-# ------------------------------------------------------------------------------
+version = "1"
+
+## ------------------------------------------------------------------------------
+## Log Level: Configure the logging verbosity.
+## Possible values include "info", "debug", "warn", "error" or "trace"
+## ------------------------------------------------------------------------------
 
 # log_level = "info"
 
-# ------------------------------------------------------------------------------
-# Default Theme: Sets the default theme for the application interface.
-# If this settings is not set, Web UI uses browser's theme preference.
-#
-# Supported options are:
-# light, dark, abyss, autumn, business, black, corporate, dim, dracula, forest,
-# kanagawa-dragon, night, nord, sunset, synthwave, tokyo-night
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Default Theme: Sets the default theme for the application interface.
+## If this settings is not set, Web UI uses browser's theme preference.
+##
+## Supported options are:
+## light, dark, abyss, autumn, business, black, corporate, dim, dracula, forest,
+## kanagawa-dragon, night, nord, sunset, synthwave, tokyo-night
+## ------------------------------------------------------------------------------
 
 # default_theme = "tokyo-night"
 
+
 [http_server]
-# ------------------------------------------------------------------------------
-# Base Path: Define the base URL path where the HTTP server will serve content.
-# Example: "/ups" means the server will be available "http://<domain>/ups".
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Base Path: Define the base URL path where the HTTP server will serve content.
+## Example: "/ups" means the server will be available "http://<domain>/ups".
+## ------------------------------------------------------------------------------
 
 # base_path = "/"
 
-# ------------------------------------------------------------------------------
-# Listen Address: Configure the IP address the server should bind to.
-# "0.0.0.0" makes it accessible from any external network interface, while 
-# "127.0.0.1" restricts access to the local machine only.
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Listen Address: Configure the IP address the server should bind to.
+## "0.0.0.0" makes it accessible from any external network interface, while 
+## "127.0.0.1" restricts access to the local machine only.
+## ------------------------------------------------------------------------------
 
 # listen = "0.0.0.0"
 
-# ------------------------------------------------------------------------------
-# Port: Specify the TCP port number on which the server will listen for incoming 
-# connections. Default port is 9000.
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Port: Specify the TCP port number on which the server will listen for incoming 
+## connections. Default port is 9000.
+## ------------------------------------------------------------------------------
 
 # port = 9000
 
-[upsd]
-# ------------------------------------------------------------------------------
-# Username: Set the username required to authenticate with the UPS daemon.
-# Password: Provide the password corresponding to the username for authentication.
-#
-# Username and password is required for instcmd, set var and force-shutdown 
-# actions. Provided user also should've the certain administrative privileges.
-#
-# For more details see: https://networkupstools.org/docs/man/upsd.users.html
-#
-# If username and password are not set, server simply operates in read-only mode.
-# ------------------------------------------------------------------------------
+
+## ------------------------------------------------------------------------------
+## Auth section: Enables authentication for both UI and API
+## Users file  : User configuration TOML file for basic authentication.
+## ------------------------------------------------------------------------------
+# [auth]
+# users_file = "/etc/nut_webgui/users.toml"
+
+
+## ------------------------------------------------------------------------------
+## UPSD connection settings.
+## Multiple connection can be defined under the `upsd` table. Table keys are 
+## used as connection namespace/identifier.
+## ------------------------------------------------------------------------------
+
+# [upsd.default]
+## ------------------------------------------------------------------------------
+## Username: Set the username required to authenticate with the UPS daemon.
+## Password: Provide the password corresponding to the username for authentication.
+##
+## Username and password is required for instcmd, set var and force-shutdown 
+## actions. Provided user also should've the certain administrative privileges.
+##
+## For more details see: https://networkupstools.org/docs/man/upsd.users.html
+##
+## If username and password are not set, server simply operates in read-only mode.
+## ------------------------------------------------------------------------------
 
 # username = "admin"
 # password = "test"
 
-# ------------------------------------------------------------------------------
-# Address: Specify the IP address or hostname of the UPS daemon.
-# Default address is localhost.
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Address: Specify the IP address or hostname of the UPS daemon.
+## Default address is localhost.
+## ------------------------------------------------------------------------------
 
 # address = "localhost"
 
-# ------------------------------------------------------------------------------
-# Port: Define the TCP port number on which the UPS server is listening.
-# Default port is 3493 (default port used by NUT)
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Port: Define the TCP port number on which the UPS server is listening.
+## Default port is 3493 (default port used by NUT)
+## ------------------------------------------------------------------------------
 
 # port = 3493
 
-# ------------------------------------------------------------------------------
-# Max Connection: Set the maximum number of simultaneous connections allowed to
-# the UPS daemon service. This limit applies only to monitoring; administrative 
-# actions like instcmd, set var, and fsd can create additional short-lived 
-# connections.
-#
-# Default value is 4 connection.
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Max Connection: Set the maximum number of simultaneous connections allowed to
+## the UPS daemon service. This limit applies only to monitoring; administrative 
+## actions like instcmd, set var, and fsd can create additional short-lived 
+## connections.
+##
+## Default value is 4 connection.
+## ------------------------------------------------------------------------------
 
 # max_connection = 4
 
-# ------------------------------------------------------------------------------
-# Poll Frequency: Configure how often (in seconds) the application should
-# attempt to poll non-critical variables from the UPS. Default is 30 seconds.
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Poll Frequency: Configure how often (in seconds) the application should
+## attempt to poll non-critical variables from the UPS. Default is 30 seconds.
+## ------------------------------------------------------------------------------
 
 # poll_freq = 30
 
-# ------------------------------------------------------------------------------
-# Poll Interval: Set the interval (in seconds) for polling critical variables,
-# such as `ups.status`.
-#
-# This is used for critical data that needs near real-time monitoring. A shorter
-# interval ensures quicker updates on critical status. Default is 2 seconds.
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## Poll Interval: Set the interval (in seconds) for polling critical variables,
+## such as `ups.status`.
+##
+## This is used for critical data that needs near real-time monitoring. A shorter
+## interval ensures quicker updates on critical status. Default is 2 seconds.
+## ------------------------------------------------------------------------------
 
 # poll_interval = 2
 
-# ------------------------------------------------------------------------------
-# TLS mode: Configures the TLS option for UPSD connections. Default value is 'disabled'
-#
-# Supported options are:
-#   - disable : Connects the UPSD server without TLS.
-#   - strict  : Enables TLS. This option requires NUT server to have  "proper"
-#               certificate setup.
-#   - skip    : Enables TLS but skips all types of certificate validations.
-# ------------------------------------------------------------------------------
+## ------------------------------------------------------------------------------
+## TLS mode: Configures the TLS option for UPSD connections. Default value is 'disabled'
+##
+## Supported options are:
+##   - disable : Connects the UPSD server without TLS.
+##   - strict  : Enables TLS. This option requires NUT server to have  "proper"
+##               certificate setup.
+##   - skip    : Enables TLS but skips all types of certificate validations.
+## ------------------------------------------------------------------------------
 
-# tls_mode = "strict"
-
-# ------------------------------------------------------------------------------
-# Auth section: Enables authentication for both UI and API
-# Users file  : User configuration TOML file for basic authentication.
-# ------------------------------------------------------------------------------
-
-# [auth]
-# users_file = "/etc/nut_webgui/users.toml"
+# tls_mode = "disable"

@@ -61,30 +61,30 @@ impl From<Error> for ProblemDetail {
   fn from(err: Error) -> Self {
     match err.kind() {
       ErrorKind::EmptyResponse => ProblemDetail {
-        title: "UPS daemon empty response",
+        title: "UPSD empty response",
         status: StatusCode::INTERNAL_SERVER_ERROR,
         detail: Some(
-          "Server is able to connect daemon, but daemon isn't responding to any commands for now."
+          "Server is able to connect the UPSD, but it does not responding to any commands for now."
             .to_string(),
         ),
       },
       ErrorKind::IOError { .. } => ProblemDetail {
-        title: "UPS daemon IO error",
+        title: "UPSD IO error",
         status: StatusCode::INTERNAL_SERVER_ERROR,
         detail: Some(err.to_string()),
       },
       ErrorKind::ParseError { .. } => ProblemDetail {
-        title: "Invalid UPS daemon response",
+        title: "Invalid UPSD response",
         status: StatusCode::INTERNAL_SERVER_ERROR,
         detail: Some(err.to_string()),
       },
       ErrorKind::ProtocolError { .. } => ProblemDetail {
-        title: "UPS daemon protocol error",
+        title: "UPSD protocol error",
         status: StatusCode::INTERNAL_SERVER_ERROR,
         detail: Some(err.to_string()),
       },
       ErrorKind::ConnectionPoolClosed => ProblemDetail {
-        title: "Server connection pool error",
+        title: "UPSD connection pool error",
         status: StatusCode::INTERNAL_SERVER_ERROR,
         detail: Some(err.to_string()),
       },

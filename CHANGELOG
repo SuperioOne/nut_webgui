@@ -1,3 +1,24 @@
+# v0.7.0 - November 4, 2025
+
+## Added
+- Multiple NUT server support.
+- New system page to display server, application, and user informations.
+- New connection page to display upsd connections and their configurations.
+- New data API endpoints for reading namespace/connection details.
+- New probe endpoints for checking individual NUT server status.
+- Config file version field for maintaining better backward compability in the future.
+
+## Changed
+- `NUTWG__UPSD__*` environment variables configure NUT server with `default` namespace. This allows prior nut_webgui configurations works without any change.
+- The config TOML now supports multiple NUT server configurations.
+- **(BREAKING)** JSON Data API endpoints are changed due to new namespace support. Review the OpenAPI spec before updating if you rely on `v0.6.0` API. This changes only affects the `/api` endpoints.
+
+## Removed
+- Brotli compression support has been temporarily removed due to excessively high memory usage compared to deflate and gzip compressions.
+
+## Deprecated
+- The old config TOML format (without a version field and using a single upsd configuration table) is deprecated. No immediate action is required for `v0.7.0`, but it is planned to be removed in the `v0.8.0` release.
+
 # v0.6.0 - September 10, 2025
 
 ## Added

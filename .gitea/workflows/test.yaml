@@ -1,7 +1,7 @@
 name: test
 on: push
 jobs:
-  publish-binaries:
+  test:
     defaults:
       run:
         shell: bash
@@ -9,8 +9,8 @@ jobs:
     container:
       image: gitea-service:80/actions/arch-action-runner-full:latest
       credentials:
-        username:  ${{secrets.REGISTRY_USERNAME}}
-        password:  ${{secrets.REGISTRY_ACCESS_TOKEN}}
+        username: ${{secrets.REGISTRY_USERNAME}}
+        password: ${{secrets.REGISTRY_ACCESS_TOKEN}}
     steps:
       - uses: http://gitea-service/actions/checkout@v4
         with:

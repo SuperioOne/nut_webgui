@@ -4,19 +4,20 @@
 
 You can create a `config.toml` file on your host machine and mount it directly into the container.
 
+*Create a basic `config.toml`*
 ```bash
-# Create a basic config.toml
-echo 'log_level = "debug"
+echo 'version = "1"
 
-[upsd]
+[upsd.default]
 address = "10.0.0.1"
 username = "admin"
 password = "test"
 
-[http_server]
 ' > config.toml;
+```
 
-# Run the container, mounting the config file
+*Run nut_webgui with the `config.toml` file*
+```bash
 docker run \
   -p 9000:9000 \
   -v "$(pwd)/config.toml":"/etc/nut_webgui/config.toml" \
@@ -27,18 +28,19 @@ docker run \
 
 If a configuration file is not found at the default location (`/etc/nut_webgui/config.toml`), `nut_webgui` will automatically generate a new one. You can mount a directory to this location to persist the generated file and edit it on the host.
 
+*Create an empty directory and mount it to nut_webgui's config directory*
 ```bash
-# Create a directory on the host
-mkdir nut_webgui_config
+mkdir app_config
 
-# Run the container, mounting the directory
 docker run \
   -p 9000:9000 \
-  -v "$(pwd)/nut_webgui_config":"/etc/nut_webgui" \
+  -v "$(pwd)/app_config":"/etc/nut_webgui" \
   ghcr.io/superioone/nut_webgui:latest
+```
 
-# After starting, you can view or edit the generated file
-less nut_webgui_config/config.toml
+*After container starts, generated `config.toml` can be read/edited on the host machine*
+```bash
+cat app_config/config.toml
 ```
 
 > **Note:** The container must be restarted for any changes to the configuration file to take effect. The file is not reloaded automatically.

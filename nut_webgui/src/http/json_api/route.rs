@@ -34,10 +34,10 @@ macro_rules! request_auth_client {
       },
       _ => Err(
         $crate::http::json_api::problem_detail::ProblemDetail::new(
-          "Insufficient upsd configuration",
-          axum::http::StatusCode::UNAUTHORIZED,
+          "Insufficient UPSD configuration",
+          axum::http::StatusCode::FORBIDDEN,
         )
-        .with_detail("Operation requires valid username and password to be configured.".into()),
+        .with_detail("Operation requires valid username and password to be configured for the UPSD connection.".into()),
       ),
     }
   };

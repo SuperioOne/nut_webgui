@@ -32,7 +32,7 @@ impl IntoResponse for Readiness {
   fn into_response(self) -> Response {
     match self {
       Readiness::Ready => (StatusCode::OK, "READY"),
-      Readiness::NotReady => (StatusCode::OK, "NOT-READY"),
+      Readiness::NotReady => (StatusCode::SERVICE_UNAVAILABLE, "NOT-READY"),
     }
     .into_response()
   }

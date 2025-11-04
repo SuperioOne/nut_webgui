@@ -68,9 +68,9 @@ where
               Some(upsd) => match upsd.daemon_state.read().await.status {
                 ConnectionStatus::Online => Ok(()),
                 ConnectionStatus::Dead => Err(
-                  ProblemDetail::new("Upsd daemon no connection", StatusCode::SERVICE_UNAVAILABLE)
+                  ProblemDetail::new("No UPSD connection", StatusCode::SERVICE_UNAVAILABLE)
                     .with_detail(
-                      "Server is unable to connect upsd. See application logs for more details."
+                      "Server is unable to connect UPSD. See application logs for more details."
                         .into(),
                     ),
                 ),

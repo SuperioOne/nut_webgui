@@ -16,7 +16,7 @@ docker run -p 9000:9000 \
 
 ## Features
 
-- Monitors UPS variables with auto refresh.
+- Monitors UPS variables with auto-refresh.
 - Supports INSTCMD, SET VAR, and FSD calls from GUI.
 - 🥔 Potato PC friendly. Small footprint on both resource usage and disk size.
 - Basic JSON API.
@@ -25,7 +25,7 @@ docker run -p 9000:9000 \
 > In order to run `INSTCMD` and `FSD`, make sure the configured user has proper privileges given at `upsd.users`. See
 > man([upsd.users](https://networkupstools.org/docs/man/upsd.users.html)).
 
-## Examples
+## Examples/How-To's
 
 - [Volumes and args](docs/examples/01_volumes_and_args.md)
 - [Docker/Podman compose](docs/examples/02_compose.md)
@@ -35,18 +35,19 @@ docker run -p 9000:9000 \
 - [Accessing localhost](docs/examples/06_accessing_localhost.md)
 - [Using NUT with TLS](docs/examples/07_nut_and_tls.md)
 - [Enabling Auth and API Keys](docs/examples/08_enabling_auth.md)
+- [Connecting multiple NUT servers](docs/examples/09_multiple_nut_connection.md)
 
 ## CPU architecture support
 
-| Arch         | Test Hardware           | Notes                                                                                         |
-|--------------|-------------------------|-----------------------------------------------------------------------------------------------|
-| amd64        | AM4 CPU                 | Works across all amd64 platforms.                                                             |
-| amd64-v3     | AM4 CPU                 | Snake oil level optimizations with AVX. It mostly improves response compression, and TLS.     |
-| amd64-v4     | Intel® SDE              | Snake oil level optimizations with AVX-512. It mostly improves response compression, and TLS. |
-| arm64        | Raspberry Pi 4 Model B  |                                                                                               |
-| armv7        | Qemu emulation          | Uses software floating-point.                                                                 |
-| armv6        | Qemu emulation          | Uses software floating-point.                                                                 |
-| riscv64      | Qemu emulation          |                                                                                               |
+| Arch     | Test Hardware          | Notes                                                                                         |
+|----------|------------------------|-----------------------------------------------------------------------------------------------|
+| amd64    | AM4 CPU                | Works across all amd64 platforms.                                                             |
+| amd64-v3 | AM4 CPU                | Snake oil level optimizations with AVX. It mostly improves response compression, and TLS.     |
+| amd64-v4 | Intel® SDE             | Snake oil level optimizations with AVX-512. It mostly improves response compression, and TLS. |
+| arm64    | Raspberry Pi 4 Model B |                                                                                               |
+| armv7    | Qemu emulation         | Uses software floating-point.                                                                 |
+| armv6    | Qemu emulation         | Uses software floating-point.                                                                 |
+| riscv64  | Qemu emulation         |                                                                                               |
 
 > amd64 v3 and v4 variants require certain CPU feature flags to run. If you are a crackhead min-max enjoyer (like me), you can use 
 > `nut_webgui:latest-amd64-v3` and `nut_webgui:latest-amd64-v4` images.
@@ -59,7 +60,7 @@ nut_webgui can be configured via args, environment variables, or config file. Al
 
 ### CLI arguments
 
-CLI arguments hold the highest priority in configuration settings. You can override existing configurations by using them.
+CLI arguments hold the highest priority in configuration settings.
 
 * `--allow-env`: Allows application to load configuration from environment variables.
 * `--base-path`: Overrides HTTP server base path. Default is `/`.
@@ -67,49 +68,53 @@ CLI arguments hold the highest priority in configuration settings. You can overr
 * `--default-theme`: Web UI default theme.
 * `--listen`: Listen address for the HTTP server. Default is `0.0.0.0`.
 * `--log-level`: Log level for the HTTP server. Default is `info`.
-* `--poll-freq`: UPS [pollfreq](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `30`.
-* `--poll-interval`: UPS [pollinterval](https://networkupstools.org/docs/man/ups.conf.html#_global_directives) in seconds. Default is `2`.
 * `--port`: Port used by the HTTP server. Default is `9000`.
-* `--server-key`: Private server key value. Default is randomly auto generated value.
-* `--upsd-addr`: UPS daemon address. Default is `localhost`.
-* `--upsd-max-connection`: Allowed maximum connection for UPSD client. Default is `4`.
-* `--upsd-pass`: UPS daemon password.
-* `--upsd-port`: UPS daemon port. Default is `3493`.
-* `--upsd-tls-mode`: Configures TLS communication between UPSD and client. Default is `disable`.
-* `--upsd-user`: UPS daemon username.
+* `--server-key`: Private server key value. Default is randomly auto-generated value.
 * `--with-auth`: Enables authentication with `user.toml` file.
 
 ### Container image environment variables
 
-Environment variables have the second-highest priority in configuration settings. They can also accept paths as values. When an environment variable 
+Environment variables have the second-highest priority in configuration settings. They can also accept file paths as values. When an environment variable 
 specifies a file path, the system automatically reads content of that file as a value.
 
-| Names                            | Aliases          | Default                       | Values                                      | Description                                                        |
-|----------------------------------|------------------|-------------------------------|---------------------------------------------|--------------------------------------------------------------------|
-| `NUTWG__CONFIG_FILE`             |`CONFIG_FILE`     | `/etc/nut_webgui/config.toml` | File path                                   | Custom config.toml file path.                                      |
-| `NUTWG__DEFAULT_THEME`           |`DEFAULT_THEME`   | None                          | See [config.toml](./containers/config.toml) | Web UI default theme.                                              |
-| `NUTWG__LOG_LEVEL`               |`LOG_LEVEL`       | `info`                        | `error`, `warn`, `info`, `debug`, `trace`   | Log level.                                                         |
-| `NUTWG__SERVER_KEY`              |`SERVER_KEY`      | `/etc/nut_webgui/server.key`  | File path, UTF-8 string                     | Server sign key used for signing session tokens.                   |
-| `NUTWG__AUTH__USERS_FILE`        |`AUTH_USERS_FILE` | None                          | File path                                   | Enables authentication with the provided `users.toml` file.        |
-| `NUTWG__HTTP_SERVER__BASE_PATH`  |`BASE_PATH`       | `/`                           |                                             | Overrides HTTP server base path.                                   |
-| `NUTWG__HTTP_SERVER__LISTEN`     |`LISTEN`          | `0.0.0.0`                     |                                             | Works across all amd64 platforms.                                  |
-| `NUTWG__HTTP_SERVER__PORT`       |`PORT`            | `9000`                        | 1-65535                                     | Works across all amd64 platforms.                                  |
-| `NUTWG__UPSD__ADDRESS`           |`UPSD_ADDR`       | `localhost`                   | IPv6, IPv4, hostname                        | UPS daemon address.                                                |
-| `NUTWG__UPSD__MAX_CONNECTION`    |                  | `4`                           |                                             | Allowed maximum connection for UPSD client.                        |
-| `NUTWG__UPSD__PASSWORD`          |`UPSD_PASS`       | None                          |                                             | UPS daemon password.                                               |
-| `NUTWG__UPSD__POLL_FREQ`         |`POLL_FREQ`       | `30`                          |                                             | Non-critical ups variables update frequency in seconds.            |
-| `NUTWG__UPSD__POLL_INTERVAL`     |`POLL_INTERVAL`   | `2`                           |                                             | Critical ups variables (`ups.status`) update interval in seconds.  |
-| `NUTWG__UPSD__PORT`              |`UPSD_PORT`       | `3493`                        | 1-65535                                     | UPS daemon port.                                                   |
-| `NUTWG__UPSD__TLS_MODE`          |`UPSD_TLS`        | `disable`                     | `strict`, `disable`, `skip`                 | Configures TLS communication between UPSD and client.              |
-| `NUTWG__UPSD__USERNAME`          |`UPSD_USER`       | None                          |                                             | UPS daemon username.                                               |
-| `UPSD_ROOT_CA`                   |                  | None                          |                                             | Path to the Root CA certificate for TLS.                           |
+#### General
+
+| Names                           | Aliases           | Default                       | Values                                      | Description                                                 |
+|---------------------------------|-------------------|-------------------------------|---------------------------------------------|-------------------------------------------------------------|
+| `NUTWG__CONFIG_FILE`            | `CONFIG_FILE`     | `/etc/nut_webgui/config.toml` | File path                                   | Custom `config.toml` file path.                             |
+| `NUTWG__DEFAULT_THEME`          | `DEFAULT_THEME`   | None                          | See [config.toml](./containers/config.toml) | Web UI default theme.                                       |
+| `NUTWG__LOG_LEVEL`              | `LOG_LEVEL`       | `info`                        | `error`, `warn`, `info`, `debug`, `trace`   | Log level.                                                  |
+| `NUTWG__SERVER_KEY`             | `SERVER_KEY`      | `/etc/nut_webgui/server.key`  | File path, UTF-8 string                     | Server sign key used for signing session tokens.            |
+| `NUTWG__AUTH__USERS_FILE`       | `AUTH_USERS_FILE` | None                          | File path                                   | Enables authentication with the provided `users.toml` file. |
+| `NUTWG__HTTP_SERVER__BASE_PATH` | `BASE_PATH`       | `/`                           |                                             | Overrides HTTP server base path.                            |
+| `NUTWG__HTTP_SERVER__LISTEN`    | `LISTEN`          | `0.0.0.0`                     |                                             | HTTP server listen address.                                 |
+| `NUTWG__HTTP_SERVER__PORT`      | `PORT`            | `9000`                        | 1-65535                                     | HTTP server listen port.                                    |
+| `UPSD_ROOT_CA`                  |                   | None                          |                                             | Path to the Root CA certificate for TLS.                    |
+
+#### Default UPSD
+
+If you only connect to a single NUT server and want to keep configurations simple as possible, connection details can be configured via `NUTWG__UPSD__*` environment variables.
+
+| Names                         | Aliases         | Default     | Values                      | Description                                                       |
+|-------------------------------|-----------------|-------------|-----------------------------|-------------------------------------------------------------------|
+| `NUTWG__UPSD__ADDRESS`        | `UPSD_ADDR`     |             | IPv6, IPv4, hostname        | UPS daemon address.                                               |
+| `NUTWG__UPSD__MAX_CONNECTION` |                 | `4`         |                             | Allowed maximum connection for UPSD client.                       |
+| `NUTWG__UPSD__NAME`           |                 | `default`   |                             | Target namespace for the `NUTWG__UPSD__*` environment variables.  |
+| `NUTWG__UPSD__PASSWORD`       | `UPSD_PASS`     | None        |                             | UPS daemon password.                                              |
+| `NUTWG__UPSD__POLL_FREQ`      | `POLL_FREQ`     | `30`        |                             | Non-critical ups variables update frequency in seconds.           |
+| `NUTWG__UPSD__POLL_INTERVAL`  | `POLL_INTERVAL` | `2`         |                             | Critical ups variables (`ups.status`) update interval in seconds. |
+| `NUTWG__UPSD__PORT`           | `UPSD_PORT`     | `3493`      | 1-65535                     | UPS daemon port.                                                  |
+| `NUTWG__UPSD__TLS_MODE`       | `UPSD_TLS`      | `disable`   | `strict`, `disable`, `skip` | Configures TLS communication between UPSD and client.             |
+| `NUTWG__UPSD__USERNAME`       | `UPSD_USER`     | None        |                             | UPS daemon username.                                              |
+
 
 ### TOML config
 
 Config.toml has the least priority, but it's recommended to use the config file as a baseline configuration and use environment variables or command-line arguments 
-to override settings.
+to override settings when needed.
 
 ```toml
+version = "1"
 log_level = "info"
 default_theme = "tokyo-night"
 
@@ -118,15 +123,20 @@ base_path = "/"
 listen = "0.0.0.0"
 port = 9000
 
-[upsd]
+[upsd.default]
 username = "admin"
-password = "test"
+password = "where an old man of Aran goes around and around"
 address = "localhost"
 port = 3493
 max_connection = 4
 poll_freq = 30
 poll_interval = 2
 tls_mode = "disable"
+
+[upsd.reactor]
+address = "10.0.12.10"
+username = "observer"
+password = "AbsoluteSecurity"
 
 [auth]
 users_file = "/etc/nut_webgui/users.toml"
@@ -145,6 +155,11 @@ OpenAPI 3.0.0 specification files: [json](docs/api_specs/openapi3_spec.json) | [
 nut_webgui has basic probe endpoints to check server health and readiness:
 - `/probes/health`
 - `/probes/readiness`
+
+If you've multiple NUT server connections, you can also probe the individual connection
+
+- `/probes/health/<namespace>`
+- `/probes/readiness/<namespace>`
 
 ## Building from source and debugging
 

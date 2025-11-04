@@ -161,7 +161,7 @@ These commands should be run on the NUT server machine.
     # (Optional but recommended) Disable weak SSL/TLS protocols
     DISABLE_WEAK_SSL true
     ```
-    *   Replace `"My nut server"` with the nickname used in step 6.
+    *   Replace `"nut server"` with the nickname used in step 6.
     *   Replace `"database_password"` with the password you created in step 1.
 
 

@@ -61,7 +61,7 @@ where
 
           Box::pin(inner_future)
         } else {
-          let problem_detail = ProblemDetail::new("Access Denied", StatusCode::FORBIDDEN)
+          let problem_detail = ProblemDetail::new("Access denied", StatusCode::FORBIDDEN)
             .with_detail("Insufficient API permissions.".to_owned());
 
           Box::pin(async move { Ok(problem_detail.into_response()) })

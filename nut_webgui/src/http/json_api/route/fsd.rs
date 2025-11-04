@@ -15,10 +15,9 @@ use tracing::warn;
 
 pub async fn post(
   State(state): State<Arc<ServerState>>,
-  Path(namespace): Path<Box<str>>,
-  ups_name: Result<Path<UpsName>, PathRejection>,
+  paths: Result<Path<(Box<str>, UpsName)>, PathRejection>,
 ) -> Result<StatusCode, ProblemDetail> {
-  let Path(ups_name) = ups_name?;
+  let Path((namespace, ups_name)) = paths?;
   let upsd = extract_upsd!(state, namespace)?;
 
   {

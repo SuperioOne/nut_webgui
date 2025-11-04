@@ -1,8 +1,8 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.4",
   "info": {
     "title": "nut_webgui JSON API",
-    "version": "0.5.0",
+    "version": "0.7.0",
     "description": "Simple JSON API for interfacing with nut_webgui.",
     "license": {
       "name": "Apache 2.0",
@@ -38,34 +38,41 @@
     }
   ],
   "paths": {
-    "/api/ups": {
-      "description": "Returns collection of all available UPS devices.",
+    "/api": {
       "get": {
-        "tags": [
-          "ups"
+        "operationId": "get_namespace_collection",
+        "description": "Returns all available namespaces and connection information.",
+        "security": [
+          {
+            "ApiToken": []
+          }
         ],
-        "operationId": "api_ups_collection_get",
+        "tags": [
+          "namespace"
+        ],
         "responses": {
           "200": {
-            "description": "Collection of UPS devices.",
+            "description": "Collection of all existing namespace details.",
             "content": {
               "application/json": {
-                "examples": {
-                  "ups_list": {
-                    "$ref": "#/components/examples/ups_list_response"
-                  },
-                  "empty_list": {
-                    "$ref": "#/components/examples/empty_ups_list_response"
-                  }
-                },
                 "schema": {
-                  "$ref": "#/components/schemas/UpsList"
+                  "$ref": "#/components/schemas/ArrayOfNamespaces"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized if authentication is enabled and an invalid bearer token or no token is provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
           },
           "500": {
-            "description": "Server or daemon errors.",
+            "description": "Unexpected server error occured.",
             "content": {
               "application/json": {
                 "schema": {
@@ -75,7 +82,7 @@
             }
           },
           "503": {
-            "description": "Server is not ready to serve.",
+            "description": "HTTP server is started but unable to serve requsted resource.",
             "content": {
               "application/json": {
                 "schema": {
@@ -87,10 +94,169 @@
         }
       }
     },
-    "/api/ups/{ups_name}": {
+    "/api/{namespace}": {
+      "get": {
+        "operationId": "get_namespace",
+        "description": "Returns information about a specific namespace.",
+        "security": [
+          {
+            "ApiToken": []
+          }
+        ],
+        "tags": [
+          "namespace"
+        ],
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "Target namespace",
+            "required": true,
+            "allowEmptyValue": false,
+            "example": "default",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Namespace details object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Namespace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized if authentication is enabled and an invalid bearer token or no token is provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Namespace does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error occured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "HTTP server is started but unable to serve requsted resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{namespace}/devices": {
+      "get": {
+        "description": "List all UPS devices in a specific namespace.",
+        "tags": [
+          "ups"
+        ],
+        "security": [
+          {
+            "ApiToken": []
+          }
+        ],
+        "operationId": "get_namespace_device_collection",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "Target namespace",
+            "required": true,
+            "allowEmptyValue": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collection of UPS devices in the target namespace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArrayOfDevices"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized if authentication is enabled and an invalid bearer token or no token is provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Namespace does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "HTTP server is started but unable to serve requsted resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{namespace}/devices/{ups_name}": {
       "patch": {
+        "operationId": "patch_namespace_device",
+        "description": "Updates a specific device in the specified namespace.",
         "requestBody": {
-          "description": "Set var request body.",
+          "description": "JSON object containing variable name to update and its new value.",
           "required": true,
           "content": {
             "application/json": {
@@ -102,6 +268,16 @@
         },
         "parameters": [
           {
+            "name": "namespace",
+            "in": "path",
+            "description": "Target namespace",
+            "required": true,
+            "allowEmptyValue": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "ups_name",
             "in": "path",
             "description": "UPS name",
@@ -112,16 +288,20 @@
             }
           }
         ],
+        "security": [
+          {
+            "ApiToken": []
+          }
+        ],
         "tags": [
           "ups"
         ],
-        "operationId": "api_ups_patch_rw",
         "responses": {
           "202": {
-            "description": "Set variable request accepted"
+            "description": "SETVAR request accepted by the UPS driver."
           },
           "400": {
-            "description": "Invalid SetVar request or UPS name.",
+            "description": "Invalid SETVAR request.",
             "content": {
               "application/json": {
                 "schema": {
@@ -131,7 +311,17 @@
             }
           },
           "401": {
-            "description": "Upsd user and password configs are not set.",
+            "description": "Unauthorized if authentication is enabled and an invalid bearer token or no token is provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "It's either server cannot authenticate to NUT server due missing/invalid configuration or provided API token does not have the 'setvar' permission.",
             "content": {
               "application/json": {
                 "schema": {
@@ -141,7 +331,7 @@
             }
           },
           "404": {
-            "description": "Ups does not exists.",
+            "description": "UPS or namespace does not exists.",
             "content": {
               "application/json": {
                 "schema": {
@@ -151,7 +341,7 @@
             }
           },
           "500": {
-            "description": "Server or daemon errors.",
+            "description": "Unexpected server error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -161,7 +351,7 @@
             }
           },
           "503": {
-            "description": "Server is not ready to serve.",
+            "description": "HTTP server is started but unable to serve requsted resource.",
             "content": {
               "application/json": {
                 "schema": {
@@ -173,7 +363,19 @@
         }
       },
       "get": {
+        "operationId": "get_namespace_device",
+        "description": "Returns information about a specific UPS device.",
         "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "Target namespace",
+            "required": true,
+            "allowEmptyValue": false,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "ups_name",
             "in": "path",
@@ -185,28 +387,27 @@
             }
           }
         ],
+        "security": [
+          {
+            "ApiToken": []
+          }
+        ],
         "tags": [
           "ups"
         ],
-        "operationId": "api_ups_get",
         "responses": {
           "200": {
             "description": "UPS device response.",
             "content": {
               "application/json": {
-                "examples": {
-                  "ups": {
-                    "$ref": "#/components/examples/ups_response"
-                  }
-                },
                 "schema": {
-                  "$ref": "#/components/schemas/Ups"
+                  "$ref": "#/components/schemas/UpsDevice"
                 }
               }
             }
           },
-          "400": {
-            "description": "Invalid UPS name",
+          "401": {
+            "description": "Unauthorized if authentication is enabled and an invalid bearer token or no token is provided.",
             "content": {
               "application/json": {
                 "schema": {
@@ -216,7 +417,7 @@
             }
           },
           "404": {
-            "description": "Ups does not exists.",
+            "description": "UPS or namespace does not exists.",
             "content": {
               "application/json": {
                 "schema": {
@@ -226,7 +427,7 @@
             }
           },
           "500": {
-            "description": "Server or daemon errors.",
+            "description": "Unexpected server error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -236,7 +437,7 @@
             }
           },
           "503": {
-            "description": "Server is not ready to serve.",
+            "description": "HTTP server is started but unable to serve requsted resource.",
             "content": {
               "application/json": {
                 "schema": {
@@ -248,11 +449,11 @@
         }
       }
     },
-    "/api/ups/{ups_name}/instcmd": {
-      "description": "Instantiate UPS INSTCMD command.",
+    "/api/{namespace}/devices/{ups_name}/instcmd": {
       "post": {
+        "description": "Calls UPS INSTCMD command.",
         "requestBody": {
-          "description": "Command request body.",
+          "description": "JSON object containing INSTCMD name.",
           "required": true,
           "content": {
             "application/json": {
@@ -264,81 +465,16 @@
         },
         "parameters": [
           {
-            "name": "ups_name",
+            "name": "namespace",
             "in": "path",
-            "description": "UPS name",
+            "description": "Target namespace",
             "required": true,
             "allowEmptyValue": false,
+            "example": "default",
             "schema": {
               "type": "string"
             }
-          }
-        ],
-        "tags": [
-          "ups"
-        ],
-        "operationId": "api_ups_instcmd",
-        "responses": {
-          "202": {
-            "description": "Command is accepted."
           },
-          "400": {
-            "description": "Invalid command or UPS name",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Upsd user and password configs are not set.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Ups does not exists.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server or daemon errors.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Server is not ready to serve.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/ups/{ups_name}/fsd": {
-      "description": "Instantiate forced shutdown on UPS.",
-      "post": {
-        "parameters": [
           {
             "name": "ups_name",
             "in": "path",
@@ -350,16 +486,21 @@
             }
           }
         ],
+        "security": [
+          {
+            "ApiToken": []
+          }
+        ],
         "tags": [
           "ups"
         ],
-        "operationId": "api_ups_fsd",
+        "operationId": "post_namespace_device_instcmd",
         "responses": {
           "202": {
-            "description": "FSD is accepted."
+            "description": "INSTCMD is accepted by UPS driver."
           },
           "400": {
-            "description": "Invalid UPS name",
+            "description": "Invalid INSTCMD",
             "content": {
               "application/json": {
                 "schema": {
@@ -369,7 +510,17 @@
             }
           },
           "401": {
-            "description": "Upsd user and password configs are not set.",
+            "description": "Unauthorized if authentication is enabled and an invalid bearer token or no token is provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "It's either server cannot authenticate to NUT server due missing/invalid configuration or provided API token does not have the 'instcmd' permission.",
             "content": {
               "application/json": {
                 "schema": {
@@ -379,7 +530,7 @@
             }
           },
           "404": {
-            "description": "Ups does not exists.",
+            "description": "UPS or namespace does not exist.",
             "content": {
               "application/json": {
                 "schema": {
@@ -389,7 +540,7 @@
             }
           },
           "500": {
-            "description": "Server or daemon errors.",
+            "description": "Unexpected server error.",
             "content": {
               "application/json": {
                 "schema": {
@@ -399,7 +550,99 @@
             }
           },
           "503": {
-            "description": "Server is not ready to serve.",
+            "description": "HTTP server is started but unable to serve requsted resource.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/{namespace}/devices/{ups_name}/fsd": {
+      "post": {
+        "description": "Sets forced shutdown (FSD) on UPS.",
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "Target namespace",
+            "required": true,
+            "allowEmptyValue": false,
+            "example": "default",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ups_name",
+            "in": "path",
+            "description": "UPS name",
+            "required": true,
+            "allowEmptyValue": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiToken": []
+          }
+        ],
+        "tags": [
+          "ups"
+        ],
+        "operationId": "post_namespace_device_fsd",
+        "responses": {
+          "202": {
+            "description": "FSD is accepted by the UPS driver."
+          },
+          "401": {
+            "description": "Unauthorized if authentication is enabled and an invalid bearer token or no token is provided.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "It's either server cannot authenticate to NUT server due missing/invalid configuration or provided API token does not have the 'fsd' permission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "UPS or namespace does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "HTTP server is started but unable to serve requsted resource.",
             "content": {
               "application/json": {
                 "schema": {
@@ -412,54 +655,34 @@
       }
     },
     "/probes/health": {
-      "description": "Server health check",
       "get": {
+        "description": "Checks the overall health of the HTTP server and its UPSD connections.",
         "tags": [
           "probes"
         ],
-        "operationId": "probes_health",
+        "operationId": "get_probe_health",
         "responses": {
           "200": {
-            "description": "Command is accepted",
+            "description": "HTTP server is ready and has at least one healthy UPSD connection.",
             "content": {
-              "application/json": {
-                "examples": {
-                  "default": {
-                    "$ref": "#/components/examples/health_200"
-                  }
-                },
+              "text/plain": {
+                "example": "READY",
                 "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
+                  "enum": [
+                    "READY",
+                    "DEGRADED"
+                  ]
                 }
               }
             }
           },
           "500": {
-            "description": "Upsd daemon failure",
+            "description": "The HTTP server is not functioning properly or all UPSD connections are dead.",
             "content": {
-              "application/json": {
-                "examples": {
-                  "default": {
-                    "$ref": "#/components/examples/health_500"
-                  }
-                },
+              "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Server is not ready to serve",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "default": {
-                    "$ref": "#/components/examples/health_503"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
+                  "type": "string",
+                  "example": "DEAD"
                 }
               }
             }
@@ -468,21 +691,20 @@
       }
     },
     "/probes/readiness": {
-      "description": "Server readiness probe mainly intented for Kubernetes.",
       "get": {
+        "description": "Checks if the server is ready to respond.",
         "tags": [
           "probes"
         ],
-        "operationId": "probes_readiness",
+        "operationId": "get_probe_readiness",
         "responses": {
           "200": {
             "description": "Server is ready to response.",
             "content": {
               "text/plain": {
                 "schema": {
-                  "enum": [
-                    "READY"
-                  ]
+                  "type": "string",
+                  "example": "READY"
                 }
               }
             }
@@ -492,9 +714,122 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "enum": [
-                    "NOT READY"
-                  ]
+                  "type": "string",
+                  "example": "NOT-READY"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/probes/health/{namespace}": {
+      "get": {
+        "operationId": "get_probe_health_namespace",
+        "description": "Checks the health of a specific UPSD connection in the specified namespace.",
+        "tags": [
+          "probes"
+        ],
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "Target namespace",
+            "required": true,
+            "allowEmptyValue": false,
+            "example": "default",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UPSD connection is healthy.",
+            "content": {
+              "text/plain": {
+                "example": "READY",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Namespace does not exist.",
+            "content": {
+              "text/plain": {
+                "example": "UPSD NAMESPACE DOES NOT EXIST",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "UPSD connection is dead.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "DEAD"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/probes/readiness/{namespace}": {
+      "get": {
+        "operationId": "get_probe_readiness_namespace",
+        "description": "Checks if a specific UPSD connection in the specified namespace is ready to serve data.",
+        "tags": [
+          "probes"
+        ],
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "description": "Target namespace",
+            "required": true,
+            "allowEmptyValue": false,
+            "example": "default",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "UPSD connection is online and data is ready to be served.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "READY"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Namespace does not exist.",
+            "content": {
+              "text/plain": {
+                "example": "UPSD NAMESPACE DOES NOT EXIST",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data syncing from UPSD connection is not completed yet.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "NOT-READY"
                 }
               }
             }
@@ -504,9 +839,106 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "ApiToken": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
     "schemas": {
-      "Ups": {
+      "Namespace": {
         "type": "object",
+        "required": [
+          "address",
+          "device_count",
+          "last_sync_time",
+          "namespace",
+          "poll_freq",
+          "poll_interval",
+          "port",
+          "protocol_version",
+          "status",
+          "tls_mode",
+          "version"
+        ],
+        "properties": {
+          "address": {
+            "type": "string",
+            "description": "The hostname or IP address of the UPSD connection.",
+            "example": "localhost"
+          },
+          "device_count": {
+            "type": "integer",
+            "description": "Total number of UPS devices connected to the UPSD server.",
+            "example": 12
+          },
+          "last_sync_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "UTC timestamp indicating when the last synchronization occurred.",
+            "example": "2025-11-04T19:13:01.205137806Z"
+          },
+          "namespace": {
+            "type": "string",
+            "description": "Name used to group related UPS devices for management purposes.",
+            "example": "kongou"
+          },
+          "poll_freq": {
+            "type": "integer",
+            "description": "Frequency at which the UPSD server is polled in seconds.",
+            "example": 30
+          },
+          "poll_interval": {
+            "type": "integer",
+            "description": "Interval at critical variables is polled in seconds.",
+            "example": 2
+          },
+          "port": {
+            "type": "integer",
+            "description": "Port number on which the UPSD service is running.",
+            "example": 3493
+          },
+          "protocol_version": {
+            "type": "string",
+            "description": "Version of the NUT (Network UPS Tools) protocol reported by the UPSD server.",
+            "example": "1.3"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Online",
+              "Dead",
+              "Not Ready"
+            ],
+            "description": "Current operational status of the connection to the UPSD server.",
+            "example": "Online"
+          },
+          "tls_mode": {
+            "type": "string",
+            "enum": [
+              "disable",
+              "skip",
+              "strict"
+            ],
+            "description": "Mode for TLS encryption during connections to the UPSD server.",
+            "example": "disable"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version information of the Network UPS Tools software.",
+            "example": "Network UPS Tools upsd 2.8.1 - https://www.networkupstools.org/"
+          }
+        }
+      },
+      "ArrayOfNamespaces": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Namespace"
+        }
+      },
+      "UpsDevice": {
+        "type": "object",
+        "description": "UPS device details including status, variables, and supported commands.",
         "required": [
           "attached",
           "commands",
@@ -519,20 +951,29 @@
         ],
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Unique identifier of the UPS device.",
+            "example": "lab-ups"
           },
           "desc": {
-            "type": "string"
+            "type": "string",
+            "description": "Description of the UPS device.",
+            "example": "Secondary rack mounted ups"
           },
           "status": {
-            "type": "string"
+            "type": "string",
+            "description": "Current operational status flags reported by the UPS device.",
+            "example": "OL TEST"
           },
           "last_modified": {
             "type": "string",
-            "format": "date-time"
+            "description": "UTC timestamp indicating when the device details were last updated.",
+            "format": "date-time",
+            "example": "2025-11-04T22:46:12.354759505Z"
           },
           "rw_variables": {
             "type": "object",
+            "description": "UPS variables that support read-write operations with their data types and constraints.",
             "additionalProperties": {
               "oneOf": [
                 {
@@ -544,12 +985,14 @@
                     "type": {
                       "type": "string",
                       "default": "string",
+                      "example": "string",
                       "enum": [
                         "string"
                       ]
                     },
                     "max_len": {
-                      "type": "integer"
+                      "type": "integer",
+                      "example": 12
                     }
                   }
                 },
@@ -562,6 +1005,7 @@
                     "type": {
                       "type": "string",
                       "default": "number",
+                      "example": "number",
                       "enum": [
                         "number"
                       ]
@@ -578,12 +1022,17 @@
                     "type": {
                       "type": "string",
                       "default": "enum",
+                      "example": "enum",
                       "enum": [
                         "enum"
                       ]
                     },
                     "options": {
                       "type": "array",
+                      "example": [
+                        "high",
+                        "low"
+                      ],
                       "items": {
                         "type": "string"
                       }
@@ -601,23 +1050,71 @@
                     "type": {
                       "type": "string",
                       "default": "range",
+                      "example": "range",
                       "enum": [
                         "range"
                       ]
                     },
                     "min": {
-                      "type": "number"
+                      "type": "number",
+                      "example": 140
                     },
                     "max": {
-                      "type": "number"
+                      "type": "number",
+                      "example": 240
                     }
                   }
                 }
               ]
+            },
+            "example": {
+              "battery.mfr.date": {
+                "type": "string,",
+                "max_len": 10
+              },
+              "battery.charge.low": {
+                "type": "number"
+              },
+              "input.sensitivity": {
+                "type": "enum",
+                "options": [
+                  "high",
+                  "low"
+                ]
+              },
+              "battery.runtime.low": {
+                "type": "range",
+                "min": 5,
+                "max": 75
+              }
             }
           },
           "variables": {
             "type": "object",
+            "description": "Variables collected from the UPS device via the NUT protocol.",
+            "example": {
+              "battery.mfr.date": "2023/02/25",
+              "battery.type": "PbAc",
+              "battery.voltage": 27.3,
+              "device.mfr": "American Power Conversion",
+              "device.model": "Back-UPS BX1600MI",
+              "device.serial": "999999999999",
+              "driver.flag.allow_killpower": 0,
+              "driver.parameter.pollinterval": 2,
+              "driver.parameter.vendorid": "051D",
+              "driver.version.data": "APC HID 0.100",
+              "driver.version.internal": 0.52,
+              "driver.version.usb": "libusb-1.0.27 (API: 0x100010a)",
+              "input.sensitivity": "medium",
+              "input.transfer.high": 295,
+              "input.transfer.low": 145,
+              "input.voltage": 230.0,
+              "ups.load": 26,
+              "ups.mfr.date": "2023/02/25",
+              "ups.model": "Back-UPS BX1600MI",
+              "ups.status": "OL",
+              "ups.timer.shutdown": -1
+            },
             "additionalProperties": {
               "oneOf": [
                 {
@@ -631,22 +1128,32 @@
           },
           "commands": {
             "type": "array",
+            "description": "List of supported INSTCMD operations for the UPS device.",
+            "example": [
+              "beeper.on",
+              "beeper.off"
+            ],
             "items": {
               "type": "string"
             }
           },
           "attached": {
             "type": "array",
+            "description": "List of IP addresses of devices attached to the UPS for power.",
+            "example": [
+              "10.10.23.12",
+              "10.10.23.13"
+            ],
             "items": {
               "type": "string"
             }
           }
         }
       },
-      "UpsList": {
+      "ArrayOfDevices": {
         "type": "array",
         "items": {
-          "$ref": "#/components/schemas/Ups"
+          "$ref": "#/components/schemas/UpsDevice"
         }
       },
       "ProblemDetails": {
@@ -657,14 +1164,21 @@
         ],
         "properties": {
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "Human-readable title of the encountered error.",
+            "example": "Error title"
           },
           "details": {
-            "type": "string"
+            "type": "string",
+            "description": "Optional additional information providing context about the error.",
+            "example": "It's just a flesh wound."
           },
           "status": {
             "type": "number",
-            "minimum": 100
+            "description": "HTTP error code corresponding to the problem.",
+            "minimum": 100,
+            "maximum": 599,
+            "example": 400
           }
         }
       },
@@ -675,7 +1189,9 @@
         ],
         "properties": {
           "instcmd": {
-            "type": "string"
+            "type": "string",
+            "description": "INSTCMD to be executed on the UPS device.",
+            "example": "beeper.disable"
           }
         }
       },
@@ -687,9 +1203,13 @@
         ],
         "properties": {
           "variable": {
-            "type": "string"
+            "type": "string",
+            "description": "Name of the UPS variable to modify.",
+            "example": "battery.charge.low"
           },
           "value": {
+            "example": 25,
+            "description": "Value to set for the specified variable. Value type depends on the variable's data type.",
             "oneOf": [
               {
                 "type": "number"
@@ -700,73 +1220,21 @@
             ]
           }
         }
-      },
-      "HealthResponse": {
-        "type": "object",
-        "required": [
-          "upsd_status",
-          "upsd_server",
-          "upsd_port"
-        ],
-        "properties": {
-          "last_device_sync": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "upsd_port": {
-            "type": "number",
-            "format": "hostname"
-          },
-          "upsd_server": {
-            "type": "string",
-            "format": "hostname"
-          },
-          "upsd_status": {
-            "type": "string",
-            "enum": [
-              "Online",
-              "Dead",
-              "NotReady"
-            ]
-          }
-        }
-      }
-    },
-    "examples": {
-      "health_200": {
-        "summary": "Server Online",
-        "value": "{\n  \"last_device_sync\": \"2025-06-23T14:58:35.597830446Z\",\n  \"upsd_port\": 3493,\n  \"upsd_server\": \"127.0.0.1\",\n  \"upsd_status\": \"Online\"\n}\n"
-      },
-      "health_500": {
-        "summary": "Server Dead",
-        "value": "{\n  \"last_device_sync\": \"2025-06-23T14:58:35.597830446Z\",\n  \"upsd_port\": 3493,\n  \"upsd_server\": \"127.0.0.1\",\n  \"upsd_status\": \"Dead\"\n}\n"
-      },
-      "health_503": {
-        "summary": "Server NotReady",
-        "value": "{\n  \"last_device_sync\": null,\n  \"upsd_port\": 3493,\n  \"upsd_server\": \"127.0.0.1\",\n  \"upsd_status\": \"NotReady\"\n}\n"
-      },
-      "ups_response": {
-        "summary": "UPS device",
-        "value": "{\n    \"attached\": [\n      \"10.20.10.1\"\n    ],\n    \"commands\": [\n      \"driver.killpower\",\n      \"driver.reload\",\n      \"driver.reload-or-error\",\n      \"driver.reload-or-exit\",\n      \"load.off\"\n    ],\n    \"desc\": \"dummy-ups apc_c1500\",\n    \"last_modified\": \"2025-06-23T14:40:19.598889563Z\",\n    \"name\": \"apc_c1500\",\n    \"rw_variables\": {\n      \"device.model\": {\n        \"type\": \"string\",\n        \"max_len\": 32\n      },\n      \"battery.runtime.low\": {\n        \"type\": \"number\"\n      },\n      \"ups.beeper.status\": {\n        \"type\": \"enum\",\n        \"options\": [\n          \"enabled\",\n          \"disabled\"\n        ]\n      },\n      \"battery.charge\": {\n        \"type\": \"range\",\n        \"min\": 0,\n        \"max\": 100\n      }\n    },\n    \"status\": \"OL\",\n    \"variables\": {\n      \"battery.charge.warning\": 50,\n      \"device.type\": \"ups\",\n      \"ups.productid\": \"0003\",\n      \"battery.voltage.nominal\": 24.0,\n      \"ups.mfr\": \"American Power Conversion\",\n      \"device.mfr\": \"American Power Conversion\",\n      \"driver.parameter.synchronous\": \"auto\",\n      \"ups.firmware\": \"UPS 10.0 / ID = 1005\",\n      \"driver.version\": \"2.8.1\",\n      \"device.model\": \"Smart-UPS C 1500\",\n      \"driver.version.internal\": 0.18,\n      \"ups.beeper.status\": \"disabled\",\n      \"ups.status\": \"OL\",\n      \"battery.charge.low\": 10,\n      \"ups.timer.shutdown\": -1,\n      \"driver.debug\": 0,\n      \"driver.flag.allow_killpower\": 0,\n      \"driver.name\": \"dummy-ups\",\n      \"ups.delay.shutdown\": 20,\n      \"battery.charge\": 100,\n      \"driver.parameter.pollinterval\": 2,\n      \"battery.type\": \"PbAc\",\n      \"driver.parameter.port\": \"apc_c1500.dev\",\n      \"ups.serial\": \"s00000000000\",\n      \"battery.voltage\": 27.3,\n      \"ups.mfr.date\": \"2016/08/17\",\n      \"ups.timer.reboot\": -1,\n      \"ups.vendorid\": \"051d\",\n      \"ups.model\": \"Smart-UPS C 1500\",\n      \"driver.parameter.mode\": \"dummy-once\",\n      \"battery.runtime.low\": 120,\n      \"driver.state\": \"quiet\",\n      \"device.serial\": \"s00000000000\",\n      \"battery.runtime\": 17820\n    }\n  }\n"
-      },
-      "empty_ups_list_response": {
-        "summary": "Empty UPS list",
-        "value": "[]"
-      },
-      "ups_list_response": {
-        "summary": "Populated UPS list",
-        "value": "[\n  {\n    \"attached\": [\n      \"10.20.10.1\"\n    ],\n    \"commands\": [\n      \"driver.killpower\",\n      \"driver.reload\",\n      \"driver.reload-or-error\",\n      \"driver.reload-or-exit\",\n      \"load.off\"\n    ],\n    \"desc\": \"dummy-ups apc_c1500\",\n    \"last_modified\": \"2025-06-23T14:40:19.598889563Z\",\n    \"name\": \"apc_c1500\",\n    \"rw_variables\": {\n      \"device.model\": {\n        \"type\": \"string\",\n        \"max_len\": 32\n      },\n      \"battery.runtime.low\": {\n        \"type\": \"number\"\n      },\n      \"ups.beeper.status\": {\n        \"type\": \"enum\",\n        \"options\": [\n          \"enabled\",\n          \"disabled\"\n        ]\n      },\n      \"battery.charge\": {\n        \"type\": \"range\",\n        \"min\": 0,\n        \"max\": 100\n      }\n    },\n    \"status\": \"OL\",\n    \"variables\": {\n      \"battery.charge.warning\": 50,\n      \"device.type\": \"ups\",\n      \"ups.productid\": \"0003\",\n      \"battery.voltage.nominal\": 24.0,\n      \"ups.mfr\": \"American Power Conversion\",\n      \"device.mfr\": \"American Power Conversion\",\n      \"driver.parameter.synchronous\": \"auto\",\n      \"ups.firmware\": \"UPS 10.0 / ID = 1005\",\n      \"driver.version\": \"2.8.1\",\n      \"device.model\": \"Smart-UPS C 1500\",\n      \"driver.version.internal\": 0.18,\n      \"ups.beeper.status\": \"disabled\",\n      \"ups.status\": \"OL\",\n      \"battery.charge.low\": 10,\n      \"ups.timer.shutdown\": -1,\n      \"driver.debug\": 0,\n      \"driver.flag.allow_killpower\": 0,\n      \"driver.name\": \"dummy-ups\",\n      \"ups.delay.shutdown\": 20,\n      \"battery.charge\": 100,\n      \"driver.parameter.pollinterval\": 2,\n      \"battery.type\": \"PbAc\",\n      \"driver.parameter.port\": \"apc_c1500.dev\",\n      \"ups.serial\": \"s00000000000\",\n      \"battery.voltage\": 27.3,\n      \"ups.mfr.date\": \"2016/08/17\",\n      \"ups.timer.reboot\": -1,\n      \"ups.vendorid\": \"051d\",\n      \"ups.model\": \"Smart-UPS C 1500\",\n      \"driver.parameter.mode\": \"dummy-once\",\n      \"battery.runtime.low\": 120,\n      \"driver.state\": \"quiet\",\n      \"device.serial\": \"s00000000000\",\n      \"battery.runtime\": 17820\n    }\n  }\n]\n"
       }
     }
   },
   "tags": [
     {
+      "name": "namespace",
+      "description": "Endpoints for namespaces and their configurations."
+    },
+    {
       "name": "ups",
-      "description": "UPS endpoints"
+      "description": "Endpoints for UPS devices monitoring and control."
     },
     {
       "name": "probes",
-      "description": "Server health check endpoints"
+      "description": "Server health check and readiness endpoints."
     }
   ]
 }
