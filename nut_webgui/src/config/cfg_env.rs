@@ -132,21 +132,18 @@ impl ConfigLayer for ServerEnvArgs {
       config.auth = Some(AuthConfig { users_file });
     }
 
-    if self.upsd_addr.is_some() {
-      let namespace = self
-        .upsd_name
-        .as_ref()
-        .map_or_else(|| Box::from(DEFAULT_UPSD_KEY), |v| v.clone());
-
-      config.upsd.insert(namespace, UpsdConfig::default());
-    }
-
-    let key: &str = self
+    let default_upsd_key: &str = self
       .upsd_name
       .as_ref()
       .map_or(DEFAULT_UPSD_KEY, |v| v.as_ref());
 
-    if let Some(default_upsd) = config.upsd.get_mut(key) {
+    if self.upsd_addr.is_some() && !config.upsd.contains_key(default_upsd_key) {
+      config
+        .upsd
+        .insert(Box::from(default_upsd_key), UpsdConfig::default());
+    }
+
+    if let Some(default_upsd) = config.upsd.get_mut(default_upsd_key) {
       override_opt_field!(default_upsd.addr, inner_value: self.upsd_addr);
       override_opt_field!(default_upsd.max_conn, inner_value: self.upsd_max_conn);
       override_opt_field!(default_upsd.pass, self.upsd_pass);

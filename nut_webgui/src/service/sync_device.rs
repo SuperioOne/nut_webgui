@@ -46,7 +46,7 @@ impl BackgroundService for DeviceSyncService {
 
     Box::pin(async move {
       let namespace = state.namespace.clone();
-      let mut interval = interval(Duration::from_secs(state.config.poll_interval));
+      let mut interval = interval(Duration::from_secs(state.config.poll_freq));
       interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
       let task = DeviceSyncTask {
@@ -56,12 +56,7 @@ impl BackgroundService for DeviceSyncService {
 
       'MAIN: loop {
         select! {
-          _ = interval.tick() => {
-            debug!(
-              message = "starting remote device sync",
-              namespace = %namespace
-            );
-          },
+          _ = interval.tick() => { },
           _ = token.cancelled() =>  { break 'MAIN; }
         };
 
@@ -70,13 +65,13 @@ impl BackgroundService for DeviceSyncService {
             match v {
               Ok(_) => {
                 debug!(
-                  message = "remote device sync completed",
+                  message = "ups device sync completed",
                   namespace = %namespace
                 );
               },
               Err(err) => {
                 error!(
-                  message = "remote device sync failed",
+                  message = "ups device sync failed",
                   namespace = %namespace,
                   reason = %err
                 );
@@ -116,7 +111,7 @@ impl DeviceSyncTask {
           write_lock.ver = None;
 
           error!(
-            message = "ups daemon is disconnected",
+            message = "upsd is disconnected",
             namespace = %self.state.namespace,
             reason = %err
           );
@@ -169,7 +164,7 @@ impl DeviceSyncTask {
         Ok(Err(err)) => {
           failure_count += 1;
           error!(
-            message = "unable to get device details from nut upsd",
+            message = "unable to get device details from upsd",
             namespace = %self.state.namespace,
             device = %err.name,
             reason = %err.inner

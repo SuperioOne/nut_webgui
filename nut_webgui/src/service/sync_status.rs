@@ -57,15 +57,7 @@ impl BackgroundService for StatusSyncService {
 
       'MAIN: loop {
         let poll_type = select! {
-          poll_type = interval.tick() => {
-            debug!(
-              message = "starting device status sync",
-              namespace = %namespace,
-              poll_type = %poll_type
-            );
-
-            poll_type
-          }
+          poll_type = interval.tick() => poll_type,
           _ = token.cancelled() => { break 'MAIN; }
         };
 
