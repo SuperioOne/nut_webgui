@@ -74,9 +74,9 @@ generate dockerfiles and build binaries. You can provide custom configuration to
     RUN adduser -H -D -g "<${MY_CUSTOM_USER}>" "${MY_CUSTOM_USER}"; \
             install -d -m 774 -o root -g "${MY_CUSTOM_USER}" /etc/nut_webgui
     COPY --chmod=750 --chown=root:${MY_CUSTOM_USER} ${EXE_DIR}/nut_webgui /usr/local/bin/nut_webgui
-    COPY --chmod=754 --chown=root:${MY_CUSTOM_USER} ./containers/server_start.sh /usr/local/bin/nut_webgui_server.sh
-    COPY --chmod=774 --chown=root:${MY_CUSTOM_USER} ./containers/config.toml /etc/nut_webgui/config.toml
-    COPY --chmod=774 --chown=root:${MY_CUSTOM_USER} ./containers/config.toml /usr/local/share/nut_webgui/config.toml
+    COPY --chmod=754 --chown=root:${MY_CUSTOM_USER} ./dist/container/server_start.sh /usr/local/bin/nut_webgui_server.sh
+    COPY --chmod=774 --chown=root:${MY_CUSTOM_USER} ./dist/config.toml /etc/nut_webgui/config.toml
+    COPY --chmod=774 --chown=root:${MY_CUSTOM_USER} ./dist/config.toml /usr/local/share/nut_webgui/config.toml
     USER ${MY_CUSTOM_USER}
     CMD ["/usr/local/bin/nut_webgui_server.sh"]
     ```

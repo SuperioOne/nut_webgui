@@ -2,7 +2,8 @@ PROJECT_NAME     := $(shell cargo metadata --no-deps --offline --format-version 
 PROJECT_VER      := $(shell cargo metadata --no-deps --offline --format-version 1 | jq -r ".packages[0].version")
 BIN_DIR          := ./bin
 NODE_MODULES_DIR := ./nut_webgui_client/node_modules
-DOCKER_TEMPLATE  := ./containers/Dockerfile.template
+DOCKER_TEMPLATE  := ./dist/container/Dockerfile.template
+INSTALL_TEMPLATE := ./dist/install-script/install.template.sh
 BUILD_CONFIG     := ./build.config.json
 PROJECT_SRCS     := $(shell find . -type f -iregex "\./nut_webgui[^/]*/src/.*") \
 					$(shell find . -type f -iname Cargo.toml) \
@@ -17,12 +18,15 @@ fn_target_path    = target/$(1)/$(PROJECT_NAME)
 .PHONY: help
 help:
 	@echo "RECEIPES"
-	@echo "  build                : Generates server binary for the current system's CPU architecture and OS."
+	@echo "  build                : Builds server binary for the current system's CPU architecture and OS."
+	@echo "  build-native         : Builds server binary specifically optimized for the current system's CPU."
 	@echo "  build-all            : Cross compiles everything."
 	@echo "  clean                : Clears all build directories."
-	@echo "  gen-dockerfiles      : Generates dockerfiles for all supported architectures."
+	@echo "  gen-dist             : Generates dockerfiles and install scripts required for distribution."
+	@echo "  install              : Builds nut_webgui and installs it to /usr/bin/local (Requires permission)."
+	@echo "  install-local        : Builds nut_webgui and installs it locally to $HOME/.local/bin"
 	@echo "  init                 : Initializes project dependencies by calling package managers like pnpm."
-	@echo "  pack                 : Compresses (.tar.gz) all compiled targets under the bin directory."
+	@echo "  pack                 : Builds everything based on build config file and creates local tarballs."
 	@echo "  test                 : Calls test suites."
 	@echo ""
 	@echo "Specific build targets:"
@@ -48,16 +52,23 @@ init:
 		echo "System doesn't have pnpm or npm. Install at least one of them to initialize node_modules."; \
 	fi
 
-# Default toolchain
-
+# Builds with default toolchain
 .PHONY: build
 build: init $(PROJECT_SRCS)
 	@echo "Building binaries for the current system's architecture."
 	@cargo build -p nut_webgui --release
 	@install -D $(call fn_target_path,release) $(call fn_output_path,release)
 
-# x86-64 MUSL
+# Builds with default toolchain, also enables CPU specific optimizations.
+# Mostly revelant for the x86_64 micro-architecture levels.
+.PHONY: build-native
+build-native: init $(PROJECT_SRCS)
+	@echo "Building binary for the current system's CPU."
+	@export RUSTFLAGS="-Ctarget-cpu=native" && \
+		cargo build -p nut_webgui --release
+	@install -D $(call fn_target_path,release) $(call fn_output_path,native)
 
+# x86-64 MUSL
 .PHONY: build-x86-64-musl
 build-x86-64-musl: init $(call fn_output_path,x86-64-musl)
 
@@ -69,7 +80,6 @@ $(call fn_output_path,x86-64-musl) &: $(PROJECT_SRCS)
 		$(call fn_output_path,x86-64-musl)
 
 # x86-64-v3 MUSL
-
 .PHONY: build-x86-64-v3-musl
 build-x86-64-v3-musl: init $(call fn_output_path,x86-64-v3-musl)
 
@@ -81,7 +91,6 @@ $(call fn_output_path,x86-64-v3-musl) &: $(PROJECT_SRCS)
 		$(call fn_output_path,x86-64-v3-musl)
 
 # x86-64-v4 MUSL
-
 .PHONY: build-x86-64-v4-musl
 build-x86-64-v4-musl: init $(call fn_output_path,x86-64-v4-musl)
 
@@ -93,7 +102,6 @@ $(call fn_output_path,x86-64-v4-musl) &: $(PROJECT_SRCS)
 		$(call fn_output_path,x86-64-v4-musl)
 
 # x86-64 GLIBC
-
 .PHONY: build-x86-64-gnu
 build-x86-64-gnu: init $(call fn_output_path,x86-64-gnu)
 
@@ -104,7 +112,6 @@ $(call fn_output_path,x86-64-gnu) &: $(PROJECT_SRCS)
 		$(call fn_output_path,x86-64-gnu)
 
 # x86-64-v3 GLIBC
-
 .PHONY: build-x86-64-v3-gnu
 build-x86-64-v3-gnu: init $(call fn_output_path,x86-64-v3-gnu)
 
@@ -116,7 +123,6 @@ $(call fn_output_path,x86-64-v3-gnu) &: $(PROJECT_SRCS)
 		$(call fn_output_path,x86-64-v3-gnu)
 
 # x86-64-v4 GLIBC
-
 .PHONY: build-x86-64-v4-gnu
 build-x86-64-v4-gnu: init $(call fn_output_path,x86-64-v4-gnu)
 
@@ -128,7 +134,6 @@ $(call fn_output_path,x86-64-v4-gnu) &: $(PROJECT_SRCS)
 		$(call fn_output_path,x86-64-v4-gnu)
 
 # ARM64/v8 MUSL
-
 .PHONY: build-aarch64-musl
 build-aarch64-musl: init $(call fn_output_path,aarch64-musl)
 
@@ -140,7 +145,6 @@ $(call fn_output_path,aarch64-musl) &: $(PROJECT_SRCS)
 		$(call fn_output_path,aarch64-musl)
 
 # ARM64/v8 GLIBC
-
 .PHONY: build-aarch64-gnu
 build-aarch64-gnu: init $(call fn_output_path,aarch64-gnu)
 
@@ -152,7 +156,6 @@ $(call fn_output_path,aarch64-gnu) &: $(PROJECT_SRCS)
 		$(call fn_output_path,aarch64-gnu)
 
 # ARMv7 MUSL
-
 .PHONY: build-armv7-musleabi
 build-armv7-musleabi: init $(call fn_output_path,armv7-musleabi)
 
@@ -165,7 +168,6 @@ $(call fn_output_path,armv7-musleabi) &: $(PROJECT_SRCS)
 		$(call fn_output_path,armv7-musleabi)
 
 # ARMv6 MUSL
-
 .PHONY: build-armv6-musleabi
 build-armv6-musleabi: init $(call fn_output_path,armv6-musleabi)
 
@@ -179,7 +181,6 @@ $(call fn_output_path,armv6-musleabi) &: $(PROJECT_SRCS)
 		$(call fn_output_path,armv6-musleabi)
 
 # RISC-V64 GLIBC
-
 .PHONY: build-riscv64gc-gnu
 build-riscv64gc-gnu: init $(call fn_output_path,riscv64gc-gnu)
 
@@ -195,7 +196,7 @@ $(call fn_output_path,riscv64gc-gnu) &: $(PROJECT_SRCS)
 build-all: $(addprefix build-,$(BINARY_TARGETS))
 
 .PHONY: pack
-pack: build-all
+pack: gen-dist build-all
 	@install -d $(DIST_DIR)
 	@for target in $(BINARY_TARGETS); do \
 		if [ -f "$(BIN_DIR)/$${target}/$(PROJECT_NAME)" ]; then \
@@ -207,8 +208,8 @@ pack: build-all
 		fi; \
 	done;
 
-.PHONY: gen-dockerfiles
-gen-dockerfiles:
+.PHONY: gen-dist
+gen-dist:
 	@install -d "$(BIN_DIR)/dockerfiles"
 	@for entry in $$(jq -rc '.oci.images[]' "$(BUILD_CONFIG)"); do \
 			export PLATFORM="$$(echo $$entry | jq -r '.platform')"; \
@@ -229,6 +230,22 @@ gen-dockerfiles:
 			--arg revision "$$REVISION" \
 			'.packages[0] | { title:.name, version:.version, url:.homepage, licenses:.license, documentation:.documentation, source:.repository, description:.description, authors:(.authors | join(";")), revision: $$revision}' \
 		> "$(BIN_DIR)/dockerfiles/annotations.json";
+	@echo "Creating install-script.sh"
+	@install -d $(DIST_DIR)
+	@cat "$(INSTALL_TEMPLATE)" | sed 's/__PLACEHOLDER_NUTWG_VERSION/$(PROJECT_VER)/g' > "$(DIST_DIR)/install.sh"
+	@chmod +x "$(DIST_DIR)/install.sh"
+
+.PHONY: install
+install: build-native
+	@if [ "$$(id -u)" -ne 0 ]; then \
+		sudo install "$(call fn_target_path,release)" "/usr/local/bin/$(PROJECT_NAME)"; \
+		else \
+		install "$(call fn_target_path,release)" "/usr/local/bin/$(PROJECT_NAME)"; \
+	 fi
+
+.PHONY: install-local
+install-local: build-native
+	@install -D "$(call fn_target_path,release)" "$$HOME/.local/bin/$(PROJECT_NAME)"
 
 .PHONY: test
 test: init
