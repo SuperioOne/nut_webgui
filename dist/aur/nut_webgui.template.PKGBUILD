@@ -1,24 +1,24 @@
-pkgname=nut_webgui
+pkgname=nut_webgui-bin
 pkgver=__PLACEHOLDER_NUTWG_VERSION
 pkgrel=1
 pkgdesc='Light weight web interface for Network UPS Tools.'
 url='https://github.com/SuperioOne/nut_webgui/'
 arch=('x86_64' 'aarch64' 'armv7h')
 license=('Apache-2.0')
-source_x86_64=("${pkgname}_${pkgver}_x86-64-gnu.tar.gz"::"https://github.com/SuperioOne/nut_webgui/releases/download/v${pkgver}/${pkgname}_${pkgver}_x86-64-gnu.tar.gz")
-source_aarch64=("${pkgname}_${pkgver}_aarch64-gnu.tar.gz"::"https://github.com/SuperioOne/nut_webgui/releases/download/v${pkgver}/${pkgname}_${pkgver}_aarch64-gnu.tar.gz")
-source_armv7h=("${pkgname}_${pkgver}_armv7-musleabi.tar.gz"::"https://github.com/SuperioOne/nut_webgui/releases/download/v${pkgver}/${pkgname}_${pkgver}_armv7-musleabi.tar.gz")
+source_x86_64=("nut_webgui_${pkgver}_x86-64-gnu.tar.gz"::"https://github.com/SuperioOne/nut_webgui/releases/download/v${pkgver}/nut_webgui_${pkgver}_x86-64-gnu.tar.gz")
+source_aarch64=("nut_webgui_${pkgver}_aarch64-gnu.tar.gz"::"https://github.com/SuperioOne/nut_webgui/releases/download/v${pkgver}/nut_webgui_${pkgver}_aarch64-gnu.tar.gz")
+source_armv7h=("nut_webgui_${pkgver}_armv7-musleabi.tar.gz"::"https://github.com/SuperioOne/nut_webgui/releases/download/v${pkgver}/nut_webgui_${pkgver}_armv7-musleabi.tar.gz")
 sha256sums_x86_64=('__PLACEHOLDER_NUTWG_SHA256_x86_64')
 sha256sums_aarch64=('__PLACEHOLDER_NUTWG_SHA256_AARCH64')
 sha256sums_armv7h=('__PLACEHOLDER_NUTWG_SHA256_ARMV7')
 
 package() {
   if [ "$CARCH" = 'x86_64' ]; then
-         root_dir="${pkgname}_${pkgver}_x86-64-gnu";
+         root_dir="nut_webgui_${pkgver}_x86-64-gnu";
   elif [ "$CARH" = 'aarch64' ]; then
-        root_dir="${pkgname}_${pkgver}_aarch64-gnu";
+        root_dir="nut_webgui_${pkgver}_aarch64-gnu";
   elif [ "$CARCH" = 'armv7h' ]; then
-        root_dir="${pkgname}_${pkgver}_armv7-musleabi";
+        root_dir="nut_webgui_${pkgver}_armv7-musleabi";
   fi
 
   install -Dm 755 "${srcdir}/${root_dir}/nut_webgui" "${pkgdir}/usr/bin/nut_webgui"

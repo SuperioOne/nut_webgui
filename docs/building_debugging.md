@@ -69,10 +69,7 @@ make gen-dockerfiles
     > [NUT Device Dumps Library](https://github.com/networkupstools/nut-ddl) as submodule, 
     > which contains known UPS device dumps.
 
-
-2. Use `make init` to initialize client's `node_modules` directory.
-
-3. Run server
+2. Run server
    - Start with bacon:
 
       `make watch` can start development server. It simply calls [bacon -j serve](https://github.com/Canop/bacon).

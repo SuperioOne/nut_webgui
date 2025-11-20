@@ -1,9 +1,9 @@
 # Binary Installation
 
-## install.sh script
+## Method 1: install.sh script
 
-`install.sh` script automatically detects the system configuration and installs nut_webgui.
-It also generates empty `/etc/nut_webgui/config.toml` file and systemd `nut_webgui.service`
+`install.sh` script automatically detects the system configuration and installs `nut_webgui`.
+It also creates empty `/etc/nut_webgui/config.toml` file and systemd `nut_webgui.service`
 if they're not already present on the system.
 
 > For x86_64, please note that install script does not check CPU flags to detect
@@ -31,7 +31,7 @@ Or pipe curl output into `sh` directly (* *Insert Michael worried meme here* *):
 curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.7.0/install.sh | sh -
 ```
 
-### (Optional) Custom Target
+### (Optional) Custom target
 
    Use `NUTWG_TARGET` environment variable to specify the target if needed:
 
@@ -69,40 +69,63 @@ rm /etc/systemd/system/nut_webgui.service
 rm -r /etc/nut_webgui
 ```
 
-## Source code
+## Method 2: From source code
 
-nut_webgui can be build and installed directly from the source code.
+`nut_webgui` can be build and install directly from the source code.
 
 > This installation method does not create systemd service or empty config.toml file.
 
-### Prerequisites:
-- cargo
-- git
-- make
-- npm or pnpm
-- rust toolchain
+**Prerequisites:**
+   - cargo
+   - git
+   - make
+   - jq
+   - node
+   - npm or pnpm
+   - rust toolchain
+
+### make
 
 Makefile has two different recipe for installation:
 
-
    1. System-wide installation (`/usr/local/bin`):
    ```shell
-   git clone https://github.com/SuperioOne/nut_webgui.git
+   git clone --depth=1 https://github.com/SuperioOne/nut_webgui.git
    cd nut_webgui
    make install
    ```
 
    2. User only installation (`$HOME/.local/bin`):
    ```shell
-   git clone https://github.com/SuperioOne/nut_webgui.git
+   git clone --depth=1 https://github.com/SuperioOne/nut_webgui.git
    cd nut_webgui
    make install-local
    ```
 
-## Tar archive
+### cargo
 
-nut_webgui is only a single executable and does not require any runtime dependency*.
+Alternatively, it can be installed via `cargo` (`$HOME/.cargo/bin`).
+
+```
+cargo install --git https://github.com/SuperioOne/nut_webgui.git
+```
+
+## Method 3: I use Arch Linux btw™
+
+A `PKGBUILD` file is available on the [releases page](https://github.com/SuperioOne/nut_webgui/releases). 
+Similar to `install.sh`, it creates `systemd` service and empty config file.
+
+> Package is currently not available on AUR.
+
+```shell
+curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.7.0/PKGBUILD -o PKGBUILD
+makepkg -i
+```
+
+## Method 4: Extracting tar archive
+
+`nut_webgui` is only a single executable and does not require any runtime dependency*.
 You can simply download and extract the tar archive from the [releases page](https://github.com/SuperioOne/nut_webgui/releases) to anywhere you want.
 
-> `*` The only exceptions are `*-gnu` targets, they link with `glibc`.
+> `*` The only exceptions are `*-gnu` targets, they link with `glibc`. This is only relevant if you use a distro with different libc implementation such as Alpine Linux.
 
