@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e;
 
-# Inspired from the first version of the k3s install.sh
+# Inspired from the first version of k3s install.sh
 # attribution: @ibuildthecloud
 
 NUTWG_VERSION="__PLACEHOLDER_NUTWG_VERSION";
@@ -150,8 +150,9 @@ detect_init_system
 echo "detected target: $NUTWG_TARGET"
 echo "detected init system: ${NUTWG_INIT_SYSTEM:-"N/A"}"
 
-NUTWG_PACKAGE="nut_webgui_${NUTWG_VERSION}_${NUTWG_TARGET}.tar.gz"
-NUTWG_PACKAGE_SHA="nut_webgui_${NUTWG_VERSION}_${NUTWG_TARGET}.tar.gz.sha256"
+NUTWG_FULL_NAME="nut_webgui_${NUTWG_VERSION}_${NUTWG_TARGET}"
+NUTWG_PACKAGE="${NUTWG_FULL_NAME}.tar.gz"
+NUTWG_PACKAGE_SHA="${NUTWG_FULL_NAME}.tar.gz.sha256"
 NUTWG_BIN_URL="$NUTWG_RELEASE_URL/$NUTWG_PACKAGE"
 NUTWG_SHA_URL="$NUTWG_RELEASE_URL/$NUTWG_PACKAGE_SHA"
 
@@ -168,7 +169,7 @@ else
     exit 1
 fi
 
-$SUDO install -m=751 "/tmp/${NUTWG_TARGET}/nut_webgui" "${NUTWG_INSTALL_PATH}"
+$SUDO install -m=755 "/tmp/${NUTWG_FULL_NAME}/nut_webgui" "${NUTWG_INSTALL_PATH}"
 echo "nut_webgui executable installed to ${NUTWG_INSTALL_PATH}"
 
 if test ! -d "$NUTWG_CONFIG_DIR"; then

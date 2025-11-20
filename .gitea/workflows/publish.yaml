@@ -14,8 +14,8 @@ jobs:
       image: gitea-service:80/actions/arch-action-runner-full:latest
       options: "--security-opt seccomp=unconfined --security-opt apparmor=unconfined --device /dev/fuse:rw" # container setup for buildah
       credentials:
-        username:  ${{secrets.REGISTRY_USERNAME}}
-        password:  ${{secrets.REGISTRY_ACCESS_TOKEN}}
+        username: ${{secrets.REGISTRY_USERNAME}}
+        password: ${{secrets.REGISTRY_ACCESS_TOKEN}}
     steps:
       - uses: http://gitea-service/actions/checkout@v4
         with:
@@ -31,14 +31,12 @@ jobs:
           riscv64gc-unknown-linux-gnu \
           x86_64-unknown-linux-gnu \
           x86_64-unknown-linux-musl;
-      - name: Init project
-        run: make init
       - name: Run tests
         run: make test
-      - name: Build binaries and pack
+      - name: Build binaries
         run: >
           export CARGO_TERM_QUIET=true;
-          make pack
+          make build-all
       - name: Build container images
         run: >
           make gen-dockerfiles;
@@ -53,6 +51,9 @@ jobs:
           REGISTRY_URL: ${{secrets.REGISTRY_URL}}
           REGISTRY_USERNAME: ${{secrets.REGISTRY_USERNAME}}
           REGISTRY_PASSWORD: ${{secrets.REGISTRY_ACCESS_TOKEN}}
+      - name: Generate additional install utils
+        run: >
+          make gen-pkgbuild gen-install-sh
       - name: Generate release body from changelog
         run: >
           VERSION="$(cat "./bin/dockerfiles/annotations.json" | jq -r '.version')";

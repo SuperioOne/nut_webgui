@@ -1,36 +1,140 @@
 use sha2::Digest;
 use std::{
-  fs::{File, canonicalize},
+  fs::{File, canonicalize, copy},
   io::{Read, Write},
   path::{Path, PathBuf},
-  process::Command,
   str::FromStr,
 };
+
+trait IntoCliArg {
+  fn into_cli_arg(&self) -> Option<&str>;
+}
+
+impl IntoCliArg for &str {
+  #[inline]
+  fn into_cli_arg(&self) -> Option<&str> {
+    Some(self)
+  }
+}
+
+impl IntoCliArg for String {
+  #[inline]
+  fn into_cli_arg(&self) -> Option<&str> {
+    Some(self.as_str())
+  }
+}
+
+impl<T> IntoCliArg for Option<T>
+where
+  T: AsRef<str>,
+{
+  #[inline]
+  fn into_cli_arg(&self) -> Option<&str> {
+    self.as_ref().map(|v| v.as_ref())
+  }
+}
+
+macro_rules! exec {
+  ($cmd:literal) => {
+    std::process::Command::new($cmd)
+      .status()
+      .inspect(|status| {
+        if !status.success() {
+          println!("cargo::error={}: execution failed.", $cmd);
+        }
+      })
+      .inspect_err(|err| {
+        println!("cargo::error={}", err.to_string());
+      });
+  };
+
+  ($cmd:literal, $($arg:expr),+) => {
+    {
+      let mut args: Vec<&str> = Vec::new();
+
+      $(
+        if let Some(arg) = $arg.into_cli_arg() {
+          args.push(arg);
+        }
+      )+
+
+      std::process::Command::new($cmd)
+        .args(&args)
+        .status()
+        .inspect(|status| {
+          if !status.success() {
+            println!("cargo::error={}: execution failed.", $cmd);
+          }
+        })
+        .inspect_err(|err| {
+          println!("cargo::error={}", err.to_string());
+        })
+    }
+  };
+}
 
 fn main() -> Result<(), std::io::Error> {
   let outdir =
     std::env::var("OUT_DIR").expect("cargo did not set OUT_DIR env variable for build script.");
+  let outdir = PathBuf::from_str(&outdir).unwrap();
 
   let profile =
     std::env::var("PROFILE").expect("cargo did not set PROFILE env variable for build script.");
 
-  if profile.eq_ignore_ascii_case("release") {
-    Command::new("node")
-      .args([
-        "scripts/build.js",
-        "--minify",
-        format!("--outdir={}", &outdir).as_str(),
-      ])
-      .status()
-      .unwrap();
-  } else {
-    Command::new("node")
-      .args(["scripts/build.js", format!("--outdir={}", &outdir).as_str()])
-      .status()
-      .unwrap();
+  match exec!("node", "--version") {
+    Ok(status) if status.success() => {}
+    _ => {
+      println!(
+        "cargo::error=node is required for building the client assets. Make sure the system has nodejs installed."
+      );
+      return Ok(());
+    }
   }
 
-  let outdir = PathBuf::from_str(&outdir).unwrap();
+  match detect_package_manager() {
+    Some(PackageManager::Npm) => exec!("npm", "install")?,
+    Some(PackageManager::Pnpm) => exec!("pnpm", "install")?,
+    None => {
+      println!("cargo::error=npm or pnpm is required for initializing node_modules directory.");
+      return Ok(());
+    }
+  };
+
+  let minify: Option<&'static str> = if profile.eq_ignore_ascii_case("release") {
+    Some("--minify")
+  } else {
+    None
+  };
+
+  let style_css_path = format!("{}", outdir.join("style.css").display());
+  exec!(
+    "node",
+    "node_modules/@tailwindcss/cli/dist/index.mjs",
+    "-i",
+    "src/style.css",
+    "-o",
+    style_css_path,
+    minify
+  )?;
+
+  let outdir_arg = format!("--outdir={}", outdir.display());
+  exec!(
+    "node",
+    "node_modules/esbuild/bin/esbuild",
+    "src/index.js",
+    "--bundle",
+    "--format=iife",
+    "--target=firefox109,chrome108,safari15",
+    outdir_arg,
+    minify
+  )?;
+
+  copy("static/icon.svg", outdir.join("icon.svg"))?;
+  copy(
+    "static/feather-sprite.svg",
+    outdir.join("feather-sprite.svg"),
+  )?;
+
   create_asset(&outdir, "NUTWG_CLIENT_CSS", "style.css")?;
   create_asset(&outdir, "NUTWG_CLIENT_JS", "index.js")?;
   create_asset(&outdir, "NUTWG_CLIENT_ICON", "icon.svg")?;
@@ -78,4 +182,23 @@ fn calc_sha256(bytes: &[u8]) -> Result<String, std::io::Error> {
   let digest = sha256.finalize();
 
   Ok(base16ct::lower::encode_string(&digest))
+}
+
+enum PackageManager {
+  Pnpm,
+  Npm,
+}
+
+fn detect_package_manager() -> Option<PackageManager> {
+  if let Ok(status) = exec!("pnpm", "--version")
+    && status.success()
+  {
+    Some(PackageManager::Pnpm)
+  } else if let Ok(status) = exec!("npm", "--version")
+    && status.success()
+  {
+    Some(PackageManager::Npm)
+  } else {
+    None
+  }
 }

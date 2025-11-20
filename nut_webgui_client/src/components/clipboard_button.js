@@ -17,8 +17,8 @@ export default class ClipboardButton extends HTMLElement {
       this.addEventListener(
         "click",
         () => {
-          console.debug("Clicked");
           navigator.clipboard.writeText(data);
+
           this.dispatchEvent(
             new CustomEvent("clipboard", {
               composed: true,

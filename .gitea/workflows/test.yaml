@@ -19,9 +19,5 @@ jobs:
       - name: Setup rustup targets
         run: |
           rustup default stable
-      - name: Init project
-        run: make init
-      - name: Run checks
-        run: make check
       - name: Run tests
         run: make test
