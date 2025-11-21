@@ -86,8 +86,8 @@ build-x86-64-v3-musl: $(call fn_bin_path,x86-64-v3-musl)
 $(call fn_outputs,x86-64-v3-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v3-unknown-linux-musl"
 	@export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v3 -Clinker=rust-lld" && \
-		cargo build -p nut_webgui --target=x86_64-unknown-linux-musl --release
-	@install -D '$(call fn_target_path,x86_64-unknown-linux-musl/release)' "$(call fn_bin_path,x86-64-v3-musl)"
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-musl --target-dir target/x86_64-v3-musl --release
+	@install -D '$(call fn_target_path,x86_64-v3-musl/x86_64-unknown-linux-musl/release)' "$(call fn_bin_path,x86-64-v3-musl)"
 	@$(call fn_create_tar,x86-64-v3-musl)
 
 # x86-64-v4 MUSL
@@ -97,8 +97,8 @@ build-x86-64-v4-musl: $(call fn_bin_path,x86-64-v4-musl)
 $(call fn_outputs,x86-64-v4-musl) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v4-unknown-linux-musl"
 	@export RUSTFLAGS="-Clink-self-contained=yes -Ctarget-cpu=x86-64-v4 -Clinker=rust-lld" && \
-		cargo build -p nut_webgui --target=x86_64-unknown-linux-musl --release
-	@install -D "$(call fn_target_path,x86_64-unknown-linux-musl/release)" "$(call fn_bin_path,x86-64-v4-musl)"
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-musl --target-dir target/x86_64-v4-musl --release
+	@install -D "$(call fn_target_path,x86_64-v4-musl/x86_64-unknown-linux-musl/release)" "$(call fn_bin_path,x86-64-v4-musl)"
 	@$(call fn_create_tar,x86-64-v4-musl)
 
 # x86-64 GLIBC
@@ -118,8 +118,8 @@ build-x86-64-v3-gnu: $(call fn_bin_path,x86-64-v3-gnu)
 $(call fn_outputs,x86-64-v3-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v3-unknown-linux-gnu"
 	@export RUSTFLAGS="-Ctarget-cpu=x86-64-v3" && \
-		cargo build -p nut_webgui --target=x86_64-unknown-linux-gnu --release
-	@install -D "$(call fn_target_path,x86_64-unknown-linux-gnu/release)" "$(call fn_bin_path,x86-64-v3-gnu)"
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-gnu --target-dir target/x86_64-v3-gnu --release
+	@install -D "$(call fn_target_path,x86_64-v3-gnu/x86_64-unknown-linux-gnu/release)" "$(call fn_bin_path,x86-64-v3-gnu)"
 	@$(call fn_create_tar,x86-64-v3-gnu)
 
 # x86-64-v4 GLIBC
@@ -129,8 +129,8 @@ build-x86-64-v4-gnu: $(call fn_bin_path,x86-64-v4-gnu)
 $(call fn_outputs,x86-64-v4-gnu) &: $(PROJECT_SRCS)
 	@echo "Building for x86_64-v4-unknown-linux-gnu"
 	@export RUSTFLAGS="-Ctarget-cpu=x86-64-v4" && \
-		cargo build -p nut_webgui --target=x86_64-unknown-linux-gnu --release
-	@install -D "$(call fn_target_path,x86_64-unknown-linux-gnu/release)" "$(call fn_bin_path,x86-64-v4-gnu)"
+		cargo build -p nut_webgui --target=x86_64-unknown-linux-gnu --target-dir target/x86_64-v4-gnu --release
+	@install -D "$(call fn_target_path,x86_64-v4-gnu/x86_64-unknown-linux-gnu/release)" "$(call fn_bin_path,x86-64-v4-gnu)"
 	@$(call fn_create_tar,x86-64-v4-gnu)
 
 # ARM64/v8 MUSL
