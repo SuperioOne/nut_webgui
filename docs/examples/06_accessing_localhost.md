@@ -31,20 +31,22 @@ docker run --network=host -d -e UPSD_ADDR=localhost ghcr.io/superioone/nut_webgu
 podman run --network=host -d -e UPSD_ADDR=localhost ghcr.io/superioone/nut_webgui:latest
 ```
 
-## Podman - slirp4netns with default loopback IP (10.0.2.2)
-
-```bash
-podman run -d \
-  --network=slirp4netns:allow_host_loopback=true \
-  -e UPSD_ADDR=10.0.2.2 \
-  -p 9000:9000 ghcr.io/superioone/nut_webgui:latest
-```
-
 ## Podman - pasta with default host gateway (169.254.1.2)
 
 ```bash
 podman run -d \
   --network=pasta:--map-gw \
   -e UPSD_ADDR=169.254.1.2 \
+  -p 9000:9000 ghcr.io/superioone/nut_webgui:latest
+```
+
+## Podman - slirp4netns with default loopback IP (10.0.2.2)
+
+> WARNING: slirp4netns is deprecated in Podman 5, prefer using `Pasta` network mode.
+
+```bash
+podman run -d \
+  --network=slirp4netns:allow_host_loopback=true \
+  -e UPSD_ADDR=10.0.2.2 \
   -p 9000:9000 ghcr.io/superioone/nut_webgui:latest
 ```
