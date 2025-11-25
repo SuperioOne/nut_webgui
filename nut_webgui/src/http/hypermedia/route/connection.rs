@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
-  http::hypermedia::{error::ErrorPage, utils::RenderWithConfig},
+  http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
   state::{DaemonState, ServerState},
 };
 use askama::Template;

@@ -6,8 +6,8 @@ use crate::{
     error::ErrorPage,
     notification::NotificationTemplate,
     semantic_type::SemanticType,
-    units::UnitDisplay,
-    utils::{RenderWithConfig, redirect_not_found},
+    unit::UnitDisplay,
+    util::{RenderWithConfig, redirect_not_found},
   },
   state::{DescriptionKey, ServerState},
 };
@@ -92,6 +92,19 @@ enum UpsPageTabTemplate<'a> {
     namespace: &'a str,
     upsd_config: &'a UpsdConfig,
   },
+}
+
+impl UpsPageTabTemplate<'_> {
+  fn as_type_str(&self) -> &'static str {
+    match self {
+      UpsPageTabTemplate::None => "none",
+      UpsPageTabTemplate::Commands { .. } => "commands",
+      UpsPageTabTemplate::Variables { .. } => "variables",
+      UpsPageTabTemplate::Grid { .. } => "grid",
+      UpsPageTabTemplate::Rw { .. } => "rw",
+      UpsPageTabTemplate::Clients { .. } => "clients",
+    }
+  }
 }
 
 async fn get_tab_template<'a>(

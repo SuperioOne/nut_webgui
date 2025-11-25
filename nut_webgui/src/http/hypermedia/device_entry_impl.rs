@@ -2,12 +2,14 @@ use crate::{
   device_entry::DeviceEntry,
   http::hypermedia::{
     semantic_type::SemanticType,
-    units::{
+    unit::{
       ApparentPower, Approx, Celcius, OneOf, Percentage, RealPower, RemainingSeconds, UnitDisplay,
     },
   },
 };
 use nut_webgui_upsmc::{Value, VarName};
+
+use super::unit::Voltage;
 
 // Provides hypermedia specific impls for DeviceEntry struct
 impl DeviceEntry {
@@ -45,7 +47,7 @@ impl DeviceEntry {
           .unwrap_or(60.0);
 
         value.set_semantic_type(SemanticType::from_range(
-          value.get_raw_value(),
+          value.as_raw_value(),
           low_temp,
           high_temp,
         ));
@@ -61,7 +63,7 @@ impl DeviceEntry {
 
     match Percentage::try_from(load_var) {
       Ok(mut value) => {
-        value.set_semantic_type(SemanticType::from_range(value.get_raw_value(), 45.0, 75.0));
+        value.set_semantic_type(SemanticType::from_range(value.as_raw_value(), 45.0, 75.0));
 
         Some(value)
       }
@@ -87,7 +89,7 @@ impl DeviceEntry {
           .unwrap_or(25.0);
 
         value.set_semantic_type(SemanticType::from_range_inverted(
-          value.get_raw_value(),
+          value.as_raw_value(),
           danger_level,
           warn_level,
         ));
@@ -109,7 +111,7 @@ impl DeviceEntry {
           .and_then(|v| v.as_lossly_i64())
           .unwrap_or(60);
 
-        if value.get_raw_value() < danger_level {
+        if value.as_raw_value() < danger_level {
           value.set_semantic_type(SemanticType::Error);
         } else {
           value.set_semantic_type(SemanticType::Success);
@@ -170,6 +172,99 @@ impl DeviceEntry {
       Some(OneOf::T1(value))
     } else {
       self.get_approx_apparent_power().map(|v| OneOf::T2(v))
+    }
+  }
+
+  pub fn get_input_voltage(&self) -> Option<Voltage> {
+    let volt_var = self.variables.get(VarName::INPUT_VOLTAGE)?;
+
+    match Voltage::try_from(volt_var) {
+      Ok(mut value) => {
+        let low_volt = self
+          .variables
+          .get(VarName::INPUT_VOLTAGE_LOW_CRITICAL)
+          .and_then(|v| v.as_lossly_f64());
+
+        let high_volt = self
+          .variables
+          .get(VarName::INPUT_VOLTAGE_HIGH_CRITICAL)
+          .and_then(|v| v.as_lossly_f64());
+
+        let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
+          || high_volt.is_some_and(|target| value.as_raw_value() >= target)
+        {
+          SemanticType::Warning
+        } else {
+          SemanticType::Success
+        };
+
+        value.set_semantic_type(semantic_type);
+
+        Some(value)
+      }
+      Err(_) => None,
+    }
+  }
+
+  pub fn get_output_voltage(&self) -> Option<Voltage> {
+    let volt_var = self.variables.get(VarName::OUTPUT_VOLTAGE)?;
+
+    match Voltage::try_from(volt_var) {
+      Ok(mut value) => {
+        let low_volt = self
+          .variables
+          .get(VarName::OUTPUT_VOLTAGE_LOW)
+          .and_then(|v| v.as_lossly_f64());
+
+        let high_volt = self
+          .variables
+          .get(VarName::OUTPUT_VOLTAGE_HIGH)
+          .and_then(|v| v.as_lossly_f64());
+
+        let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
+          || high_volt.is_some_and(|target| value.as_raw_value() >= target)
+        {
+          SemanticType::Error
+        } else {
+          SemanticType::Success
+        };
+
+        value.set_semantic_type(semantic_type);
+
+        Some(value)
+      }
+      Err(_) => None,
+    }
+  }
+
+  pub fn get_battery_voltage(&self) -> Option<Voltage> {
+    let volt_var = self.variables.get(VarName::BATTERY_VOLTAGE)?;
+
+    match Voltage::try_from(volt_var) {
+      Ok(mut value) => {
+        let low_volt = self
+          .variables
+          .get(VarName::BATTERY_VOLTAGE_LOW)
+          .and_then(|v| v.as_lossly_f64());
+
+        let high_volt = self
+          .variables
+          .get(VarName::BATTERY_VOLTAGE_HIGH)
+          .and_then(|v| v.as_lossly_f64());
+
+        let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
+          || high_volt.is_some_and(|target| value.as_raw_value() >= target)
+        {
+          SemanticType::Error
+        } else {
+          SemanticType::Success
+        };
+
+        value.set_semantic_type(semantic_type);
+
+        Some(value)
+      }
+      Err(_) => None,
     }
   }
 }

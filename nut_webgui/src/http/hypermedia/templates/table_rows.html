@@ -6,19 +6,19 @@
     class="content-card rounded shadow-md"
     id="{{row.id}}"
     morph-preserve-attr="class"
-    search-value="{{row.name}}@{{namespace}}"
+    search-value="{{row.device.name}}@{{namespace}}"
   >
     <div class="grid grid-cols-15">
       <div class="border-b border-daisy border-dashed col-span-full flex flex-col gap-2 grow items-center lg:border-b-0 lg:border-r lg:col-span-3 lg:items-start p-2">
         <a
           class="break-all font-bold link link-hover text-primary text-wrap"
-          href="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{row.name | urlencode_strict}}"
+          href="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{row.device.name | urlencode_strict}}"
         >
-          <span>{{row.name}}</span><span class="opacity-70 font-light">@{{namespace}}</span>
+          <span>{{row.device.name}}</span><span class="opacity-70 font-light">@{{namespace}}</span>
         </a>
         <div class="font-semibold opacity-80 text-xs uppercase">
           <div class="flex flex-row flex-wrap gap-1">
-            {%- if let Some(status) = row.status -%}
+            {%- if let Some(Value::String(status)) = row.device.variables.get(nut_webgui_upsmc::VarName::UPS_STATUS) -%}
               {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status) -%}
                 <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
                   {{status_detail.name}}
@@ -29,7 +29,7 @@
             {%- endif -%}
           </div>
         </div>
-        <p class="opacity-50 text-wrap text-xs">{{row.desc}}</p>
+        <p class="opacity-50 text-wrap text-xs">{{row.device.desc}}</p>
       </div>
       <div class="col-span-full grid grid-cols-6 lg:col-span-12">
         <div class="col-span-full md:col-span-2 stat xl:col-span-1 xs:col-span-3">
@@ -38,7 +38,7 @@
           </div>
           <div class="stat-title">Ups Load</div>
           <div class="stat-value text-lg">
-            {%- match row.load -%}
+            {%- match row.device.get_ups_load() -%}
               {%- when Some(load) -%}
                 <div class="text-center w-full {{load.get_semantic_type().as_text()}}">{{load}}</div>
               {%- when None -%}
@@ -52,13 +52,15 @@
           </div>
           <div class="stat-title">Ups Power</div>
           <div class="stat-value text-lg">
-              {%- if let Some(power) = row.power -%}
+              {%- let power = row.device.get_apparent_power() -%}
+              {%- let real_power = row.device.get_real_power() -%}
+              {%- if let Some(power) = power -%}
                   <div class="text-center w-full {{power.get_semantic_type().as_text()}}">{{power}}</div>
               {%- endif -%}
-              {%- if let Some(real_power) = row.real_power -%}
+              {%- if let Some(real_power) = real_power -%}
                   <div class="text-center w-full {{real_power.get_semantic_type().as_text()}}">{{real_power}}</div>
               {%- endif -%}
-              {%- if row.power.is_none() && row.real_power.is_none() -%}
+              {%- if power.is_none() && real_power.is_none() -%}
                   <p class="font-bold opacity-50 text-center">N/A</p>
               {%- endif -%}
           </div>
@@ -69,7 +71,7 @@
           </div>
           <div class="stat-title">Battery Charge</div>
           <div class="stat-value text-lg">
-            {%- match row.charge -%}
+            {%- match row.device.get_battery_charge() -%}
               {%- when Some(charge) -%}
                 <div class="text-center w-full {{charge.get_semantic_type().as_text()}}">{{charge}}</div>
               {%- when None -%}
@@ -83,10 +85,10 @@
           </div>
           <div class="stat-title">Battery Runtime</div>
           <div class="stat-value text-lg">
-            {%- match row.runtime-%}
+            {%- match row.device.get_battery_runtime() -%}
               {%- when Some(runtime) -%}
                 <p class="font-bold text-center {{runtime.get_semantic_type().as_text()}}">
-                  <nut-time-display value="{{runtime.get_raw_value()}}"></nut-time-display>
+                  <nut-time-display value="{{runtime.as_raw_value()}}"></nut-time-display>
                 </p>
               {%- when None -%}
                 <p class="font-bold opacity-50 text-center">N/A</p>
@@ -99,7 +101,7 @@
           </div>
           <div class="stat-title">Ups Temperature</div>
           <div class="stat-value text-lg">
-            {%- match row.temperature -%}
+            {%- match row.device.get_ups_temperature() -%}
               {%- when Some(temperature) -%}
                 <div class="text-center text-info w-full {{temperature.get_semantic_type().as_text()}}">
                   {{temperature}}
@@ -115,7 +117,7 @@
           </div>
           <div class="stat-title">Attached Clients</div>
           <div class="stat-value text-lg">
-            <p class="font-bold text-center">{{row.attached}}</p>
+            <p class="font-bold text-center">{{row.device.attached.len()}}</p>
           </div>
         </div>
       </div>

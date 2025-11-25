@@ -1,4 +1,4 @@
-import { link_host_styles } from "../utils.js";
+import { getAttributeNumeric, link_host_styles } from "../util.js";
 import {
   arc as d3_arc,
   create as d3_create,
@@ -52,11 +52,7 @@ export default class Gauge extends HTMLElement {
   }
 
   connectedCallback() {
-    const value_text = this.getAttribute("value") ?? "0";
-
-    let value_number = Number(value_text);
-    value_number = isNaN(value_number) ? 0 : value_number;
-
+    const value = getAttributeNumeric(this, "value") ?? 0;
     const height = Math.min(500, this.clientWidth / 2);
     const outerRadius = height;
     const innerRadius = outerRadius * 0.85;
@@ -89,7 +85,7 @@ export default class Gauge extends HTMLElement {
 
     this.#value_track = tracks
       .append("path")
-      .datum({ endAngle: calc_angle(value_number) })
+      .datum({ endAngle: calc_angle(value) })
       .attr("d", /** @type{any}*/ (arc));
 
     this.#text = gauge
@@ -97,7 +93,7 @@ export default class Gauge extends HTMLElement {
       .attr("text-anchor", "middle")
       .attr("transform", `translate(${this.clientWidth / 2}, ${height})`)
       .style("font-size", `${font_size}px`)
-      .text(`${value_text}%`);
+      .text(`${value}%`);
 
     this.#gauge_arc = arc;
 

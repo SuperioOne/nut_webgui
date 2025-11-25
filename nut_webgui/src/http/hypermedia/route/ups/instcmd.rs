@@ -5,7 +5,7 @@ use crate::{
     error::ErrorPage,
     notification::NotificationTemplate,
     semantic_type::SemanticType,
-    utils::{RenderWithConfig, redirect_not_found},
+    util::{RenderWithConfig, redirect_not_found},
   },
   state::ServerState,
 };

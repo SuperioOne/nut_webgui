@@ -7,4 +7,5 @@ pub mod logout;
 pub mod not_found;
 pub mod static_content;
 pub mod system;
+pub mod topology;
 pub mod ups;

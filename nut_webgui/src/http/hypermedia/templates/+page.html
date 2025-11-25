@@ -17,7 +17,7 @@
           autocomplete="off"
           id="device-filter-input"
           maxlength="64"
-          name="device-filter"
+          name="device_filter"
           placeholder="Fuzzy search by device name"
         />
       </label>
@@ -73,7 +73,7 @@
                 No device available
               </div>
             {%- else -%}
-              <nut-search-list for="device-filter" id="device_list" class="flex flex-col gap-1 list-none">
+              <nut-search-list for="device_filter" id="device_list" class="flex flex-col gap-1 list-none">
                 {%- for row in rows_html -%}
                     {{row.html | safe}}
                 {%- endfor -%}

@@ -15,6 +15,7 @@
         <form
           id="api-key-form"
           class="flex flex-col gap-6 p-6"
+          hx-ext="morph"
           hx-post="{{base_path}}/api-keys"
           hx-swap="morph:outerHTML"
         >

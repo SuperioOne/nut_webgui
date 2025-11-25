@@ -1,7 +1,7 @@
 use askama::FastWritable;
 use core::fmt::Display;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SemanticType {
   None,
   Info,
@@ -57,11 +57,6 @@ impl SemanticType {
   }
 
   #[inline]
-  pub fn as_progress(self) -> &'static str {
-    ProgressStyle::from_type(self)
-  }
-
-  #[inline]
   pub fn as_alert(self) -> &'static str {
     AlertStyle::from_type(self)
   }
@@ -74,6 +69,21 @@ impl SemanticType {
   #[inline]
   pub fn as_select(self) -> &'static str {
     SelectStyle::from_type(self)
+  }
+
+  #[inline]
+  pub fn as_edge(self) -> &'static str {
+    EdgeStyle::from_type(self)
+  }
+
+  #[inline]
+  pub fn as_border(self) -> &'static str {
+    BorderStyle::from_type(self)
+  }
+
+  #[inline]
+  pub fn as_bar_gauge(self) -> &'static str {
+    BarGaugeStyle::from_type(self)
   }
 }
 
@@ -157,10 +167,12 @@ macro_rules! impl_semantic_class {
 pub struct TextStyle;
 pub struct BadgeStyle;
 pub struct FillStyle;
-pub struct ProgressStyle;
 pub struct AlertStyle;
 pub struct InputStyle;
 pub struct SelectStyle;
+pub struct EdgeStyle;
+pub struct BorderStyle;
+pub struct BarGaugeStyle;
 
 impl_semantic_class!(
   TextStyle,
@@ -194,16 +206,6 @@ impl_semantic_class!(
 );
 
 impl_semantic_class!(
-  ProgressStyle,
-  {
-    info = "progress-info",
-    success = "progress-success",
-    warning = "progress-warning",
-    error = "progress-error"
-  }
-);
-
-impl_semantic_class!(
   AlertStyle,
   {
     info = "alert-info",
@@ -230,5 +232,35 @@ impl_semantic_class!(
     success = "select-success",
     warning = "select-warning",
     error = "select-error"
+  }
+);
+
+impl_semantic_class!(
+  EdgeStyle,
+  {
+    info = "edge-info",
+    success = "edge-success",
+    warning = "edge-warning",
+    error = "edge-error"
+  }
+);
+
+impl_semantic_class!(
+  BorderStyle,
+  {
+    info = "border-info",
+    success = "border-success",
+    warning = "border-warning",
+    error = "border-error"
+  }
+);
+
+impl_semantic_class!(
+  BarGaugeStyle,
+  {
+    info = "bar-gauge-info",
+    success = "bar-gauge-success",
+    warning = "bar-gauge-warning",
+    error = "bar-gauge-error"
   }
 );

@@ -1,0 +1,349 @@
+{%- extends "../+layout.html" -%}
+{%- import "icons.html" as icons -%}
+
+{%- block page_title -%}
+  NUT Web - Topology
+{%- endblock page_title -%}
+
+{%- block page_wrapper -%}
+
+<div class="bg-grid max-h-[calc(100dvh-112px)] overflow-hidden relative w-full">
+  <div class="absolute bottom-0 flex flex-row justify-end max-w-96 right-0 tabs tabs-bottom tabs-lift tabs-sm z-10">
+    <input
+        autocomplete="off"
+        aria-label="Legend"
+        checked="checked"
+        class="[--tab-bg:var(--color-base-300)] backdrop-blur-sm tab"
+        name="control_tab"
+        type="radio"
+      />
+    <div class="backdrop-blur-sm bg-base-300/60 p-2 tab-content">
+      <table class="table table-xs">
+        <tr>
+          <td>
+            <div class="bg-base-300 border border-primary font-bold h-4 leading-3 rounded-2xl text-center text-lg w-4">∿</div>
+          </td>
+          <td>AC Supply</td>
+        </tr>
+        <tr>
+          <td class="text-primary">
+            {%- call icons::get_svg("server", 16) -%}
+          </td>
+          <td>NUT Server</td>
+        </tr>
+        <tr>
+          <td class="text-primary">
+            {%- call icons::get_svg("hard-drive", 16) -%}
+          </td>
+          <td>UPS Device</td>
+        </tr>
+        <tr>
+          <td class="text-secondary">
+            {%- call icons::get_svg("monitor", 16) -%}
+          </td>
+          <td>PC/Server powered by UPS</td>
+        </tr>
+        <tr>
+          <td>
+            <svg width="30" height="16" viewPort="0 0 30 16" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="8" x2="30" y2="8" class="edge-4 edge-base-content edge-dashed" />
+            </svg>
+          </td>
+          <td>Active electrical line</td>
+        </tr>
+        <tr>
+          <td>
+            <svg width="30" height="16" viewPort="0 0 30 16" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="8" x2="30" y2="8" class="edge-4 edge-error" />
+            </svg>
+          </td>
+          <td>Inactive electrical line</td>
+        </tr>
+        <tr>
+          <td>
+            <svg width="30" height="16" viewPort="0 0 30 16" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="8" x2="30" y2="8" class="edge-4 edge-base-content edge-dotted" />
+            </svg>
+          </td>
+          <td>Data line</td>
+        </tr>
+      </table>
+    </div>
+
+    <input
+        autocomplete="off"
+        aria-label="Controls"
+        class="[--tab-bg:var(--color-base-300)] backdrop-blur-sm tab"
+        name="control_tab"
+        type="radio"
+      />
+    <div class="backdrop-blur-sm bg-base-300/60 p-2 tab-content">
+      <table class="table table-xs">
+        <tr>
+          <td class="flex flex-row gap-1 items-center">
+            <span>{%- call icons::get_svg("move", 16) -%}</span>
+            <span>Pan</span>
+          </td>
+          <td>Mouse middle button</td>
+        </tr>
+        <tr>
+          <td class="flex flex-row gap-1 items-center">
+            <span>{%- call icons::get_svg("zoom-in", 16) -%}</span>
+            <span>Zoom-In</span>
+          </td>
+          <td>Mouse wheel up</td>
+        </tr>
+        <tr>
+          <td class="flex flex-row gap-1 items-center">
+            <span>{%- call icons::get_svg("zoom-out", 16) -%}</span>
+            <span>Zoom-Out</span>
+          </td>
+          <td>Mouse wheel down</td>
+        </tr>
+      </table>
+    </div>
+
+    <input
+      autocomplete="off"
+      aria-label="View Settings"
+      class="[--tab-bg:var(--color-base-300)] backdrop-blur-sm tab"
+      name="control_tab"
+      type="radio"
+    />
+    <div class="backdrop-blur-sm bg-base-300/60 p-2 tab-content">
+      <nut-attr-control for="topology_graph" class="flex flex-col gap-1">
+        <div class="gap-1 grid grid-cols-3">
+          <label class="input input-xs">
+            <span class="label">X</span>
+            <input
+              id="topology_graph_input_x"
+              autocomplete="off"
+              name="x"
+              step="1"
+              type="number"
+              value="0"
+            />
+          </label>
+          <label class="input input-xs">
+            <span class="label">Y</span>
+            <input
+              id="topology_graph_input_y"
+              autocomplete="off"
+              name="y"
+              step="1"
+              type="number"
+              value="0"
+            />
+          </label>
+          <label class="input input-xs">
+            <span class="label">Scale</span>
+            <input
+              id="topology_graph_input_scale"
+              autocomplete="off"
+              max="10"
+              min="0.1"
+              name="scale"
+              step="0.1"
+              type="number"
+              value="1"
+            />
+          </label>
+        </div>
+        <label class="select select-xs w-full">
+          <span class="label">Rank direction</span>
+          <select name="rankdir" autocomplete="off" >
+            <option value="TB" selected>Top to Bottom</option>
+            <option value="BT">Bottom to Top</option>
+            <option value="LR">Left to Right</option>
+            <option value="RL">Right to Left</option>
+          </select>
+        </label>
+        <label class="select select-xs w-full">
+          <span class="label">Align</span>
+          <select name="align" autocomplete="off" >
+            <option value="" selected>None</option>
+            <option value="DL">Down-Left</option>
+            <option value="DR">Down-Right</option>
+            <option value="UL">Up-Left</option>
+            <option value="UR">Up-Right</option>
+          </select>
+        </label>
+        <button class="btn btn-block btn-secondary btn-xs" type="reset">Reset</button>
+      </nut-attr-control>
+    </div>
+    <input
+      autocomplete="off"
+      aria-label="Minimize"
+      class="[--tab-bg:var(--color-base-300)] backdrop-blur-sm tab"
+      name="control_tab"
+      type="radio"
+    />
+    <div class="tab-content"></div>
+  </div>
+
+  <nut-graph
+    id="topology_graph"
+    tabindex="0"
+    class="block grab-zone h-full object-none touch-none w-full"
+    hx-get="{{base_path}}/topology?section=graph_nodes"
+    hx-indicator="#indicator"
+    hx-ext="morph"
+    hx-swap="morph:innerHTML"
+    hx-trigger="every 30s"
+  >
+    {%- block graph_nodes -%}
+    {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
+
+      {%- for device in graph.devices.values() -%}
+        {%- let node_id = device.get_id() -%}
+        <nut-graph-node id="{{node_id}}">
+          <div class="bg-base-300 border-2 border-collapse flex flex-col min-w-32 rounded {{device.get_semantic_type().as_border()}}">
+            <div class="flex flex-row gap-1 items-center p-2">
+              <div class="text-primary">
+                {%- call icons::get_svg("hard-drive", 24) -%}
+              </div>
+              <div class="flex flex-col text-primary">
+                {%- for alias in device.aliases.iter() -%}
+                  <a
+                    href="{{base_path}}/ups/{{alias.namespace | urlencode_strict}}/{{alias.name | urlencode_strict}}"
+                    class="font-bold link link-primary text-nowrap"
+                  >
+                    <span>{{alias.name}}</span><span class="font-light opacity-70">@{{alias.namespace}}</span>
+                  </a>
+                {%- endfor -%}
+              </div>
+            </div>
+            <div class="divider my-0"></div>
+            <div class="p-2">
+              {%- if let Some(mfr) = device.device_id.manufacturer -%}
+                <p class="opacity-70 text-nowrap text-xs"><b>MFR:</b> {{mfr}}</p>
+              {%- endif -%}
+              {%- if let Some(model) = device.device_id.model -%}
+                <p class="opacity-70 text-nowrap text-xs"><b>MOD:</b> {{model}}</p>
+              {%- endif -%}
+              {%- if let Some(sn) = device.device_id.serial -%}
+                <p class="opacity-70 text-nowrap text-xs"><b>SN:</b> {{sn}}</p>
+              {%- endif -%}
+              {%- if let Some(rt) = device.runtime -%}
+              <p class="opacity-70 text-nowrap text-xs"><b>RT:</b>
+                <nut-time-display
+                  class="font-bold text-success {{rt.get_semantic_type().as_text()}}"
+                  value="{{rt.as_raw_value()}}"
+                >
+                </nut-time-display>
+              </p>
+              {%- endif -%}
+            </div>
+            <div class="gap-1 grid grid-cols-2 p-2">
+              <div>
+                <div class="font-bold opacity-70 text-center text-xs w-full">BATT</div>
+                {%- if let Some(battery) = device.battery -%}
+                  <nut-bar-gauge
+                    class="{{battery.get_semantic_type().as_bar_gauge()}}"
+                    value="{{battery.as_raw_value()}}"
+                    step="8"
+                  >
+                  </nut-bar-gauge>
+                  <div class="opacity-70 text-center text-xs w-full">{{battery}}</div>
+                {%- else -%}
+                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">N/A</div>
+                {%- endif -%}
+              </div>
+              <div>
+                <div class="font-bold opacity-70 text-center text-xs w-full">LOAD</div>
+                {%- if let Some(load) = device.load -%}
+                  <nut-bar-gauge
+                    class="{{load.get_semantic_type().as_bar_gauge()}}"
+                    value="{{load.as_raw_value()}}"
+                    step="8"
+                  >
+                  </nut-bar-gauge>
+                  <div class="opacity-70 text-center text-xs w-full">{{load}}</div>
+                {%- else -%}
+                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">N/A</div>
+                {%- endif -%}
+              </div>
+            </div>
+            <div class="border-success flex flex-col gap-1 items-center justify-center p-2">
+              {%- let status = device.status.to_string() -%}
+              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status.as_ref()) -%}
+                <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
+                  {{status_detail.name}}
+                </span>
+              {%- endfor -%}
+            </div>
+          </div>
+        </nut-graph-node>
+        <nut-graph-node id="power_link_{{node_id}}">
+          <div class="bg-base-300 border-2 border-primary font-bold h-8 leading-6 rounded-4xl text-3xl text-center w-8">∿</div>
+        </nut-graph-node>
+        <nut-graph-link
+          {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
+            class="animate-pulse edge-4 edge-error"
+          {%- else if let Some(input_voltage) = device.input_voltage -%}
+            class="edge-4 edge-animate-flow edge-dashed {{input_voltage.get_semantic_type().as_edge()}}"
+          {%- else -%}
+            class="edge-4 edge-animate-flow edge-dashed edge-success"
+          {%- endif %}
+          id="power_link_{{node_id}}"
+          from="power_link_{{node_id}}"
+          to="{{node_id}}"
+        >
+          {%- if let Some(input_voltage) = device.input_voltage -%}
+            <div
+              class="backdrop-blur-sm bg-base-300/80 border border-neutral/30 font-bold p-1 rounded text-nowrap text-xs"
+            >
+              {{input_voltage}}
+            </div>
+          {%- endif -%}
+        </nut-graph-link>
+      {%- endfor -%}
+
+      <nut-graph-group id="group_clients">
+        {%- for server in graph.servers.values() -%}
+          <nut-graph-node id="{{server.get_id()}}">
+            <div class="bg-base-300 border-2 border-collapse flex flex-col min-w-32 rounded {{server.get_semantic_type().as_border()}}">
+              <div class="flex flex-row gap-1 items-center p-2">
+                <div class="text-primary">
+                  {%- call icons::get_svg("server", 24) -%}
+                </div>
+                <div class="font-bold text-nowrap text-primary">{{server.namespace}}</div>
+              </div>
+              <div class="divider my-0"></div>
+              <p class="font-bold p-2 text-center text-nowrap">{{server.address}}</p>
+              <div class="divider my-0"></div>
+              <div class="p-2">
+                <p class="opacity-70 text-nowrap text-xs"><b>UPSD STATUS:</b> {{server.status}}</p>
+                <p class="opacity-70 text-nowrap text-xs"><b>UPSD PORT:</b> {{server.port}}</p>
+              </div>
+            </div>
+          </nut-graph-node>
+        {%- endfor -%}
+
+        {%- for client in graph.clients.values() -%}
+          <nut-graph-node id="{{client.get_id()}}">
+            <div class="bg-base-300 border-2 border-collapse flex flex-col min-w-32 rounded {{client.get_semantic_type().as_border()}}">
+              <div class="flex flex-row gap-1 items-center p-2">
+                <div class="text-secondary">
+                  {%- call icons::get_svg("monitor", 24) -%}
+                </div>
+                <span class="font-bold text-nowrap">{{client.address}}</span>
+              </div>
+            </div>
+          </nut-graph-node>
+        {%- endfor -%}
+      </nut-graph-group>
+
+      {%- for edge in graph.edges -%}
+        <nut-graph-link
+          class="edge-2 edge-animate-flow {{edge.edge_type.as_class()}} {{edge.get_semantic_type().as_edge()}}"
+          from="{{edge.from}}"
+          id="{{edge.get_id()}}"
+          to="{{edge.to}}"
+        >
+        </nut-graph-link>
+      {%- endfor -%}
+    {%- endblock graph_nodes -%}
+  </nut-graph>
+</div>
+{%- endblock -%}

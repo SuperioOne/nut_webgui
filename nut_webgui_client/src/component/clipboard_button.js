@@ -17,15 +17,18 @@ export default class ClipboardButton extends HTMLElement {
       this.addEventListener(
         "click",
         () => {
-          navigator.clipboard.writeText(data);
-
-          this.dispatchEvent(
-            new CustomEvent("clipboard", {
-              composed: true,
-              detail: data,
-              cancelable: false,
-            }),
-          );
+          navigator.clipboard
+            .writeText(data)
+            .then(() => {
+              this.dispatchEvent(
+                new CustomEvent("clipboard", {
+                  composed: true,
+                  detail: data,
+                  cancelable: false,
+                }),
+              );
+            })
+            .catch(console.error);
         },
         {
           signal: this.#abort_controller.signal,

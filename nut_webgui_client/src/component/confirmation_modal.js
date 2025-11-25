@@ -1,4 +1,4 @@
-import { link_host_styles } from "../utils";
+import { link_host_styles } from "../util.js";
 
 const TEMPLATE = document.createElement("template");
 TEMPLATE.innerHTML = `

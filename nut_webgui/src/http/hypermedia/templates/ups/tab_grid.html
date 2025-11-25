@@ -7,18 +7,19 @@
   hx-swap="morph:innerHTML"
   hx-trigger="every {{upsd_config.poll_freq}}s"
   hx-target="#tab-content"
+  hx-ext="morph"
 >
   {%- if let Some(load) = device.get_ups_load() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Ups Load</h3>
-      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{load.get_semantic_type().as_fill()}}" value="{{load.get_raw_value()}}"></nut-gauge>
+      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{load.get_semantic_type().as_fill()}}" value="{{load.as_raw_value()}}"></nut-gauge>
     </div>
   {%- endif -%}
 
   {%- if let Some(charge) = device.get_battery_charge() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Battery Charge</h3>
-      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{charge.get_semantic_type().as_fill()}}" value="{{charge.get_raw_value()}}"></nut-gauge>
+      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{charge.get_semantic_type().as_fill()}}" value="{{charge.as_raw_value()}}"></nut-gauge>
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
         {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_LOW) -%}
           <p>
@@ -83,7 +84,7 @@
       <h3 class="opacity-60 tracking-wide">Battery Runtime</h3>
       <nut-time-display
         class="content-center grow py-6 text-6xl text-center tooltip tooltip-bottom {{runtime.get_semantic_type().as_text()}}"
-        value="{{runtime.get_raw_value()}}"
+        value="{{runtime.as_raw_value()}}"
         data-tip="{{runtime}}"
       >
       </nut-time-display>
@@ -98,9 +99,9 @@
     </div>
   {%- endif -%}
 
-  {%- let out_voltage = device.variables.get(nut_webgui_upsmc::VarName::OUTPUT_VOLTAGE) -%}
-  {%- let in_voltage = device.variables.get(nut_webgui_upsmc::VarName::INPUT_VOLTAGE) -%}
-  {%- let batt_voltage = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_VOLTAGE) -%}
+  {%- let out_voltage = device.get_output_voltage() -%}
+  {%- let in_voltage = device.get_input_voltage() -%}
+  {%- let batt_voltage = device.get_battery_voltage() -%}
 
   {%- if out_voltage.is_some() || in_voltage.is_some() || batt_voltage.is_some() -%}
     <div class="content-card flex flex-col gap-4">
@@ -109,19 +110,19 @@
         {%- if let Some(in_voltage) = in_voltage -%}
         <div class="p-2 stat">
           <div class="stat-title">Input</div>
-          <div class="stat-value text-center text-info">{{in_voltage}} V</div>
+          <div class="stat-value text-center {{in_voltage.get_semantic_type().as_text()}}">{{in_voltage}}</div>
         </div>
         {%- endif -%}
         {%- if let Some(out_voltage) = out_voltage -%}
           <div class="p-2 stat">
             <div class="stat-title">Output</div>
-            <div class="stat-value text-center text-info">{{out_voltage}} V</div>
+            <div class="stat-value text-center {{out_voltage.get_semantic_type().as_text()}}">{{out_voltage}}</div>
           </div>
         {%- endif -%}
         {%- if let Some(batt_voltage) = batt_voltage -%}
           <div class="p-2 stat">
             <div class="stat-title">Battery</div>
-            <div class="stat-value text-center text-info">{{batt_voltage}} V</div>
+            <div class="stat-value text-center {{batt_voltage.get_semantic_type().as_text()}}">{{batt_voltage}}</div>
           </div>
         {%- endif -%}
       </div>

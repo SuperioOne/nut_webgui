@@ -124,7 +124,7 @@ fn main() -> Result<(), std::io::Error> {
     "src/index.js",
     "--bundle",
     "--format=iife",
-    "--target=firefox109,chrome108,safari15",
+    "--target=es2020",
     outdir_arg,
     minify
   )?;

@@ -86,38 +86,18 @@
 
         <div id="tab-control" class="flex flex-row justify-center">
           <div role="tablist" class="md:w-fit tabs tabs-box w-full">
-            {%- if let UpsPageTabTemplate::Grid { .. } = tab_template  -%}
-              {%- call tab_button(device.name, tab_name = "grid", title = "Grid View", icon = "grid", is_active = true) -%}
-            {%- else -%}
-              {%- call tab_button(device.name, tab_name = "grid", title = "Grid View", icon = "grid", is_active = false) -%}
-            {%- endif -%}
+            {%- let template_type = tab_template.as_type_str() -%}
 
-            {%- if let UpsPageTabTemplate::Variables { .. } = tab_template  -%}
-              {%- call tab_button(device.name, tab_name = "variables", title = "Variables", icon = "table", is_active = true) -%}
-            {%- else -%}
-              {%- call tab_button(device.name, tab_name = "variables", title = "Variables", icon = "table", is_active = false) -%}
-            {%- endif -%}
-
-            {%- if let UpsPageTabTemplate::Clients { .. } = tab_template  -%}
-              {%- call tab_button(device.name, tab_name = "clients", title = "Clients", icon = "monitor", is_active = true) -%}
-            {%- else -%}
-              {%- call tab_button(device.name, tab_name = "clients", title = "Clients", icon = "monitor", is_active = false) -%}
-            {%- endif -%}
+            {%- call tab_button(device.name, tab_name = "grid", title = "Grid View", icon = "grid", is_active = (template_type == "grid")) -%}
+            {%- call tab_button(device.name, tab_name = "variables", title = "Variables", icon = "table", is_active = (template_type == "variables")) -%}
+            {%- call tab_button(device.name, tab_name = "clients", title = "Clients", icon = "monitor", is_active = (template_type == "clients")) -%}
 
             {%- if permission.has(crate::auth::permission::Permissions::FSD) || permission.has(crate::auth::permission::Permissions::INSTCMD) -%}
-              {%- if let UpsPageTabTemplate::Commands { .. } = tab_template  -%}
-                {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = true) -%}
-              {%- else -%}
-                {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = false) -%}
-              {%- endif -%}
+              {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = (template_type == "commands")) -%}
             {%- endif -%}
 
             {%- if permission.has(crate::auth::permission::Permissions::SETVAR) -%}
-              {%- if let UpsPageTabTemplate::Rw { .. } = tab_template  -%}
-                {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = true) -%}
-              {%- else -%}
-                {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = false) -%}
-              {%- endif -%}
+              {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = (template_type == "rw")) -%}
             {%- endif -%}
           </div>
         </div>

@@ -1,6 +1,6 @@
 use crate::{
   auth::user_session::UserSession,
-  http::hypermedia::{error::ErrorPage, utils::RenderWithConfig},
+  http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
   state::ServerState,
 };
 use askama::Template;

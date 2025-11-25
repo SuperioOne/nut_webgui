@@ -1,7 +1,9 @@
+import { getAttributeNumeric } from "../util.js";
+
 const TRIGGER_QUERY =
   ".ttl-trigger button, .ttl-trigger a, .ttl-trigger [role=button]";
 
-export default class TTLElement extends HTMLElement {
+export default class TtlElement extends HTMLElement {
   /** @type {number|undefined} */
   #timer;
 
@@ -11,18 +13,20 @@ export default class TTLElement extends HTMLElement {
   }
 
   connectedCallback() {
-    const ttl_attr = Number(this.getAttribute("ttl"));
-    const ttl = isNaN(ttl_attr) || ttl_attr < 1 ? 3000 : ttl_attr;
-    const dismissElements = this.querySelectorAll(TRIGGER_QUERY);
+    const ttl = getAttributeNumeric(this, "ttl") ?? -1;
+    const dismiss_elements = this.querySelectorAll(TRIGGER_QUERY);
 
-    for (const element of dismissElements) {
+    for (const element of dismiss_elements) {
       element.addEventListener("click", () => this?.remove());
     }
 
     this.role = "alert";
-    this.#timer = setTimeout(() => {
-      this?.remove();
-    }, ttl);
+
+    if (ttl > 0) {
+      this.#timer = setTimeout(() => {
+        this?.remove();
+      }, ttl);
+    }
   }
 
   disconnectedCallback() {
@@ -38,4 +42,4 @@ export default class TTLElement extends HTMLElement {
   }
 }
 
-customElements.define("nut-ttl", TTLElement);
+customElements.define("nut-ttl", TtlElement);

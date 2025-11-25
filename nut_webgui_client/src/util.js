@@ -112,3 +112,22 @@ export function localCompareStr(a, b) {
     return a.localeCompare(b);
   }
 }
+
+/**
+ * Reads element attribute as number.
+ *
+ * @param {Element} element
+ * @param {string} attribute
+ * @return {number | undefined}
+ */
+export function getAttributeNumeric(element, attribute) {
+  const text_value = element.getAttribute(attribute)?.trim();
+
+  if (text_value && text_value.length > 0) {
+    const value = Number(text_value);
+
+    return isNaN(value) ? undefined : value;
+  } else {
+    return undefined;
+  }
+}

@@ -7,7 +7,7 @@ use crate::{
     notification::NotificationTemplate,
     route::ups::RwFormTemplate,
     semantic_type::SemanticType,
-    utils::{RenderWithConfig, htmx_swap, redirect_not_found},
+    util::{RenderWithConfig, htmx_swap, redirect_not_found},
   },
   state::ServerState,
 };

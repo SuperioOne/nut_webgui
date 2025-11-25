@@ -8,7 +8,7 @@ pub trait UnitDisplay: core::fmt::Display {
 
   fn get_semantic_type(&self) -> SemanticType;
   fn set_semantic_type(&mut self, semantic_type: SemanticType);
-  fn get_raw_value(&self) -> Self::RawValue;
+  fn as_raw_value(&self) -> Self::RawValue;
 }
 
 macro_rules! impl_unit {
@@ -17,13 +17,13 @@ macro_rules! impl_unit {
   };
 
   (@internal $type:ident, inner_type = f64 $(, $($rest:tt)+)?) => {
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
     pub struct $type {
       raw_value: f64,
       semantic_type: $crate::http::hypermedia::semantic_type::SemanticType
     }
 
-    impl $crate::http::hypermedia::units::UnitDisplay for $type {
+    impl $crate::http::hypermedia::unit::UnitDisplay for $type {
       type RawValue = f64;
 
       #[inline]
@@ -37,8 +37,15 @@ macro_rules! impl_unit {
       }
 
       #[inline]
-      fn get_raw_value(&self) -> Self::RawValue {
+      fn as_raw_value(&self) -> Self::RawValue {
         self.raw_value
+      }
+    }
+
+    impl AsRef<f64> for $type {
+      #[inline]
+      fn as_ref(&self) -> &f64 {
+        &self.raw_value
       }
     }
 
@@ -84,13 +91,13 @@ macro_rules! impl_unit {
   };
 
   (@internal $type:ident, inner_type = i64 $(, $($rest:tt)+)?) => {
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
     pub struct $type {
       raw_value: i64,
       semantic_type: $crate::http::hypermedia::semantic_type::SemanticType
     }
 
-    impl $crate::http::hypermedia::units::UnitDisplay for $type {
+    impl $crate::http::hypermedia::unit::UnitDisplay for $type {
       type RawValue = i64;
 
       #[inline]
@@ -104,8 +111,15 @@ macro_rules! impl_unit {
       }
 
       #[inline]
-      fn get_raw_value(&self) -> Self::RawValue {
+      fn as_raw_value(&self) -> Self::RawValue {
         self.raw_value
+      }
+    }
+
+    impl AsRef<i64> for $type {
+      #[inline]
+      fn as_ref(&self) -> &i64 {
+        &self.raw_value
       }
     }
 
@@ -188,6 +202,7 @@ impl_unit!(Celcius, inner_type = f64, format = "{} ℃");
 impl_unit!(Percentage, inner_type = f64, format = "{} %");
 impl_unit!(RealPower, inner_type = f64, format = "{} W");
 impl_unit!(RemainingSeconds, inner_type = i64, format = "{} s");
+impl_unit!(Voltage, inner_type = f64, format = "{} V");
 
 /// Wrapper type for units with approximate value
 #[derive(Debug)]
@@ -249,8 +264,8 @@ where
     self.inner.set_semantic_type(semantic_type)
   }
 
-  fn get_raw_value(&self) -> Self::RawValue {
-    self.inner.get_raw_value()
+  fn as_raw_value(&self) -> Self::RawValue {
+    self.inner.as_raw_value()
   }
 }
 
@@ -327,10 +342,10 @@ where
   }
 
   #[inline]
-  fn get_raw_value(&self) -> Self::RawValue {
+  fn as_raw_value(&self) -> Self::RawValue {
     match self {
-      OneOf::T1(v) => v.get_raw_value(),
-      OneOf::T2(v) => v.get_raw_value(),
+      OneOf::T1(v) => v.as_raw_value(),
+      OneOf::T2(v) => v.as_raw_value(),
     }
   }
 }

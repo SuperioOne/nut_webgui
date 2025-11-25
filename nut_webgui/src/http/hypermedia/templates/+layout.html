@@ -35,7 +35,7 @@
     {%- block page_head -%}{%- endblock page_head -%}
   </head>
   <body>
-    <div id="notifications" class="md:w-md toast w-full z-50"></div>
+    <div id="notifications" class="md:w-md toast w-full z-99"></div>
     <div class="drawer drawer-end">
       <input id="menu-toggle" type="checkbox" class="drawer-toggle" />
       <div class="drawer-content flex flex-col justify-between min-h-screen">
@@ -52,6 +52,11 @@
                 <li>
                   <a class="text-lg" href="{{base_path}}/">
                     {%- call icons::get_svg("columns", 18) -%} Devices
+                  </a>
+                </li>
+                <li>
+                  <a class="text-lg" href="{{base_path}}/topology">
+                    {%- call icons::get_svg("map", 18) -%} Topology
                   </a>
                 </li>
                 <li>
@@ -76,6 +81,11 @@
               <li>
                 <a class="text-lg" href="{{base_path}}/">
                   {%- call icons::get_svg("columns", 18) -%} Devices
+                </a>
+              </li>
+              <li>
+                <a class="text-lg" href="{{base_path}}/topology">
+                  {%- call icons::get_svg("map", 18) -%} Topology
                 </a>
               </li>
               <li>
@@ -118,7 +128,7 @@
                     {{username.get_initials()}}
                   </div>
                 </div>
-                <ul tabindex="0" class="bg-base-200 dropdown-content menu menu-lg mt-5 p-2 rounded-box shadow-lg w-52 z-1">
+                <ul tabindex="0" class="bg-base-200 dropdown-content menu menu-lg mt-5 p-2 rounded-box shadow-lg w-52 z-99">
                   <li class="menu-title">User: {{username}}</li>
                   <li>
                     <label class="btn-ghost drawer-button" for="menu-toggle" >
@@ -164,14 +174,16 @@
             {%- endif -%}
           </div>
         </header>
-        <div  class="flex flex-row grow justify-center lg:p-16 md:p-14 p-3 w-full">
-          <div id="page_content" class="max-w-384 w-full">
-            {%- block content -%} {%- endblock content -%}
-          </div>
+        <div class="flex flex-row grow justify-center w-full">
+          {%- block page_wrapper -%}
+            <div id="page_content" class="box-border lg:p-16 max-w-512 md:p-14 p-3 w-full">
+              {%- block content -%} {%- endblock content -%}
+            </div>
+          {%- endblock -%}
         </div>
         <footer class="bg-base-200 flex flex-row footer p-3">
           <aside>
-            {%- let app_info = crate::http::hypermedia::utils::get_app_info() -%}
+            {%- let app_info = crate::http::hypermedia::util::get_app_info() -%}
             <a
               class="font-light link text-xs"
               href="{{app_info.repository}}/releases/tag/v{{app_info.version}}"
@@ -179,12 +191,11 @@
               <span>Version: {{app_info.version}}</span>
             </a>
           </aside>
-          <div>
         </footer>
       </div>
       <div class="drawer-side">
         <label for="menu-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
-        <div class="bg-base-200 min-h-full p-4 sm:w-80 w-full">
+        <div class="bg-base-200 min-h-full p-4 sm:w-80 w-full z-90">
           <div class="flex flex-row items-center justify-between mb-3">
             <h3 class="font-bold">
               Themes

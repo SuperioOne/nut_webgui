@@ -3,7 +3,7 @@ use crate::{
     AUTH_COOKIE_NAME, password_str::PasswordStr, signed_token::SignedToken,
     user_session::UserSession, username::Username,
   },
-  http::hypermedia::{error::ErrorPage, utils::RenderWithConfig},
+  http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
   state::ServerState,
 };
 use askama::Template;

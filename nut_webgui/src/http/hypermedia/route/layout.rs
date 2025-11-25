@@ -1,6 +1,6 @@
 use crate::http::{
   ServerState,
-  hypermedia::{error::ErrorPage, utils::RenderWithConfig},
+  hypermedia::{error::ErrorPage, util::RenderWithConfig},
 };
 use askama::Template;
 use axum::{

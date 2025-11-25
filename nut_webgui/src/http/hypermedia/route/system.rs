@@ -3,7 +3,7 @@ use crate::{
   config::ServerConfig,
   http::hypermedia::{
     error::ErrorPage,
-    utils::{AppDetails, RenderWithConfig, get_app_info},
+    util::{AppDetails, RenderWithConfig, get_app_info},
   },
   state::ServerState,
 };

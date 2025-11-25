@@ -1,5 +1,5 @@
 import htmx from "htmx.org";
-import { into_debounced_fn, localCompareStr } from "../utils";
+import { into_debounced_fn, localCompareStr } from "../util.js";
 
 /** @typedef {"for"} SearchListAttributes */
 

@@ -3,7 +3,7 @@ use crate::{
   config::ServerConfig,
   http::hypermedia::{
     error::ErrorPage, notification::NotificationTemplate, semantic_type::SemanticType,
-    utils::RenderWithConfig,
+    util::RenderWithConfig,
   },
 };
 use axum::{

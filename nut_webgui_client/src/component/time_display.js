@@ -1,4 +1,4 @@
-import { link_host_styles } from "../utils.js";
+import { link_host_styles } from "../util.js";
 
 /** @typedef {"value"} TimeDisplayAttrTypes */
 

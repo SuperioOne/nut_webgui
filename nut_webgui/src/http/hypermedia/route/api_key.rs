@@ -9,7 +9,7 @@ use crate::{
       error::ErrorPage,
       notification::NotificationTemplate,
       semantic_type::SemanticType,
-      utils::{RenderWithConfig, htmx_swap, redirect_not_found},
+      util::{RenderWithConfig, htmx_swap, redirect_not_found},
     },
   },
 };

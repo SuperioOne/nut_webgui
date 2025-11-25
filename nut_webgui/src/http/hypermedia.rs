@@ -1,10 +1,10 @@
 pub mod middleware;
 pub mod route;
 
-mod device_entry_impls;
+mod device_entry_impl;
 mod error;
 mod notification;
 mod semantic_type;
-mod units;
+mod unit;
 mod ups_status;
-mod utils;
+mod util;

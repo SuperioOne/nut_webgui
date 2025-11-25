@@ -245,7 +245,6 @@ impl_standard_names!(
   (INPUT_VOLTAGE_LOW_CRITICAL                       ,InputVoltageLowCritical                     ,"input.voltage.low.critical");
   (INPUT_VOLTAGE_LOW_WARNING                        ,InputVoltageLowWarning                      ,"input.voltage.low.warning");
   (INPUT_VOLTAGE_MAXIMUM                            ,InputVoltageMaximum                         ,"input.voltage.maximum");
-  (INPUT_VOLTAGE_MINIMIM                            ,InputVoltageMinimim                         ,"input.voltage.minimim");
   (INPUT_VOLTAGE_MINIMUM                            ,InputVoltageMinimum                         ,"input.voltage.minimum");
   (INPUT_VOLTAGE_NOMINAL                            ,InputVoltageNominal                         ,"input.voltage.nominal");
   (INPUT_VOLTAGE_STATUS                             ,InputVoltageStatus                          ,"input.voltage.status");
