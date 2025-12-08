@@ -1,3 +1,15 @@
+# v0.7.1 - December 8, 2025
+
+## Added
+- New topology graph page to display all linked NUT servers, clients, and UPS devices.
+
+## Fixed
+- Device sync background task uses `poll_interval` instead of `poll_freq`, which unnecessarily increases background noise.
+
+## Changed
+- UI content maximum width increased from 1584px to 2048px for better wide-screen monitor view.
+- Home page template struct is optimized. At this point, it's a nonsense tier latency improvement, but why not.
+
 # v0.7.0 - November 4, 2025
 
 ## Added

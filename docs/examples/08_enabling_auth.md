@@ -23,7 +23,7 @@ permissions = ["setvar", "instcmd", "fsd"]  # Optional: Grant additional permiss
 password = "passw0rd"
 
 [spear-of-democracy]
-password = "⇩⇧⇨⇧⇦⇨"                         # Passwords do not have any character limit.
+password = "⇩⇧⇨⇧⇦⇨" # Passwords do not have any character limit.
 permissions = ["instcmd"]
 
 [sector-g-admin]
@@ -31,9 +31,9 @@ password = "otis123"
 permissions = ["fsd"]
 ```
 
-## 2. Example Docker Compose File
+## 2. Mount Users File to Container
 
-Here is an example `docker-compose.yaml` that uses secrets to provide authentication details.
+Example `docker-compose.yaml` that uses secrets to mount `users.toml` file.
 
 **docker-compose.yaml**
 ```yaml
@@ -59,6 +59,16 @@ volumes:
 secrets:
   users_file:
     file: ./users.toml
+```
+
+Example CLI argument to mount `users.toml` file.
+
+```shell
+docker run \
+  -p 9000:9000 \
+  -v "$(pwd)/users.toml":"/etc/nut_webgui/users.toml" \
+  -e AUTH_USERS_FILE="/etc/nut_webgui/users.toml" \
+  ghcr.io/superioone/nut_webgui:latest
 ```
 
 ## 3. (Optional) Persisting the Server Key
