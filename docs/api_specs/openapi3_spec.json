@@ -2,7 +2,7 @@
   "openapi": "3.0.4",
   "info": {
     "title": "nut_webgui JSON API",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "description": "Simple JSON API for interfacing with nut_webgui.",
     "license": {
       "name": "Apache 2.0",
