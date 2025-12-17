@@ -234,8 +234,8 @@ impl TopologyGraphBuilder {
           status: device.status,
         };
 
-        for client_ip in device.attached.iter() {
-          if client_ip.is_loopback() {
+        for client in device.attached.iter() {
+          if client.addr.is_loopback() {
             match semantic_type {
               SemanticType::None => {}
               SemanticType::Error => server_node.connection_counter.increment_failed(),
@@ -252,8 +252,8 @@ impl TopologyGraphBuilder {
           } else {
             let client = self
               .clients
-              .entry(*client_ip)
-              .or_insert(ClientNode::new(*client_ip));
+              .entry(client.addr)
+              .or_insert_with(|| ClientNode::new(client.addr, client.name.clone()));
 
             match semantic_type {
               SemanticType::None => {}
@@ -263,7 +263,7 @@ impl TopologyGraphBuilder {
             };
 
             self.edge_refs.push(EdgeRefNode {
-              to: (*client_ip).into(),
+              to: client.address.into(),
               from: key.clone().into(),
               edge_type: EdgeType::Power,
               semantic_type: semantic_type,
@@ -343,6 +343,7 @@ struct ClientNode {
   connection_counter: ConnectionCounter,
   id: usize,
   pub address: IpAddr,
+  pub name: Option<Box<str>>,
 }
 
 struct NutServerNode {
@@ -402,10 +403,11 @@ impl NodeType {
 }
 
 impl ClientNode {
-  pub fn new(ip: IpAddr) -> Self {
+  pub fn new(address: IpAddr, name: Option<Box<str>>) -> Self {
     Self {
       id: 0,
-      address: ip,
+      address,
+      name,
       connection_counter: ConnectionCounter::default(),
     }
   }

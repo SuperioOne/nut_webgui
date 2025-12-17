@@ -1,6 +1,8 @@
 use crate::{
+  device_entry::ClientInfo,
   diff_utils::Diff,
   event::{DeviceStatusChange, EventBatch, EventChannel, SystemEvent},
+  reverse_dns::lookup_ip,
   service::BackgroundService,
   state::UpsdState,
 };
@@ -223,36 +225,50 @@ impl StatusSyncTask {
                 }
               }
 
-              let client_diff = entry.attached.as_slice().into_diff(&clients.ips);
+              let client_diff = entry.attached.into_diff(&clients.ips);
+
+              if !client_diff.disconnected.is_empty() {
+                for client_ip in client_diff.disconnected.iter() {
+                  if let Some(idx) = entry.attached.iter().position(|c| c.addr == *client_ip) {
+                    _ = entry.attached.swap_remove(idx);
+
+                    info!(
+                      message = "client detached from ups",
+                      namespace = %self.state.namespace,
+                      device = %device,
+                      client = %client_ip
+                    );
+                  }
+                }
+
+                events.client_disconnect(device.clone(), client_diff.disconnected);
+              }
 
               if !client_diff.connected.is_empty() {
-                for client in client_diff.connected.iter() {
+                for client_ip in client_diff.connected.iter() {
+                  let client_name = if !client_ip.is_loopback() {
+                    lookup_ip(*client_ip).map_or(None, |v| Some(v))
+                  } else {
+                    None
+                  };
+
+                  entry.attached.push(ClientInfo {
+                    addr: *client_ip,
+                    name: client_name,
+                  });
+
                   info!(
                     message = "new client attached to ups",
                     namespace = %self.state.namespace,
                     device = %device,
-                    client = %client
+                    client = %client_ip
                   );
                 }
 
                 events.client_connection(device.clone(), client_diff.connected);
               }
 
-              if !client_diff.disconnected.is_empty() {
-                for client in client_diff.disconnected.iter() {
-                  info!(
-                    message = "client detached from ups",
-                    namespace = %self.state.namespace,
-                    device = %device,
-                    client = %client
-                  );
-                }
-
-                events.client_disconnect(device.clone(), client_diff.disconnected);
-              }
-
               entry.variables = var_list.variables;
-              entry.attached = clients.ips;
               entry.commands = commands.cmds;
               entry.last_modified = Utc::now();
 

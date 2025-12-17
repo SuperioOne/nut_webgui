@@ -27,13 +27,16 @@
     </div>
   {%- else -%}
     <nut-search-list for="client-filter" class="list">
-      {%- for ip in device.attached.iter() -%}
-        <li class="list-row" search-value="{{ip}}">
+      {%- for client in device.attached.iter() -%}
+        <li class="list-row" search-value="{{client.addr}} {{client.name.as_deref().unwrap_or("")}}">
+          <div class="text-secondary content-center">{%- call icons::get_svg("monitor", 24) -%}</div>
           <div>
-            {%- call icons::get_svg("monitor", 16) -%}
-          </div>
-          <div class="gap-3 grid grid-cols-2 list-col-grows">
-            <p class="break-all font-bold text-primary">{{ip}}</p>
+            {%- if let Some(name) = client.name -%}
+              <div class="font-bold text-primary">{{name}}</div>
+              <div class="font-semibold opacity-50 text-xs">{{client.addr}}</div>
+            {%- else -%}
+              <div class="font-bold text-primary">{{client.addr}}</div>
+            {%- endif -%}
           </div>
         </li>
       {%- endfor -%}

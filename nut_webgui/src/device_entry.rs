@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Serialize)]
 pub struct DeviceEntry {
-  pub attached: Vec<IpAddr>,
+  pub attached: Vec<ClientInfo>,
   pub commands: Vec<CmdName>,
   pub desc: Box<str>,
   pub last_modified: DateTime<Utc>,
@@ -16,6 +16,12 @@ pub struct DeviceEntry {
   pub rw_variables: HashMap<VarName, VarDetail>,
   pub status: UpsStatus,
   pub variables: UpsVariables,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ClientInfo {
+  pub addr: IpAddr,
+  pub name: Option<Box<str>>,
 }
 
 #[derive(Debug, Clone)]

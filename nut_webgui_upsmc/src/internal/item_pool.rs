@@ -104,7 +104,6 @@ where
     self.pool.release(item).await;
   }
 
-  #[inline]
   pub fn into_inner(mut self) -> A::Item {
     let item: A::Item = unsafe { self.item.assume_init_read() };
     self.item = MaybeUninit::zeroed();

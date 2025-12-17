@@ -39,6 +39,7 @@ mod device_entry;
 mod diff_utils;
 mod event;
 mod http;
+mod reverse_dns;
 mod service;
 mod skip_tls_verifier;
 mod state;

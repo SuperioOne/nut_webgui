@@ -1,7 +1,8 @@
 use crate::{
-  device_entry::{DeviceEntry, VarDetail},
+  device_entry::{ClientInfo, DeviceEntry, VarDetail},
   diff_utils::Diff,
   event::{EventBatch, EventChannel, SystemEvent},
+  reverse_dns::lookup_ip,
   service::{
     BackgroundService,
     error::{DeviceLoadError, IntoLoadError, SyncTaskError},
@@ -293,9 +294,8 @@ impl DeviceSyncTask {
       Some(value) => UpsStatus::from(value),
       _ => UpsStatus::default(),
     };
-    let attached = clients.map_load_err(&ups_name)?.ips;
+    let client_list = clients.map_load_err(&ups_name)?;
     let commands = commands.map_load_err(&ups_name)?.cmds;
-
     let rw_vars = join_all(
       rw_vars
         .map_load_err(&ups_name)?
@@ -321,6 +321,20 @@ impl DeviceSyncTask {
         }
       };
     }
+
+    let attached: Vec<ClientInfo> = client_list
+      .ips
+      .into_iter()
+      .map(|ip| {
+        let name = if !ip.is_loopback() {
+          lookup_ip(ip).map_or(None, |n| Some(n))
+        } else {
+          None
+        };
+
+        ClientInfo { addr: ip, name }
+      })
+      .collect();
 
     let entry = DeviceEntry {
       attached,

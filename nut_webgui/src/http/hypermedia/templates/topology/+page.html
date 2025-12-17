@@ -197,8 +197,8 @@
       {%- for device in graph.devices.values() -%}
         {%- let node_id = device.get_id() -%}
         <nut-graph-node id="{{node_id}}">
-          <div class="bg-base-300 border-2 border-collapse flex flex-col min-w-32 rounded {{device.get_semantic_type().as_border()}}">
-            <div class="flex flex-row gap-1 items-center p-2">
+          <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{device.get_semantic_type().as_border()}}">
+            <div class="flex flex-row gap-1 items-center">
               <div class="text-primary">
                 {%- call icons::get_svg("hard-drive", 24) -%}
               </div>
@@ -213,8 +213,7 @@
                 {%- endfor -%}
               </div>
             </div>
-            <div class="divider my-0"></div>
-            <div class="p-2">
+            <div>
               {%- if let Some(mfr) = device.device_id.manufacturer -%}
                 <p class="opacity-70 text-nowrap text-xs"><b>MFR:</b> {{mfr}}</p>
               {%- endif -%}
@@ -234,7 +233,7 @@
               </p>
               {%- endif -%}
             </div>
-            <div class="gap-1 grid grid-cols-2 p-2">
+            <div class="gap-1 grid grid-cols-2">
               <div>
                 <div class="font-bold opacity-70 text-center text-xs w-full">BATT</div>
                 {%- if let Some(battery) = device.battery -%}
@@ -264,7 +263,7 @@
                 {%- endif -%}
               </div>
             </div>
-            <div class="border-success flex flex-col gap-1 items-center justify-center p-2">
+            <div class="border-success flex flex-col gap-1 items-center justify-center">
               {%- let status = device.status.to_string() -%}
               {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status.as_ref()) -%}
                 <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
@@ -302,19 +301,22 @@
       <nut-graph-group id="group_clients">
         {%- for server in graph.servers.values() -%}
           <nut-graph-node id="{{server.get_id()}}">
-            <div class="bg-base-300 border-2 border-collapse flex flex-col min-w-32 rounded {{server.get_semantic_type().as_border()}}">
-              <div class="flex flex-row gap-1 items-center p-2">
+            <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{server.get_semantic_type().as_border()}}">
+              <div class="flex flex-row gap-2 items-center">
                 <div class="text-primary">
                   {%- call icons::get_svg("server", 24) -%}
                 </div>
-                <div class="font-bold text-nowrap text-primary">{{server.namespace}}</div>
+                <div>
+                  <div class="font-bold leading-tight text-nowrap text-primary">{{server.namespace}}</div>
+                  <div class="leading-tight opacity-70 text-center text-nowrap text-xs">
+                    {{server.address}}:{{server.port}}
+                  </div>
+                </div>
               </div>
-              <div class="divider my-0"></div>
-              <p class="font-bold p-2 text-center text-nowrap">{{server.address}}</p>
-              <div class="divider my-0"></div>
-              <div class="p-2">
-                <p class="opacity-70 text-nowrap text-xs"><b>UPSD STATUS:</b> {{server.status}}</p>
-                <p class="opacity-70 text-nowrap text-xs"><b>UPSD PORT:</b> {{server.port}}</p>
+              <div class="flex flex-row justify-center">
+                <span class="badge badge-outline badge-info text-nowrap text-xs uppercase">
+                  {{server.status}}
+                </span>
               </div>
             </div>
           </nut-graph-node>
@@ -322,12 +324,21 @@
 
         {%- for client in graph.clients.values() -%}
           <nut-graph-node id="{{client.get_id()}}">
-            <div class="bg-base-300 border-2 border-collapse flex flex-col min-w-32 rounded {{client.get_semantic_type().as_border()}}">
-              <div class="flex flex-row gap-1 items-center p-2">
+            <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{client.get_semantic_type().as_border()}}">
+              <div class="flex flex-row gap-2 items-center">
                 <div class="text-secondary">
                   {%- call icons::get_svg("monitor", 24) -%}
                 </div>
-                <span class="font-bold text-nowrap">{{client.address}}</span>
+                <div>
+                  {%- if let Some(name) = client.name -%}
+                    <div class="font-bold leading-tight text-nowrap text-primary">{{name}}</div>
+                    <div class="leading-tight opacity-70 text-center text-nowrap text-xs">
+                      {{client.address}}
+                    </div>
+                  {%- else -%}
+                    <div class="font-bold leading-tight text-nowrap text-primary">{{client.address}}</div>
+                  {%- endif -%}
+                </div>
               </div>
             </div>
           </nut-graph-node>

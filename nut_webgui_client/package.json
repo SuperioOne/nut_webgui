@@ -13,11 +13,11 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.17",
+    "@tailwindcss/cli": "^4.1.18",
     "@types/d3": "^7.4.3",
-    "daisyui": "^5.5.8",
-    "esbuild": "^0.27.1",
-    "tailwindcss": "^4.1.17",
+    "daisyui": "5.5.8",
+    "esbuild": "^0.27.2",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3"
   },
   "dependencies": {

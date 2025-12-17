@@ -1,5 +1,8 @@
+use nut_webgui_upsmc::response::ClientList;
 use nut_webgui_upsmc::{UpsName, response::UpsDevice};
 use std::{collections::HashMap, net::IpAddr};
+
+use crate::device_entry::ClientInfo;
 
 pub trait Diff<T> {
   type Result;
@@ -52,14 +55,13 @@ pub struct ClientDiff {
   pub disconnected: Vec<IpAddr>,
 }
 
-impl<'a, 'b> Diff<&'b [IpAddr]> for &'a [IpAddr]
+impl<'a, 'b> Diff<&'b [IpAddr]> for &'a [ClientInfo]
 where
   'a: 'b,
 {
   type Result = ClientDiff;
 
-  /// Generates diff from two slices of IPs. Current implementation expects extremly short
-  /// slices.
+  /// Current implementation expects extremly short slices.
   fn into_diff(self, target: &'_ [IpAddr]) -> Self::Result {
     let mut diff = ClientDiff {
       connected: Vec::new(),
@@ -67,13 +69,13 @@ where
     };
 
     for old in self.iter() {
-      if target.iter().find(|v| *v == old).is_none() {
-        diff.disconnected.push(*old);
+      if target.iter().find(|v| **v == old.addr).is_none() {
+        diff.disconnected.push(old.addr);
       }
     }
 
     for new in target.iter() {
-      if self.iter().find(|v| *v == new).is_none() {
+      if self.iter().find(|v| v.addr == *new).is_none() {
         diff.connected.push(*new);
       }
     }
