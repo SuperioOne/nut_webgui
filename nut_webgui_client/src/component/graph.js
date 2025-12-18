@@ -343,7 +343,7 @@ class Graph extends HTMLElement {
           this.#pointer_state = { x: e.screenX, y: e.screenY };
         }
       },
-      { signal: this.#abort_controller.signal },
+      { signal: this.#abort_controller.signal, passive: true },
     );
 
     this.addEventListener(
@@ -356,7 +356,7 @@ class Graph extends HTMLElement {
           this.#internals.states.add(GRAB_STATE);
         }
       },
-      { signal: this.#abort_controller.signal },
+      { signal: this.#abort_controller.signal, passive: true },
     );
 
     const cancel_action = () => {
@@ -368,6 +368,7 @@ class Graph extends HTMLElement {
 
     this.addEventListener("pointerup", cancel_action, {
       signal: this.#abort_controller.signal,
+      passive: true,
     });
 
     this.addEventListener("pointercancel", (e) => {
@@ -386,7 +387,7 @@ class Graph extends HTMLElement {
         );
         this.#scale(scale, pivot);
       },
-      { signal: this.#abort_controller.signal },
+      { signal: this.#abort_controller.signal, passive: true },
     );
 
     this.#state = {
@@ -471,7 +472,7 @@ class Graph extends HTMLElement {
 
     this.#container.append(temp_layout);
 
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       const graph = new dagre.graphlib.Graph({
         multigraph: true,
         compound: true,
@@ -587,10 +588,10 @@ class Graph extends HTMLElement {
       this.#container.replaceChildren(...svg_root.children);
       this.#svg = svg;
       this.#resize_observer.observe(this.#container);
-    });
+    }, 0);
   }
 
-  #lazy_render = into_debounced_fn(() => this.#render(), { duration: 0 });
+  #lazy_render = into_debounced_fn(() => this.#render(), { duration: 33 });
 
   /**
    * @param {ResizeObserverEntry[]} entries

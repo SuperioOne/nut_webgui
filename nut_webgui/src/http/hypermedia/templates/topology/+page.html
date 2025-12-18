@@ -21,7 +21,7 @@
       <table class="table table-xs">
         <tr>
           <td>
-            <div class="bg-base-300 border border-primary font-bold h-4 leading-3 rounded-2xl text-center text-lg w-4">∿</div>
+            <div class="bg-base-300 border border-primary flex flex-row font-bold h-4 items-center justify-center rounded-full text-center text-lg w-4">∿</div>
           </td>
           <td>AC Supply</td>
         </tr>
@@ -274,7 +274,7 @@
           </div>
         </nut-graph-node>
         <nut-graph-node id="power_link_{{node_id}}">
-          <div class="bg-base-300 border-2 border-primary font-bold h-8 leading-6 rounded-4xl text-3xl text-center w-8">∿</div>
+          <div class="bg-base-300 border-2 border-primary flex flex-row font-bold h-8 items-center justify-center rounded-full text-3xl w-8">∿</div>
         </nut-graph-node>
         <nut-graph-link
           {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
@@ -314,7 +314,7 @@
                 </div>
               </div>
               <div class="flex flex-row justify-center">
-                <span class="badge badge-outline badge-info text-nowrap text-xs uppercase">
+                <span class="badge badge-info badge-outline text-nowrap text-xs uppercase">
                   {{server.status}}
                 </span>
               </div>
