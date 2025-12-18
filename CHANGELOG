@@ -1,3 +1,15 @@
+# v0.8.0 - December 18, 2025
+
+## Added
+- Reverse DNS lookup to find and display host names of the attached client IPs.
+- TOML v1.1.0 support.
+
+## Changed
+- **(BREAKING)** The `attached` field in the device response now returns an array of objects instead of strings in the JSON Data API. This is a minor but breaking change.
+
+## Fixed
+- Topology graph nodes sometimes disappears after a re-render.
+
 # v0.7.1 - December 8, 2025
 
 ## Added

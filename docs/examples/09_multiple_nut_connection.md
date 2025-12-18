@@ -74,20 +74,32 @@ secrets:
     file: ./config.toml
 ```
 
-
 ## Notes
 
-- Namespace names must be unique.
+- Config file uses TOML v1.1.0 format.
+- Namespaces must be unique.
 - UPS devices are always referred by their namespace, allowing the use of the same UPS name under different namespaces. For example: `ups@kongou` and `ups@hiei`.
 - The same NUT server address and port can be added multiple times as different namespace. This is kinda useless feature for 99.99% of users but is available as an option.
-- Since config file uses TOML format, [inline tables](https://toml.io/en/v1.0.0#inline-table) can be used to define connections. Note that TOML spec does not allow newlines between the curly braces.
 
   Example using inline tables:
   ```toml
   [upsd]
   kongou = { address = "19.12.1.17" }
-  hiei = { address = "19.12.11.21", username = "admin", password = "test" }
-  kirishima = { address = "19.13.12.1", username = "admin", password = "test", port = 4493, max_connection = 12, poll_freq = 10, poll_interval = 1, tls_mode = "strict" }
+  hiei = {
+    address = "19.12.11.21",
+    username = "admin",
+    password = "test"
+  }
+  kirishima = {
+    address = "19.13.12.1",
+    username = "admin",
+    password = "test",
+    port = 4493,
+    max_connection = 12,
+    poll_freq = 10,
+    poll_interval = 1,
+    tls_mode = "strict"
+  }
   haruna = {}
   ```
 

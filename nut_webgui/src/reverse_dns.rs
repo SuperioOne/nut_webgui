@@ -56,7 +56,7 @@ fn lookup_inner<T>(socket: *const T) -> Result<Box<str>, Error> {
       size_of::<T>() as socklen_t,
       host.as_mut_ptr().cast(),
       NI_MAXHOST,
-      null_mut::<i8>(),
+      null_mut(),
       0,
       NI_NAMEREQD,
     )

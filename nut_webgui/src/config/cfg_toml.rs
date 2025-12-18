@@ -58,7 +58,7 @@ impl<'de> Deserialize<'de> for LogLevel {
 
 #[deprecated(
   since = "0.7.0",
-  note = "Old configuration files will be supported until the next major version (v0.8.0)"
+  note = "Old configuration files will be supported until the next major version (v0.9.0)"
 )]
 #[derive(Debug, Deserialize, Default)]
 pub struct LegacyServerTomlArgs {
@@ -142,7 +142,7 @@ impl ServerTomlArgs {
       None => {
         let legacy_config = root.try_into::<LegacyServerTomlArgs>()?;
         warn!(
-          message = "Old config file format detected. Compatibility will be removed in future release (v0.8.0); consider updating your configuration file."
+          message = "Old config file format detected. Compatibility will be removed in future release (v0.9.0); consider updating your configuration file."
         );
 
         Ok(legacy_config.into())
