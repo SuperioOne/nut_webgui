@@ -9,10 +9,9 @@ jobs:
       run:
         shell: bash
     runs-on: akashi
-    # Using custom ArchLinux based action runner from private registry
     container:
       image: gitea-service:80/actions/arch-action-runner-full:latest
-      options: "--security-opt seccomp=unconfined --security-opt apparmor=unconfined --device /dev/fuse:rw" # container setup for buildah
+      options: "--security-opt seccomp=unconfined --security-opt apparmor=unconfined --device /dev/fuse:rw"
       credentials:
         username: ${{secrets.REGISTRY_USERNAME}}
         password: ${{secrets.REGISTRY_ACCESS_TOKEN}}
@@ -21,7 +20,7 @@ jobs:
         with:
           show-progress: false
           submodules: true
-      - name: Setup rustup targets and pnpm
+      - name: Setup rustup targets
         run: |
           rustup default stable;
           rustup target add aarch64-unknown-linux-gnu \
@@ -59,7 +58,7 @@ jobs:
           VERSION="$(cat "./bin/dockerfiles/annotations.json" | jq -r '.version')";
           cat ./CHANGELOG | awk -v version="^# v${VERSION}" '$0 ~ version {start=1;next}/^# v.*$/{start=0}start' > release_body.txt;
           cat ./release_body.txt;
-      - name: Crete draft release with binaries
+      - name: Crete new release with binaries
         uses: http://gitea-service/actions/gitea-release-action@main
         env:
           NODE_TLS_REJECT_UNAUTHORIZED: false

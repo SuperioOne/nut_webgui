@@ -1,77 +1,15 @@
 {
   "binary": [
+    "aarch64-gnu",
     "aarch64-musl",
-    "armv7-musleabi",
     "armv6-musleabi",
+    "armv7-musleabi",
+    "riscv64gc-gnu",
+    "x86-64-gnu",
     "x86-64-musl",
-    "x86-64-v3-musl"
-  ],
-  "oci": {
-    "manifest": {
-      "name": "$PROJECT_NAME-rc",
-      "tags": [
-        "$VERSION",
-        "latest"
-      ]
-    },
-    "images": [
-      {
-        "target": "x86-64-musl",
-        "base_image": "docker.io/busybox:stable-musl",
-        "platform": "linux/amd64",
-        "os": "linux",
-        "arch": "amd64",
-        "variant": "",
-        "tags": [
-          "$VERSION-amd64",
-          "latest-amd64"
-        ]
-      },
-      {
-        "target": "x86-64-v3-musl",
-        "base_image": "docker.io/busybox:stable-musl",
-        "platform": "linux/amd64",
-        "os": "linux",
-        "arch": "amd64",
-        "variant": "v3",
-        "tags": [
-          "$VERSION-amd64-v3",
-          "latest-amd64-v3"
-        ]
-      },
-      {
-        "target": "aarch64-musl",
-        "base_image": "docker.io/busybox:stable-musl",
-        "platform": "linux/arm64/v8",
-        "os": "linux",
-        "arch": "arm64",
-        "variant": "v8",
-        "tags": [
-          "$VERSION-arm64"
-        ]
-      },
-      {
-        "target": "armv6-musleabi",
-        "base_image": "docker.io/busybox:stable-musl",
-        "platform": "linux/arm/v6",
-        "os": "linux",
-        "arch": "arm",
-        "variant": "v6",
-        "tags": [
-          "$VERSION-armv6"
-        ]
-      },
-      {
-        "target": "armv7-musleabi",
-        "base_image": "docker.io/busybox:stable-musl",
-        "platform": "linux/arm/v7",
-        "os": "linux",
-        "arch": "arm",
-        "variant": "v7",
-        "tags": [
-          "$VERSION-armv7"
-        ]
-      }
-    ]
-  }
+    "x86-64-v3-gnu",
+    "x86-64-v3-musl",
+    "x86-64-v4-gnu",
+    "x86-64-v4-musl"
+  ]
 }

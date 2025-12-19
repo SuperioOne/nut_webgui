@@ -1,5 +1,9 @@
+# Simple test runner that works on all branches.
 name: test
-on: push
+on:
+  push:
+    branches-ignore:
+      - dev_next
 jobs:
   test:
     defaults:

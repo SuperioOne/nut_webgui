@@ -153,15 +153,6 @@ mod test {
 
   #[test]
   #[ignore = "must be explicitly enabled"]
-  fn lookup_google_dns_ipv4_2() {
-    match lookup_ip(Ipv4Addr::new(8, 8, 8, 8)) {
-      Ok(result) => assert_eq!("dns.google", result.as_ref()),
-      Err(err) => assert!(false, "cannot resolve google DNS, {}", err),
-    }
-  }
-
-  #[test]
-  #[ignore = "must be explicitly enabled"]
   fn lookup_cloudflare_dns_ipv6() {
     match lookup_ip(Ipv6Addr::from_str("2606:4700:4700::1111").unwrap()) {
       Ok(result) => assert_eq!("one.one.one.one", result.as_ref()),
