@@ -1,4 +1,4 @@
-import { link_host_styles } from "../util.js";
+import { getAttributeNumeric, link_host_styles } from "../util.js";
 
 /** @typedef {"value"} TimeDisplayAttrTypes */
 
@@ -62,34 +62,35 @@ export default class TimeDisplay extends HTMLElement {
 
   constructor() {
     super();
-    this.#shadow_root = this.attachShadow({ mode: "open" });
+    this.#shadow_root = this.attachShadow({ mode: "closed" });
     link_host_styles(this.#shadow_root);
   }
 
   connectedCallback() {
-    const value = Number(this.getAttribute("value"));
-    this.#generate_display(value);
+    this.#update();
   }
 
-  /** @param {number} value  **/
-  #generate_display(value) {
-    this.#shadow_root.innerHTML = isNaN(value)
-      ? "[ERR! NaN value]"
-      : get_time_str(Math.floor(value));
+  #update() {
+    const value = getAttributeNumeric(this, "value");
+
+    this.#shadow_root.innerHTML =
+      value === undefined
+        ? "[ERR! NaN value]"
+        : get_time_str(Math.floor(value));
   }
 
   /**
    * @param {TimeDisplayAttrTypes} name
-   * @param {null | undefined | string} _old_value
+   * @param {null | undefined | string} old_value
    * @param {null | undefined | string} new_value
    */
-  attributeChangedCallback(name, _old_value, new_value) {
-    switch (name) {
-      case "value":
-        this.#generate_display(Number(new_value));
-        break;
-      default:
-        break;
+  attributeChangedCallback(name, old_value, new_value) {
+    if (old_value === new_value) {
+      return;
+    }
+
+    if (name === "value") {
+      this.#update();
     }
   }
 }

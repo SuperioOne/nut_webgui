@@ -46,7 +46,10 @@
         <div class="stat-value text-sm">
           {%- match state.last_device_sync -%}
             {%- when Some(date) -%}
-              {{date.format("%Y-%m-%d %H:%M:%S")}} UTC
+              {%- let tooltip = date.format("%Y-%m-%d %H:%M:%S") -%}
+              <div class="tooltip" data-tip="{{tooltip}} UTC">
+                <nut-localized-date timestamp="{{date.timestamp_millis()}}"></nut-localized-date>
+              </div>
             {%- when None -%}
               Never
           {%- endmatch -%}
