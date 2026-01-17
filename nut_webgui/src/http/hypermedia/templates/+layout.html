@@ -4,7 +4,7 @@
 {%- let username = askama::get_value::<crate::auth::username::Username>("USER_NAME") -%}
 
 <!doctype html>
-<html lang="en" {% if let Ok(theme) = default_theme %} data-theme="{{theme}}" {% else %} data-theme="dark" {% endif %} >
+<html lang="en" {% if let Ok(theme) = default_theme -%} data-theme="{{theme}}" {%- else -%} data-theme="dark" {%- endif -%} >
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -101,11 +101,6 @@
             </ul>
           </div>
           <div class="navbar-end">
-            <div class="htmx-send-error-indicator">
-              <div class="text-error tooltip tooltip-bottom" data-tip="Network connection lost">
-                {%- call icons::get_svg("wifi-off", 18) -%}
-              </div>
-            </div>
             <div id="indicator" class="cursor-default htmx-indicator">
               <div
                 class="text-success tooltip tooltip-bottom"
@@ -174,6 +169,12 @@
             {%- endif -%}
           </div>
         </header>
+        <div class="bg-error htmx-send-error-indicator p-2 text-center text-error-content w-full">
+          <div class="font-bold">Connection lost</div>
+          <div class="text-sm font-light">
+            Unable to get response from server. Please check your internet connection and try again.
+          </div>
+        </div>
         <div class="flex flex-row grow justify-center w-full">
           {%- block page_wrapper -%}
             <div id="page_content" class="box-border lg:p-16 max-w-512 md:p-14 p-3 w-full">
