@@ -1,3 +1,12 @@
+# v0.8.1 - January 18, 2026
+
+## Fixed
+- Data and electrical edges visually overlap when they connect to the same nodes on the topology page.
+
+## Changed
+- Last synchronized date now shows the localized time (based on the browser's locale) instead of UTC only.
+- Added an updated UI indicator for when network connectivity is lost.
+
 # v0.8.0 - December 18, 2025
 
 ## Added

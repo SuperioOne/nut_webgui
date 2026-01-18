@@ -1,5 +1,4 @@
 use core::{
-  mem::MaybeUninit,
   num::NonZeroUsize,
   ops::{Deref, DerefMut},
   pin::Pin,
@@ -79,7 +78,7 @@ where
   A: ItemAllocator,
 {
   _permit: OwnedSemaphorePermit,
-  item: MaybeUninit<A::Item>,
+  item: A::Item,
   pool: Arc<InnerPool<A>>,
 }
 
@@ -98,15 +97,12 @@ impl<A> PoolGuard<A>
 where
   A: ItemAllocator,
 {
-  pub async fn release(mut self) {
-    let item: A::Item = unsafe { self.item.assume_init_read() };
-    self.item = MaybeUninit::zeroed();
-    self.pool.release(item).await;
+  pub async fn release(self) {
+    self.pool.release(self.item).await;
   }
 
-  pub fn into_inner(mut self) -> A::Item {
-    let item: A::Item = unsafe { self.item.assume_init_read() };
-    self.item = MaybeUninit::zeroed();
+  pub fn into_inner(self) -> A::Item {
+    let item: A::Item = self.item;
     drop(self._permit);
 
     item
@@ -119,8 +115,9 @@ where
 {
   type Target = A::Item;
 
+  #[inline]
   fn deref(&self) -> &Self::Target {
-    unsafe { self.item.assume_init_ref() }
+    &self.item
   }
 }
 
@@ -128,8 +125,9 @@ impl<A> DerefMut for PoolGuard<A>
 where
   A: ItemAllocator,
 {
+  #[inline]
   fn deref_mut(&mut self) -> &mut Self::Target {
-    unsafe { self.item.assume_init_mut() }
+    &mut self.item
   }
 }
 
@@ -165,7 +163,7 @@ where
           ItemState::Ready(item) => {
             return Ok(PoolGuard {
               _permit: permit,
-              item: MaybeUninit::new(item),
+              item,
               pool: self.inner.clone(),
             });
           }
@@ -178,7 +176,7 @@ where
           return match self.inner.allocator.init().await {
             Ok(item) => Ok(PoolGuard {
               _permit: permit,
-              item: MaybeUninit::new(item),
+              item,
               pool: self.inner.clone(),
             }),
             Err(inner) => Err(ItemPoolError::AllocatorError { inner }),
@@ -199,13 +197,13 @@ where
     match item {
       Some(item) => Ok(PoolGuard {
         _permit: permit,
-        item: MaybeUninit::new(item),
+        item,
         pool: self.inner.clone(),
       }),
       None => match self.inner.allocator.init().await {
         Ok(item) => Ok(PoolGuard {
           _permit: permit,
-          item: MaybeUninit::new(item),
+          item,
           pool: self.inner.clone(),
         }),
         Err(inner) => Err(ItemPoolError::AllocatorError { inner }),
