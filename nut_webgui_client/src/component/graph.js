@@ -40,9 +40,9 @@ const GRAB_STATE = "grabbing";
 /** @type {Record<string, PositionType>} */
 const Position = {
   Top: 0,
-  Bottom: 1,
-  Left: 2,
-  Right: 3,
+  Right: 1,
+  Bottom: 2,
+  Left: 3,
 };
 
 class GraphNode extends HTMLElement {}
@@ -90,6 +90,8 @@ function process_nodes(context, root_node, parent) {
         const from = child.getAttribute("from") ?? "";
         const to = child.getAttribute("to") ?? "";
         const weight = getAttributeNumeric(child, "weight") ?? 1;
+        const from_offset = getAttributeNumeric(child, "from-offset") ?? 0;
+        const to_offset = getAttributeNumeric(child, "to-offset") ?? 0;
         const label = child.innerHTML?.trim();
 
         if (label && label.length > 1) {
@@ -99,12 +101,14 @@ function process_nodes(context, root_node, parent) {
             label_height: child.clientHeight ?? 0,
             label_width: child.clientWidth ?? 0,
             weight,
+            from_offset,
+            to_offset,
           });
         } else {
           context.setEdge(
             from,
             to,
-            { class: child.className, weight },
+            { class: child.className, weight, from_offset, to_offset },
             child.id,
           );
         }
@@ -123,10 +127,10 @@ function process_nodes(context, root_node, parent) {
  */
 function try_into_align(value) {
   switch (value.trim().toUpperCase()) {
-    case "UL":
-    case "UR":
     case "DL":
     case "DR":
+    case "UL":
+    case "UR":
       return /** @type {AlignDirection} */ (value);
     default:
       return undefined;
@@ -139,10 +143,10 @@ function try_into_align(value) {
  */
 function try_into_rankdir(value) {
   switch (value.trim().toUpperCase()) {
-    case "TB":
-    case "RL":
     case "BT":
     case "LR":
+    case "RL":
+    case "TB":
       return /** @type {RankDirection} */ (value);
     default:
       return undefined;
@@ -208,24 +212,55 @@ function getAttributeAlign(element, name) {
 }
 
 /**
- * @param {{x:number, y:number, width:number, height:number}} rect
- * @param {PositionType} position
+ * Calculates the edge connection point on the rectangle.
+ *
+ * # Example
+ *
+ *   Relative         Current
+ *     Node            Node
+ *
+ *                    position: Position.Right
+ *   ┌─────┐          ┌─────┐
+ *   │ OH, │          │     │
+ *   │ HI  │       ┌─►*  o◄─┼──┐
+ *   │MARK!│       │  │     │  │
+ *   └─────┘       │  └─────┘  │
+ *                 │          rect x and y is the origin point of the rectangle
+ *                 │
+ *               the connection point function calculates
+ *
+ * @param {{x:number, y:number, width:number, height:number}} rect Rectangle object
+ * @param {PositionType} position direction of the rectangle 'relative' to target node
+ * @param {number} [offset] Optional offset value in pixels
  * @returns {Vector2}
  */
-function get_connection_point(rect, position) {
+function get_connection_point(rect, position, offset) {
   const dw = rect.width / 2;
   const dh = rect.height / 2;
+  const edge_offset = offset ?? 0;
 
   switch (position) {
     case Position.Left:
-      return { x: rect.x - dw, y: rect.y };
+      return {
+        x: rect.x - dw,
+        y: rect.y + edge_offset,
+      };
     case Position.Top:
-      return { x: rect.x, y: rect.y - dh };
+      return {
+        x: rect.x + edge_offset,
+        y: rect.y - dh,
+      };
     case Position.Right:
-      return { x: rect.x + dw, y: rect.y };
+      return {
+        x: rect.x + dw,
+        y: rect.y + edge_offset,
+      };
     case Position.Bottom:
     default:
-      return { x: rect.x, y: rect.y + dh };
+      return {
+        x: rect.x + edge_offset,
+        y: rect.y + dh,
+      };
   }
 }
 
@@ -286,17 +321,6 @@ class Graph extends HTMLElement {
     this.#resize_observer = new ResizeObserver(
       into_debounced_fn((entries) => this.#resize(entries), { duration: 200 }),
     );
-  }
-
-  connectedCallback() {
-    const rankdir = getAttributeRankdir(this, "rankdir") ?? "TB";
-    const align = getAttributeAlign(this, "align");
-    const pos_x = getAttributeNumeric(this, "x") ?? 0;
-    const pos_y = getAttributeNumeric(this, "y") ?? 0;
-    const scale = getAttributeNumeric(this, "scale") ?? 1;
-
-    this.#abort_controller?.abort();
-    this.#abort_controller = new AbortController();
     this.#mutation_observer = new MutationObserver((records) => {
       for (const record of records) {
         if (record.target !== this) {
@@ -315,7 +339,17 @@ class Graph extends HTMLElement {
         }
       }
     });
+  }
 
+  connectedCallback() {
+    const rankdir = getAttributeRankdir(this, "rankdir") ?? "TB";
+    const align = getAttributeAlign(this, "align");
+    const pos_x = getAttributeNumeric(this, "x") ?? 0;
+    const pos_y = getAttributeNumeric(this, "y") ?? 0;
+    const scale = getAttributeNumeric(this, "scale") ?? 1;
+
+    this.#abort_controller?.abort();
+    this.#abort_controller = new AbortController();
     this.#mutation_observer.observe(this, {
       subtree: true,
       childList: true,
@@ -533,10 +567,12 @@ class Graph extends HTMLElement {
               const start = get_connection_point(
                 src_node,
                 edge_config.src_position,
+                graph_edge.from_offset,
               );
               const dest = get_connection_point(
                 dest_node,
                 edge_config.dest_position,
+                graph_edge.to_offset,
               );
 
               const path = d3_link(edge_config.curvature)({

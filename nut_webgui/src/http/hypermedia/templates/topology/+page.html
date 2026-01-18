@@ -189,7 +189,7 @@
     hx-indicator="#indicator"
     hx-ext="morph"
     hx-swap="morph:innerHTML"
-    hx-trigger="every 30s"
+    hx-trigger="every 15s"
   >
     {%- block graph_nodes -%}
     {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
@@ -351,6 +351,9 @@
           from="{{edge.from}}"
           id="{{edge.get_id()}}"
           to="{{edge.to}}"
+          {%- if edge.edge_type == EdgeType::Data -%}
+            from-offset="-32"
+          {%- endif -%}
         >
         </nut-graph-link>
       {%- endfor -%}
