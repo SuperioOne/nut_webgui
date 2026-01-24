@@ -36,7 +36,7 @@ enum InferredType {
 
 impl Value {
   #[inline]
-  pub fn is_numeric(&self) -> bool {
+  pub const fn is_numeric(&self) -> bool {
     match self {
       Value::Float(_) | Value::Int(_) => true,
       _ => false,
@@ -44,7 +44,7 @@ impl Value {
   }
 
   #[inline]
-  pub fn is_text(&self) -> bool {
+  pub const fn is_text(&self) -> bool {
     match self {
       Value::String(_) => true,
       _ => false,
@@ -68,7 +68,7 @@ impl Value {
   }
 
   #[inline]
-  pub fn as_lossly_i64(&self) -> Option<i64> {
+  pub const fn as_lossly_i64(&self) -> Option<i64> {
     match self {
       Value::Float(num) => Some(*num as i64),
       Value::Int(num) => Some(*num),
@@ -77,7 +77,7 @@ impl Value {
   }
 
   #[inline]
-  pub fn as_lossly_f64(&self) -> Option<f64> {
+  pub const fn as_lossly_f64(&self) -> Option<f64> {
     match self {
       Value::Float(num) => Some(*num),
       Value::Int(num) => Some(*num as f64),

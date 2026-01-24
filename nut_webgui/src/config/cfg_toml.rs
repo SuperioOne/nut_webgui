@@ -1,6 +1,6 @@
 use crate::config::{
-  AuthConfig, ConfigLayer, DEFAULT_UPSD_KEY, ServerConfig, UpsdConfig, error::TomlConfigError,
-  tls_mode::TlsMode, uri_path::UriPath, utils::override_opt_field,
+  AuthConfig, ConfigLayer, ServerConfig, UpsdConfig, error::TomlConfigError, tls_mode::TlsMode,
+  uri_path::UriPath, utils::override_opt_field,
 };
 use core::{net::IpAddr, str};
 use serde::{Deserialize, de::Visitor};
@@ -12,7 +12,7 @@ use std::{
   path::{Path, PathBuf},
 };
 use toml::Table;
-use tracing::{level_filters::LevelFilter, warn};
+use tracing::level_filters::LevelFilter;
 
 #[derive(Debug)]
 pub struct LogLevel(LevelFilter);
@@ -56,41 +56,8 @@ impl<'de> Deserialize<'de> for LogLevel {
   }
 }
 
-#[deprecated(
-  since = "0.7.0",
-  note = "Old configuration files will be supported until the next major version (v0.9.0)"
-)]
-#[derive(Debug, Deserialize, Default)]
-pub struct LegacyServerTomlArgs {
-  pub default_theme: Option<Box<str>>,
-  pub log_level: Option<LogLevel>,
-  pub http_server: Option<HttpServerConfigSection>,
-  pub upsd: Option<UpsdConfigSection>,
-  pub auth: Option<AuthConfigSection>,
-}
-
-impl From<LegacyServerTomlArgs> for ServerTomlArgs {
-  fn from(value: LegacyServerTomlArgs) -> Self {
-    let mut upsd = HashMap::new();
-
-    if let Some(upsd_section) = value.upsd {
-      upsd.insert(Box::from(DEFAULT_UPSD_KEY), upsd_section);
-    }
-
-    Self {
-      default_theme: value.default_theme,
-      auth: value.auth,
-      log_level: value.log_level,
-      version: "1".into(),
-      http_server: value.http_server,
-      upsd: Some(upsd),
-    }
-  }
-}
-
 #[derive(Debug, Deserialize, Default)]
 pub struct ServerTomlArgs {
-  pub version: Box<str>,
   pub default_theme: Option<Box<str>>,
   pub log_level: Option<LogLevel>,
   pub http_server: Option<HttpServerConfigSection>,
@@ -137,16 +104,7 @@ impl ServerTomlArgs {
 
     match root.get("version") {
       Some(toml::Value::String(version)) if version == "1" => {
-        let config = root.try_into::<ServerTomlArgs>()?;
-        Ok(config)
-      }
-      None => {
-        let legacy_config = root.try_into::<LegacyServerTomlArgs>()?;
-        warn!(
-          message = "Old config file format detected. Compatibility will be removed in future release (v0.9.0); consider updating your configuration file."
-        );
-
-        Ok(legacy_config.into())
+        root.try_into::<ServerTomlArgs>().map_err(|err| err.into())
       }
       _ => Err(TomlConfigError::InvalidVersion),
     }

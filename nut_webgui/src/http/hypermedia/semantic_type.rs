@@ -88,10 +88,6 @@ impl SemanticType {
 }
 
 pub trait SemanticClass {
-  fn error() -> &'static str;
-  fn info() -> &'static str;
-  fn success() -> &'static str;
-  fn warning() -> &'static str;
   fn from_type(value: SemanticType) -> &'static str;
 }
 
@@ -130,26 +126,6 @@ impl SemanticType {
 macro_rules! impl_semantic_class {
   ($struct_name:ident, { info = $info:literal, success = $success:literal, warning = $warning:literal, error = $error:literal }) => {
     impl SemanticClass for $struct_name {
-      #[inline]
-      fn info() -> &'static str {
-        $info
-      }
-
-      #[inline]
-      fn warning() -> &'static str {
-        $warning
-      }
-
-      #[inline]
-      fn success() -> &'static str {
-        $success
-      }
-
-      #[inline]
-      fn error() -> &'static str {
-        $error
-      }
-
       #[inline]
       fn from_type(value: SemanticType) -> &'static str {
         match value {

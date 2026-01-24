@@ -95,7 +95,7 @@ pub struct EventBatch<'a> {
 }
 
 impl<'a> EventBatch<'a> {
-  pub fn new(namespace: &'a str) -> Self {
+  pub const fn new(namespace: &'a str) -> Self {
     Self {
       namespace,
       new: Vec::new(),
@@ -149,7 +149,7 @@ impl<'a> EventBatch<'a> {
   }
 
   #[inline]
-  pub fn set_upsd_status(&mut self, status: ConnectionStatus) {
+  pub const fn set_upsd_status(&mut self, status: ConnectionStatus) {
     self.upsd_status = Some(status);
   }
 

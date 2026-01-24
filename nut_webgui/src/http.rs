@@ -54,7 +54,10 @@ impl HttpServer {
         header::CACHE_CONTROL,
         HeaderValue::from_static("no-cache, max-age=0"),
       ))
-      .layer(TimeoutLayer::new(Duration::from_secs(30)))
+      .layer(TimeoutLayer::with_status_code(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Duration::from_secs(30),
+      ))
       .layer(CompressionLayer::new().gzip(true).deflate(true));
 
     let probes = Router::new()

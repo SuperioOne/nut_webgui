@@ -22,6 +22,9 @@ impl Permissions {
   /// User can modify RW variables on UPS
   pub const SETVAR: Permissions = Permissions(4);
 
+  /// User can only read data, no additional permission flag is set.
+  pub const READONLY: Permissions = Permissions(0);
+
   #[inline]
   pub const fn all() -> Self {
     Self::FSD.set(Self::INSTCMD).set(Self::SETVAR)
@@ -45,11 +48,6 @@ impl Permissions {
   #[inline]
   pub const fn len(&self) -> u32 {
     self.0.count_ones()
-  }
-
-  #[inline]
-  pub const fn is_empty(&self) -> bool {
-    self.0 == 0
   }
 
   #[inline]

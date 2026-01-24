@@ -109,17 +109,12 @@ impl UriPath {
   }
 
   #[inline]
-  pub fn len(&self) -> usize {
-    self.inner.len()
-  }
-
-  #[inline]
-  pub fn is_empty(&self) -> bool {
+  pub const fn is_empty(&self) -> bool {
     self.inner.is_empty()
   }
 
   #[inline]
-  pub fn as_str(&self) -> &str {
+  pub const fn as_str(&self) -> &str {
     self.inner.as_str()
   }
 }

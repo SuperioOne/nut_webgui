@@ -49,11 +49,6 @@ fn cmp_hash(lhs: &[u8; 32], rhs: &[u8; 32]) -> bool {
 
 impl UserStore {
   #[inline]
-  pub fn get_profile(&self, username: &Username) -> Option<&UserProfile> {
-    self.inner.get(username).map(|v| &v.profile)
-  }
-
-  #[inline]
   pub fn builder() -> UserStoreBuilder {
     UserStoreBuilder::new()
   }

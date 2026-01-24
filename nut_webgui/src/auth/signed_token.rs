@@ -48,22 +48,6 @@ where
     signed
   }
 
-  pub fn verify(&self, bytes: &[u8]) -> Result<(), SignatureError<T>> {
-    if bytes.len() <= Self::KEY_SIZE {
-      return Err(SignatureError::InvalidLength);
-    }
-
-    let (payload, signature) = bytes.split_at(bytes.len() - Self::KEY_SIZE);
-
-    let mut hmac =
-      Hmac::<Sha256>::new_from_slice(self.server_key.as_ref()).expect("infallible: hmac key size");
-
-    hmac.update(payload);
-    hmac
-      .verify_slice(signature)
-      .map_err(|_| SignatureError::InvalidSignature)
-  }
-
   pub fn from_bytes(&self, bytes: &[u8]) -> Result<T, SignatureError<T>> {
     if bytes.len() <= Self::KEY_SIZE {
       return Err(SignatureError::InvalidLength);

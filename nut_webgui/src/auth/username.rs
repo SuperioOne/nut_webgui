@@ -1,6 +1,8 @@
 use askama::FastWritable;
-use serde::de::Visitor;
-use serde::{Deserialize, de};
+use serde::{
+  Deserialize,
+  de::{self, Visitor},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Username(Box<str>);
@@ -53,11 +55,6 @@ impl Username {
     } else {
       Ok(Self(Box::from(username)))
     }
-  }
-
-  #[inline]
-  pub fn as_str(&self) -> &str {
-    &self.0
   }
 
   pub fn get_initials(&self) -> &str {

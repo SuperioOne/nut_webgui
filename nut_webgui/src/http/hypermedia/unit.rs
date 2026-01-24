@@ -230,8 +230,9 @@ impl<T> From<T> for Approx<T>
 where
   T: UnitDisplay,
 {
+  #[inline]
   fn from(value: T) -> Self {
-    Self { inner: value }
+    Self::new(value)
   }
 }
 
@@ -240,13 +241,8 @@ where
   T: UnitDisplay,
 {
   #[inline]
-  pub fn new(value: T) -> Self {
+  pub const fn new(value: T) -> Self {
     Self { inner: value }
-  }
-
-  #[inline]
-  pub fn into_inner(self) -> T {
-    self.inner
   }
 }
 

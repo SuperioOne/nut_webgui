@@ -31,21 +31,21 @@ pub struct AccessTokenBuilder {
 
 impl AccessTokenBuilder {
   #[inline]
-  pub fn new() -> Self {
+  pub const fn new() -> Self {
     Self {
-      permissions: Permissions::default(),
+      permissions: Permissions::READONLY,
       valid_until: Duration::from_secs(60 * 15),
     }
   }
 
   #[inline]
-  pub fn with_valid_until(mut self, duration: Duration) -> Self {
+  pub const fn with_valid_until(mut self, duration: Duration) -> Self {
     self.valid_until = duration;
     self
   }
 
   #[inline]
-  pub fn with_permissions(mut self, permissions: Permissions) -> Self {
+  pub const fn with_permissions(mut self, permissions: Permissions) -> Self {
     self.permissions = permissions;
     self
   }
@@ -67,7 +67,7 @@ impl AccessToken {
   pub const VERSION: u8 = 1;
 
   #[inline]
-  pub fn builder() -> AccessTokenBuilder {
+  pub const fn builder() -> AccessTokenBuilder {
     AccessTokenBuilder::new()
   }
 
