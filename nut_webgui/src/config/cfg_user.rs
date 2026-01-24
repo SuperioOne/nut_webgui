@@ -1,6 +1,6 @@
 use crate::{
   auth::{password_str::PasswordStr, permission::Permissions, username::Username},
-  config::error::TomlConfigError,
+  config::error::UserTomlError,
 };
 use serde::{Deserialize, de::Visitor};
 use std::{collections::HashMap, fs::File, io::Read, path::Path};
@@ -16,7 +16,7 @@ pub struct UsersConfigFile {
 }
 
 impl UsersConfigFile {
-  pub fn load<P>(path: P) -> Result<Self, TomlConfigError>
+  pub fn load<P>(path: P) -> Result<Self, UserTomlError>
   where
     P: AsRef<Path>,
   {

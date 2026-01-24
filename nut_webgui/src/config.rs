@@ -48,6 +48,7 @@ pub struct HttpServerConfig {
   pub listen: IpAddr,
   pub port: u16,
   pub base_path: UriPath,
+  pub worker_count: Option<NonZeroUsize>,
 }
 
 #[derive(Clone)]
@@ -101,6 +102,7 @@ impl Default for HttpServerConfig {
       base_path: UriPath::default(),
       listen: Ipv4Addr::UNSPECIFIED.into(),
       port: 9000,
+      worker_count: None,
     }
   }
 }
@@ -109,7 +111,7 @@ impl Default for UpsdConfig {
   fn default() -> Self {
     Self {
       addr: "localhost".into(),
-      max_conn: unsafe { NonZeroUsize::new_unchecked(4) },
+      max_conn: NonZeroUsize::new(4).expect("static non-zero max_conn is provided as default"),
       pass: None,
       poll_freq: 30,
       poll_interval: 2,

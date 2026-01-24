@@ -42,6 +42,13 @@ version = "1"
 
 # port = 9000
 
+## ------------------------------------------------------------------------------
+## Worker count: Specify the HTTP server worker count. # By default, HTTP server 
+## uses all available cores.
+## ------------------------------------------------------------------------------
+
+# worker_count = 4
+
 
 ## ------------------------------------------------------------------------------
 ## Auth section: Enables authentication for both UI and API

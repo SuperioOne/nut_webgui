@@ -103,6 +103,7 @@ pub struct HttpServerConfigSection {
   pub listen: Option<IpAddr>,
   pub port: Option<u16>,
   pub base_path: Option<UriPath>,
+  pub worker_count: Option<NonZeroUsize>,
 }
 
 #[derive(Deserialize, Default, Debug)]
@@ -180,6 +181,7 @@ impl ConfigLayer for ServerTomlArgs {
       override_opt_field!(config.http_server.base_path, inner_value: http_server.base_path);
       override_opt_field!(config.http_server.listen, inner_value: http_server.listen);
       override_opt_field!(config.http_server.port, inner_value: http_server.port);
+      override_opt_field!(config.http_server.worker_count, http_server.worker_count);
     }
 
     if let Some(auth) = self.auth {

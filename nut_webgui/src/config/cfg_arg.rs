@@ -5,7 +5,7 @@ use crate::config::{
 };
 use clap::Parser;
 use core::net::IpAddr;
-use std::path::PathBuf;
+use std::{num::NonZeroUsize, path::PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -45,6 +45,10 @@ pub struct ServerCliArgs {
   /// Enables basic auth with users file
   #[arg(long)]
   pub with_auth: Option<PathBuf>,
+
+  /// HTTP server worker count, default is all available system CPU count.
+  #[arg(short, long)]
+  pub worker_count: Option<NonZeroUsize>,
 }
 
 fn uri_path_parser(input: &str) -> Result<UriPath, InvalidPathError> {
@@ -68,6 +72,7 @@ impl ConfigLayer for ServerCliArgs {
     override_opt_field!(config.http_server.base_path, inner_value:  self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);
     override_opt_field!(config.http_server.port, inner_value: self.port);
+    override_opt_field!(config.http_server.worker_count, self.worker_count);
 
     if let Some(users_file) = self.with_auth {
       config.auth = Some(AuthConfig { users_file });

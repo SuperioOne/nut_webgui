@@ -1,7 +1,6 @@
 use crate::config::{tls_mode::InvalidTlsModeError, uri_path::InvalidPathError};
 use core::{net::AddrParseError, num::ParseIntError};
 use std::ffi::OsString;
-use std::str::ParseBoolError;
 
 #[derive(Debug)]
 pub enum ConfigError {
@@ -17,6 +16,71 @@ pub enum TomlConfigError {
   InvalidVersion,
 }
 
+#[derive(Debug)]
+pub enum UserTomlError {
+  IOError { inner: std::io::Error },
+  ParseError { inner: toml::de::Error },
+}
+
+#[derive(Debug)]
+pub enum EnvConfigError {
+  IOError { inner: std::io::Error },
+  InvalidAddrFormat { inner: core::net::AddrParseError },
+  InvalidLogLevelFormat,
+  InvalidNumericFormat,
+  InvalidTlsMode,
+  InvalidUriPath,
+  NonUnicodeVar { variable: OsString },
+}
+
+impl std::fmt::Display for EnvConfigError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      EnvConfigError::IOError { inner } => f.write_fmt(format_args!("env config: {}", inner)),
+      EnvConfigError::NonUnicodeVar { variable } => f.write_fmt(format_args!(
+        "env config: non-unicode variable received, {:?}",
+        variable
+      )),
+      EnvConfigError::InvalidNumericFormat => f.write_str("env config: invalid numeric value"),
+      EnvConfigError::InvalidLogLevelFormat => f.write_str("env config: invalid log level"),
+      EnvConfigError::InvalidAddrFormat { inner } => {
+        f.write_fmt(format_args!("env config: {}", inner))
+      }
+      EnvConfigError::InvalidUriPath => f.write_str("env config: invalid uri path format"),
+      EnvConfigError::InvalidTlsMode => f.write_str("env config: invalid tls mode option"),
+    }
+  }
+}
+
+impl std::fmt::Display for TomlConfigError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::IOError { inner } => f.write_fmt(format_args!("toml config file: {}", inner)),
+      Self::ParseError { inner } => f.write_fmt(format_args!("toml config file: {}", inner)),
+      Self::InvalidVersion => f.write_str("toml config file: unknown version"),
+    }
+  }
+}
+
+impl std::fmt::Display for UserTomlError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::IOError { inner } => f.write_fmt(format_args!("user toml file: {}", inner)),
+      Self::ParseError { inner } => f.write_fmt(format_args!("user toml file: {}", inner)),
+    }
+  }
+}
+
+impl std::fmt::Display for ConfigError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      ConfigError::File(e) => e.fmt(f),
+      ConfigError::Environment(e) => e.fmt(f),
+      ConfigError::Arguments(e) => e.fmt(f),
+    }
+  }
+}
+
 impl From<std::io::Error> for TomlConfigError {
   fn from(value: std::io::Error) -> Self {
     Self::IOError { inner: value }
@@ -29,51 +93,15 @@ impl From<toml::de::Error> for TomlConfigError {
   }
 }
 
-impl core::error::Error for TomlConfigError {}
-
-impl std::fmt::Display for TomlConfigError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      TomlConfigError::IOError { inner } => std::fmt::Display::fmt(&inner, f),
-      TomlConfigError::ParseError { inner } => std::fmt::Display::fmt(&inner, f),
-      TomlConfigError::InvalidVersion => f.write_str("unknown config toml version"),
-    }
+impl From<std::io::Error> for UserTomlError {
+  fn from(value: std::io::Error) -> Self {
+    Self::IOError { inner: value }
   }
 }
 
-#[derive(Debug)]
-pub enum EnvConfigError {
-  IOError { inner: std::io::Error },
-  NonUnicodeVar { variable: OsString },
-  InvalidNumericFormat { inner: ParseIntError },
-  InvalidLogLevelFormat,
-  InvalidAddrFormat { inner: core::net::AddrParseError },
-  InvalidUriPath,
-  InvalidTlsMode,
-  InvalidBoolFormat,
-}
-
-impl core::error::Error for EnvConfigError {}
-
-impl std::fmt::Display for EnvConfigError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      EnvConfigError::IOError { inner } => {
-        f.write_fmt(format_args!("env config io error, {}", inner))
-      }
-      EnvConfigError::NonUnicodeVar { variable } => f.write_fmt(format_args!(
-        "non-unicode variable received, {:?}",
-        variable
-      )),
-      EnvConfigError::InvalidNumericFormat { .. } => f.write_str("invalid numeric format"),
-      EnvConfigError::InvalidLogLevelFormat => f.write_str("invalid log level"),
-      EnvConfigError::InvalidAddrFormat { inner } => {
-        f.write_fmt(format_args!("invalid ip address format, {}", inner))
-      }
-      EnvConfigError::InvalidUriPath => f.write_str("invalid uri path format"),
-      EnvConfigError::InvalidTlsMode => f.write_str("invalid tls mode option"),
-      EnvConfigError::InvalidBoolFormat => f.write_str("invalid boolean option"),
-    }
+impl From<toml::de::Error> for UserTomlError {
+  fn from(value: toml::de::Error) -> Self {
+    Self::ParseError { inner: value }
   }
 }
 
@@ -100,8 +128,8 @@ impl From<clap::Error> for ConfigError {
 
 impl From<ParseIntError> for EnvConfigError {
   #[inline]
-  fn from(value: ParseIntError) -> Self {
-    Self::InvalidNumericFormat { inner: value }
+  fn from(_: ParseIntError) -> Self {
+    Self::InvalidNumericFormat
   }
 }
 
@@ -116,13 +144,6 @@ impl From<AddrParseError> for EnvConfigError {
   #[inline]
   fn from(value: AddrParseError) -> Self {
     Self::InvalidAddrFormat { inner: value }
-  }
-}
-
-impl From<ParseBoolError> for EnvConfigError {
-  #[inline]
-  fn from(_: ParseBoolError) -> Self {
-    Self::InvalidBoolFormat
   }
 }
 
@@ -144,3 +165,8 @@ impl From<std::io::Error> for EnvConfigError {
     Self::IOError { inner: value }
   }
 }
+
+impl core::error::Error for ConfigError {}
+impl core::error::Error for EnvConfigError {}
+impl core::error::Error for TomlConfigError {}
+impl core::error::Error for UserTomlError {}

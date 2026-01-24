@@ -33,7 +33,6 @@ impl NutClient<TcpStream> {
   {
     let connection = TcpStream::connect(addr).await?;
     connection.set_nodelay(true)?;
-    connection.set_linger(None)?;
     connection
       .ready(Interest::READABLE | Interest::WRITABLE)
       .await?;

@@ -74,6 +74,7 @@ CLI arguments hold the highest priority in configuration settings.
 * `--port`: Port used by the HTTP server. Default is `9000`.
 * `--server-key`: Private server key value. Default is randomly auto-generated value.
 * `--with-auth`: Enables authentication with `user.toml` file.
+* `--worker-count`: Sets HTTP server worker count.
 
 ### Container image environment variables
 
@@ -82,17 +83,18 @@ specifies a file path, the system automatically reads content of that file as a 
 
 #### General
 
-| Name                            | Alias (Container Only) | Default                       | Value                                       | Description                                                 |
-|---------------------------------|------------------------|-------------------------------|---------------------------------------------|-------------------------------------------------------------|
-| `NUTWG__CONFIG_FILE`            | `CONFIG_FILE`          | `/etc/nut_webgui/config.toml` | File path                                   | Custom `config.toml` file path.                             |
-| `NUTWG__DEFAULT_THEME`          | `DEFAULT_THEME`        | None                          | See [config.toml](./dist/config.toml)       | Web UI default theme.                                       |
-| `NUTWG__LOG_LEVEL`              | `LOG_LEVEL`            | `info`                        | `error`, `warn`, `info`, `debug`, `trace`   | Log level.                                                  |
-| `NUTWG__SERVER_KEY`             | `SERVER_KEY`           | `/etc/nut_webgui/server.key`  | File path, UTF-8 string                     | Server sign key used for signing session tokens.            |
-| `NUTWG__AUTH__USERS_FILE`       | `AUTH_USERS_FILE`      | None                          | File path                                   | Enables authentication with the provided `users.toml` file. |
-| `NUTWG__HTTP_SERVER__BASE_PATH` | `BASE_PATH`            | `/`                           |                                             | Overrides HTTP server base path.                            |
-| `NUTWG__HTTP_SERVER__LISTEN`    | `LISTEN`               | `0.0.0.0`                     |                                             | HTTP server listen address.                                 |
-| `NUTWG__HTTP_SERVER__PORT`      | `PORT`                 | `9000`                        | 1-65535                                     | HTTP server listen port.                                    |
-| `UPSD_ROOT_CA`                  |                        | None                          |                                             | Path to the Root CA certificate for TLS.                    |
+| Name                             | Alias (Container Only) | Default                       | Value                                       | Description                                                 |
+|----------------------------------|------------------------|-------------------------------|---------------------------------------------|-------------------------------------------------------------|
+|`NUTWG__CONFIG_FILE`              |`CONFIG_FILE`           |`/etc/nut_webgui/config.toml`  |File path                                    |Custom `config.toml` file path.                              |
+|`NUTWG__DEFAULT_THEME`            |`DEFAULT_THEME`         |None                           |See [config.toml](./dist/config.toml)        |Web UI default theme.                                        |
+|`NUTWG__LOG_LEVEL`                |`LOG_LEVEL`             |`info`                         |`error`, `warn`, `info`, `debug`, `trace`    |Log level.                                                   |
+|`NUTWG__SERVER_KEY`               |`SERVER_KEY`            |`/etc/nut_webgui/server.key`   |File path, UTF-8 string                      |Server sign key used for signing session tokens.             |
+|`NUTWG__AUTH__USERS_FILE`         |`AUTH_USERS_FILE`       |None                           |File path                                    |Enables authentication with the provided `users.toml` file.  |
+|`NUTWG__HTTP_SERVER__BASE_PATH`   |`BASE_PATH`             |`/`                            |                                             |Overrides HTTP server base path.                             |
+|`NUTWG__HTTP_SERVER__LISTEN`      |`LISTEN`                |`0.0.0.0`                      |                                             |HTTP server listen address.                                  |
+|`NUTWG__HTTP_SERVER__PORT`        |`PORT`                  |`9000`                         |1-65535                                      |HTTP server listen port.                                     |
+|`NUTWG__HTTP_SERVER__WORKER_COUNT`|                        |All CPU cores                  |1-usize::MAX                                 |HTTP server worker count.                                    |
+|`UPSD_ROOT_CA`                    |                        |None                           |                                             |Path to the Root CA certificate for TLS.                     |
 
 #### Default UPSD
 
@@ -125,6 +127,7 @@ default_theme = "tokyo-night"
 base_path = "/"
 listen = "0.0.0.0"
 port = 9000
+worker_count = 8
 
 [upsd.default]
 username = "admin"

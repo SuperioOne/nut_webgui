@@ -15,19 +15,20 @@ use tracing::level_filters::LevelFilter;
 #[derive(Debug, Default)]
 pub struct ServerEnvArgs {
   pub auth_users_file: Option<PathBuf>,
-  pub base_path: Option<UriPath>,
   pub config_file: Option<PathBuf>,
   pub default_theme: Option<Box<str>>,
-  pub listen: Option<IpAddr>,
+  pub http_base_path: Option<UriPath>,
+  pub http_listen: Option<IpAddr>,
+  pub http_port: Option<u16>,
+  pub http_worker_count: Option<NonZeroUsize>,
   pub log_level: Option<tracing::level_filters::LevelFilter>,
-  pub poll_freq: Option<u64>,
-  pub poll_interval: Option<u64>,
-  pub port: Option<u16>,
   pub server_key: Option<Box<str>>,
-  pub upsd_name: Option<Box<str>>,
   pub upsd_addr: Option<Box<str>>,
   pub upsd_max_conn: Option<NonZeroUsize>,
+  pub upsd_name: Option<Box<str>>,
   pub upsd_pass: Option<Box<str>>,
+  pub upsd_poll_freq: Option<u64>,
+  pub upsd_poll_interval: Option<u64>,
   pub upsd_port: Option<u16>,
   pub upsd_tls: Option<TlsMode>,
   pub upsd_user: Option<Box<str>>,
@@ -91,26 +92,27 @@ impl ServerEnvArgs {
     let mut env_config = Self::default();
 
     load_var!(
-      ("NUTWG__CONFIG_FILE",             env_config.config_file,     path_buf);
-      ("NUTWG__DEFAULT_THEME",           env_config.default_theme,   boxed_str);
-      ("NUTWG__LOG_LEVEL",               env_config.log_level,       LevelFilter);
-      ("NUTWG__SERVER_KEY",              env_config.server_key,      boxed_str);
+      ("NUTWG__CONFIG_FILE"              ,env_config.config_file       ,path_buf);
+      ("NUTWG__DEFAULT_THEME"            ,env_config.default_theme     ,boxed_str);
+      ("NUTWG__LOG_LEVEL"                ,env_config.log_level         ,LevelFilter);
+      ("NUTWG__SERVER_KEY"               ,env_config.server_key        ,boxed_str);
 
-      ("NUTWG__HTTP_SERVER__BASE_PATH",  env_config.base_path,       UriPath);
-      ("NUTWG__HTTP_SERVER__LISTEN",     env_config.listen,          IpAddr);
-      ("NUTWG__HTTP_SERVER__PORT",       env_config.port,            u16);
+      ("NUTWG__HTTP_SERVER__BASE_PATH"   ,env_config.http_base_path    ,UriPath);
+      ("NUTWG__HTTP_SERVER__LISTEN"      ,env_config.http_listen       ,IpAddr);
+      ("NUTWG__HTTP_SERVER__PORT"        ,env_config.http_port         ,u16);
+      ("NUTWG__HTTP_SERVER__WORKER_COUNT",env_config.http_worker_count ,NonZeroUsize);
 
-      ("NUTWG__AUTH__USERS_FILE",        env_config.auth_users_file, path_buf);
+      ("NUTWG__AUTH__USERS_FILE"         ,env_config.auth_users_file   ,path_buf);
 
-      ("NUTWG__UPSD__NAME",              env_config.upsd_name,       boxed_str);
-      ("NUTWG__UPSD__ADDRESS",           env_config.upsd_addr,       boxed_str);
-      ("NUTWG__UPSD__MAX_CONNECTION",    env_config.upsd_max_conn,   NonZeroUsize);
-      ("NUTWG__UPSD__PASSWORD",          env_config.upsd_pass,       boxed_str);
-      ("NUTWG__UPSD__POLL_FREQ",         env_config.poll_freq,       u64);
-      ("NUTWG__UPSD__POLL_INTERVAL",     env_config.poll_interval,   u64);
-      ("NUTWG__UPSD__PORT",              env_config.upsd_port,       u16);
-      ("NUTWG__UPSD__TLS_MODE",          env_config.upsd_tls,        TlsMode);
-      ("NUTWG__UPSD__USERNAME",          env_config.upsd_user,       boxed_str);
+      ("NUTWG__UPSD__NAME"               ,env_config.upsd_name         ,boxed_str);
+      ("NUTWG__UPSD__ADDRESS"            ,env_config.upsd_addr         ,boxed_str);
+      ("NUTWG__UPSD__MAX_CONNECTION"     ,env_config.upsd_max_conn     ,NonZeroUsize);
+      ("NUTWG__UPSD__PASSWORD"           ,env_config.upsd_pass         ,boxed_str);
+      ("NUTWG__UPSD__POLL_FREQ"          ,env_config.upsd_poll_freq    ,u64);
+      ("NUTWG__UPSD__POLL_INTERVAL"      ,env_config.upsd_poll_interval,u64);
+      ("NUTWG__UPSD__PORT"               ,env_config.upsd_port         ,u16);
+      ("NUTWG__UPSD__TLS_MODE"           ,env_config.upsd_tls          ,TlsMode);
+      ("NUTWG__UPSD__USERNAME"           ,env_config.upsd_user         ,boxed_str);
     );
 
     Ok(env_config)
@@ -124,9 +126,10 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.log_level, inner_value: self.log_level);
     override_opt_field!(config.server_key, inner_value: self.server_key);
 
-    override_opt_field!(config.http_server.base_path, inner_value: self.base_path);
-    override_opt_field!(config.http_server.listen, inner_value: self.listen);
-    override_opt_field!(config.http_server.port, inner_value: self.port);
+    override_opt_field!(config.http_server.base_path, inner_value: self.http_base_path);
+    override_opt_field!(config.http_server.listen, inner_value: self.http_listen);
+    override_opt_field!(config.http_server.port, inner_value: self.http_port);
+    override_opt_field!(config.http_server.worker_count, self.http_worker_count);
 
     if let Some(users_file) = self.auth_users_file {
       config.auth = Some(AuthConfig { users_file });
@@ -147,8 +150,8 @@ impl ConfigLayer for ServerEnvArgs {
       override_opt_field!(default_upsd.addr, inner_value: self.upsd_addr);
       override_opt_field!(default_upsd.max_conn, inner_value: self.upsd_max_conn);
       override_opt_field!(default_upsd.pass, self.upsd_pass);
-      override_opt_field!(default_upsd.poll_freq, inner_value: self.poll_freq);
-      override_opt_field!(default_upsd.poll_interval, inner_value: self.poll_interval);
+      override_opt_field!(default_upsd.poll_freq, inner_value: self.upsd_poll_freq);
+      override_opt_field!(default_upsd.poll_interval, inner_value: self.upsd_poll_interval);
       override_opt_field!(default_upsd.port, inner_value: self.upsd_port);
       override_opt_field!(default_upsd.tls_mode, inner_value: self.upsd_tls);
       override_opt_field!(default_upsd.user, self.upsd_user);

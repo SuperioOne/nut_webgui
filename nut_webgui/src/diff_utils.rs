@@ -1,4 +1,3 @@
-use nut_webgui_upsmc::response::ClientList;
 use nut_webgui_upsmc::{UpsName, response::UpsDevice};
 use std::{collections::HashMap, net::IpAddr};
 
