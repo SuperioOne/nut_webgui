@@ -1,7 +1,7 @@
 use crate::{
   device_entry::{ClientInfo, DeviceEntry, VarDetail},
   diff_utils::Diff,
-  event::{EventBatch, EventChannel, SystemEvent},
+  event::{SystemEvent, channel::EventChannel, event_batch::EventBatch},
   reverse_dns::lookup_ip,
   service::{
     BackgroundService,
@@ -148,7 +148,6 @@ impl DeviceSyncTask {
 
     let total_device_count = remote.devices.len();
     let diff = local_devices.into_diff(remote.devices);
-
     let mut failure_count = 0;
     let mut task_set = JoinSet::new();
 

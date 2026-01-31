@@ -9,7 +9,7 @@ use crate::{
     cfg_fallback::FallbackArgs, cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile,
     error::ConfigError,
   },
-  event::EventChannel,
+  event::channel::EventChannel,
   http::HttpServer,
   service::{
     BackgroundServiceRunner, sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
@@ -23,7 +23,7 @@ use nut_webgui_upsmc::{
   rustls::{ClientConfig, pki_types::ServerName},
 };
 use rustls_platform_verifier::BuilderVerifierExt;
-use std::{collections::HashMap, panic, process::exit, sync::Arc, time::Duration};
+use std::{collections::HashMap, panic, process::ExitCode, sync::Arc, time::Duration};
 use tokio::{
   net::TcpListener,
   select,
@@ -55,7 +55,7 @@ use mimalloc::MiMalloc;
 #[global_allocator]
 static GLOBAL: MiMalloc = MiMalloc;
 
-fn main() {
+fn main() -> ExitCode {
   panic::set_hook(Box::new(|info| {
     eprintln!("thread panic, details = {}", info);
   }));
@@ -68,10 +68,10 @@ fn main() {
     .init();
 
   match nut_webgui(handle) {
-    Ok(()) => exit(0),
+    Ok(()) => ExitCode::SUCCESS,
     Err(err) => {
       error!("{}", err);
-      exit(1);
+      ExitCode::FAILURE
     }
   }
 }

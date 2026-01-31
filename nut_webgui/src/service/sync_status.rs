@@ -1,7 +1,7 @@
 use crate::{
   device_entry::ClientInfo,
   diff_utils::Diff,
-  event::{DeviceStatusChange, EventBatch, EventChannel, SystemEvent},
+  event::{DeviceStatusChange, SystemEvent, channel::EventChannel, event_batch::EventBatch},
   reverse_dns::lookup_ip,
   service::BackgroundService,
   state::UpsdState,

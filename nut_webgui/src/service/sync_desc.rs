@@ -1,5 +1,5 @@
 use crate::{
-  event::{EventChannel, SystemEvent},
+  event::{SystemEvent, channel::EventChannel},
   service::BackgroundService,
   state::ServerState,
 };
@@ -41,7 +41,7 @@ impl BackgroundService for DescriptionSyncService {
       'MAIN: loop {
         select! {
             event = events.recv() => {
-              match event {
+              match event.as_deref() {
                 Ok(SystemEvent::DeviceAddition { devices, namespace }) => {
                   task.next(devices, namespace).await;
                 },
@@ -77,8 +77,8 @@ struct TaskContext {
 }
 
 impl DescriptionTask {
-  pub async fn next(&self, devices: Vec<UpsName>, namespace: Box<str>) {
-    let upsd_state = match self.state.upsd_servers.get(&namespace) {
+  pub async fn next(&self, devices: &[UpsName], namespace: &str) {
+    let upsd_state = match self.state.upsd_servers.get(namespace) {
       Some(upsd) => upsd,
       None => {
         warn!(
@@ -97,7 +97,7 @@ impl DescriptionTask {
       let shared_desc_lock = self.state.shared_desc.read().await;
 
       for name in devices {
-        match upsd_lock.devices.get(&name) {
+        match upsd_lock.devices.get(name) {
           Some(entry) => {
             let mut cmds: Vec<CmdName> = Vec::new();
             let mut vars: Vec<VarName> = Vec::new();
@@ -121,7 +121,11 @@ impl DescriptionTask {
             }
 
             if !cmds.is_empty() || !vars.is_empty() {
-              ctxs.push(TaskContext { name, cmds, vars })
+              ctxs.push(TaskContext {
+                name: name.clone(),
+                cmds,
+                vars,
+              })
             }
           }
           None => {
