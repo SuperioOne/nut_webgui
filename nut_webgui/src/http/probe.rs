@@ -74,7 +74,7 @@ pub async fn get_namespace_health(
   Path(namespace): Path<Box<str>>,
   State(state): State<Arc<ServerState>>,
 ) -> Response {
-  match state.upsd_servers.get(&namespace) {
+  match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd_state) => {
       let daemon_state = upsd_state.daemon_state.read().await;
 
@@ -94,7 +94,7 @@ pub async fn get_namespace_readiness(
   Path(namespace): Path<Box<str>>,
   State(state): State<Arc<ServerState>>,
 ) -> Response {
-  match state.upsd_servers.get(&namespace) {
+  match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd_state) => {
       let daemon_state = upsd_state.daemon_state.read().await;
 

@@ -1,4 +1,4 @@
-use crate::config::{ConfigLayer, DEFAULT_UPSD_KEY, ServerConfig, UpsdConfig};
+use super::{ConfigLayer, DEFAULT_UPSD_KEY, ServerConfig, UpsdConfig};
 
 /// Applies fallbacks for required configurations
 #[derive(Clone, Copy, Debug)]

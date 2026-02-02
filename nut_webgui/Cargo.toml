@@ -13,7 +13,7 @@ repository.workspace = true
 
 [dependencies]
 askama = { version = "0.14", features = ["blocks"] }
-axum = { version = "0.8" }
+axum = { version = "0.8", features = ["ws"] }
 axum-extra = { version = "0.10", features = ["cookie"] }
 base64 = { version = "0.22" }
 chrono = { version = "0.4", default-features = false, features = [

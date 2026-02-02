@@ -1,6 +1,6 @@
 use crate::{
   auth::{
-    AUTH_COOKIE_NAME, signed_token::SignedToken, user_session::UserSession, user_store::UserStore,
+    AUTH_COOKIE_NAME, token_signer::TokenSigner, user_session::UserSession, user_store::UserStore,
   },
   config::ServerConfig,
 };
@@ -120,7 +120,7 @@ impl<S> UserAuthService<S> {
           .decode(value.as_bytes())
           .map_err(|_| InvalidCookieValue)?;
 
-        let user_session: UserSession = SignedToken::new(self.config.server_key.as_bytes())
+        let user_session: UserSession = TokenSigner::new(self.config.server_key.as_bytes())
           .from_bytes(&bytes)
           .map_err(|_| InvalidCookieValue)?;
 

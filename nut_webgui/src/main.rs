@@ -4,19 +4,23 @@ use crate::{
     permission::Permissions,
     user_store::{UserProfile, UserStore},
   },
+  background_service::BackgroundServiceRunner,
   config::{
     AuthConfig, ServerConfig, UpsdConfig, cfg_arg::ServerCliArgs, cfg_env::ServerEnvArgs,
     cfg_fallback::FallbackArgs, cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile,
     error::ConfigError,
   },
   event::channel::EventChannel,
-  http::HttpServer,
-  service::{
-    BackgroundServiceRunner, sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
-    sync_status::StatusSyncService,
+  http::{
+    HttpServer,
+    event_api::message_broadcast::{MessageBroadcast, MessageBroadcastService},
   },
   skip_tls_verifier::SkipTlsVerifier,
-  state::{DaemonState, ServerState, UpsdState},
+  state::{DaemonState, ServerState, UpsdNamespace, UpsdState},
+  sync::{
+    sync_desc::DescriptionSyncService, sync_device::DeviceSyncService,
+    sync_status::StatusSyncService,
+  },
 };
 use nut_webgui_upsmc::{
   client::{NutPoolClient, NutPoolClientBuilder},
@@ -38,15 +42,13 @@ use tracing_subscriber::{
 };
 
 mod auth;
+mod background_service;
 mod config;
-mod device_entry;
-mod diff_utils;
 mod event;
 mod http;
-mod reverse_dns;
-mod service;
 mod skip_tls_verifier;
 mod state;
+mod sync;
 
 #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 use mimalloc::MiMalloc;
@@ -128,25 +130,28 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
     })?;
 
   let event_channel = EventChannel::new(256);
+  let message_broadcast = MessageBroadcast::new(256);
   let auth_user_store = create_user_store(&config)?;
   let mut upsd_servers = HashMap::new();
 
   for (name, upsd_cfg) in config.upsd.iter() {
+    let namespace = UpsdNamespace::from(name.as_ref());
     let upsd_state = UpsdState {
       config: upsd_cfg.clone(),
       daemon_state: RwLock::new(DaemonState::new()),
       connection_pool: create_pool(upsd_cfg)?,
-      namespace: name.clone(),
+      namespace: namespace.clone(),
     };
 
-    upsd_servers.insert(name.clone(), Arc::new(upsd_state));
+    upsd_servers.insert(namespace, Arc::new(upsd_state));
   }
 
   let server_state = Arc::new(ServerState {
-    upsd_servers,
-    config,
-    shared_desc: RwLock::new(HashMap::new()),
     auth_user_store,
+    config,
+    message_broadcast: message_broadcast.clone(),
+    shared_desc: RwLock::new(HashMap::new()),
+    upsd_servers,
   });
 
   let mut bg_services = BackgroundServiceRunner::new()
@@ -154,12 +159,16 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
     .add_service(DescriptionSyncService::new(
       event_channel.clone(),
       server_state.clone(),
+    ))
+    .add_service(MessageBroadcastService::new(
+      event_channel.clone(),
+      message_broadcast,
     ));
 
   for (name, upsd_state) in server_state.upsd_servers.iter() {
     debug!(
       message = "adding background services for upsd config",
-      namespace = &name
+      namespace = name.as_ref()
     );
 
     let device_sync = DeviceSyncService::new(event_channel.clone(), upsd_state.clone());
@@ -172,7 +181,6 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
 
   debug!(message = "starting background services");
   let service_runner = bg_services.start();
-
   let http_server = HttpServer::new(server_state.clone());
 
   http_server
@@ -208,7 +216,6 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
 #[inline]
 fn load_configs() -> Result<ServerConfig, ConfigError> {
   let cli_args = ServerCliArgs::load()?;
-
   let env_args = if cli_args.allow_env {
     ServerEnvArgs::load()?
   } else {

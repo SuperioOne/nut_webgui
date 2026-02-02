@@ -13,7 +13,7 @@ pub enum UpsEvent {
   Boosting,
 
   /// Voltage boosting ended
-  BoostEnded,
+  BoostingEnded,
 
   /// Bypass is on
   BypassOn,
@@ -25,19 +25,19 @@ pub enum UpsEvent {
   Calibrating,
 
   /// Calibrating ended
-  CalibrationEnded,
+  CalibrationCompleted,
 
   /// Battery is charging
   Charging,
 
   /// Battery charging ended
-  ChargeEnded,
+  ChargingEnded,
 
   /// Battery is discharging
   Discharging,
 
   /// Battery discharge stoped
-  DischargeEnded,
+  DischargingEnded,
 
   /// Forced shutdown initiated (Execute Order 66)
   FSD,
@@ -76,7 +76,7 @@ pub enum UpsEvent {
   Testing,
 
   /// Test completed
-  TestEnded,
+  TestCompleted,
 
   /// Trimming voltage
   Trimming,
@@ -104,16 +104,16 @@ impl UpsEvents {
     for status in removed {
       _ = match status {
         UpsStatus::ALARM => events.insert(UpsEvent::AlarmOff),
-        UpsStatus::BOOST => events.insert(UpsEvent::BoostEnded),
+        UpsStatus::BOOST => events.insert(UpsEvent::BoostingEnded),
         UpsStatus::BYPASS => events.insert(UpsEvent::BypassOff),
-        UpsStatus::CALIBRATING => events.insert(UpsEvent::CalibrationEnded),
-        UpsStatus::CHARGING => events.insert(UpsEvent::ChargeEnded),
-        UpsStatus::DISCHARGE => events.insert(UpsEvent::DischargeEnded),
+        UpsStatus::CALIBRATING => events.insert(UpsEvent::CalibrationCompleted),
+        UpsStatus::CHARGING => events.insert(UpsEvent::ChargingEnded),
+        UpsStatus::DISCHARGE => events.insert(UpsEvent::DischargingEnded),
         UpsStatus::LOW_BATTERY => events.insert(UpsEvent::LowBatteryEnded),
         UpsStatus::OFFLINE => events.insert(UpsEvent::DeviceOn),
         UpsStatus::OVERLOADED => events.insert(UpsEvent::OverloadEnded),
         UpsStatus::REPLACE_BATTERY => events.insert(UpsEvent::ReplaceBatteryEnded),
-        UpsStatus::TEST => events.insert(UpsEvent::TestEnded),
+        UpsStatus::TEST => events.insert(UpsEvent::TestCompleted),
         UpsStatus::TRIM => events.insert(UpsEvent::TrimEnded),
         _ => false,
       };
@@ -147,6 +147,7 @@ impl UpsEvents {
     Self { events }
   }
 
+  #[inline]
   pub fn contains(&self, event: UpsEvent) -> bool {
     self.events.contains(&event)
   }
@@ -157,12 +158,50 @@ impl UpsEvents {
     }
   }
 
+  #[inline]
   pub fn len(&self) -> usize {
     self.events.len()
   }
 
+  #[inline]
   pub fn is_empty(&self) -> bool {
     self.events.is_empty()
+  }
+}
+
+impl UpsEvent {
+  pub const fn as_str(&self) -> &'static str {
+    match self {
+      UpsEvent::AlarmOn => "AlarmOn",
+      UpsEvent::AlarmOff => "AlarmOff",
+      UpsEvent::Boosting => "Boosting",
+      UpsEvent::BoostingEnded => "BoostingEnded",
+      UpsEvent::BypassOn => "BypassOn",
+      UpsEvent::BypassOff => "BypassOff",
+      UpsEvent::Calibrating => "Calibrating",
+      UpsEvent::CalibrationCompleted => "CalibrationCompleted",
+      UpsEvent::Charging => "Charging",
+      UpsEvent::ChargingEnded => "ChargingEnded",
+      UpsEvent::Discharging => "Discharging",
+      UpsEvent::DischargingEnded => "DischargingEnded",
+      UpsEvent::FSD => "FSD",
+      UpsEvent::LowBattery => "LowBattery",
+      UpsEvent::LowBatteryEnded => "LowBatteryEnded",
+      UpsEvent::DeviceOff => "DeviceOff",
+      UpsEvent::DeviceOn => "DeviceOn",
+      UpsEvent::Online => "Online",
+      UpsEvent::OnBattery => "OnBattery",
+      UpsEvent::Overloaded => "Overloaded",
+      UpsEvent::OverloadEnded => "OverloadEnded",
+      UpsEvent::ReplaceBattery => "ReplaceBattery",
+      UpsEvent::ReplaceBatteryEnded => "ReplaceBatteryEnded",
+      UpsEvent::Testing => "Testing",
+      UpsEvent::TestCompleted => "TestCompleted",
+      UpsEvent::Trimming => "Trimming",
+      UpsEvent::TrimEnded => "TrimEnded",
+      UpsEvent::NoCOMM => "NoCOMM",
+      UpsEvent::COMM => "COMM",
+    }
   }
 }
 
@@ -192,38 +231,36 @@ impl<'a> IntoIterator for &'a UpsEvents {
 
 impl std::fmt::Display for UpsEvent {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let text = match self {
-      UpsEvent::AlarmOn => "Alarm on",
-      UpsEvent::AlarmOff => "Alarm off",
-      UpsEvent::Boosting => "Boosting voltage",
-      UpsEvent::BoostEnded => "Not boosting",
-      UpsEvent::BypassOn => "Bypass on",
-      UpsEvent::BypassOff => "Bypass off",
-      UpsEvent::Calibrating => "Calibrating",
-      UpsEvent::CalibrationEnded => "Not calibrating",
-      UpsEvent::Charging => "Charging",
-      UpsEvent::ChargeEnded => "Not charging",
-      UpsEvent::Discharging => "Discharging",
-      UpsEvent::DischargeEnded => "Not discharging",
-      UpsEvent::FSD => "System shutdown",
-      UpsEvent::LowBattery => "Low battery",
-      UpsEvent::LowBatteryEnded => "Battery not low",
-      UpsEvent::DeviceOff => "Ups turned off",
-      UpsEvent::DeviceOn => "Ups not turned off",
-      UpsEvent::Online => "Receiving power",
-      UpsEvent::OnBattery => "Power lost",
-      UpsEvent::Overloaded => "Ups overloaded",
-      UpsEvent::OverloadEnded => "Ups not overloaded",
-      UpsEvent::ReplaceBattery => "Replace battery",
-      UpsEvent::ReplaceBatteryEnded => "Replace battery canceled",
-      UpsEvent::Testing => "Test starts",
-      UpsEvent::TestEnded => "Test finished",
-      UpsEvent::Trimming => "Trimming voltage",
-      UpsEvent::TrimEnded => "Not trimming",
-      UpsEvent::NoCOMM => "Ups is dead",
-      UpsEvent::COMM => "Ups communicating",
-    };
+    f.write_str(self.as_str())
+  }
+}
 
-    f.write_str(text)
+#[cfg(feature = "serde")]
+mod serde {
+  use super::{UpsEvent, UpsEvents};
+  use serde::ser::SerializeSeq;
+
+  impl serde::Serialize for UpsEvents {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: serde::Serializer,
+    {
+      let mut seq_serializer = serializer.serialize_seq(Some(self.events.len()))?;
+
+      for event in self.events.iter() {
+        seq_serializer.serialize_element(event)?;
+      }
+
+      seq_serializer.end()
+    }
+  }
+
+  impl serde::Serialize for UpsEvent {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+      S: serde::Serializer,
+    {
+      serializer.serialize_str(self.as_str())
+    }
   }
 }

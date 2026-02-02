@@ -1,6 +1,6 @@
 use crate::{
   auth::{
-    access_token::AccessToken, permission::Permissions, signed_token::SignedToken,
+    access_token::AccessToken, permission::Permissions, token_signer::TokenSigner,
     user_session::UserSession,
   },
   http::{
@@ -80,8 +80,8 @@ pub async fn post(
             .with_valid_until(Duration::from_millis(duration.get()))
             .build();
 
-          let signed_bytes = SignedToken::<AccessToken>::new(state.config.server_key.as_bytes())
-            .sign_token(&access_token);
+          let signed_bytes =
+            TokenSigner::new(state.config.server_key.as_bytes()).sign_token(&access_token);
 
           info!(
             message = "new api key generated",

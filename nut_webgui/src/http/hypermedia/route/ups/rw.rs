@@ -1,7 +1,6 @@
 use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
-  device_entry::VarDetail,
   http::hypermedia::{
     error::ErrorPage,
     notification::NotificationTemplate,
@@ -9,7 +8,7 @@ use crate::{
     semantic_type::SemanticType,
     util::{RenderWithConfig, htmx_swap, redirect_not_found},
   },
-  state::ServerState,
+  state::{ServerState, VarDetail},
 };
 use axum::{
   Extension, Form,
@@ -103,7 +102,7 @@ pub async fn patch(
   session: Option<Extension<UserSession>>,
   Form(request): Form<RwRequest>,
 ) -> Result<Response, ErrorPage> {
-  let upsd = match state.upsd_servers.get(&namespace) {
+  let upsd = match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd) => upsd,
     None => return Ok(redirect_not_found!(&state)),
   };

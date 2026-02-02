@@ -1,7 +1,3 @@
-mod hypermedia;
-mod json_api;
-mod probe;
-
 use crate::{
   auth::{AUTH_COOKIE_RENEW, permission::Permissions},
   http::{
@@ -19,7 +15,7 @@ use crate::{
 use axum::{
   Router, ServiceExt,
   http::{HeaderValue, StatusCode, header},
-  routing::{get, patch, post},
+  routing::{any, get, patch, post},
 };
 use std::{sync::Arc, time::Duration};
 use tokio::net::TcpListener;
@@ -30,12 +26,17 @@ use tower_http::{
   trace::TraceLayer, validate_request::ValidateRequestHeaderLayer,
 };
 
+pub mod event_api;
+pub mod hypermedia;
+pub mod json_api;
+pub mod probe;
+
 pub struct HttpServer {
   server_state: Arc<ServerState>,
 }
 
 impl HttpServer {
-  pub fn new(server_state: Arc<ServerState>) -> Self {
+  pub const fn new(server_state: Arc<ServerState>) -> Self {
     Self { server_state }
   }
 
@@ -46,6 +47,7 @@ impl HttpServer {
     let Self { server_state } = self;
     let data_api = create_data_routes(server_state.clone());
     let hypermedia_api = create_hypermedia_routes(server_state.clone());
+    let event_api = create_event_routes(server_state.clone());
 
     let middleware = ServiceBuilder::new()
       .layer(TraceLayer::new_for_http())
@@ -74,6 +76,7 @@ impl HttpServer {
     let router = Router::new()
       .nest("/api", data_api)
       .nest("/probes", probes)
+      .nest("/events", event_api)
       .merge(hypermedia_api)
       .layer(middleware)
       .with_state(server_state.clone());
@@ -91,6 +94,17 @@ impl HttpServer {
     axum::serve(listener, app.into_make_service())
       .with_graceful_shutdown(close_signal)
       .await
+  }
+}
+
+#[inline]
+fn create_event_routes(serve_state: Arc<ServerState>) -> Router<Arc<ServerState>> {
+  let router = Router::new();
+
+  if serve_state.auth_user_store.is_some() {
+    router.route("/", any(event_api::wss_with_auth_handler))
+  } else {
+    router.route("/", any(event_api::wss_handler))
   }
 }
 

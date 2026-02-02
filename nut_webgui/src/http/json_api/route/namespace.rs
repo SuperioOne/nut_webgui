@@ -36,7 +36,7 @@ pub async fn get(
   Path(namespace): Path<Box<str>>,
   State(state): State<Arc<ServerState>>,
 ) -> Result<Response, ProblemDetail> {
-  let upsd = extract_upsd!(state, namespace)?;
+  let upsd = extract_upsd!(state, namespace.as_ref())?;
   let daemon_state = upsd.daemon_state.read().await;
 
   let upsd_entry = UpsdEntry {

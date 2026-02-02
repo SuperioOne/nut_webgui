@@ -1,7 +1,6 @@
-use super::{ConfigLayer, ServerConfig, utils::override_opt_field};
-use crate::config::{
-  AuthConfig,
-  uri_path::{InvalidPathError, UriPath},
+use super::{
+  AuthConfig, ConfigLayer, ServerConfig, error::InvalidPathError, uri_path::UriPath,
+  utils::override_opt_field,
 };
 use clap::Parser;
 use core::net::IpAddr;

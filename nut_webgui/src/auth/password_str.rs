@@ -1,10 +1,8 @@
+use super::error::EmptyPasswordStr;
 use core::{ops::Deref, str::FromStr};
 use serde::{Deserialize, de::Visitor};
 
 pub struct PasswordStr(Box<str>);
-
-#[derive(Debug)]
-pub struct EmptyPasswordStr;
 
 impl TryFrom<String> for PasswordStr {
   type Error = EmptyPasswordStr;
@@ -93,11 +91,3 @@ impl<'de> Deserialize<'de> for PasswordStr {
     deserializer.deserialize_string(PasswordStrVisitor)
   }
 }
-
-impl core::fmt::Display for EmptyPasswordStr {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.write_str("password string cannot be empty or whitespace only")
-  }
-}
-
-impl core::error::Error for EmptyPasswordStr {}

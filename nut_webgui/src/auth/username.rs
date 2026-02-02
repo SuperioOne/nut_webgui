@@ -1,3 +1,4 @@
+use super::error::EmptyUsername;
 use askama::FastWritable;
 use serde::{
   Deserialize,
@@ -34,17 +35,6 @@ impl TryFrom<String> for Username {
 impl core::fmt::Display for Username {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str(&self.0)
-  }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct EmptyUsername;
-
-impl core::error::Error for EmptyUsername {}
-
-impl core::fmt::Display for EmptyUsername {
-  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    f.write_str("username cannot be empty")
   }
 }
 

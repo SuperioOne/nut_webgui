@@ -2,14 +2,14 @@ use super::{
   DeviceClientInfo, DeviceStatusChange, SystemEvent,
   channel::{ChannelSendError, EventChannel},
 };
-use crate::state::ConnectionStatus;
+use crate::state::{ConnectionStatus, UpsdNamespace};
 use nut_webgui_upsmc::{UpsName, ups_status::UpsStatus};
 use std::net::IpAddr;
 
-/// This struct does not exactly send all events as a single message, but allows to aggregate all events in
-/// one place and call send multiple time based on available data.
-pub struct EventBatch<'a> {
-  namespace: &'a str,
+/// This struct does not exactly send all events as a single message, but simply aggregates all events in
+/// one place.
+pub struct EventBatch {
+  namespace: UpsdNamespace,
   upsd_status: Option<ConnectionStatus>,
   new: Vec<UpsName>,
   removed: Vec<UpsName>,
@@ -19,8 +19,8 @@ pub struct EventBatch<'a> {
   connections: Vec<DeviceClientInfo>,
 }
 
-impl<'a> EventBatch<'a> {
-  pub const fn new(namespace: &'a str) -> Self {
+impl EventBatch {
+  pub const fn new(namespace: UpsdNamespace) -> Self {
     Self {
       namespace,
       new: Vec::new(),
@@ -52,8 +52,8 @@ impl<'a> EventBatch<'a> {
   pub fn status_change(&mut self, name: UpsName, old_status: UpsStatus, new_status: UpsStatus) {
     self.status_changes.push(DeviceStatusChange {
       name,
-      old_status,
-      new_status,
+      status_old: old_status,
+      status_new: new_status,
     });
   }
 
@@ -82,49 +82,49 @@ impl<'a> EventBatch<'a> {
     if !self.new.is_empty() {
       channel.send(SystemEvent::DeviceAddition {
         devices: self.new,
-        namespace: self.namespace.into(),
+        namespace: self.namespace.clone(),
       })?;
     }
 
     if !self.removed.is_empty() {
       channel.send(SystemEvent::DeviceRemoval {
         devices: self.removed,
-        namespace: self.namespace.into(),
+        namespace: self.namespace.clone(),
       })?;
     }
 
     if !self.updated.is_empty() {
       channel.send(SystemEvent::DeviceUpdate {
         devices: self.updated,
-        namespace: self.namespace.into(),
+        namespace: self.namespace.clone(),
       })?;
     }
 
     if !self.status_changes.is_empty() {
       channel.send(SystemEvent::DeviceStatusChange {
         changes: self.status_changes,
-        namespace: self.namespace.into(),
+        namespace: self.namespace.clone(),
       })?;
     }
 
     if !self.disconnections.is_empty() {
       channel.send(SystemEvent::ClientDisconnection {
         devices: self.disconnections,
-        namespace: self.namespace.into(),
+        namespace: self.namespace.clone(),
       })?;
     }
 
     if !self.connections.is_empty() {
       channel.send(SystemEvent::ClientConnection {
         devices: self.connections,
-        namespace: self.namespace.into(),
+        namespace: self.namespace.clone(),
       })?;
     }
 
     if let Some(status) = self.upsd_status {
       channel.send(SystemEvent::DaemonStatusUpdate {
         status,
-        namespace: self.namespace.into(),
+        namespace: self.namespace.clone(),
       })?;
     }
 

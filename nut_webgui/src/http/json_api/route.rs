@@ -45,7 +45,7 @@ macro_rules! request_auth_client {
 
 macro_rules! extract_upsd {
   ($state:expr, $namespace:expr) => {
-    match $state.upsd_servers.get(&$namespace) {
+    match $state.upsd_servers.get($namespace) {
       Some(upsd) => Ok(upsd),
       None => Err(ProblemDetail::new(
         "Upsd namespace does not exists",

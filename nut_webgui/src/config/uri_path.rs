@@ -1,3 +1,4 @@
+use super::error::InvalidPathError;
 use askama::FastWritable;
 use serde::{Deserialize, de::Visitor};
 
@@ -78,9 +79,6 @@ impl core::fmt::Debug for UriPath {
   }
 }
 
-#[derive(Debug)]
-pub struct InvalidPathError;
-
 impl UriPath {
   pub fn new<T>(path: T) -> Result<Self, InvalidPathError>
   where
@@ -155,15 +153,6 @@ impl core::str::FromStr for UriPath {
     Self::new(s)
   }
 }
-
-impl std::fmt::Display for InvalidPathError {
-  #[inline]
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.write_str("incorrect base path format")
-  }
-}
-
-impl std::error::Error for InvalidPathError {}
 
 impl AsRef<str> for UriPath {
   #[inline]

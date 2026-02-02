@@ -1,36 +1,28 @@
-use super::BinaryToken;
+use super::{BinaryToken, error::SignatureError};
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use std::marker::PhantomData;
-use std::sync::Arc;
 
 #[derive(Clone)]
-pub struct SignedToken<T>
+pub struct TokenSigner<K, T>
 where
   T: BinaryToken,
+  K: AsRef<[u8]>,
 {
-  server_key: Arc<[u8]>,
+  server_key: K,
   _token: PhantomData<T>,
 }
 
-pub enum SignatureError<T>
+impl<K, T> TokenSigner<K, T>
 where
   T: BinaryToken,
+  K: AsRef<[u8]>,
 {
-  InvalidLength,
-  InvalidSignature,
-  TokenError(T::Error),
-}
+  const SIGNATURE_SIZE: usize = 32;
 
-impl<T> SignedToken<T>
-where
-  T: BinaryToken,
-{
-  const KEY_SIZE: usize = 32;
-
-  pub fn new(key: &[u8]) -> Self {
+  pub fn new(key: K) -> Self {
     Self {
-      server_key: Arc::from(key),
+      server_key: key,
       _token: PhantomData::default(),
     }
   }
@@ -49,11 +41,11 @@ where
   }
 
   pub fn from_bytes(&self, bytes: &[u8]) -> Result<T, SignatureError<T>> {
-    if bytes.len() <= Self::KEY_SIZE {
+    if bytes.len() <= Self::SIGNATURE_SIZE {
       return Err(SignatureError::InvalidLength);
     }
 
-    let (payload, signature) = bytes.split_at(bytes.len() - Self::KEY_SIZE);
+    let (payload, signature) = bytes.split_at(bytes.len() - Self::SIGNATURE_SIZE);
 
     let mut hmac =
       Hmac::<Sha256>::new_from_slice(self.server_key.as_ref()).expect("infallible: hmac key size");

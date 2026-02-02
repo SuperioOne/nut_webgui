@@ -1,12 +1,11 @@
 use crate::{
   auth::user_session::UserSession,
-  device_entry::DeviceEntry,
   http::hypermedia::{
     error::ErrorPage,
     unit::UnitDisplay,
     util::{RenderWithConfig, normalize_id},
   },
-  state::{ServerState, UpsdState},
+  state::{DeviceEntry, ServerState, UpsdState},
 };
 use askama::Template;
 use axum::{
@@ -90,7 +89,7 @@ pub async fn get(
   match query
     .namespace
     .as_ref()
-    .map(|n| state.upsd_servers.get(n))
+    .map(|n| state.upsd_servers.get(n.as_ref()))
     .flatten()
   {
     Some(upsd) => {

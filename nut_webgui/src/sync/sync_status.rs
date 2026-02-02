@@ -1,25 +1,46 @@
 use crate::{
-  device_entry::ClientInfo,
-  diff_utils::Diff,
-  event::{DeviceStatusChange, SystemEvent, channel::EventChannel, event_batch::EventBatch},
-  reverse_dns::lookup_ip,
-  service::BackgroundService,
-  state::UpsdState,
+  background_service::BackgroundService,
+  event::{DeviceStatusChange, SystemEvent, batch::EventBatch, channel::EventChannel},
+  state::{ClientInfo, UpsdState},
+  sync::reverse_dns::lookup_ip,
 };
 use chrono::Utc;
 use futures::future::join_all;
 use nut_webgui_upsmc::{UpsName, VarName, client::AsyncNutClient, ups_status::UpsStatus};
-use std::{sync::Arc, time::Duration};
+use std::{net::IpAddr, sync::Arc, time::Duration};
 use tokio::{
-  join, select,
+  select,
   time::{Instant, Interval, MissedTickBehavior, interval},
+  try_join,
 };
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, warn};
 
 pub struct StatusSyncService {
   event_channel: EventChannel,
   state: Arc<UpsdState>,
+}
+
+struct UpsPollInterval {
+  interval: Interval,
+  last_full_sync: Option<Instant>,
+  full_sync_period: Duration,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum UpsPollType {
+  Full,
+  Partial,
+}
+
+struct StatusSyncTask {
+  state: Arc<UpsdState>,
+  event_channel: EventChannel,
+}
+
+struct ClientDiff {
+  pub connected: Vec<IpAddr>,
+  pub disconnected: Vec<IpAddr>,
 }
 
 impl StatusSyncService {
@@ -97,11 +118,6 @@ impl BackgroundService for StatusSyncService {
   }
 }
 
-struct StatusSyncTask {
-  state: Arc<UpsdState>,
-  event_channel: EventChannel,
-}
-
 impl StatusSyncTask {
   async fn snapshot_device_names(&self) -> Vec<UpsName> {
     let read_lock = self.state.daemon_state.read().await;
@@ -121,12 +137,12 @@ impl StatusSyncTask {
     }
 
     let responses = join_all(devices.iter().map(|device| async move {
-      let result = self
+      self
         .state
         .connection_pool
         .get_var(device, VarName::UPS_STATUS)
-        .await;
-      (device, result)
+        .await
+        .map_err(|err| (device, err))
     }))
     .await;
 
@@ -135,7 +151,7 @@ impl StatusSyncTask {
     {
       let mut write_lock = self.state.daemon_state.write().await;
 
-      for (device, result) in responses {
+      for result in responses {
         match result {
           Ok(variable) => {
             if let Some(entry) = write_lock.devices.get_mut(&variable.ups_name) {
@@ -148,14 +164,14 @@ impl StatusSyncTask {
 
               if old_status != new_status {
                 changes.push(DeviceStatusChange {
-                  new_status,
-                  old_status,
+                  status_new: new_status,
+                  status_old: old_status,
                   name: variable.ups_name,
                 });
               }
             }
           }
-          Err(err) => {
+          Err((device, err)) => {
             debug!(
               message = "failed to read ups status",
               namespace = %self.state.namespace,
@@ -164,21 +180,22 @@ impl StatusSyncTask {
           }
         }
       }
-    }
+    };
 
     if !changes.is_empty() {
-      let send_result = self.event_channel.send(SystemEvent::DeviceStatusChange {
-        changes,
-        namespace: Box::from(self.state.namespace.as_ref()),
-      });
-
-      if let Err(err) = send_result {
-        warn!(
-          message = "cannot write new system events to channel",
-          namespace = %self.state.namespace,
-          reason = %err
-        );
-      }
+      _ = self
+        .event_channel
+        .send(SystemEvent::DeviceStatusChange {
+          changes,
+          namespace: self.state.namespace.clone(),
+        })
+        .inspect_err(|err| {
+          warn!(
+            message = "cannot write new system events to channel",
+            namespace = %self.state.namespace,
+            reason = %err
+          );
+        });
     }
   }
 
@@ -194,25 +211,26 @@ impl StatusSyncTask {
       return;
     }
 
+    let client = &self.state.connection_pool;
     let responses = join_all(devices.iter().map(|device| async move {
-      let (variables, clients, commands) = join!(
-        self.state.connection_pool.list_var(device),
-        self.state.connection_pool.list_client(device),
-        self.state.connection_pool.list_cmd(device)
-      );
-
-      (device, variables, clients, commands)
+      try_join!(
+        client.list_var(device),
+        client.list_client(device),
+        client.list_cmd(device)
+      )
+      .map(|(var, client, cmd)| (device, var, client, cmd))
+      .map_err(|err| (device, err))
     }))
     .await;
 
-    let mut events = EventBatch::new(self.state.namespace.as_ref());
+    let mut events = EventBatch::new(self.state.namespace.clone());
 
     {
       let mut write_lock = self.state.daemon_state.write().await;
 
       for result in responses {
         match result {
-          (device, Ok(var_list), Ok(clients), Ok(commands)) => {
+          Ok((device, var_list, clients, commands)) => {
             if let Some(entry) = write_lock.devices.get_mut(device) {
               if let Some(status_value) = var_list.variables.get(VarName::UPS_STATUS) {
                 let new_status = UpsStatus::from(status_value);
@@ -220,12 +238,11 @@ impl StatusSyncTask {
 
                 if old_status != new_status {
                   entry.status = new_status;
-
                   events.status_change(var_list.ups_name, old_status, new_status);
                 }
               }
 
-              let client_diff = entry.attached.into_diff(&clients.ips);
+              let client_diff = ClientDiff::diff(&entry.attached, &clients.ips);
 
               if !client_diff.disconnected.is_empty() {
                 for client_ip in client_diff.disconnected.iter() {
@@ -275,56 +292,26 @@ impl StatusSyncTask {
               events.updated_device(clients.ups_name);
             }
           }
-          (device, vars_results, clients_result, cmds_result) => {
-            if let Err(err) = vars_results {
-              debug!(
-                message = "failed to read ups variables",
-                namespace = %self.state.namespace,
-                device = %device,
-                reason = %err
-              );
-            }
-            if let Err(err) = clients_result {
-              debug!(
-                message = "failed to read ups attached clients",
-                namespace = %self.state.namespace,
-                device = %device,
-                reason = %err
-              );
-            }
-            if let Err(err) = cmds_result {
-              debug!(
-                message = "failed to read ups commands",
-                namespace = %self.state.namespace,
-                device = %device,
-                reason = %err
-              );
-            }
+          Err((device, err)) => {
+            error!(
+              message = "failed to read ups details",
+              namespace = %self.state.namespace,
+              device = %device,
+              reason = %err
+            );
           }
         }
       }
-    }
+    };
 
-    if let Err(err) = events.send(&self.event_channel) {
+    _ = self.event_channel.send_batch(events).inspect_err(|err| {
       warn!(
         message = "cannot write new system events to channel",
         namespace = %self.state.namespace,
         reason = %err
       );
-    }
+    });
   }
-}
-
-struct UpsPollInterval {
-  interval: Interval,
-  last_full_sync: Option<Instant>,
-  full_sync_period: Duration,
-}
-
-#[derive(Debug, Clone, Copy)]
-enum UpsPollType {
-  Full,
-  Partial,
 }
 
 impl std::fmt::Display for UpsPollType {
@@ -348,7 +335,6 @@ impl UpsPollInterval {
     }
   }
 
-  #[inline]
   pub async fn tick(&mut self) -> UpsPollType {
     let instant = self.interval.tick().await;
 
@@ -366,5 +352,28 @@ impl UpsPollInterval {
         UpsPollType::Full
       }
     }
+  }
+}
+
+impl ClientDiff {
+  pub fn diff(source: &[ClientInfo], target: &[IpAddr]) -> Self {
+    let mut diff = ClientDiff {
+      connected: Vec::new(),
+      disconnected: Vec::new(),
+    };
+
+    for old in source.iter() {
+      if target.iter().find(|v| **v == old.addr).is_none() {
+        diff.disconnected.push(old.addr);
+      }
+    }
+
+    for new in target.iter() {
+      if source.iter().find(|v| v.addr == *new).is_none() {
+        diff.connected.push(*new);
+      }
+    }
+
+    diff
   }
 }

@@ -30,7 +30,7 @@ pub async fn post(
 ) -> Result<StatusCode, ProblemDetail> {
   let Path((namespace, ups_name)) = paths?;
   let Json(body) = body?;
-  let upsd = extract_upsd!(state, namespace)?;
+  let upsd = extract_upsd!(state, namespace.as_ref())?;
 
   {
     match upsd.daemon_state.read().await.devices.get(&ups_name) {

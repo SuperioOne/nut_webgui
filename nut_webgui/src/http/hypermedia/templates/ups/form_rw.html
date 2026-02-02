@@ -25,18 +25,18 @@
   <fieldset class="grow">
     <input type="hidden" name="name" value="{{var_name.as_str()}}" />
     {%- match detail -%}
-      {%- when crate::device_entry::VarDetail::String {max_len} -%}
+      {%- when VarDetail::String {max_len} -%}
         <input class="input rounded-e-none w-full {{semantic.as_input()}}" maxlength="{{max_len}}" minlength="1" name="value" placeholder="Type here" required type="text" {% call set_value(value) %} />
         <p class="opacity-60 text-xs">max length: {{max_len}}</p>
-      {%- when crate::device_entry::VarDetail::Number -%}
+      {%- when VarDetail::Number -%}
         <input class="input rounded-e-none w-full {{semantic.as_input()}}" name="value" placeholder="Type here" required type="number" {% call set_value(value) %} />
-      {%- when crate::device_entry::VarDetail::Enum {options} -%}
+      {%- when VarDetail::Enum {options} -%}
         <select class="input rounded-e-none w-full {{semantic.as_select()}}" name="value" placeholder="Select a value" required>
         {%- for opt in options -%}
           <option value="{{opt}}" {% call is_selected(opt, value) %}>{{opt}}</option>
         {%- endfor -%}
       </select>
-      {%- when crate::device_entry::VarDetail::Range {min, max} -%}
+      {%- when VarDetail::Range {min, max} -%}
         <input class="input rounded-e-none w-full {{semantic.as_input()}}" max="{{max}}" min="{{min}}" name="value" placeholder="Enter value here" required type="number" {% match max -%}{%- when Value::Float(_) -%} step="0.01" {%- else -%} step="1" {%- endmatch %} {% call set_value(value) %} />
         <p class="break-normal label">values between {{min}} and {{max}}</p>
       {%- endmatch -%}

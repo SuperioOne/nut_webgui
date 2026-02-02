@@ -127,7 +127,7 @@ impl From<NonZeroI32> for Error {
 
 #[cfg(test)]
 mod test {
-  use crate::reverse_dns::lookup_ip;
+  use crate::sync::reverse_dns::lookup_ip;
   use std::{
     net::{Ipv4Addr, Ipv6Addr},
     str::FromStr,

@@ -1,8 +1,4 @@
-use crate::auth::{
-  BinaryToken,
-  access_token::{AccessToken, AccessTokenError},
-  username::Username,
-};
+use super::{BinaryToken, access_token::AccessToken, error::UserSessionError, username::Username};
 use core::str::from_utf8;
 use tokio_util::bytes::BufMut;
 
@@ -61,14 +57,6 @@ impl BinaryToken for UserSession {
   }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum UserSessionError {
-  InvalidAccessToken(AccessTokenError),
-  InvalidLength,
-  InvalidUtf8,
-  EmptyUsername,
-}
-
 impl AsRef<AccessToken> for UserSession {
   #[inline]
   fn as_ref(&self) -> &AccessToken {
@@ -83,26 +71,6 @@ impl core::ops::Deref for UserSession {
     self.as_access_token()
   }
 }
-
-impl From<AccessTokenError> for UserSessionError {
-  #[inline]
-  fn from(value: AccessTokenError) -> Self {
-    Self::InvalidAccessToken(value)
-  }
-}
-
-impl core::fmt::Display for UserSessionError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      UserSessionError::InvalidAccessToken(err) => err.fmt(f),
-      UserSessionError::InvalidLength => f.write_str("token length is invalid"),
-      UserSessionError::InvalidUtf8 => f.write_str("username string is not a valid utf-8 string"),
-      UserSessionError::EmptyUsername => f.write_str("username is empty"),
-    }
-  }
-}
-
-impl core::error::Error for UserSessionError {}
 
 #[cfg(test)]
 mod tests {

@@ -1,4 +1,5 @@
 use super::SystemEvent;
+use super::batch::EventBatch;
 use std::sync::Arc;
 use tokio::sync::broadcast::{Receiver, Sender, channel};
 
@@ -23,6 +24,11 @@ impl EventChannel {
       Ok(_) => Ok(()),
       Err(_) => Err(ChannelSendError),
     }
+  }
+
+  #[inline]
+  pub fn send_batch(&self, event: EventBatch) -> Result<(), ChannelSendError> {
+    event.send(&self)
   }
 }
 

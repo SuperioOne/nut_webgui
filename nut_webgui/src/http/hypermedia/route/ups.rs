@@ -1,7 +1,6 @@
 use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
-  device_entry::{DeviceEntry, VarDetail},
   http::hypermedia::{
     error::ErrorPage,
     notification::NotificationTemplate,
@@ -9,7 +8,7 @@ use crate::{
     unit::UnitDisplay,
     util::{RenderWithConfig, redirect_not_found},
   },
-  state::{DescriptionKey, ServerState},
+  state::{DescriptionKey, DeviceEntry, ServerState, VarDetail},
 };
 use askama::Template;
 use axum::{
@@ -192,7 +191,7 @@ pub async fn get(
   state: State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
-  let upsd = match state.upsd_servers.get(&namespace) {
+  let upsd = match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd) => upsd,
     None => return Ok(redirect_not_found!(&state)),
   };

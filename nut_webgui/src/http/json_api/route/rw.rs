@@ -1,10 +1,9 @@
 use crate::{
-  device_entry::VarDetail,
   http::json_api::{
     problem_detail::ProblemDetail,
     route::{extract_upsd, request_auth_client},
   },
-  state::ServerState,
+  state::{ServerState, VarDetail},
 };
 use axum::{
   Json,
@@ -32,7 +31,7 @@ pub async fn patch(
 ) -> Result<StatusCode, ProblemDetail> {
   let Path((namespace, ups_name)) = paths?;
   let Json(body) = body?;
-  let upsd = extract_upsd!(state, namespace)?;
+  let upsd = extract_upsd!(state, namespace.as_ref())?;
 
   {
     match upsd.daemon_state.read().await.devices.get(&ups_name) {

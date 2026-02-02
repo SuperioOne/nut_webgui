@@ -1,4 +1,4 @@
-use crate::auth::{BinaryToken, Nonce, permission::Permissions};
+use super::{BinaryToken, error::AccessTokenError, nonce::Nonce, permission::Permissions};
 use chrono::Utc;
 use core::time::Duration;
 use tokio_util::bytes::BufMut;
@@ -137,27 +137,6 @@ impl BinaryToken for AccessToken {
     })
   }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AccessTokenError {
-  InvalidVersion,
-  InvalidLength,
-  InvalidTimestamps,
-}
-
-impl core::fmt::Display for AccessTokenError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      AccessTokenError::InvalidVersion => f.write_str("api token version is invalid"),
-      AccessTokenError::InvalidLength => f.write_str("token length is invalid"),
-      AccessTokenError::InvalidTimestamps => {
-        f.write_str("token's issued_at and valid_until dates are not valid")
-      }
-    }
-  }
-}
-
-impl core::error::Error for AccessTokenError {}
 
 #[cfg(test)]
 mod tests {

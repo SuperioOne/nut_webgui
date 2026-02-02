@@ -1,7 +1,5 @@
-use crate::{
-  auth::{password_str::PasswordStr, permission::Permissions, username::Username},
-  config::error::UserTomlError,
-};
+use super::error::UserTomlError;
+use crate::auth::{password_str::PasswordStr, permission::Permissions, username::Username};
 use serde::{Deserialize, de::Visitor};
 use std::{collections::HashMap, fs::File, io::Read, path::Path};
 

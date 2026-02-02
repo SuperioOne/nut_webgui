@@ -1,15 +1,14 @@
 use crate::{
-  device_entry::DeviceEntry,
   http::hypermedia::{
     semantic_type::SemanticType,
     unit::{
       ApparentPower, Approx, Celcius, OneOf, Percentage, RealPower, RemainingSeconds, UnitDisplay,
+      Voltage,
     },
   },
+  state::DeviceEntry,
 };
 use nut_webgui_upsmc::{Value, VarName};
-
-use super::unit::Voltage;
 
 // Provides hypermedia specific impls for DeviceEntry struct
 impl DeviceEntry {

@@ -1,6 +1,6 @@
 use crate::{
   auth::{
-    AUTH_COOKIE_NAME, password_str::PasswordStr, signed_token::SignedToken,
+    AUTH_COOKIE_NAME, password_str::PasswordStr, token_signer::TokenSigner,
     user_session::UserSession, username::Username,
   },
   http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
@@ -88,8 +88,8 @@ pub async fn post(
       Some(store) => match store.login_user(&login_form.username, &login_form.password) {
         Ok(session) => {
           let ttl = session.ttl();
-          let signed_bytes = SignedToken::<UserSession>::new(state.config.server_key.as_bytes())
-            .sign_token(&session);
+          let signed_bytes =
+            TokenSigner::new(state.config.server_key.as_bytes()).sign_token(&session);
 
           let cookie = Cookie::build((AUTH_COOKIE_NAME, BASE64_STANDARD.encode(signed_bytes)))
             .http_only(true)

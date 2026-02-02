@@ -18,7 +18,7 @@ pub async fn post(
   paths: Result<Path<(Box<str>, UpsName)>, PathRejection>,
 ) -> Result<StatusCode, ProblemDetail> {
   let Path((namespace, ups_name)) = paths?;
-  let upsd = extract_upsd!(state, namespace)?;
+  let upsd = extract_upsd!(state, namespace.as_ref())?;
 
   {
     if upsd

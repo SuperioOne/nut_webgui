@@ -16,7 +16,7 @@ pub async fn get(
   paths: Result<Path<(Box<str>, UpsName)>, PathRejection>,
 ) -> Result<Response, ProblemDetail> {
   let Path((namespace, ups_name)) = paths?;
-  let upsd = extract_upsd!(state, namespace)?;
+  let upsd = extract_upsd!(state, namespace.as_ref())?;
 
   match upsd.daemon_state.read().await.devices.get(&ups_name) {
     Some(ups) => Ok(Json(ups).into_response()),

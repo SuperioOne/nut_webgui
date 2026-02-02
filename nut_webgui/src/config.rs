@@ -1,4 +1,5 @@
-use crate::config::{tls_mode::TlsMode, uri_path::UriPath, utils::rand_server_key_256bit};
+use self::utils::rand_server_key_256bit;
+use self::{tls_mode::TlsMode, uri_path::UriPath};
 use core::net::{IpAddr, Ipv4Addr};
 use std::{collections::HashMap, num::NonZeroUsize, path::PathBuf};
 use tracing::level_filters::LevelFilter;

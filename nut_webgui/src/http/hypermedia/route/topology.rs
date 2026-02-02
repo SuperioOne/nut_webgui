@@ -1,13 +1,12 @@
 use crate::{
   auth::user_session::UserSession,
-  device_entry::DeviceEntry,
   http::hypermedia::{
     error::ErrorPage,
     semantic_type::SemanticType,
     unit::{Percentage, RemainingSeconds, UnitDisplay, Voltage},
     util::RenderWithConfig,
   },
-  state::{ConnectionStatus, ServerState},
+  state::{ConnectionStatus, DeviceEntry, ServerState, UpsdNamespace},
 };
 use askama::Template;
 use axum::{
@@ -55,14 +54,14 @@ pub async fn get(
 }
 
 struct TopologyGraph {
-  pub servers: BTreeMap<Arc<str>, NutServerNode>,
+  pub servers: BTreeMap<UpsdNamespace, NutServerNode>,
   pub clients: BTreeMap<IpAddr, ClientNode>,
   pub devices: BTreeMap<Arc<DeviceId>, DeviceNode>,
   pub edges: Vec<EdgeNode>,
 }
 
 struct TopologyGraphBuilder {
-  servers: BTreeMap<Arc<str>, NutServerNode>,
+  servers: BTreeMap<UpsdNamespace, NutServerNode>,
   clients: BTreeMap<IpAddr, ClientNode>,
   devices: BTreeMap<Arc<DeviceId>, DeviceNode>,
   edge_refs: Vec<EdgeRefNode>,
@@ -86,7 +85,7 @@ impl TopologyGraphBuilder {
       let daemon_state = upsd.daemon_state.read().await;
 
       let mut server_node = NutServerNode {
-        namespace: Arc::from(namespace.as_ref()),
+        namespace: namespace.clone(),
         port: upsd.config.port,
         status: daemon_state.status,
         address: upsd.config.addr.clone(),

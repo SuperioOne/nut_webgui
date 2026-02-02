@@ -1,7 +1,6 @@
 use crate::{
-  device_entry::DeviceEntry,
   http::json_api::{problem_detail::ProblemDetail, route::extract_upsd},
-  state::ServerState,
+  state::{DeviceEntry, ServerState},
 };
 use axum::{
   Json,
@@ -14,7 +13,7 @@ pub async fn get(
   State(state): State<Arc<ServerState>>,
   Path(namespace): Path<Box<str>>,
 ) -> Result<Response, ProblemDetail> {
-  let upsd = extract_upsd!(state, namespace)?;
+  let upsd = extract_upsd!(state, namespace.as_ref())?;
   let daemon_state = upsd.daemon_state.read().await;
 
   let mut device_refs: Vec<&DeviceEntry> = daemon_state.devices.values().collect();

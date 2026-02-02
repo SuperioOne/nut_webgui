@@ -27,9 +27,9 @@ pub fn rand_server_key_256bit() -> String {
   let mut idx: usize = 0;
 
   for _ in 0..4 {
-    let indexs: [u8; 8] = (rng.next_u64() & 0x3F3F3F3F3F3F3F3F).to_le_bytes();
+    let indexes: [u8; 8] = (rng.next_u64() & 0x3F3F3F3F3F3F3F3F).to_le_bytes();
 
-    for key in indexs {
+    for key in indexes {
       bytes[idx] = *CHARSET.get(key as usize).unwrap();
       idx += 1;
     }

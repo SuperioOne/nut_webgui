@@ -153,6 +153,60 @@ impl core::str::FromStr for Permissions {
   }
 }
 
+impl<'de> Deserialize<'de> for Permissions {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    deserializer.deserialize_any(PermissionVisitor)
+  }
+}
+
+impl askama::FastWritable for Permissions {
+  fn write_into<W: core::fmt::Write + ?Sized>(
+    &self,
+    dest: &mut W,
+    _: &dyn askama::Values,
+  ) -> askama::Result<()> {
+    if self.len() > 1 {
+      let mut iter = self.iter().peekable();
+
+      while let Some(value) = iter.next() {
+        dest.write_str(value.as_str())?;
+
+        if iter.peek().is_some() {
+          dest.write_char(' ')?;
+        }
+      }
+
+      Ok(())
+    } else {
+      dest.write_str((*self).as_str())?;
+      Ok(())
+    }
+  }
+}
+
+impl std::fmt::Display for Permissions {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    if self.len() > 1 {
+      let mut iter = self.iter().peekable();
+
+      while let Some(value) = iter.next() {
+        f.write_str(value.as_str())?;
+
+        if iter.peek().is_some() {
+          f.write_char(' ')?;
+        }
+      }
+
+      Ok(())
+    } else {
+      f.write_str((*self).as_str())
+    }
+  }
+}
+
 struct PermissionVisitor;
 
 impl<'de> Visitor<'de> for PermissionVisitor {
@@ -211,59 +265,5 @@ impl<'de> Visitor<'de> for PermissionVisitor {
     E: de::Error,
   {
     Permissions::from_str(v).map_err(|err| E::custom(err.to_string()))
-  }
-}
-
-impl<'de> Deserialize<'de> for Permissions {
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: serde::Deserializer<'de>,
-  {
-    deserializer.deserialize_any(PermissionVisitor)
-  }
-}
-
-impl askama::FastWritable for Permissions {
-  fn write_into<W: core::fmt::Write + ?Sized>(
-    &self,
-    dest: &mut W,
-    _: &dyn askama::Values,
-  ) -> askama::Result<()> {
-    if self.len() > 1 {
-      let mut iter = self.iter().peekable();
-
-      while let Some(value) = iter.next() {
-        dest.write_str(value.as_str())?;
-
-        if iter.peek().is_some() {
-          dest.write_char(' ')?;
-        }
-      }
-
-      Ok(())
-    } else {
-      dest.write_str((*self).as_str())?;
-      Ok(())
-    }
-  }
-}
-
-impl std::fmt::Display for Permissions {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    if self.len() > 1 {
-      let mut iter = self.iter().peekable();
-
-      while let Some(value) = iter.next() {
-        f.write_str(value.as_str())?;
-
-        if iter.peek().is_some() {
-          f.write_char(' ')?;
-        }
-      }
-
-      Ok(())
-    } else {
-      f.write_str((*self).as_str())
-    }
   }
 }

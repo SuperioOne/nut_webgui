@@ -1,8 +1,9 @@
 use crate::{
+  background_service::BackgroundService,
   event::{SystemEvent, channel::EventChannel},
-  service::BackgroundService,
   state::ServerState,
 };
+use futures::future::join_all;
 use nut_webgui_upsmc::{
   CmdName, UpsName, VarName,
   client::{AsyncNutClient, NutPoolClient},
@@ -16,6 +17,16 @@ use tracing::{debug, warn};
 pub struct DescriptionSyncService {
   event_channel: EventChannel,
   state: Arc<ServerState>,
+}
+
+struct DescriptionTask {
+  state: Arc<ServerState>,
+}
+
+struct TaskContext {
+  name: UpsName,
+  cmds: Vec<CmdName>,
+  vars: Vec<VarName>,
 }
 
 impl DescriptionSyncService {
@@ -64,16 +75,6 @@ impl BackgroundService for DescriptionSyncService {
       debug!(message = "description sync task stopped");
     })
   }
-}
-
-struct DescriptionTask {
-  state: Arc<ServerState>,
-}
-
-struct TaskContext {
-  name: UpsName,
-  cmds: Vec<CmdName>,
-  vars: Vec<VarName>,
 }
 
 impl DescriptionTask {
@@ -160,12 +161,8 @@ impl DescriptionTask {
 
   /// **concurrently** loads requested command and variable descriptions for target ups.
   async fn load_descs(client: NutPoolClient, ctx: TaskContext) -> Vec<(Box<str>, Box<str>)> {
-    let cmd_future =
-      futures::future::join_all(ctx.cmds.iter().map(|v| client.get_cmd_desc(&ctx.name, v)));
-
-    let var_future =
-      futures::future::join_all(ctx.vars.iter().map(|v| client.get_var_desc(&ctx.name, v)));
-
+    let cmd_future = join_all(ctx.cmds.iter().map(|v| client.get_cmd_desc(&ctx.name, v)));
+    let var_future = join_all(ctx.vars.iter().map(|v| client.get_var_desc(&ctx.name, v)));
     let (cmds, vars) = join!(cmd_future, var_future);
     let mut results = Vec::with_capacity(cmds.len() + vars.len());
 

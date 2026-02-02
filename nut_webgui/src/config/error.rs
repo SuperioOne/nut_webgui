@@ -1,4 +1,3 @@
-use crate::config::{tls_mode::InvalidTlsModeError, uri_path::InvalidPathError};
 use core::{net::AddrParseError, num::ParseIntError};
 use std::ffi::OsString;
 
@@ -31,6 +30,25 @@ pub enum EnvConfigError {
   InvalidTlsMode,
   InvalidUriPath,
   NonUnicodeVar { variable: OsString },
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct InvalidTlsModeError;
+
+#[derive(Debug, Clone, Copy)]
+pub struct InvalidPathError;
+
+impl std::fmt::Display for InvalidPathError {
+  #[inline]
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str("incorrect base path format")
+  }
+}
+
+impl core::fmt::Display for InvalidTlsModeError {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    f.write_fmt(format_args!("not a valid tls mode option"))
+  }
 }
 
 impl std::fmt::Display for EnvConfigError {
@@ -170,3 +188,5 @@ impl core::error::Error for ConfigError {}
 impl core::error::Error for EnvConfigError {}
 impl core::error::Error for TomlConfigError {}
 impl core::error::Error for UserTomlError {}
+impl core::error::Error for InvalidTlsModeError {}
+impl std::error::Error for InvalidPathError {}

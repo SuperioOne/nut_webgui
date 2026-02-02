@@ -1,6 +1,6 @@
-use crate::auth::{
-  access_token::AccessToken, password_str::PasswordStr, permission::Permissions,
-  user_session::UserSession, username::Username,
+use super::{
+  access_token::AccessToken, error::SessionError, password_str::PasswordStr,
+  permission::Permissions, user_session::UserSession, username::Username,
 };
 use core::borrow::Borrow;
 use rand_chacha::{
@@ -26,12 +26,6 @@ pub struct UserStore {
   inner: HashMap<Username, User>,
   session_duration: Duration,
   hash_params: Params,
-}
-
-#[derive(Debug)]
-pub enum SessionError {
-  InvalidLogin,
-  InvalidOutputLength,
 }
 
 #[inline(never)]
@@ -193,14 +187,3 @@ impl<'a> Iterator for Iter<'a> {
     self.inner_iter.next().map(|(_, user)| &user.profile)
   }
 }
-
-impl core::fmt::Display for SessionError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      SessionError::InvalidLogin => f.write_str("username is not present in user list"),
-      SessionError::InvalidOutputLength => f.write_str("hashing output length is invalid"),
-    }
-  }
-}
-
-impl core::error::Error for SessionError {}

@@ -1,15 +1,15 @@
-use crate::state::ConnectionStatus;
+use crate::state::{ConnectionStatus, UpsdNamespace};
 use nut_webgui_upsmc::{UpsName, ups_status::UpsStatus};
 use std::net::IpAddr;
 
+pub mod batch;
 pub mod channel;
-pub mod event_batch;
 
 #[derive(Debug, Clone)]
 pub struct DeviceStatusChange {
   pub name: UpsName,
-  pub old_status: UpsStatus,
-  pub new_status: UpsStatus,
+  pub status_old: UpsStatus,
+  pub status_new: UpsStatus,
 }
 
 #[derive(Debug, Clone)]
@@ -22,30 +22,30 @@ pub struct DeviceClientInfo {
 pub enum SystemEvent {
   DeviceAddition {
     devices: Vec<UpsName>,
-    namespace: Box<str>,
+    namespace: UpsdNamespace,
   },
   DeviceRemoval {
     devices: Vec<UpsName>,
-    namespace: Box<str>,
+    namespace: UpsdNamespace,
   },
   DeviceUpdate {
     devices: Vec<UpsName>,
-    namespace: Box<str>,
+    namespace: UpsdNamespace,
   },
   DeviceStatusChange {
     changes: Vec<DeviceStatusChange>,
-    namespace: Box<str>,
+    namespace: UpsdNamespace,
   },
   DaemonStatusUpdate {
     status: ConnectionStatus,
-    namespace: Box<str>,
+    namespace: UpsdNamespace,
   },
   ClientConnection {
     devices: Vec<DeviceClientInfo>,
-    namespace: Box<str>,
+    namespace: UpsdNamespace,
   },
   ClientDisconnection {
     devices: Vec<DeviceClientInfo>,
-    namespace: Box<str>,
+    namespace: UpsdNamespace,
   },
 }

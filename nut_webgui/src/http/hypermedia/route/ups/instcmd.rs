@@ -30,7 +30,7 @@ pub async fn post(
   session: Option<Extension<UserSession>>,
   Form(request): Form<CommandRequest>,
 ) -> Result<Response, ErrorPage> {
-  let upsd = match state.upsd_servers.get(&namespace) {
+  let upsd = match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd) => upsd,
     None => return Ok(redirect_not_found!(&state)),
   };

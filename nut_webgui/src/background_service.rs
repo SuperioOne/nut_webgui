@@ -1,16 +1,10 @@
 use core::{pin::Pin, time::Duration};
-use error::ShutdownTimedOut;
 use futures::future::try_join_all;
 use tokio::{
   task::{AbortHandle, JoinHandle},
-  time::timeout,
+  time::{error::Elapsed, timeout},
 };
 use tokio_util::sync::CancellationToken;
-
-pub mod error;
-pub mod sync_desc;
-pub mod sync_device;
-pub mod sync_status;
 
 /// Trait for services that can be run in the background.
 ///
@@ -111,14 +105,14 @@ impl RunnerHandle {
   /// This method cancels all services using the associated cancellation token
   /// and waits for them to finish gracefully. If any service does not shut down
   /// within the specified timeout, it will be aborted.
-  pub async fn stop(self) -> Result<(), ShutdownTimedOut> {
+  pub async fn stop(self) -> Result<(), Elapsed> {
     let unified_handle = try_join_all(self.handles.into_iter().map(
       |(handle, abort_handle)| async move {
         match timeout(self.wait_timeout, handle).await {
           Ok(_) => Ok(()),
-          Err(_) => {
+          Err(err) => {
             abort_handle.abort();
-            Err(ShutdownTimedOut)
+            Err(err)
           }
         }
       },
