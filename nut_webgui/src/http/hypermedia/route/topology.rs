@@ -161,6 +161,8 @@ impl TopologyGraphBuilder {
 
   fn insert_from(&mut self, device: &DeviceEntry, server_node: &mut NutServerNode) {
     let key = DeviceId {
+      name: device.name.to_owned(),
+      namespace: server_node.namespace.clone(),
       model: device
         .variables
         .get(VarName::UPS_MODEL)
@@ -304,6 +306,8 @@ struct DeviceId {
   pub manufacturer: Option<String>,
   pub model: Option<String>,
   pub serial: Option<String>,
+  pub name: UpsName,
+  pub namespace: UpsdNamespace,
 }
 
 struct DeviceAlias {
@@ -382,7 +386,7 @@ struct EdgeNode {
 }
 
 impl EdgeType {
-  pub fn as_class(&self) -> &'static str {
+  pub const fn as_class(&self) -> &'static str {
     match self {
       EdgeType::Power => "edge-dashed",
       EdgeType::Data => "edge-dotted",
@@ -391,7 +395,7 @@ impl EdgeType {
 }
 
 impl NodeType {
-  pub fn as_str(&self) -> &'static str {
+  pub const fn as_str(&self) -> &'static str {
     match self {
       NodeType::Server => "server",
       NodeType::Client => "client",
@@ -432,31 +436,40 @@ impl Ord for DeviceId {
     }
 
     match self.serial.cmp(&other.serial) {
-      core::cmp::Ordering::Equal => {}
-      ord => return ord,
-    }
+      core::cmp::Ordering::Equal => {
+        if self.serial.is_none() && self.model.is_none() && self.manufacturer.is_none() {
+          match self.namespace.cmp(&other.namespace) {
+            std::cmp::Ordering::Equal => {}
+            ord => return ord,
+          }
 
-    core::cmp::Ordering::Equal
+          self.name.cmp(&other.name)
+        } else {
+          core::cmp::Ordering::Equal
+        }
+      }
+      ord => ord,
+    }
   }
 }
 
 impl ConnectionCounter {
   #[inline]
-  pub fn increment_active(&mut self) {
+  pub const fn increment_active(&mut self) {
     self.active += 1;
   }
 
   #[inline]
-  pub fn increment_degraded(&mut self) {
+  pub const fn increment_degraded(&mut self) {
     self.degraded += 1;
   }
 
   #[inline]
-  pub fn increment_failed(&mut self) {
+  pub const fn increment_failed(&mut self) {
     self.failed += 1;
   }
 
-  pub fn as_semantic_type(&self) -> SemanticType {
+  pub const fn as_semantic_type(&self) -> SemanticType {
     if self.active > 0 {
       SemanticType::Success
     } else if self.degraded > 0 {

@@ -1,7 +1,6 @@
 use crate::Value;
 use std::fmt::Write;
 
-// Implements repetitive traits and const values
 macro_rules! impl_status {
   ($(($name:ident, $value:literal);)+) => {
     impl $crate::ups_status::UpsStatus {
@@ -149,7 +148,7 @@ impl UpsStatus {
   }
 
   #[inline]
-  pub fn iter(&self) -> Iter {
+  pub const fn iter(&self) -> Iter {
     Iter { state: *self }
   }
 }

@@ -146,6 +146,16 @@ impl std::fmt::Display for ConnectionStatus {
   }
 }
 
+impl DeviceEntry {
+  pub fn mark_as_dead_with(&mut self, status: UpsStatus) {
+    self.status = status;
+    self.commands.clear();
+    self.rw_variables.clear();
+    self.variables.clear();
+    self.last_modified = Utc::now();
+  }
+}
+
 impl DaemonState {
   pub fn new() -> DaemonState {
     DaemonState {

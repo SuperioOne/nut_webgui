@@ -75,7 +75,7 @@
             {%- else -%}
               <nut-search-list for="device_filter" id="device_list" class="flex flex-col gap-1 list-none">
                 {%- for row in rows_html -%}
-                    {{row.html | safe}}
+                  {{row.html | safe}}
                 {%- endfor -%}
               </nut-search-list>
             {%- endif -%}

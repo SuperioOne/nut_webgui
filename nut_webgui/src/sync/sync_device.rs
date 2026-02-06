@@ -14,6 +14,7 @@ use nut_webgui_upsmc::{
   client::{AsyncNutClient, NutPoolClient},
   response::{DaemonVer, ProtVer, UpsDevice},
   ups_status::UpsStatus,
+  ups_variables::UpsVariables,
 };
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{select, task::JoinSet, time::interval, try_join};
@@ -118,7 +119,7 @@ impl DeviceSyncTask {
           );
 
           events.new_device(entry.name.clone());
-          write_lock.devices.insert(entry.name.clone(), entry);
+          _ = write_lock.devices.insert(entry.name.clone(), entry);
         }
 
         for entry in patch.updated.into_iter() {
@@ -221,6 +222,8 @@ impl DeviceSyncTask {
       try_join!(client.list_ups(), client.get_protver(), client.get_ver())?;
 
     let total_device_count = remote.devices.len();
+    let mut new_devices = Vec::new();
+    let mut recheck_devices = Vec::new();
     let mut patch = DeviceDiffPatch {
       prot_ver,
       upsd_ver,
@@ -228,7 +231,6 @@ impl DeviceSyncTask {
       updated: Vec::new(),
       deleted: Vec::new(),
     };
-    let mut new_devices = Vec::new();
 
     {
       let state_lock = self.state.daemon_state.read().await;
@@ -247,7 +249,9 @@ impl DeviceSyncTask {
       for remote_device in remote.devices.into_iter() {
         match state_lock.devices.get(&remote_device.ups_name) {
           Some(local_device) => {
-            if local_device.desc != remote_device.desc {
+            if local_device.status.has(UpsStatus::NOCOMM) {
+              recheck_devices.push(remote_device);
+            } else if local_device.desc != remote_device.desc {
               patch.updated.push(remote_device);
             }
           }
@@ -259,20 +263,60 @@ impl DeviceSyncTask {
     };
 
     let mut failure_count = 0;
-    let mut task_set = JoinSet::new();
-
-    for device in new_devices.into_iter() {
+    let mut new_devices_task = JoinSet::from_iter(new_devices.into_iter().map(|dev| {
       let client = self.state.connection_pool.clone();
-      task_set.spawn(Self::load_device_entry(client, device));
-    }
+      Self::load_device_entry(client, dev)
+    }));
+    let mut recheck_task = JoinSet::from_iter(recheck_devices.into_iter().map(|dev| {
+      let client = self.state.connection_pool.clone();
+      Self::load_device_entry(client, dev)
+    }));
 
-    while let Some(result) = task_set.join_next().await {
+    while let Some(result) = new_devices_task.join_next().await {
       match result {
         Ok(Ok(device)) => patch.added.push(device),
         Ok(Err(err)) => {
           failure_count += 1;
           error!(
             message = "unable to get device details from upsd",
+            namespace = %self.state.namespace,
+            device = %err.name,
+            reason = %err.inner
+          );
+
+          // NOTE: At this point, upsd reports this device via LIST UPS command, but it
+          // cannot get the device details. We simply report these devices as NOCOMM.
+          let entry = DeviceEntry {
+            status: UpsStatus::NOCOMM,
+            name: err.name,
+            desc: String::new().into_boxed_str(),
+            last_modified: Utc::now(),
+            attached: Vec::new(),
+            commands: Vec::new(),
+            rw_variables: HashMap::new(),
+            variables: UpsVariables::new(),
+          };
+
+          patch.added.push(entry);
+        }
+        Err(err) => {
+          failure_count += 1;
+          error!(
+            message = "cannot join device load task",
+            namespace = %self.state.namespace,
+            reason = %err
+          )
+        }
+      }
+    }
+
+    while let Some(result) = recheck_task.join_next().await {
+      match result {
+        Ok(Ok(device)) => patch.added.push(device),
+        Ok(Err(err)) => {
+          failure_count += 1;
+          warn!(
+            message = "device is still not accessible",
             namespace = %self.state.namespace,
             device = %err.name,
             reason = %err.inner
@@ -289,10 +333,10 @@ impl DeviceSyncTask {
       }
     }
 
-    if failure_count >= total_device_count {
-      Err(SyncTaskError::DeviceLoadFailed)
-    } else {
+    if failure_count < total_device_count {
       Ok(patch)
+    } else {
+      Err(SyncTaskError::DeviceLoadFailed)
     }
   }
 

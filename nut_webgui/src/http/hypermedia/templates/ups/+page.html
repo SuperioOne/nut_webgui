@@ -54,27 +54,25 @@
             hx-trigger="every {{upsd_config.poll_interval}}s"
           >
             {%- block ups_status -%}
-              {%- if let Some(status) = device.get_status() -%}
-                {%- match device.get_beeper_status() -%}
-                  {%- when Some with (true) -%}
-                    <span class="badge badge-outline badge-success text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is enabled">
-                      {%- call icons::get_svg("volume-2", 16) -%}
-                      <span class="uppercase">Beeper-On</span>
-                    </span>
-                  {%- when Some with (false) -%}
-                    <span class="badge badge-outline badge-warning text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is disabled">
-                      {%- call icons::get_svg("volume-x", 16) -%}
-                      <span class="uppercase">Beeper-Off</span>
-                    </span>
-                  {%- when None -%}
-                {%- endmatch -%}
-                {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status) -%}
-                  <span class="badge badge-outline text-nowrap text-xs tooltip tooltip-bottom {{status_detail.class.as_badge()}}" data-tip="{{status_detail.desc}}">
-                    {%- call icons::get_svg(status_detail.icon_name, 16) -%}
-                    <span class="uppercase">{{status_detail.name}}</span>
+              {%- match device.get_beeper_status() -%}
+                {%- when Some with (true) -%}
+                  <span class="badge badge-outline badge-success text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is enabled">
+                    {%- call icons::get_svg("volume-2", 16) -%}
+                    <span class="uppercase">Beeper-On</span>
                   </span>
-                {%- endfor -%}
-              {%- endif -%}
+                {%- when Some with (false) -%}
+                  <span class="badge badge-outline badge-warning text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is disabled">
+                    {%- call icons::get_svg("volume-x", 16) -%}
+                    <span class="uppercase">Beeper-Off</span>
+                  </span>
+                {%- when None -%}
+              {%- endmatch -%}
+              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(*device.status) -%}
+                <span class="badge badge-outline text-nowrap text-xs tooltip tooltip-bottom {{status_detail.class.as_badge()}}" data-tip="{{status_detail.desc}}">
+                  {%- call icons::get_svg(status_detail.icon_name, 16) -%}
+                  <span class="uppercase">{{status_detail.name}}</span>
+                </span>
+              {%- endfor -%}
             {%- endblock ups_status -%}
           </div>
         </div>

@@ -119,14 +119,24 @@ impl BackgroundService for StatusSyncService {
 }
 
 impl StatusSyncTask {
-  async fn snapshot_device_names(&self) -> Vec<UpsName> {
+  async fn snapshot_active_device_names(&self) -> Vec<UpsName> {
     let read_lock = self.state.daemon_state.read().await;
-    read_lock.devices.keys().cloned().collect()
+    read_lock
+      .devices
+      .iter()
+      .filter_map(|(k, v)| {
+        if v.status.has(UpsStatus::NOCOMM) {
+          None
+        } else {
+          Some(k.clone())
+        }
+      })
+      .collect()
   }
 
   /// Only syncs `ups.status` variables for existing devices.
   pub async fn status_sync(&self) {
-    let devices = self.snapshot_device_names().await;
+    let devices = self.snapshot_active_device_names().await;
 
     if devices.is_empty() {
       debug!(
@@ -200,7 +210,7 @@ impl StatusSyncTask {
   }
 
   pub async fn state_sync(&self) {
-    let devices = self.snapshot_device_names().await;
+    let devices = self.snapshot_active_device_names().await;
 
     if devices.is_empty() {
       debug!(
@@ -212,14 +222,14 @@ impl StatusSyncTask {
     }
 
     let client = &self.state.connection_pool;
-    let responses = join_all(devices.iter().map(|device| async move {
+    let responses = join_all(devices.into_iter().map(|device| async move {
       try_join!(
-        client.list_var(device),
-        client.list_client(device),
-        client.list_cmd(device)
+        client.list_var(&device),
+        client.list_client(&device),
+        client.list_cmd(&device)
       )
+      .map_err(|err| (device.clone(), err))
       .map(|(var, client, cmd)| (device, var, client, cmd))
-      .map_err(|err| (device, err))
     }))
     .await;
 
@@ -230,15 +240,15 @@ impl StatusSyncTask {
 
       for result in responses {
         match result {
-          Ok((device, var_list, clients, commands)) => {
-            if let Some(entry) = write_lock.devices.get_mut(device) {
+          Ok((device_name, var_list, clients, commands)) => {
+            if let Some(entry) = write_lock.devices.get_mut(&device_name) {
               if let Some(status_value) = var_list.variables.get(VarName::UPS_STATUS) {
                 let new_status = UpsStatus::from(status_value);
                 let old_status = entry.status;
 
                 if old_status != new_status {
                   entry.status = new_status;
-                  events.status_change(var_list.ups_name, old_status, new_status);
+                  events.status_change(device_name.clone(), old_status, new_status);
                 }
               }
 
@@ -252,13 +262,13 @@ impl StatusSyncTask {
                     info!(
                       message = "client detached from ups",
                       namespace = %self.state.namespace,
-                      device = %device,
+                      device = %device_name,
                       client = %client_ip
                     );
                   }
                 }
 
-                events.client_disconnect(device.clone(), client_diff.disconnected);
+                events.client_disconnect(device_name.clone(), client_diff.disconnected);
               }
 
               if !client_diff.connected.is_empty() {
@@ -277,28 +287,32 @@ impl StatusSyncTask {
                   info!(
                     message = "new client attached to ups",
                     namespace = %self.state.namespace,
-                    device = %device,
+                    device = %device_name,
                     client = %client_ip
                   );
                 }
 
-                events.client_connection(device.clone(), client_diff.connected);
+                events.client_connection(device_name.clone(), client_diff.connected);
               }
 
               entry.variables = var_list.variables;
               entry.commands = commands.cmds;
               entry.last_modified = Utc::now();
-
-              events.updated_device(clients.ups_name);
+              events.updated_device(device_name);
             }
           }
-          Err((device, err)) => {
+          Err((device_name, err)) => {
             error!(
               message = "failed to read ups details",
               namespace = %self.state.namespace,
-              device = %device,
+              device = %device_name,
               reason = %err
             );
+
+            if let Some(entry) = write_lock.devices.get_mut(&device_name) {
+              events.status_change(device_name, entry.status, UpsStatus::NOCOMM);
+              entry.mark_as_dead_with(UpsStatus::NOCOMM);
+            }
           }
         }
       }

@@ -18,14 +18,14 @@
         </a>
         <div class="font-semibold opacity-80 text-xs uppercase">
           <div class="flex flex-row flex-wrap gap-1">
-            {%- if let Some(Value::String(status)) = row.device.variables.get(nut_webgui_upsmc::VarName::UPS_STATUS) -%}
-              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status) -%}
+            {%- if row.device.status.is_empty() -%}
+              <span class="text-error">No Status</span>
+            {%- else -%}
+              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(*row.device.status) -%}
                 <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
                   {{status_detail.name}}
                 </span>
               {%- endfor -%}
-            {%- else -%}
-              <span class="text-error">No Status</span>
             {%- endif -%}
           </div>
         </div>

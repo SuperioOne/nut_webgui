@@ -264,8 +264,7 @@
               </div>
             </div>
             <div class="border-success flex flex-col gap-1 items-center justify-center">
-              {%- let status = device.status.to_string() -%}
-              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(status.as_ref()) -%}
+              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(*device.status) -%}
                 <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
                   {{status_detail.name}}
                 </span>
@@ -279,6 +278,8 @@
         <nut-graph-link
           {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
             class="animate-pulse edge-4 edge-error"
+          {% else if device.status.has(UpsStatus::NOCOMM) -%}
+            class="edge-4 edge-base-content"
           {%- else if let Some(input_voltage) = device.input_voltage -%}
             class="edge-4 edge-animate-flow edge-dashed {{input_voltage.get_semantic_type().as_edge()}}"
           {%- else -%}

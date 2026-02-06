@@ -40,6 +40,11 @@ impl UpsVariables {
   }
 
   #[inline]
+  pub fn clear(&mut self) {
+    self.inner.clear();
+  }
+
+  #[inline]
   pub fn remove<K>(&mut self, name: K) -> Option<(VarName, Value)>
   where
     K: borrow::Borrow<VarName>,

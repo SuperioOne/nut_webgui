@@ -13,14 +13,6 @@ use nut_webgui_upsmc::{Value, VarName};
 // Provides hypermedia specific impls for DeviceEntry struct
 impl DeviceEntry {
   #[inline]
-  pub fn get_status(&self) -> Option<&str> {
-    match self.variables.get(VarName::UPS_STATUS) {
-      Some(Value::String(v)) => Some(v.as_ref()),
-      _ => None,
-    }
-  }
-
-  #[inline]
   pub fn get_beeper_status(&self) -> Option<bool> {
     match self.variables.get(VarName::UPS_BEEPER_STATUS) {
       Some(Value::String(v)) => Some(v.eq_ignore_ascii_case("enabled")),

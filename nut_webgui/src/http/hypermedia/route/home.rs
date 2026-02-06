@@ -13,7 +13,6 @@ use axum::{
   extract::{Query, State},
   response::{Html, IntoResponse, Response},
 };
-use nut_webgui_upsmc::Value;
 use serde::Deserialize;
 use std::sync::Arc;
 
