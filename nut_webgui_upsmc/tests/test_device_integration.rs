@@ -441,6 +441,7 @@ gen_dev_integration_test!(
 (DEV_LIEBERT__PSA_1500__usbhid_ups__v2_6_2__r01                                            ,"../nut-ddl/Liebert/Liebert__PSA_1500__usbhid-ups__2.6.2__01.dev");
 (DEV_LIEBERT__PSA__usbhid_ups__v2_7_4__r01                                                 ,"../nut-ddl/Liebert/Liebert__PSA__usbhid-ups__2.7.4__01.dev");
 (DEV_LIEBERT__PSA__usbhid_ups__v2_8_0__r01                                                 ,"../nut-ddl/Liebert/Liebert__PSA__usbhid-ups__2.8.0__01.dev");
+(DEV_LIEBERT__PSI5__usbhid_ups__v2_8_2_1__01                                               ,"../nut-ddl/Liebert/Liebert__PSI5__usbhid-ups__2.8.2.1__01.dev");
 (DEV_LIEBERT__PSP__usbhid_ups__v2_4_3__r01                                                 ,"../nut-ddl/Liebert/Liebert__PSP__usbhid-ups__2.4.3__01.dev");
 (DEV_LIEBERT__PSP__usbhid_ups__v2_7_2__r01                                                 ,"../nut-ddl/Liebert/Liebert__PSP__usbhid-ups__2.7.2__01.dev");
 (DEV_LYONN__CTB_1200__blazer_usb__v2_4_3__r01                                              ,"../nut-ddl/Lyonn/Lyonn__CTB-1200__blazer_usb__2.4.3__01.dev");
