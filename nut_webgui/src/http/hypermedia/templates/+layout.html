@@ -43,7 +43,7 @@
           <div class="navbar-start">
             <div class="dropdown">
               <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
-                {%- call icons::get_svg("menu", 24) -%}
+                {%- call icons::get_svg("menu", 24) -%}{%- endcall -%}
               </div>
               <ul
                 tabindex="0"
@@ -51,22 +51,22 @@
               >
                 <li>
                   <a class="text-lg" href="{{base_path}}/">
-                    {%- call icons::get_svg("columns", 18) -%} Devices
+                    {%- call icons::get_svg("columns", 18) -%}{%- endcall -%} Devices
                   </a>
                 </li>
                 <li>
                   <a class="text-lg" href="{{base_path}}/topology">
-                    {%- call icons::get_svg("map", 18) -%} Topology
+                    {%- call icons::get_svg("map", 18) -%}{%- endcall -%} Topology
                   </a>
                 </li>
                 <li>
                   <a class="text-lg" href="{{base_path}}/connection">
-                    {%- call icons::get_svg("activity", 18) -%} Connections
+                    {%- call icons::get_svg("activity", 18) -%}{%- endcall -%} Connections
                   </a>
                 </li>
                 <li>
                   <a class="text-lg" href="{{base_path}}/system">
-                    {%- call icons::get_svg("info", 18) -%} System
+                    {%- call icons::get_svg("info", 18) -%}{%- endcall -%} System
                   </a>
                 </li>
               </ul>
@@ -80,22 +80,22 @@
             <ul class="menu menu-horizontal px-1">
               <li>
                 <a class="text-lg" href="{{base_path}}/">
-                  {%- call icons::get_svg("columns", 18) -%} Devices
+                  {%- call icons::get_svg("columns", 18) -%}{%- endcall -%} Devices
                 </a>
               </li>
               <li>
                 <a class="text-lg" href="{{base_path}}/topology">
-                  {%- call icons::get_svg("map", 18) -%} Topology
+                  {%- call icons::get_svg("map", 18) -%}{%- endcall -%} Topology
                 </a>
               </li>
               <li>
                 <a class="text-lg" href="{{base_path}}/connection">
-                  {%- call icons::get_svg("activity", 18) -%} Connections
+                  {%- call icons::get_svg("activity", 18) -%}{%- endcall -%} Connections
                 </a>
               </li>
               <li>
                 <a class="text-lg" href="{{base_path}}/system">
-                  {%- call icons::get_svg("info", 18) -%} System
+                  {%- call icons::get_svg("info", 18) -%}{%- endcall -%} System
                 </a>
               </li>
             </ul>
@@ -127,13 +127,13 @@
                   <li class="menu-title">User: {{username}}</li>
                   <li>
                     <label class="btn-ghost drawer-button" for="menu-toggle" >
-                      {%- call icons::get_svg("sliders", 18) -%}
+                      {%- call icons::get_svg("sliders", 18) -%}{%- endcall -%}
                       Themes
                     </label>
                   </li>
                   <li>
                     <a href="{{base_path}}/api-keys">
-                      {%- call icons::get_svg("key", 18) -%}
+                      {%- call icons::get_svg("key", 18) -%}{%- endcall -%}
                       API Keys
                     </a>
                   </li>
@@ -150,7 +150,7 @@
                       target-event="logout-confirmed"
                       title="Logout"
                     >
-                      {%- call icons::get_svg("log-out", 18) -%}
+                      {%- call icons::get_svg("log-out", 18) -%}{%- endcall -%}
                       Logout
                     </nut-confirm-button>
                   </li>
@@ -164,7 +164,7 @@
                 hx-target="#themes-panel"
                 hx-trigger="click once, pointerenter once"
               >
-                {%- call icons::get_svg("sliders", 18) -%}
+                {%- call icons::get_svg("sliders", 18) -%}{%- endcall -%}
               </label>
             {%- endif -%}
           </div>
@@ -202,7 +202,7 @@
               Themes
             </h3>
             <label for="menu-toggle" class="btn btn-circle btn-ghost btn-sm drawer-button">
-              {%- call icons::get_svg("x", 16) -%}
+              {%- call icons::get_svg("x", 16) -%}{%- endcall -%}
             </label>
           </div>
           <div id="themes-panel">

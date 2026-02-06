@@ -89,7 +89,7 @@ pub async fn post(
         Ok(session) => {
           let ttl = session.ttl();
           let signed_bytes =
-            TokenSigner::new(state.config.server_key.as_bytes()).sign_token(&session);
+            TokenSigner::new(state.config.server_key.as_ref()).sign_token(&session);
 
           let cookie = Cookie::build((AUTH_COOKIE_NAME, BASE64_STANDARD.encode(signed_bytes)))
             .http_only(true)

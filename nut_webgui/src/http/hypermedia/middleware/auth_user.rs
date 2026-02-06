@@ -120,7 +120,7 @@ impl<S> UserAuthService<S> {
           .decode(value.as_bytes())
           .map_err(|_| InvalidCookieValue)?;
 
-        let user_session: UserSession = TokenSigner::new(self.config.server_key.as_bytes())
+        let user_session: UserSession = TokenSigner::new(self.config.server_key.as_ref())
           .from_bytes(&bytes)
           .map_err(|_| InvalidCookieValue)?;
 

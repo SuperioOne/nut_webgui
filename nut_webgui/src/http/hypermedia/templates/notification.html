@@ -2,21 +2,21 @@
 
 <div id="notifications" hx-swap-oob="afterbegin">
   <nut-ttl
-    class="alert break-words drop-shadow-lg {{semantic_type.as_alert()}}"
+    class="alert drop-shadow-lg wrap-break-words {{semantic_type.as_alert()}}"
     ttl="{{ttl}}"
   >
     <div>
       {%- match semantic_type -%}
         {%- when SemanticType::Error -%}
-          {%- call icons::get_svg("x-octagon", 16) -%}
+          {%- call icons::get_svg("x-octagon", 16) -%}{%- endcall -%}
         {%- when SemanticType::Info -%}
-          {%- call icons::get_svg("info", 16) -%}
+          {%- call icons::get_svg("info", 16) -%}{%- endcall -%}
         {%- when SemanticType::Warning -%}
-          {%- call icons::get_svg("alert-triangle", 16) -%}
+          {%- call icons::get_svg("alert-triangle", 16) -%}{%- endcall -%}
         {%- when SemanticType::Success -%}
-          {%- call icons::get_svg("check-circle", 16) -%}
+          {%- call icons::get_svg("check-circle", 16) -%}{%- endcall -%}
         {%- else -%}
-          {%- call icons::get_svg("alert-circle", 16) -%}
+          {%- call icons::get_svg("alert-circle", 16) -%}{%- endcall -%}
       {%- endmatch -%}
     </div>
     <div>
@@ -25,7 +25,7 @@
     </div>
     <div class="ttl-trigger">
       <button class="btn btn-circle btn-ghost btn-sm">
-        {%- call icons::get_svg("x", 16) -%}
+        {%- call icons::get_svg("x", 16) -%}{%- endcall -%}
       </button>
     </div>
   </nut-ttl>

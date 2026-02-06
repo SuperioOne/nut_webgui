@@ -128,7 +128,7 @@ async fn socket_recv(
 }
 
 async fn handler_with_auth(mut socket: WebSocket, server_state: Arc<ServerState>) {
-  match auth_handshake(&mut socket, server_state.config.server_key.as_bytes()).await {
+  match auth_handshake(&mut socket, server_state.config.server_key.as_ref()).await {
     Ok(session) => {
       let receiver = server_state.message_broadcast.subscribe();
       handler(socket, receiver, Some(session)).await

@@ -7,7 +7,7 @@
     <div class="flex flex-row justify-end">
       <div class="tooltip" data-tip="Copy to clipboard">
         <nut-clipboard-button class="btn btn-accent btn-outline btn-sm btn-square" content="{{key}}">
-          {%- call icons::get_svg("copy", 20) -%} 
+          {%- call icons::get_svg("copy", 20) -%}{%- endcall -%}
         </nut-clipboard-button>
       </div>
     </div>

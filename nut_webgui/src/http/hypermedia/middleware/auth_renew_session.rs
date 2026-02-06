@@ -80,7 +80,7 @@ where
       match self.user_store.renew_session(session.get_username()) {
         Ok(new_session) => {
           let signed_bytes =
-            TokenSigner::new(self.config.server_key.as_bytes()).sign_token(&new_session);
+            TokenSigner::new(self.config.server_key.as_ref()).sign_token(&new_session);
 
           let ttl = new_session.ttl();
           let cookie = Cookie::build((AUTH_COOKIE_NAME, BASE64_STANDARD.encode(&signed_bytes)))

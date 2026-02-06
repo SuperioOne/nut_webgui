@@ -5,7 +5,7 @@
   <div class="flex flex-row items-center justify-between">
     <hgroup class="grow">
       <div class="flex flex-row gap-2 items-center text-primary">
-        <span>{%- call icons::get_svg("server", 20) -%}</span>
+        <span>{%- call icons::get_svg("server", 20) -%}{%- endcall -%}</span>
         <h1 class="text-xl">
           <a class="link" href="{{base_path}}/?namespace={{name | urlencode_strict}}">
             {{name}}
@@ -40,7 +40,7 @@
     <div class="stats stats-vertical w-full">
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("clock",18) -%}
+          {%- call icons::get_svg("clock",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">Last Sync</div>
         <div class="stat-value text-sm">
@@ -58,7 +58,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("tool",18) -%}
+          {%- call icons::get_svg("tool",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">Protocol Version</div>
         <div class="stat-value text-sm">
@@ -73,7 +73,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("package",18) -%}
+          {%- call icons::get_svg("package",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">UPSD Version</div>
         <div class="stat-value text-sm text-wrap">
@@ -88,7 +88,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("hard-drive",18) -%}
+          {%- call icons::get_svg("hard-drive",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">UPS Devices</div>
         <div class="stat-value text-sm">
@@ -98,7 +98,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("refresh-cw",18) -%}
+          {%- call icons::get_svg("refresh-cw",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">Poll Interval (seconds)</div>
         <div class="stat-value text-sm">
@@ -108,7 +108,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("refresh-cw",18) -%}
+          {%- call icons::get_svg("refresh-cw",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">Poll Frequency (seconds)</div>
         <div class="stat-value text-sm">
@@ -118,7 +118,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("lock",18) -%}
+          {%- call icons::get_svg("lock",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">TLS Mode</div>
         <div class="stat-value text-sm uppercase">
@@ -135,7 +135,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("layers",18) -%}
+          {%- call icons::get_svg("layers",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">Connection Pool Size</div>
         <div class="stat-value text-sm">
@@ -145,7 +145,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("user",18) -%}
+          {%- call icons::get_svg("user",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">Username</div>
         <div class="stat-value text-sm">
@@ -159,7 +159,7 @@
 
       <div class="stat">
         <div class="stat-figure text-secondary">
-          {%- call icons::get_svg("key",18) -%}
+          {%- call icons::get_svg("key",18) -%}{%- endcall -%}
         </div>
         <div class="stat-title">Password</div>
         <div class="stat-value text-sm">

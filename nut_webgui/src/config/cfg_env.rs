@@ -22,7 +22,7 @@ pub struct ServerEnvArgs {
   pub http_port: Option<u16>,
   pub http_worker_count: Option<NonZeroUsize>,
   pub log_level: Option<tracing::level_filters::LevelFilter>,
-  pub server_key: Option<Box<str>>,
+  pub server_key: Option<Box<[u8]>>,
   pub upsd_addr: Option<Box<str>>,
   pub upsd_max_conn: Option<NonZeroUsize>,
   pub upsd_name: Option<Box<str>>,
@@ -70,6 +70,13 @@ macro_rules! load_var {
       $target_field = Some(Box::from(value.trim()));
     }
   };
+
+  (@rule $env_name:literal, $target_field:expr, boxed_u8) => {
+    if let Some(value) = $crate::config::cfg_env::load_from_env($env_name)? {
+      $target_field = Some(Box::from(value.trim().as_bytes()));
+    }
+  };
+
   (@rule $env_name:literal, $target_field:expr, path_buf) => {
     if let Ok(value) = std::env::var($env_name) {
       let path_str = value.trim();
@@ -80,7 +87,8 @@ macro_rules! load_var {
       }
     }
   };
-    (@rule $env_name:literal, $target_field:expr, $other_type:ty) => {
+
+  (@rule $env_name:literal, $target_field:expr, $other_type:ty) => {
     if let Some(value) = $crate::config::cfg_env::load_from_env($env_name)? {
       $target_field = Some(value.trim().parse::<$other_type>()?);
     }
@@ -95,7 +103,7 @@ impl ServerEnvArgs {
       ("NUTWG__CONFIG_FILE"              ,env_config.config_file       ,path_buf);
       ("NUTWG__DEFAULT_THEME"            ,env_config.default_theme     ,boxed_str);
       ("NUTWG__LOG_LEVEL"                ,env_config.log_level         ,LevelFilter);
-      ("NUTWG__SERVER_KEY"               ,env_config.server_key        ,boxed_str);
+      ("NUTWG__SERVER_KEY"               ,env_config.server_key        ,boxed_u8);
 
       ("NUTWG__HTTP_SERVER__BASE_PATH"   ,env_config.http_base_path    ,UriPath);
       ("NUTWG__HTTP_SERVER__LISTEN"      ,env_config.http_listen       ,IpAddr);

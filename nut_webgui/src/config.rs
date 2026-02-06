@@ -32,7 +32,7 @@ pub struct ServerConfig {
   pub log_level: LevelFilter,
 
   /// Server instance's private sign key
-  pub server_key: Box<str>,
+  pub server_key: Box<[u8]>,
 
   /// HTTP server configurations
   pub http_server: HttpServerConfig,
@@ -130,7 +130,7 @@ impl Default for ServerConfig {
       default_theme: None,
       http_server: Default::default(),
       log_level: LevelFilter::INFO,
-      server_key: rand_server_key_256bit().into_boxed_str(),
+      server_key: rand_server_key_256bit(),
       upsd: Default::default(),
       auth: None,
     }

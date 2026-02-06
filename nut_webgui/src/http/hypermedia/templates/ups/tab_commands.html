@@ -5,7 +5,7 @@
   <div class="content-card flex flex-col gap-4">
     <h2 class="opacity-60 text-lg tracking-wide">Commands</h2>
     <label class="input input-ghost input-sm opacity-60 tracking-wide">
-      {%- call icons::get_svg("search", 16) -%}
+      {%- call icons::get_svg("search", 16) -%}{%- endcall -%}
       <input placeholder="Filter" name="command-filter" maxlength="64" autocomplete="off" />
     </label>
     <nut-search-list for="command-filter" class="list">
@@ -34,7 +34,7 @@
               target-event="command-confirmed"
               title="FSD"
             >
-              {%- call icons::get_svg("power", 32) -%}
+              {%- call icons::get_svg("power", 32) -%}{%- endcall -%}
             </nut-confirm-button>
           </div>
         </li>
@@ -67,7 +67,7 @@
                   title="Command Confirmation"
                   value="{{cmd}}"
                 >
-                  {%- call icons::get_svg("play", 24) -%}
+                  {%- call icons::get_svg("play", 24) -%}{%- endcall -%}
                 </nut-confirm-button>
               </form>
             </div>

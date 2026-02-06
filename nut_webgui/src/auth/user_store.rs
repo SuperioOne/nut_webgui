@@ -3,10 +3,6 @@ use super::{
   permission::Permissions, user_session::UserSession, username::Username,
 };
 use core::borrow::Borrow;
-use rand_chacha::{
-  ChaCha20Rng,
-  rand_core::{RngCore, SeedableRng},
-};
 use scrypt::Params;
 use std::{collections::HashMap, time::Duration};
 
@@ -116,17 +112,9 @@ pub struct UserStoreBuilder {
 }
 
 fn random_salt() -> Box<[u8; 32]> {
-  let mut rng = ChaCha20Rng::from_os_rng();
-  let rand: [u64; 4] = [
-    rng.next_u64(),
-    rng.next_u64(),
-    rng.next_u64(),
-    rng.next_u64(),
-  ];
-
-  let rand_bytes: [u8; 32] = unsafe { core::mem::transmute(rand) };
-
-  Box::from(rand_bytes)
+  let mut rand: [u8; 32] = [0; 32];
+  getrandom::fill(&mut rand).expect("system's random fill has failed at salt generation");
+  Box::from(rand)
 }
 
 impl UserStoreBuilder {

@@ -26,25 +26,39 @@
     <input type="hidden" name="name" value="{{var_name.as_str()}}" />
     {%- match detail -%}
       {%- when VarDetail::String {max_len} -%}
-        <input class="input rounded-e-none w-full {{semantic.as_input()}}" maxlength="{{max_len}}" minlength="1" name="value" placeholder="Type here" required type="text" {% call set_value(value) %} />
+      <input class="input rounded-e-none w-full {{semantic.as_input()}}" maxlength="{{max_len}}" minlength="1" name="value" placeholder="Type here" required type="text" {% call set_value(value) -%}{%- endcall -%} />
         <p class="opacity-60 text-xs">max length: {{max_len}}</p>
       {%- when VarDetail::Number -%}
-        <input class="input rounded-e-none w-full {{semantic.as_input()}}" name="value" placeholder="Type here" required type="number" {% call set_value(value) %} />
+        <input class="input rounded-e-none w-full {{semantic.as_input()}}" name="value" placeholder="Type here" required type="number" {% call set_value(value) -%}{%- endcall -%} />
       {%- when VarDetail::Enum {options} -%}
         <select class="input rounded-e-none w-full {{semantic.as_select()}}" name="value" placeholder="Select a value" required>
         {%- for opt in options -%}
-          <option value="{{opt}}" {% call is_selected(opt, value) %}>{{opt}}</option>
+        <option value="{{opt}}" {% call is_selected(opt, value) %}{%- endcall -%}>{{opt}}</option>
         {%- endfor -%}
       </select>
       {%- when VarDetail::Range {min, max} -%}
-        <input class="input rounded-e-none w-full {{semantic.as_input()}}" max="{{max}}" min="{{min}}" name="value" placeholder="Enter value here" required type="number" {% match max -%}{%- when Value::Float(_) -%} step="0.01" {%- else -%} step="1" {%- endmatch %} {% call set_value(value) %} />
+        <input class="input rounded-e-none w-full {{semantic.as_input()}}"
+          max="{{max}}"
+          min="{{min}}"
+          name="value"
+          placeholder="Enter value here"
+          required
+          type="number"
+          {% match max %}
+            {% when Value::Float(_) %}
+              step="0.01"
+            {% else %}
+              step="1"
+          {% endmatch %}
+          {% call set_value(value) %}{%- endcall -%}
+        />
         <p class="break-normal label">values between {{min}} and {{max}}</p>
       {%- endmatch -%}
       {%- if let Some(message) = message -%}
         <p class="opacity-60 text-xs {{semantic.as_text()}}">{{message}}</p>
       {%- endif -%}
     </fieldset>
-  <button class="btn btn-neutral rounded-s-none" type="submit">{%- call icons::get_svg("save", 16) -%} Save</button>
+  <button class="btn btn-neutral rounded-s-none" type="submit">{%- call icons::get_svg("save", 16) -%}{%- endcall -%} Save</button>
 </form>
 
 {%- if let Some(notification) = notification -%}

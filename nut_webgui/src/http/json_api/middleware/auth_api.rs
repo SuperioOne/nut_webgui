@@ -113,7 +113,7 @@ impl<S> ApiAuthService<S> {
           .decode(token.trim().as_bytes())
           .map_err(|_| InvalidAuthHeaderValue)?;
 
-        let access_token: AccessToken = TokenSigner::new(self.config.server_key.as_bytes())
+        let access_token: AccessToken = TokenSigner::new(self.config.server_key.as_ref())
           .from_bytes(&bytes)
           .map_err(|_| InvalidAuthHeaderValue)?;
 

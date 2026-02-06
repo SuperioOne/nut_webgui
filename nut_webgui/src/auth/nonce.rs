@@ -1,17 +1,10 @@
-use rand_chacha::{
-  ChaCha20Rng,
-  rand_core::{RngCore, SeedableRng},
-};
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Nonce(u64);
 
 impl Nonce {
   pub fn new() -> Self {
-    let mut rng = ChaCha20Rng::from_os_rng();
-    let nonce = rng.next_u64();
-
-    Self(nonce)
+    let value = getrandom::u64().expect("system rand function has failed!");
+    Self(value)
   }
 
   #[inline]

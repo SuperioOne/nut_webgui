@@ -27,19 +27,19 @@
         </tr>
         <tr>
           <td class="text-primary">
-            {%- call icons::get_svg("server", 16) -%}
+            {%- call icons::get_svg("server", 16) -%}{%- endcall -%}
           </td>
           <td>NUT Server</td>
         </tr>
         <tr>
           <td class="text-primary">
-            {%- call icons::get_svg("hard-drive", 16) -%}
+            {%- call icons::get_svg("hard-drive", 16) -%}{%- endcall -%}
           </td>
           <td>UPS Device</td>
         </tr>
         <tr>
           <td class="text-secondary">
-            {%- call icons::get_svg("monitor", 16) -%}
+            {%- call icons::get_svg("monitor", 16) -%}{%- endcall -%}
           </td>
           <td>PC/Server powered by UPS</td>
         </tr>
@@ -81,21 +81,21 @@
       <table class="table table-xs">
         <tr>
           <td class="flex flex-row gap-1 items-center">
-            <span>{%- call icons::get_svg("move", 16) -%}</span>
+            <span>{%- call icons::get_svg("move", 16) -%}{%- endcall -%}</span>
             <span>Pan</span>
           </td>
           <td>Mouse middle button</td>
         </tr>
         <tr>
           <td class="flex flex-row gap-1 items-center">
-            <span>{%- call icons::get_svg("zoom-in", 16) -%}</span>
+            <span>{%- call icons::get_svg("zoom-in", 16) -%}{%- endcall -%}</span>
             <span>Zoom-In</span>
           </td>
           <td>Mouse wheel up</td>
         </tr>
         <tr>
           <td class="flex flex-row gap-1 items-center">
-            <span>{%- call icons::get_svg("zoom-out", 16) -%}</span>
+            <span>{%- call icons::get_svg("zoom-out", 16) -%}{%- endcall -%}</span>
             <span>Zoom-Out</span>
           </td>
           <td>Mouse wheel down</td>
@@ -200,7 +200,7 @@
           <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{device.get_semantic_type().as_border()}}">
             <div class="flex flex-row gap-1 items-center">
               <div class="text-primary">
-                {%- call icons::get_svg("hard-drive", 24) -%}
+                {%- call icons::get_svg("hard-drive", 24) -%}{%- endcall -%}
               </div>
               <div class="flex flex-col text-primary">
                 {%- for alias in device.aliases.iter() -%}
@@ -305,7 +305,7 @@
             <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{server.get_semantic_type().as_border()}}">
               <div class="flex flex-row gap-2 items-center">
                 <div class="text-primary">
-                  {%- call icons::get_svg("server", 24) -%}
+                  {%- call icons::get_svg("server", 24) -%}{%- endcall -%}
                 </div>
                 <div>
                   <div class="font-bold leading-tight text-nowrap text-primary">{{server.namespace}}</div>
@@ -328,7 +328,7 @@
             <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{client.get_semantic_type().as_border()}}">
               <div class="flex flex-row gap-2 items-center">
                 <div class="text-secondary">
-                  {%- call icons::get_svg("monitor", 24) -%}
+                  {%- call icons::get_svg("monitor", 24) -%}{%- endcall -%}
                 </div>
                 <div>
                   {%- if let Some(name) = client.name -%}

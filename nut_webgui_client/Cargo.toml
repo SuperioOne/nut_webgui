@@ -13,4 +13,4 @@ repository.workspace = true
 
 [build-dependencies]
 sha2 = "0.10"
-base16ct = { version = "0.3", features = ["alloc"] }
+base16ct = { version = "1", features = ["alloc"] }

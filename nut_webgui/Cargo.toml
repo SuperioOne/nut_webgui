@@ -12,9 +12,9 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-askama = { version = "0.14", features = ["blocks"] }
+askama = { version = "0.15" }
 axum = { version = "0.8", features = ["ws"] }
-axum-extra = { version = "0.10", features = ["cookie"] }
+axum-extra = { version = "0.12", features = ["cookie"] }
 base64 = { version = "0.22" }
 chrono = { version = "0.4", default-features = false, features = [
         "iana-time-zone",
@@ -31,7 +31,7 @@ nut_webgui_upsmc = { path = "../nut_webgui_upsmc", features = [
         "serde",
 ] }
 libc = "0.2"
-rand_chacha = { version = "0.9", features = ["os_rng"] }
+getrandom = { version = "0.4" }
 rustls-platform-verifier = { version = "0.6" }
 serde = { version = "1", features = ["serde_derive"] }
 serde_json = { version = "1", features = ["raw_value"] }

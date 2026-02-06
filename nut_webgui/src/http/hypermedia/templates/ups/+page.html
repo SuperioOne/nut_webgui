@@ -21,7 +21,7 @@
     hx-trigger="click"
     hx-push-url="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{name | urlencode_strict}}?tab={{tab_name}}"
   >
-    {%- call icons::get_svg(icon, 14) -%}
+    {%- call icons::get_svg(icon, 14) -%}{%- endcall -%}
     <span class="mx-2">{{title}}</span>
   </a>
 {%- endmacro -%}
@@ -57,19 +57,19 @@
               {%- match device.get_beeper_status() -%}
                 {%- when Some with (true) -%}
                   <span class="badge badge-outline badge-success text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is enabled">
-                    {%- call icons::get_svg("volume-2", 16) -%}
+                    {%- call icons::get_svg("volume-2", 16) -%}{%- endcall -%}
                     <span class="uppercase">Beeper-On</span>
                   </span>
                 {%- when Some with (false) -%}
                   <span class="badge badge-outline badge-warning text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is disabled">
-                    {%- call icons::get_svg("volume-x", 16) -%}
+                    {%- call icons::get_svg("volume-x", 16) -%}{%- endcall -%}
                     <span class="uppercase">Beeper-Off</span>
                   </span>
                 {%- when None -%}
               {%- endmatch -%}
               {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(*device.status) -%}
                 <span class="badge badge-outline text-nowrap text-xs tooltip tooltip-bottom {{status_detail.class.as_badge()}}" data-tip="{{status_detail.desc}}">
-                  {%- call icons::get_svg(status_detail.icon_name, 16) -%}
+                  {%- call icons::get_svg(status_detail.icon_name, 16) -%}{%- endcall -%}
                   <span class="uppercase">{{status_detail.name}}</span>
                 </span>
               {%- endfor -%}
@@ -86,16 +86,16 @@
           <div role="tablist" class="md:w-fit tabs tabs-box w-full">
             {%- let template_type = tab_template.as_type_str() -%}
 
-            {%- call tab_button(device.name, tab_name = "grid", title = "Grid View", icon = "grid", is_active = (template_type == "grid")) -%}
-            {%- call tab_button(device.name, tab_name = "variables", title = "Variables", icon = "table", is_active = (template_type == "variables")) -%}
-            {%- call tab_button(device.name, tab_name = "clients", title = "Clients", icon = "monitor", is_active = (template_type == "clients")) -%}
+            {%- call tab_button(device.name, tab_name = "grid", title = "Grid View", icon = "grid", is_active = (template_type == "grid")) -%}{%- endcall -%}
+            {%- call tab_button(device.name, tab_name = "variables", title = "Variables", icon = "table", is_active = (template_type == "variables")) -%}{%- endcall -%}
+            {%- call tab_button(device.name, tab_name = "clients", title = "Clients", icon = "monitor", is_active = (template_type == "clients")) -%}{%- endcall -%}
 
             {%- if permission.has(crate::auth::permission::Permissions::FSD) || permission.has(crate::auth::permission::Permissions::INSTCMD) -%}
-              {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = (template_type == "commands")) -%}
+              {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = (template_type == "commands")) -%}{%- endcall -%}
             {%- endif -%}
 
             {%- if permission.has(crate::auth::permission::Permissions::SETVAR) -%}
-              {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = (template_type == "rw")) -%}
+              {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = (template_type == "rw")) -%}{%- endcall -%}
             {%- endif -%}
           </div>
         </div>

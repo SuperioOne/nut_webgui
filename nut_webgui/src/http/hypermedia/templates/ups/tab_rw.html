@@ -8,7 +8,7 @@
       </div>
     {%- else -%}
       <div role="alert" class="alert alert-warning">
-        {%- call icons::get_svg("info", 16)  -%}
+        {%- call icons::get_svg("info", 16)  -%}{%- endcall -%}
         <span>The UPS protocol may return an OK response even if changes silently fail or may take several minutes to apply.</span>
       </div>
       <ul class="divide-daisy">

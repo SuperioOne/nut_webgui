@@ -33,7 +33,7 @@
 
           {%- if let Some(error_message) = error_message -%}
             <div role="alert" class="alert alert-error">
-              {%- call icons::get_svg("info", 16)  -%}
+            {%- call icons::get_svg("info", 16)  -%}{%- endcall -%}
               <span>{{error_message}}</span>
             </div>
           {%- endif -%}

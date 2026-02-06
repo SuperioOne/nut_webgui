@@ -11,7 +11,7 @@
 >
   <h2 class="opacity-60 text-lg tracking-wide">Attached Clients</h2>
   <label class="input input-ghost input-sm opacity-60 tracking-wide">
-    {%- call icons::get_svg("search", 16) -%}
+    {%- call icons::get_svg("search", 16) -%}{%- endcall -%}
     <input
       id="client-filter-input"
       placeholder="Filter"
@@ -29,7 +29,9 @@
     <nut-search-list for="client-filter" class="list">
       {%- for client in device.attached.iter() -%}
         <li class="list-row" search-value="{{client.addr}} {{client.name.as_deref().unwrap_or("")}}">
-          <div class="text-secondary content-center">{%- call icons::get_svg("monitor", 24) -%}</div>
+          <div class="text-secondary content-center">
+            {%- call icons::get_svg("monitor", 24) -%}{%- endcall -%}
+          </div>
           <div>
             {%- if let Some(name) = client.name -%}
               <div class="font-bold text-primary">{{name}}</div>

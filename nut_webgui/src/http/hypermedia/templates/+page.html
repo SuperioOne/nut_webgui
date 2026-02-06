@@ -12,7 +12,7 @@
     <h1 class="font-bold opacity-60 text-xl tracking-wide">Devices</h1>
     <div class="flex flex-row justify-between">
       <label class="input input-ghost input-sm opacity-60 tracking-wide">
-        {%- call icons::get_svg("search", 16) -%}
+        {%- call icons::get_svg("search", 16) -%}{%- endcall -%}
         <input
           autocomplete="off"
           id="device-filter-input"

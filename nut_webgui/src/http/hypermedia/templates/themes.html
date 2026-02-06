@@ -24,30 +24,30 @@
 
 <div class="flex flex-col gap-3 w-full">
   <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 w-full">
-     {%- call theme_selector("light") -%}
-     {%- call theme_selector("dark") -%}
+     {%- call theme_selector("light") -%}{%- endcall -%}
+     {%- call theme_selector("dark") -%}{%- endcall -%}
   </div>
   {%- if let Some(theme) = default_theme -%}
     <div class="col-span-full divider mb-0.5 mt-0.5">System Default</div>
     <div class="w-full">
-      {%- call theme_selector(theme) -%}
+      {%- call theme_selector(theme) -%}{%- endcall -%}
     </div>
   {%- endif -%}
   <div class="col-span-full divider mb-0.5 mt-0.5">Alternatives</div>
   <div class="gap-4 grid grid-cols-1 sm:grid-cols-2 w-full">
-     {%- call theme_selector("abyss") -%}
-     {%- call theme_selector("autumn") -%}
-     {%- call theme_selector("black") -%}
-     {%- call theme_selector("business") -%}
-     {%- call theme_selector("corporate") -%}
-     {%- call theme_selector("dim") -%}
-     {%- call theme_selector("dracula") -%}
-     {%- call theme_selector("forest") -%}
-     {%- call theme_selector("kanagawa-dragon") -%}
-     {%- call theme_selector("night") -%}
-     {%- call theme_selector("nord") -%}
-     {%- call theme_selector("sunset") -%}
-     {%- call theme_selector("synthwave") -%}
-     {%- call theme_selector("tokyo-night") -%}
+     {%- call theme_selector("abyss") -%}{%- endcall -%}
+     {%- call theme_selector("autumn") -%}{%- endcall -%}
+     {%- call theme_selector("black") -%}{%- endcall -%}
+     {%- call theme_selector("business") -%}{%- endcall -%}
+     {%- call theme_selector("corporate") -%}{%- endcall -%}
+     {%- call theme_selector("dim") -%}{%- endcall -%}
+     {%- call theme_selector("dracula") -%}{%- endcall -%}
+     {%- call theme_selector("forest") -%}{%- endcall -%}
+     {%- call theme_selector("kanagawa-dragon") -%}{%- endcall -%}
+     {%- call theme_selector("night") -%}{%- endcall -%}
+     {%- call theme_selector("nord") -%}{%- endcall -%}
+     {%- call theme_selector("sunset") -%}{%- endcall -%}
+     {%- call theme_selector("synthwave") -%}{%- endcall -%}
+     {%- call theme_selector("tokyo-night") -%}{%- endcall -%}
   </div>
 </div>

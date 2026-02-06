@@ -81,7 +81,7 @@ pub async fn post(
             .build();
 
           let signed_bytes =
-            TokenSigner::new(state.config.server_key.as_bytes()).sign_token(&access_token);
+            TokenSigner::new(state.config.server_key.as_ref()).sign_token(&access_token);
 
           info!(
             message = "new api key generated",

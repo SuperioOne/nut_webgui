@@ -66,7 +66,7 @@ impl ConfigLayer for ServerCliArgs {
     override_opt_field!(config.config_file, self.config_file);
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level);
-    override_opt_field!(config.server_key, inner_value: self.server_key);
+    override_opt_field!(config.server_key, inner_value: self.server_key.map(|v| v.into_boxed_bytes()));
 
     override_opt_field!(config.http_server.base_path, inner_value:  self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);
