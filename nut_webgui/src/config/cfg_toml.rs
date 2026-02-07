@@ -103,8 +103,13 @@ impl ServerTomlArgs {
     let root = Table::deserialize(deserializer)?;
 
     match root.get("version") {
-      Some(toml::Value::String(version)) if version == "1" => {
-        root.try_into::<ServerTomlArgs>().map_err(|err| err.into())
+      None => root.try_into::<ServerTomlArgs>().map_err(|err| err.into()),
+      Some(toml::Value::String(version)) => {
+        let ver = version.as_str();
+        match ver {
+          "1" => root.try_into::<ServerTomlArgs>().map_err(|err| err.into()),
+          _ => Err(TomlConfigError::InvalidVersion),
+        }
       }
       _ => Err(TomlConfigError::InvalidVersion),
     }

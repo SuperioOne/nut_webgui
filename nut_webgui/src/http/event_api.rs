@@ -142,8 +142,14 @@ async fn handler_with_auth(mut socket: WebSocket, server_state: Arc<ServerState>
           let msg = NutEventMessage::HandshakeError { message: &err };
 
           if let Ok(msg) = msg.try_into() {
-            _ = socket.send(msg).await;
+            _ = socket.feed(msg).await;
           }
+
+          if let Ok(msg) = NutEventMessage::SessionEnded.try_into() {
+            _ = socket.feed(msg).await;
+          }
+
+          _ = socket.flush().await;
         }
       };
 

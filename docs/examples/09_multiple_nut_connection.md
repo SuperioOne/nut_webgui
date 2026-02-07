@@ -4,7 +4,6 @@ Multiple NUT server connection can be defined in `config.toml` using the `upsd.<
 
 **config.toml**
 ```toml
-# (Required) set version to "1"
 version = "1"
 
 # Minimal (read-only mode, can't use instcmd, fsd, setvar)
@@ -42,8 +41,31 @@ tls_mode = "strict"
 ## ... Other config.toml options ...
 ```
 
-After creating the `config.toml`, it can be mounted into the container.
+Example config.toml with inline tables:
+```toml
+version = "1"
 
+[upsd]
+kongou = { address = "19.12.1.17" }
+hiei = {
+  address = "19.12.11.21",
+  username = "admin",
+  password = "test"
+}
+kirishima = {
+  address = "19.13.12.1",
+  username = "admin",
+  password = "test",
+  port = 4493,
+  max_connection = 12,
+  poll_freq = 10,
+  poll_interval = 1,
+  tls_mode = "strict"
+}
+haruna = {}
+```
+
+After creating the `config.toml`, it can be mounted into the container.
 
 **docker/podman run**
 ```bash
@@ -76,30 +98,8 @@ secrets:
 
 ## Notes
 
-- Config file uses TOML v1.1.0 format.
 - Namespaces must be unique.
 - UPS devices are always referred by their namespace, allowing the use of the same UPS name under different namespaces. For example: `ups@kongou` and `ups@hiei`.
 - The same NUT server address and port can be added multiple times as different namespace. This is kinda useless feature for 99.99% of users but is available as an option.
 
-  Example using inline tables:
-  ```toml
-  [upsd]
-  kongou = { address = "19.12.1.17" }
-  hiei = {
-    address = "19.12.11.21",
-    username = "admin",
-    password = "test"
-  }
-  kirishima = {
-    address = "19.13.12.1",
-    username = "admin",
-    password = "test",
-    port = 4493,
-    max_connection = 12,
-    poll_freq = 10,
-    poll_interval = 1,
-    tls_mode = "strict"
-  }
-  haruna = {}
-  ```
 

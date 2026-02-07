@@ -127,9 +127,9 @@ dependencies = [
 
 [[package]]
 name = "async-compression"
-version = "0.4.37"
+version = "0.4.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d10e4f991a553474232bc0a31799f6d24b034a84c0971d80d2e2f78b2e576e40"
+checksum = "68650b7df54f0293fd061972a0fb05aaf4fc0879d3b3d21a638a182c5c543b9f"
 dependencies = [
  "compression-codecs",
  "compression-core",
@@ -913,9 +913,9 @@ checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
 name = "memchr"
-version = "2.7.6"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
+checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mimalloc"
@@ -989,7 +989,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui"
-version = "0.8.1"
+version = "0.9.0"
 dependencies = [
  "askama",
  "axum",
@@ -1021,7 +1021,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui_client"
-version = "0.8.1"
+version = "0.9.0"
 dependencies = [
  "base16ct",
  "sha2",
@@ -1029,7 +1029,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui_upsmc"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde",
  "serde_json",

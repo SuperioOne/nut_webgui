@@ -20,7 +20,7 @@ docker run -p 9000:9000 \
 
 - Monitors UPS variables with auto-refresh.
 - Supports INSTCMD, SET VAR, and FSD calls from GUI.
-- 🥔 Potato PC friendly. Small footprint on both resource usage and disk size.
+- Potato PC friendly. Small footprint on both resource usage and disk size.
 - Basic JSON API.
 - Supports RISC-V and older ARM devices.
 
@@ -39,6 +39,7 @@ docker run -p 9000:9000 \
 - [Enabling Auth and API Keys](docs/examples/08_enabling_auth.md)
 - [Connecting multiple NUT servers](docs/examples/09_multiple_nut_connection.md)
 - [Binary installation](docs/examples/10_binary_installation.md)
+- [Events API](docs/examples/11_events_api.md)
 
 ## CPU architecture support
 
@@ -155,6 +156,10 @@ For more detailed config template see [./dist/config.toml](./dist/config.toml).
 A simple JSON-based API is available for integration and automation purposes.
 
 OpenAPI 3.0.0 specification files: [json](docs/api_specs/openapi3_spec.json) | [yaml](docs/api_specs/openapi3_spec.yaml)
+
+## Events API
+
+`/events` WebSocket endpoint can be used for reading UPS events. For more details see [Events API](docs/examples/11_events_api.md).
 
 ## Probes
 

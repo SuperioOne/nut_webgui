@@ -82,7 +82,7 @@ pub enum UpsEvent {
   Trimming,
 
   /// Voltage trimming ended
-  TrimEnded,
+  TrimmingEnded,
 
   /// Ups is dead (COMMBAD, NOCOMM)
   NoCOMM,
@@ -114,7 +114,7 @@ impl UpsEvents {
         UpsStatus::OVERLOADED => events.insert(UpsEvent::OverloadEnded),
         UpsStatus::REPLACE_BATTERY => events.insert(UpsEvent::ReplaceBatteryEnded),
         UpsStatus::TEST => events.insert(UpsEvent::TestCompleted),
-        UpsStatus::TRIM => events.insert(UpsEvent::TrimEnded),
+        UpsStatus::TRIM => events.insert(UpsEvent::TrimmingEnded),
         _ => false,
       };
     }
@@ -198,7 +198,7 @@ impl UpsEvent {
       UpsEvent::Testing => "Testing",
       UpsEvent::TestCompleted => "TestCompleted",
       UpsEvent::Trimming => "Trimming",
-      UpsEvent::TrimEnded => "TrimEnded",
+      UpsEvent::TrimmingEnded => "TrimmingEnded",
       UpsEvent::NoCOMM => "NoCOMM",
       UpsEvent::COMM => "COMM",
     }

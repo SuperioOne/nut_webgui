@@ -13,7 +13,7 @@ if they're not already present on the system.
 ### Steps
 1. Download
    ```shell
-   curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.8.1/install.sh -o install.sh
+   curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.9.0/install.sh -o install.sh
    ```
 2. **REVIEW**
    ```shell
@@ -28,7 +28,7 @@ if they're not already present on the system.
 
 Or pipe curl output into `sh` directly (* *Insert Michael worried meme here* *):
  ```shell
-curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.8.1/install.sh | sh -
+curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.9.0/install.sh | sh -
 ```
 
 ### (Optional) Custom target
@@ -36,7 +36,7 @@ curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.8.1/inst
    Use `NUTWG_TARGET` environment variable to specify the target if needed:
 
    ```shell
-   curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.8.1/install.sh | NUTWG_TARGET="x86-64-v3-musl" sh -
+   curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.9.0/install.sh | NUTWG_TARGET="x86-64-v3-musl" sh -
    ```
 
    Available targets are:
@@ -118,7 +118,7 @@ Similar to `install.sh`, it creates `systemd` service and empty config file.
 > Package is currently not available on AUR.
 
 ```shell
-curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.8.1/PKGBUILD -o PKGBUILD
+curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.9.0/PKGBUILD -o PKGBUILD
 makepkg -i
 ```
 

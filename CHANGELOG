@@ -1,3 +1,20 @@
+# v0.9.0 - February 07, 2026
+
+## Added
+- New events API based on web sockets.
+- Mimalloc set as main memory allocator for x86-64 and arm64 based builds.
+- Worker-count configuration options to change core count used by nut_webgui. With Mimalloc, this setting plays an important role in tweaking application memory usage.
+
+## Changed
+- Glorious potato symbol removed from README. They used to be just a funny-cringe addition, but nowadays they often symbolize slop.
+
+## Fixed
+- UPS device stops updating and only shows previous data when UPSD driver fails with DRIVER-NOT-CONNECT.
+- Failed UPS device status is now set as `NOCONN` (no connection).
+
+## Deprecated
+- Old config file format used in earlier versions is finally deprecated. (v0.5.0 to v0.6.0)
+
 # v0.8.1 - January 18, 2026
 
 ## Fixed

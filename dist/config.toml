@@ -18,8 +18,12 @@ version = "1"
 
 # default_theme = "tokyo-night"
 
+## ------------------------------------------------------------------------------
+## HTTP server settings.
+## ------------------------------------------------------------------------------
 
-[http_server]
+# [http_server]
+
 ## ------------------------------------------------------------------------------
 ## Base Path: Define the base URL path where the HTTP server will serve content.
 ## Example: "/ups" means the server will be available "http://<domain>/ups".
@@ -43,12 +47,11 @@ version = "1"
 # port = 9000
 
 ## ------------------------------------------------------------------------------
-## Worker count: Specify the HTTP server worker count. # By default, HTTP server 
+## Worker count: Specify the HTTP server worker count. By default, HTTP server
 ## uses all available cores.
 ## ------------------------------------------------------------------------------
 
 # worker_count = 4
-
 
 ## ------------------------------------------------------------------------------
 ## Auth section: Enables authentication for both UI and API
@@ -57,7 +60,6 @@ version = "1"
 # [auth]
 # users_file = "/etc/nut_webgui/users.toml"
 
-
 ## ------------------------------------------------------------------------------
 ## UPSD connection settings.
 ## Multiple connection can be defined under the `upsd` table. Table keys are 
@@ -65,6 +67,7 @@ version = "1"
 ## ------------------------------------------------------------------------------
 
 # [upsd.default]
+
 ## ------------------------------------------------------------------------------
 ## Username: Set the username required to authenticate with the UPS daemon.
 ## Password: Provide the password corresponding to the username for authentication.

@@ -41,7 +41,7 @@ fn base_events() {
     (UpsStatus::REPLACE_BATTERY                => [UpsEvent::OverloadEnded , UpsEvent::ReplaceBattery]);
     (UpsStatus::TEST                           => [UpsEvent::ReplaceBatteryEnded, UpsEvent::Testing]);
     (UpsStatus::TRIM                           => [UpsEvent::TestCompleted, UpsEvent::Trimming]);
-    (UpsStatus::NOCOMM                         => [UpsEvent::TrimEnded, UpsEvent::NoCOMM]);
+    (UpsStatus::NOCOMM                         => [UpsEvent::TrimmingEnded, UpsEvent::NoCOMM]);
     (UpsStatus::FORCED_SHUTDOWN                => [UpsEvent::FSD]);
     (UpsStatus::OFFLINE                        => [UpsEvent::DeviceOff]);
     (UpsStatus::ONLINE                         => [UpsEvent::Online, UpsEvent::DeviceOn])
