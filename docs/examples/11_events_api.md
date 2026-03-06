@@ -3,7 +3,7 @@
 ## Basic example
 *“Let's see Paul Allen's code”*
 
-Instead of long and boring wall of text, here's an basic example using Nodejs.
+Instead of a long and boring wall of text, here's a basic example using Nodejs.
 
 ```javascript
 #!/bin/node
@@ -64,7 +64,7 @@ socket.addEventListener("message", (event) => {
 
     case "DaemonStatus":
       console.log(
-        `${new Date(msg.timestamp).toISOString()}: UPSD status changed -> ${msg.name}@${msg.namespace}, before: ${msg.status_old}, after: ${msg.status_new}`,
+        `${new Date(msg.timestamp).toISOString()}: UPSD status changed -> ${msg.namespace}, status: ${msg.status}`,
       );
       break;
 
