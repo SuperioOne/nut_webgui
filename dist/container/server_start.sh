@@ -3,7 +3,7 @@ set -e
 BIN_LOCATION="/usr/local/bin/nut_webgui"
 DEFAULT_CONFIG="/usr/local/share/nut_webgui/config.toml"
 SYSTEM_CONFIG_DIR="/etc/nut_webgui"
-ROOT_CA_TARGET="/usr/local/ssl/cert.pem"
+ROOT_CA_TARGET="/etc/ssl/certs/cert.pem"
 
 function generate_rand_key {
     cat /dev/urandom | head -c 128 | sha256sum -b | head -c 64

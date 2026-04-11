@@ -49,7 +49,7 @@ You can provide the Root CA by mounting the certificate file into the container 
 
 > **Important:** The `nut_webgui` container runs as a non-root user. Ensure the mounted certificate file has appropriate read permissions (e.g., `chmod 644 rootca.crt`).
 
-The container image automatically symlinks the certificate provided via `UPSD_ROOT_CA` to the system's trust store location at `/usr/local/ssl/cert.pem`.
+The container image automatically symlinks the certificate provided via `UPSD_ROOT_CA` to the system's trust store location at `/etc/ssl/certs/cert.pem`.
 
 ## TLS Verification Modes
 

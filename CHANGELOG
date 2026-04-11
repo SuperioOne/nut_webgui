@@ -1,3 +1,8 @@
+# v0.9.1 - April 12, 2026
+
+## Fixed
+- rustls's openssl-prober no longer checks the /usr/share/ssl directory, which breaks certificates mounted via the UPSD_ROOT_CA environment variable.
+
 # v0.9.0 - February 07, 2026
 
 ## Added
