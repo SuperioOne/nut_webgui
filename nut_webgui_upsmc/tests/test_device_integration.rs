@@ -578,8 +578,10 @@ gen_dev_integration_test!(
 (DEV_POWERWALKER__ONLINE_VFI_1000_LCD__blazer_usb__v2_6_0__r01                             ,"../nut-ddl/PowerWalker/PowerWalker__Online_VFI_1000_LCD__blazer_usb__2.6.0__01.dev");
 (DEV_POWERWALKER__ONLINE_VFI_1500_LCD__blazer_usb__v2_6_3__r01                             ,"../nut-ddl/PowerWalker/PowerWalker__Online_VFI_1500_LCD__blazer_usb__2.6.3__01.dev");
 (DEV_POWERWALKER__VFI_1000_CG_PF1__nutdrv_qx__v2_7_4__r01                                  ,"../nut-ddl/PowerWalker/PowerWalker__VFI_1000_CG_PF1__nutdrv_qx__2.7.4__01.dev");
+(DEV_POWERWALKER__VFI_2000_CRM_LCD__nutdrv_qx__2_8_1__01                                   ,"../nut-ddl/PowerWalker/PowerWalker__VFI_2000_CRM_LCD__nutdrv_qx__2.8.1__01.dev");
 (DEV_POWERWALKER__VI_1200_SHL__usbhid_ups__v2_7_4__r01                                     ,"../nut-ddl/PowerWalker/PowerWalker__VI_1200_SHL__usbhid-ups__2.7.4__01.dev");
 (DEV_POWERWALKER__VI_1200_SH__usbhid_ups__v2_7_4__r01                                      ,"../nut-ddl/PowerWalker/PowerWalker__VI_1200_SH__usbhid-ups__2.7.4__01.dev");
+(DEV_POWERWALKER__VI_1500_CSW_IEC__nutdrv_qx__2_8_1__01                                    ,"../nut-ddl/PowerWalker/PowerWalker__VI_1500_CSW_IEC__nutdrv_qx__2.8.1__01.dev");
 (DEV_POWERWALKER__VI_2200_SHL__usbhid_ups__v2_7_4__r01                                     ,"../nut-ddl/PowerWalker/PowerWalker__VI_2200_SHL__usbhid-ups__2.7.4__01.dev");
 (DEV_POWERWALKER__VI_2200_SHL__usbhid_ups__v2_7_4__r02                                     ,"../nut-ddl/PowerWalker/PowerWalker__VI_2200_SHL__usbhid-ups__2.7.4__02.dev");
 (DEV_POWERWALKER__VI_2200_SH__usbhid_ups__v2_7_4__r01                                      ,"../nut-ddl/PowerWalker/PowerWalker__VI_2200_SH__usbhid-ups__2.7.4__01.dev");
