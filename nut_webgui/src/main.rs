@@ -51,11 +51,8 @@ mod state;
 mod sync;
 
 #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-use mimalloc::MiMalloc;
-
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 #[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 fn main() -> ExitCode {
   panic::set_hook(Box::new(|info| {

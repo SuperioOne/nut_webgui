@@ -13,17 +13,17 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.18",
+    "@tailwindcss/cli": "^4.2.4",
     "@types/d3": "^7.4.3",
     "daisyui": "5.5.8",
-    "esbuild": "^0.27.2",
-    "tailwindcss": "^4.1.18",
-    "typescript": "^5.9.3"
+    "esbuild": "^0.27.7",
+    "tailwindcss": "^4.2.4",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@dagrejs/dagre": "^1.1.8",
+    "@dagrejs/dagre": "1.1.8",
     "d3": "^7.9.0",
-    "htmx.org": "^2.0.8",
+    "htmx.org": "^2.0.10",
     "idiomorph": "^0.7.4"
   }
 }
