@@ -3,12 +3,12 @@ use crate::{
   event::{batch::EventBatch, channel::EventChannel},
   state::{ClientInfo, ConnectionStatus, DeviceEntry, UpsdState, VarDetail},
   sync::{
-    error::{DeviceLoadError, IntoLoadError, SyncTaskError},
+    error::{DeviceLoadError, SyncTaskError},
     reverse_dns::lookup_ip,
   },
 };
 use chrono::Utc;
-use futures::future::join_all;
+use futures::{future::join_all, join};
 use nut_webgui_upsmc::{
   UpsName, Value, VarName, VarType,
   client::{AsyncNutClient, NutPoolClient},
@@ -345,26 +345,101 @@ impl DeviceSyncTask {
     device: UpsDevice,
   ) -> Result<DeviceEntry, DeviceLoadError> {
     let UpsDevice { ups_name, desc } = device;
-
-    let (clients, commands, rw_vars, vars) = try_join!(
-      client.list_client(&ups_name),
-      client.list_cmd(&ups_name),
-      client.list_rw(&ups_name),
+    let (vars, commands, clients, rw_vars) = join!(
       client.list_var(&ups_name),
-    )
-    .map_load_err(&ups_name)?;
+      client.list_cmd(&ups_name),
+      Self::load_clients(client.clone(), &ups_name),
+      Self::load_rw_vars(client.clone(), &ups_name)
+    );
 
-    let rw_vars = join_all(
-      rw_vars
+    let vars = vars.map_err(|err| DeviceLoadError {
+      inner: err,
+      name: ups_name.to_owned(),
+    })?;
+
+    let status = match vars.variables.get(VarName::UPS_STATUS) {
+      Some(value) => UpsStatus::from(value),
+      _ => UpsStatus::default(),
+    };
+
+    let commands = commands
+      .inspect_err(|err| {
+        warn!(
+          message = "unable to get supported commands list from upsd",
+          reason = %err,
+          device = %&ups_name
+        )
+      })
+      .map_or_else(|_| Vec::new(), |v| v.cmds);
+
+    let attached = clients
+      .inspect_err(|err| {
+        warn!(
+          message = "unable to get attached clients list from upsd",
+          reason = %err,
+          device = %&ups_name
+        )
+      })
+      .unwrap_or_default();
+
+    let rw_variables = rw_vars
+      .inspect_err(|err| {
+        warn!(
+          message = "unable to get writeable variables list from upsd",
+          reason = %err,
+          device = %&ups_name
+        )
+      })
+      .unwrap_or_default();
+
+    Ok(DeviceEntry {
+      attached,
+      commands,
+      desc,
+      last_modified: Utc::now(),
+      name: ups_name,
+      rw_variables,
+      status,
+      variables: vars.variables,
+    })
+  }
+
+  async fn load_clients(
+    client: NutPoolClient,
+    ups_name: &UpsName,
+  ) -> Result<Vec<ClientInfo>, nut_webgui_upsmc::error::Error> {
+    let client_list = client.list_client(ups_name).await?;
+    let mut clients: Vec<ClientInfo> = Vec::with_capacity(client_list.ips.len());
+
+    for ip in client_list.ips.into_iter() {
+      let name = if !ip.is_loopback() {
+        lookup_ip(ip).map_or(None, |n| Some(n))
+      } else {
+        None
+      };
+
+      clients.push(ClientInfo { addr: ip, name })
+    }
+
+    Ok(clients)
+  }
+
+  async fn load_rw_vars(
+    client: NutPoolClient,
+    ups_name: &UpsName,
+  ) -> Result<HashMap<VarName, VarDetail>, nut_webgui_upsmc::error::Error> {
+    let rw_list = client.list_rw(ups_name).await?;
+    let rw_details = join_all(
+      rw_list
         .variables
         .into_iter()
         .map(|(var_name, _)| Self::load_var_detail(client.clone(), &ups_name, var_name)),
     )
     .await;
 
-    let mut rw_variables = HashMap::with_capacity(rw_vars.len());
+    let mut rw_variables = HashMap::with_capacity(rw_details.len());
 
-    for result in rw_vars {
+    for result in rw_details {
       match result {
         Ok((var_name, detail)) => {
           _ = rw_variables.insert(var_name, detail);
@@ -372,64 +447,28 @@ impl DeviceSyncTask {
         Err(err) => {
           warn!(
             message = "failed to get RW variable type details, variable will be displayed as read-only",
-            device = %err.name,
-            reason = %err.inner
+            device = %ups_name,
+            reason = %err
           );
         }
       };
     }
 
-    let attached: Vec<ClientInfo> = clients
-      .ips
-      .into_iter()
-      .map(|ip| {
-        let name = if !ip.is_loopback() {
-          lookup_ip(ip).map_or(None, |n| Some(n))
-        } else {
-          None
-        };
-
-        ClientInfo { addr: ip, name }
-      })
-      .collect();
-
-    let status = match vars.variables.get(VarName::UPS_STATUS) {
-      Some(value) => UpsStatus::from(value),
-      _ => UpsStatus::default(),
-    };
-
-    let entry = DeviceEntry {
-      attached,
-      commands: commands.cmds,
-      desc,
-      last_modified: Utc::now(),
-      name: ups_name,
-      rw_variables,
-      status,
-      variables: vars.variables,
-    };
-
-    Ok(entry)
+    Ok(rw_variables)
   }
 
   async fn load_var_detail(
     client: NutPoolClient,
     ups_name: &UpsName,
     var_name: VarName,
-  ) -> Result<(VarName, VarDetail), DeviceLoadError> {
-    let type_info = client
-      .get_var_type(ups_name, &var_name)
-      .await
-      .map_load_err(ups_name)?;
+  ) -> Result<(VarName, VarDetail), nut_webgui_upsmc::error::Error> {
+    let type_info = client.get_var_type(ups_name, &var_name).await?;
 
     for var_type in type_info.var_types {
       match var_type {
         VarType::ReadWrite => continue,
         VarType::Enum => {
-          let enum_list = client
-            .list_enum(ups_name, &var_name)
-            .await
-            .map_load_err(ups_name)?;
+          let enum_list = client.list_enum(ups_name, &var_name).await?;
 
           if enum_list.values.is_empty() {
             warn!(
@@ -447,10 +486,7 @@ impl DeviceSyncTask {
           ));
         }
         VarType::Range => {
-          let mut range_list = client
-            .list_range(ups_name, &var_name)
-            .await
-            .map_load_err(ups_name)?;
+          let mut range_list = client.list_range(ups_name, &var_name).await?;
 
           return match range_list.ranges.pop() {
             Some((min, max)) => Ok((range_list.name, VarDetail::Range { min, max })),

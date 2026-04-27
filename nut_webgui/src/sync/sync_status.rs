@@ -5,13 +5,12 @@ use crate::{
   sync::reverse_dns::lookup_ip,
 };
 use chrono::Utc;
-use futures::future::join_all;
+use futures::{future::join_all, join};
 use nut_webgui_upsmc::{UpsName, VarName, client::AsyncNutClient, ups_status::UpsStatus};
 use std::{net::IpAddr, sync::Arc, time::Duration};
 use tokio::{
   select,
   time::{Instant, Interval, MissedTickBehavior, interval},
-  try_join,
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
@@ -222,14 +221,13 @@ impl StatusSyncTask {
     }
 
     let client = &self.state.connection_pool;
-    let responses = join_all(devices.into_iter().map(|device| async move {
-      try_join!(
-        client.list_var(&device),
-        client.list_client(&device),
-        client.list_cmd(&device)
+    let responses = join_all(devices.iter().map(|device| async move {
+      join!(
+        std::future::ready(device), // Passes device name to the join result for traceback
+        client.list_var(device),
+        client.list_client(device),
+        client.list_cmd(device),
       )
-      .map_err(|err| (device.clone(), err))
-      .map(|(var, client, cmd)| (device, var, client, cmd))
     }))
     .await;
 
@@ -238,82 +236,104 @@ impl StatusSyncTask {
     {
       let mut write_lock = self.state.daemon_state.write().await;
 
-      for result in responses {
-        match result {
-          Ok((device_name, var_list, clients, commands)) => {
-            if let Some(entry) = write_lock.devices.get_mut(&device_name) {
-              if let Some(status_value) = var_list.variables.get(VarName::UPS_STATUS) {
+      for (name, var_list, clients, commands) in responses {
+        if let Some(entry) = write_lock.devices.get_mut(name) {
+          match var_list {
+            Ok(v) => {
+              if let Some(status_value) = v.variables.get(VarName::UPS_STATUS) {
                 let new_status = UpsStatus::from(status_value);
                 let old_status = entry.status;
 
                 if old_status != new_status {
                   entry.status = new_status;
-                  events.status_change(device_name.clone(), old_status, new_status);
+                  events.status_change(name.clone(), old_status, new_status);
                 }
               }
 
-              let client_diff = ClientDiff::diff(&entry.attached, &clients.ips);
-
-              if !client_diff.disconnected.is_empty() {
-                for client_ip in client_diff.disconnected.iter() {
-                  if let Some(idx) = entry.attached.iter().position(|c| c.addr == *client_ip) {
-                    _ = entry.attached.swap_remove(idx);
-
-                    info!(
-                      message = "client detached from ups",
-                      namespace = %self.state.namespace,
-                      device = %device_name,
-                      client = %client_ip
-                    );
-                  }
-                }
-
-                events.client_disconnect(device_name.clone(), client_diff.disconnected);
-              }
-
-              if !client_diff.connected.is_empty() {
-                for client_ip in client_diff.connected.iter() {
-                  let client_name = if !client_ip.is_loopback() {
-                    lookup_ip(*client_ip).map_or(None, |v| Some(v))
-                  } else {
-                    None
-                  };
-
-                  entry.attached.push(ClientInfo {
-                    addr: *client_ip,
-                    name: client_name,
-                  });
-
-                  info!(
-                    message = "new client attached to ups",
-                    namespace = %self.state.namespace,
-                    device = %device_name,
-                    client = %client_ip
-                  );
-                }
-
-                events.client_connection(device_name.clone(), client_diff.connected);
-              }
-
-              entry.variables = var_list.variables;
-              entry.commands = commands.cmds;
-              entry.last_modified = Utc::now();
-              events.updated_device(device_name);
+              entry.variables = v.variables;
             }
-          }
-          Err((device_name, err)) => {
-            error!(
-              message = "failed to read ups details",
-              namespace = %self.state.namespace,
-              device = %device_name,
-              reason = %err
-            );
+            Err(err) => {
+              error!(
+                message = "failed to read ups details",
+                namespace = %self.state.namespace,
+                device = %name,
+                reason = %err
+              );
 
-            if let Some(entry) = write_lock.devices.get_mut(&device_name) {
-              events.status_change(device_name, entry.status, UpsStatus::NOCOMM);
+              events.status_change(name.clone(), entry.status, UpsStatus::NOCOMM);
               entry.mark_as_dead_with(UpsStatus::NOCOMM);
+              continue;
             }
+          };
+
+          let attached = clients
+            .inspect_err(|err| {
+              warn!(
+                message = "unable to get attached clients list from upsd",
+                namespace = %self.state.namespace,
+                device = %name,
+                reason = %err,
+              )
+            })
+            .map_or_else(|_| Vec::new(), |v| v.ips);
+
+          let client_diff = ClientDiff::diff(&entry.attached, &attached);
+
+          if !client_diff.disconnected.is_empty() {
+            for client_ip in client_diff.disconnected.iter() {
+              if let Some(idx) = entry.attached.iter().position(|c| c.addr == *client_ip) {
+                _ = entry.attached.swap_remove(idx);
+
+                info!(
+                  message = "client detached from ups",
+                  namespace = %self.state.namespace,
+                  device = %name,
+                  client = %client_ip
+                );
+              }
+            }
+
+            events.client_disconnect(name.clone(), client_diff.disconnected);
           }
+
+          if !client_diff.connected.is_empty() {
+            for client_ip in client_diff.connected.iter() {
+              let client_name = if !client_ip.is_loopback() {
+                lookup_ip(*client_ip).map_or(None, |v| Some(v))
+              } else {
+                None
+              };
+
+              entry.attached.push(ClientInfo {
+                addr: *client_ip,
+                name: client_name,
+              });
+
+              info!(
+                message = "new client attached to ups",
+                namespace = %self.state.namespace,
+                device = %name,
+                client = %client_ip
+              );
+            }
+
+            events.client_connection(name.clone(), client_diff.connected);
+          }
+
+          let commands = commands
+            .inspect_err(|err| {
+              warn!(
+                message = "unable to get supported commands list from upsd",
+                namespace = %self.state.namespace,
+                device = %&name,
+                reason = %err
+              )
+            })
+            .map_or_else(|_| Vec::new(), |v| v.cmds);
+
+          entry.commands = commands;
+          entry.last_modified = Utc::now();
+          events.updated_device(name.clone());
         }
       }
     };

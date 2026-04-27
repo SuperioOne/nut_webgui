@@ -11,5 +11,48 @@
     "x86-64-v3-musl",
     "x86-64-v4-gnu",
     "x86-64-v4-musl"
-  ]
+  ],
+  "oci": {
+    "manifest": {
+      "name": "$PROJECT_NAME",
+      "tags": [
+        "rc"
+      ]
+    },
+    "images": [
+      {
+        "target": "x86-64-musl",
+        "base_image": "docker.io/busybox:stable-musl",
+        "platform": "linux/amd64",
+        "os": "linux",
+        "arch": "amd64",
+        "variant": "",
+        "tags": [
+          "rc-amd64"
+        ]
+      },
+      {
+        "target": "aarch64-musl",
+        "base_image": "docker.io/busybox:stable-musl",
+        "platform": "linux/arm64/v8",
+        "os": "linux",
+        "arch": "arm64",
+        "variant": "v8",
+        "tags": [
+          "rc-arm64"
+        ]
+      },
+      {
+        "target": "armv7-musleabi",
+        "base_image": "docker.io/busybox:stable-musl",
+        "platform": "linux/arm/v7",
+        "os": "linux",
+        "arch": "arm",
+        "variant": "v7",
+        "tags": [
+          "rc-armv7"
+        ]
+      }
+    ]
+  }
 }

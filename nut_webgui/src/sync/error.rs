@@ -1,9 +1,5 @@
 use nut_webgui_upsmc::UpsName;
 
-pub(super) trait IntoLoadError<T> {
-  fn map_load_err(self, name: &UpsName) -> Result<T, DeviceLoadError>;
-}
-
 #[derive(Debug)]
 pub enum SyncTaskError {
   ClientError {
@@ -39,18 +35,6 @@ impl std::fmt::Display for DeviceLoadError {
 impl From<nut_webgui_upsmc::error::Error> for SyncTaskError {
   fn from(value: nut_webgui_upsmc::error::Error) -> Self {
     Self::ClientError { inner: value }
-  }
-}
-
-impl<T> IntoLoadError<T> for Result<T, nut_webgui_upsmc::error::Error> {
-  fn map_load_err(self, name: &UpsName) -> Result<T, DeviceLoadError> {
-    match self {
-      Ok(val) => Ok(val),
-      Err(err) => Err(DeviceLoadError {
-        inner: err,
-        name: name.to_owned(),
-      }),
-    }
   }
 }
 

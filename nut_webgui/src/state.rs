@@ -66,13 +66,32 @@ pub struct DaemonState {
 
 #[derive(Debug, Serialize)]
 pub struct DeviceEntry {
+  /// List of clients `attached` to the device.
   pub attached: Vec<ClientInfo>,
+
+  /// Supported INSTCMD commands by the device.
   pub commands: Vec<CmdName>,
+
+  /// Device description.
   pub desc: Box<str>,
+
+  /// Last modification time of the device.
   pub last_modified: DateTime<Utc>,
+
+  /// Device name.
   pub name: UpsName,
+
+  /// Information about writeable variables supported by the device.
   pub rw_variables: HashMap<VarName, VarDetail>,
+
+  /// Device status.
+  ///
+  /// ## Remark
+  /// This field only contains well-known UPS statuses from RFC-9271. Some UPS drivers may have
+  /// additional status names. For those status names, check the `ups.status` in the variable map.
   pub status: UpsStatus,
+
+  /// Device variables.
   pub variables: UpsVariables,
 }
 
@@ -157,6 +176,7 @@ impl DeviceEntry {
 }
 
 impl DaemonState {
+  #[inline]
   pub fn new() -> DaemonState {
     DaemonState {
       devices: HashMap::new(),
@@ -169,27 +189,31 @@ impl DaemonState {
 }
 
 impl From<CmdName> for DescriptionKey {
+  #[inline]
   fn from(value: CmdName) -> Self {
     Self {
-      inner: Box::from(value.as_str()),
+      inner: value.into_boxed_str(),
     }
   }
 }
 
 impl From<Box<str>> for DescriptionKey {
+  #[inline]
   fn from(value: Box<str>) -> Self {
     Self { inner: value }
   }
 }
 
 impl From<VarName> for DescriptionKey {
+  #[inline]
   fn from(value: VarName) -> Self {
     Self {
-      inner: Box::from(value.as_str()),
+      inner: value.into_box_str(),
     }
   }
 }
 impl Borrow<str> for DescriptionKey {
+  #[inline]
   fn borrow(&self) -> &str {
     &self.inner
   }
