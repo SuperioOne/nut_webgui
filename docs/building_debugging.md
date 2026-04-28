@@ -92,29 +92,26 @@ make gen-dockerfiles
 
 ## Simulating UPS devices and NUT server with containers
 
-A basic NUT server container image is available at [tools/dummy_server](../tools/dummy_server) directory. 
-It starts a NUT server, and automatically configures dummy UPS devices with the 
-mounted `.seq` and `.dev` files.
+A basic NUT server container image is available at [tools/dummy_server](../tools/dummy_server) directory.
+It starts a NUT server, and automatically configures [dummy UPS devices](https://networkupstools.org/docs/man/dummy-ups.html).
 
-> Expected file formats are:
-> - <UPS_NAME>.dev
-> - <UPS_NAME>.seq
+*Build container image:*
 
-```bash
+```shell
 cd tools/dummy_server
-
-# Build dummy_server image
 docker build -t dummy_server:latest -f dummy_server.Dockerfile
+```
 
-# Create a device dump directory to mount.
-mkdir example-devices
+*Start NUT server*
+```shell
+docker run --rm -p 3493:3493 dummy_server:latest
+```
 
-# Copy your .seq and .dev files to the example-devices directory.
-
-# Start NUT server with dummy devices
+*(Optional) Start with custom device dump files*
+```shell
 docker run --rm -p 3493:3493 -v "$(pwd)/example-devices":/nut_devices dummy_server:latest
 ```
 
-For `dummy-ups` driver details, see [NetworkUpsTools - dummy-ups.](https://networkupstools.org/docs/man/dummy-ups.html)
+### Testing TLS
 
-For `.dev` and `.seq` details, see [nut-ddl.](https://github.com/networkupstools/nut-ddl)
+Dummy server is configured with a self-signed certificate. Root certificate is available at [tools/dummy_server/root.crt](../tools/dummy_server/root.crt).

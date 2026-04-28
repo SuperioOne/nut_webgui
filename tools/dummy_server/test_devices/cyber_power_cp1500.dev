@@ -1,0 +1,41 @@
+# DEVICE:URL:REPORT: https://github.com/networkupstools/nut/issues/520#issuecomment-533901597
+battery.charge: 58
+battery.charge.low: 10
+battery.charge.warning: 20
+battery.mfr.date: CPS
+battery.runtime: 4944
+battery.runtime.low: 300
+battery.type: PbAcid
+battery.voltage: 24.0
+battery.voltage.nominal: 24
+device.mfr: CPS
+device.model: CP1500PFCLCD
+device.serial: 000000000000
+device.type: ups
+driver.name: usbhid-ups
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 15
+driver.parameter.port: auto
+driver.parameter.synchronous: no
+driver.version: 2.7.4
+driver.version.data: CyberPower HID 0.4
+driver.version.internal: 0.41
+input.transfer.high: 139
+input.transfer.low: 88
+input.voltage: 120.0
+input.voltage.nominal: 120
+output.voltage: 136.0
+ups.beeper.status: disabled
+ups.delay.shutdown: 20
+ups.delay.start: 30
+ups.load: 99
+ups.mfr: CPS
+ups.model: CP1500PFCLCD
+ups.productid: 0501
+ups.realpower.nominal: 900
+ups.serial: 000000000000
+ups.status: OL CHRG
+ups.test.result: No test initiated
+ups.timer.shutdown: -60
+ups.timer.start: -60
+ups.vendorid: 0764

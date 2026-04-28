@@ -1,0 +1,34 @@
+# DEVICE:URL:REPORT: http://news.gmane.org/find-root.php?message_id=CAN6Y2AOswV5e8apRqP0Rd0Q58taXdBRbbPy%3d%2b%2da%5fes72a6XwaQ%40mail.gmail.com
+battery.charge: 100
+battery.voltage: 27.00
+battery.voltage.high: 25.46
+battery.voltage.low: 20.37
+battery.voltage.nominal: 23.5
+device.mfr: TUNCMATIK
+device.model: DG1200VA
+device.type: ups
+driver.name: blazer_usb
+driver.parameter.pollinterval: 2
+driver.parameter.port: auto
+driver.version: 2.6.4
+driver.version.internal: 0.08
+input.current.nominal: 8.0
+input.frequency: 50.0
+input.frequency.nominal: 50
+input.voltage: 212.0
+input.voltage.fault: 165.0
+input.voltage.nominal: 220
+output.voltage: 212.0
+ups.alarm: Shutdown imminent! #BAD
+ups.beeper.status: disabled
+ups.delay.shutdown: 30
+ups.delay.start: 180
+ups.firmware: VER1.01C
+ups.load: 1
+ups.mfr: TUNCMATIK
+ups.model: DG1200VA
+ups.productid: 0000
+ups.status: ALARM OL FSD #BAD: the FSD bit is always set
+ups.temperature: 0.0
+ups.type: offline / line interactive
+ups.vendorid: 0001

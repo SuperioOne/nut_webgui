@@ -1,0 +1,44 @@
+battery.charge: 58
+battery.charge.low: 38
+battery.charge.warning: 58
+battery.type: PbAc
+battery.voltage: 0.0	#BAD: Not zero with NUT v2.7.4 on same HW
+battery.voltage.nominal: 0.0	#BAD: Not zero with NUT v2.7.4 on same HW
+device.mfr: Emerson Network Power
+device.model: LiebertPSA
+device.serial:          
+device.type: ups
+driver.name: usbhid-ups
+driver.parameter.bus: 001
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 15
+driver.parameter.port: auto
+driver.parameter.productid: 0001
+driver.parameter.synchronous: auto
+driver.parameter.vendorid: 10AF
+driver.version: 2.8.0
+driver.version.data: Belkin/Liebert HID 0.18
+driver.version.internal: 0.47
+driver.version.usb: libusb-1.0.26 (API: 0x1000109)
+input.frequency: 49.9
+input.voltage: 0.0	#BAD: Not zero with NUT v2.7.4 on same HW
+output.voltage: 0.0	#BAD: Not zero with NUT v2.7.4 on same HW
+ups.load: 23
+ups.power.nominal: 1600
+ups.mfr: Emerson Network Power
+ups.model: LiebertPSA
+ups.productid: 0001
+ups.serial:          
+ups.status: OL CHRG
+ups.vendorid: 10af
+
+TIMER 30
+ups.status: OB DISCHRG
+ups.load: 99
+TIMER 30
+ups.status: OL CHRG
+ups.load: 11
+
+TIMER 30
+ups.load: 55
+

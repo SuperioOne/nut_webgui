@@ -1,0 +1,26 @@
+# DEVICE:URL:REPORT: https://lists.alioth.debian.org/pipermail/nut-upsuser/2016-November/010406.html
+
+battery.voltage: 26.30
+device.type: ups
+driver.name: nutdrv_qx
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 2
+driver.parameter.port: auto
+driver.parameter.productid: 0003
+driver.parameter.synchronous: no
+driver.parameter.vendorid: 06da
+driver.version: 2.7.4-151-g9209e18
+driver.version.data: Q1 0.07
+driver.version.internal: 0.28
+input.frequency: 59.9
+input.voltage: 120.3
+input.voltage.fault: 120.3
+output.voltage: 120.0
+ups.beeper.status: enabled
+ups.delay.shutdown: 30
+ups.delay.start: 180
+ups.load: 29
+ups.productid: 0003
+ups.status: OL CAL
+ups.type: offline / line interactive
+ups.vendorid: 06da

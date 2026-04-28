@@ -1,0 +1,64 @@
+ambient.temperature: 24
+ambient.temperature.high: 40
+battery.charge: 100
+battery.charger.status: Resting
+battery.packs: 3
+battery.runtime: 10385
+battery.runtime.low: 3
+battery.voltage:  39.4
+device.mfr: Eaton
+device.model: PW9130 1000VA-R                  1000i
+device.part: 103006455-6591  
+device.serial: GH451A0630      
+device.type: ups
+driver.name: bcmxcp
+driver.parameter.baud_rate: 9600
+driver.parameter.pollinterval: 1
+driver.parameter.port: /dev/ttyS0
+driver.version: 2.7.2.5
+driver.version.internal: 0.29
+input.bypass.frequency: 50.0
+input.bypass.voltage: 226.7
+input.frequency: 50.0
+input.frequency.high: 53
+input.frequency.low: 47
+input.frequency.nominal: 50
+input.quality: 15
+input.transfer.boost.high: 195
+input.transfer.delay: 1
+input.transfer.high: 276
+input.transfer.low: 120
+input.transfer.trim.low: 253
+input.voltage: 226.7
+input.voltage.nominal: 230
+outlet.1.delay.shutdown: -1
+outlet.1.delay.start: 3
+outlet.1.id: 1
+outlet.1.status: On/Closed
+outlet.2.delay.shutdown: -1
+outlet.2.delay.start: 5
+outlet.2.id: 2
+outlet.2.status: On/Closed
+output.current:  1.0
+output.current.nominal:  4.3
+output.frequency: 50.0
+output.frequency.nominal: 50
+output.phases: 1
+output.voltage: 230.0
+output.voltage.nominal: 230
+ups.beeper.status: enabled
+ups.date: 10/03/2015
+ups.description: On-Line UPS, Single Phase
+ups.firmware: Cont:00.13 Inve:01.29
+ups.load: 22
+ups.mfr: Eaton
+ups.model: PW9130 1000VA-R                  1000i
+ups.power: 226
+ups.power.nominal: 1000
+ups.realpower.nominal: 700
+ups.realpower: 158
+ups.serial: GH451A0630      
+ups.status: OL
+ups.temperature: 27
+ups.test.result: Done and passed
+ups.time: 18:56:25.06

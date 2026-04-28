@@ -1,0 +1,50 @@
+# DEVICE:URL:REPORT: https://github.com/networkupstools/nut/issues/365
+
+battery.charge: 9
+battery.charge.low: 10
+battery.charge.warning: 50
+battery.date: 2005/09/28
+battery.mfr.date: 2005/09/28
+battery.runtime: 1312
+battery.runtime.low: 120
+battery.temperature: 29.2
+battery.type: PbAc
+battery.voltage: 13.6
+battery.voltage.nominal: 12.0
+device.mfr: American Power Conversion
+device.model: Back-UPS CS 650
+device.serial: QB0540131574
+device.type: ups
+driver.name: usbhid-ups
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 2
+driver.parameter.port: auto
+driver.version: 2.7.2
+driver.version.data: APC HID 0.95
+driver.version.internal: 0.38
+input.sensitivity: high
+input.transfer.high: 256
+input.transfer.low: 196
+input.voltage: 228.0
+input.voltage.nominal: 230
+output.frequency: 50.0
+output.voltage: 230.0
+output.voltage.nominal: 230.0
+ups.beeper.status: disabled
+ups.delay.shutdown: 20
+ups.delay.start: 30
+ups.firmware: 817.v2.I
+ups.firmware.aux: v2
+ups.load: 55.0
+ups.mfr: American Power Conversion
+ups.mfr.date: 2005/09/28
+ups.model: Back-UPS CS 650
+ups.productid: 0002
+ups.realpower.nominal: 400
+ups.serial: QB0540131574
+ups.status: OL
+ups.test.result: No test initiated
+ups.timer.reboot: 0
+ups.timer.shutdown: -1
+ups.timer.start: 0
+ups.vendorid: 051d

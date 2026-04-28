@@ -1,0 +1,34 @@
+# DEVICE:URL:REPORT: https://github.com/networkupstools/nut/issues/557
+
+battery.charge: 52
+battery.charge.low: 10
+battery.charge.warning: 50
+battery.runtime: 2100
+battery.runtime.low: 320
+battery.type: PbAc
+battery.voltage: 25.8
+battery.voltage.nominal: 24.0
+device.mfr: American Power Conversion
+device.model: Smart-UPS 2200 BI
+device.serial: 6369960019
+device.type: ups
+driver.name: usbhid-ups
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 2
+driver.parameter.port: auto
+driver.parameter.synchronous: no
+driver.version: 2.7.4
+driver.version.data: APC HID 0.96
+driver.version.internal: 0.41
+ups.beeper.status: disabled
+ups.delay.shutdown: 20
+ups.firmware: UPS 11.0 / ID=1007
+ups.mfr: American Power Conversion
+ups.mfr.date: 2018/04/24
+ups.model: Smart-UPS 2200 BI
+ups.productid: 0003
+ups.serial: 6369960019
+ups.status: OL CHRG
+ups.timer.reboot: -1
+ups.timer.shutdown: -1
+ups.vendorid: 051d

@@ -1,0 +1,38 @@
+# DEVICE:URL:REPORT: https://lists.alioth.debian.org/pipermail/nut-upsdev/2013-December/006567.html
+battery.charge: 100
+battery.charge.low: 10
+battery.charge.warning: 20
+battery.mfr.date: CPS
+battery.runtime: 1050
+battery.runtime.low: 300
+battery.type: PbAcid
+battery.voltage: 13.5
+battery.voltage.nominal: 12
+device.mfr: CPS
+device.model: UPS CP1000AVRLCD
+device.type: ups
+driver.name: usbhid-ups
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 2
+driver.parameter.port: /dev/hiddev0
+driver.version: 2.7.1-signed-9-g6fb35b3
+driver.version.data: CyberPower HID 0.3
+driver.version.internal: 0.38
+input.transfer.high: 140
+input.transfer.low: 90
+input.voltage: 121.0
+input.voltage.nominal: 120
+output.voltage: 120.0
+ups.beeper.status: enabled
+ups.delay.shutdown: 20
+ups.delay.start: 30
+ups.load: 26
+ups.mfr: CPS
+ups.model: UPS CP1000AVRLCD
+ups.productid: 0501
+ups.realpower.nominal: 88
+ups.status: OL
+ups.test.result: Done and passed
+ups.timer.shutdown: -60
+ups.timer.start: 0
+ups.vendorid: 0764

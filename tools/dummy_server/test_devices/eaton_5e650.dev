@@ -1,0 +1,36 @@
+# DEVICE:URL:REPORT: https://lists.alioth.debian.org/pipermail/nut-upsuser/2014-August/009139.html
+battery.charge: 100
+battery.runtime: 2520
+battery.type: PbAc
+device.mfr: EATON
+device.model: 5E 650i
+device.type: ups
+driver.name: usbhid-ups
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 2
+driver.parameter.port: auto
+driver.version: 2.7.1
+driver.version.data: MGE HID 1.32
+driver.version.internal: 0.38
+input.voltage: 247.0
+outlet.1.status: on
+outlet.desc: Main Outlet
+outlet.id: 1
+outlet.switchable: no
+output.frequency: 49.8
+output.frequency.nominal: 50
+output.voltage: 244.0
+output.voltage.nominal: 230
+ups.beeper.status: enabled
+ups.delay.shutdown: 20
+ups.firmware: 01.04.0016
+ups.load: 14
+ups.mfr: EATON
+ups.model: 5E 650i
+ups.power.nominal: 650
+ups.productid: ffff
+ups.start.battery: yes
+ups.status: OL CHRG
+ups.timer.shutdown: -1
+ups.vendorid: 0463
+

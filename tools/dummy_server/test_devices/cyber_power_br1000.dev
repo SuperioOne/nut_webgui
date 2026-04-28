@@ -1,0 +1,46 @@
+# DEVICE:URL:REPORT: https://github.com/networkupstools/nut/issues/552
+# DEVICE:URL:VENDOR: https://www.cyberpower.com/eu/en/product/sku/BR1000ELCD
+
+battery.charge: 15
+battery.charge.low: 10	#COMMENT: (marked as read/write, but value does not change after setting with NUT upsrw command)
+battery.charge.warning: 20
+battery.mfr.date: CPS	#BAD: https://github.com/networkupstools/nut/issues/437
+battery.runtime: 234
+battery.runtime.low: 300
+battery.type: PbAcid
+battery.voltage: 12.9
+battery.voltage.nominal: 12
+device.mfr: CPS
+device.model: BR1000ELCD
+device.type: ups
+driver.name: usbhid-ups
+driver.parameter.bus: 001
+driver.parameter.pollfreq: 30
+driver.parameter.pollinterval: 2
+driver.parameter.port: auto
+driver.parameter.product: BR1000ELCD
+driver.parameter.productid: 0501
+driver.parameter.synchronous: no
+driver.parameter.vendor: CPS
+driver.parameter.vendorid: 0764
+driver.version: 2.7.4
+driver.version.data: CyberPower HID 0.4
+driver.version.internal: 0.41
+input.transfer.high: 0	#BAD: may be a scaling issue
+input.transfer.low: 0	#BAD: may be a scaling issue
+input.voltage: 238.0
+input.voltage.nominal: 230
+output.voltage: 239.0
+ups.beeper.status: enabled
+ups.delay.shutdown: 20
+ups.delay.start: 30
+ups.load: 17
+ups.mfr: CPS
+ups.model: BR1000ELCD
+ups.productid: 0501
+ups.realpower.nominal: 600
+ups.status: OB DISCHRG RB
+ups.test.result: No test initiated
+ups.timer.shutdown: -60
+ups.timer.start: -60
+ups.vendorid: 0764
