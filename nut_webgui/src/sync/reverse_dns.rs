@@ -1,22 +1,26 @@
 use core::{
   ffi::{CStr, FromBytesUntilNulError},
   net::{IpAddr, Ipv4Addr, Ipv6Addr},
+  num::NonZeroI32,
   ptr::null_mut,
+  str::Utf8Error,
 };
 use libc::{
   AF_INET, AF_INET6, NI_MAXHOST, NI_NAMEREQD, gai_strerror, getnameinfo, in_addr, in6_addr,
-  sockaddr_in, sockaddr_in6, socklen_t,
+  sa_family_t, sockaddr_in, sockaddr_in6, socklen_t,
 };
-use std::{ffi::CString, num::NonZeroI32, str::Utf8Error};
 
 pub fn lookup_ipv4(ip: Ipv4Addr) -> Result<Box<str>, Error> {
   let addr = sockaddr_in {
-    sin_family: AF_INET as u16,
+    sin_family: AF_INET as sa_family_t,
     sin_port: 0,
     sin_addr: in_addr {
       s_addr: ip.to_bits().to_be(),
     },
     sin_zero: [0; 8],
+
+    #[cfg(target_os = "freebsd")]
+    sin_len: size_of::<sockaddr_in>() as u8,
   };
 
   lookup_inner(&addr)
@@ -24,13 +28,16 @@ pub fn lookup_ipv4(ip: Ipv4Addr) -> Result<Box<str>, Error> {
 
 pub fn lookup_ipv6(ip: Ipv6Addr) -> Result<Box<str>, Error> {
   let addr = sockaddr_in6 {
-    sin6_family: AF_INET6 as u16,
+    sin6_family: AF_INET6 as sa_family_t,
     sin6_port: 0,
     sin6_addr: in6_addr {
       s6_addr: ip.to_bits().to_be_bytes(),
     },
     sin6_flowinfo: 0,
     sin6_scope_id: 0,
+
+    #[cfg(target_os = "freebsd")]
+    sin6_len: size_of::<sockaddr_in6>() as u8,
   };
 
   lookup_inner(&addr)
@@ -76,7 +83,7 @@ pub enum Error {
   InvalidCStr,
   InvalidUtf8,
   UnspecifiedError,
-  NameInfoError { inner: CString },
+  NameInfoError { inner: &'static CStr },
 }
 
 impl core::fmt::Display for Error {
@@ -109,15 +116,12 @@ impl From<Utf8Error> for Error {
 impl From<NonZeroI32> for Error {
   #[inline]
   fn from(errcode: NonZeroI32) -> Self {
-    let errstr_ptr = unsafe { gai_strerror(errcode.get()) };
+    let strerr_ptr = unsafe { gai_strerror(errcode.get()) };
 
-    // NOTE: to future self; this check is kinda unnecessary, and returned pointer lifetime is
-    // technically always 'static. Check the POSIX spec and existing libc implementations to see
-    // if this code can be safely simplified :D
-    if !errstr_ptr.is_null() {
-      let err_message = unsafe { CStr::from_ptr(errstr_ptr) };
+    // NOTE: gai_strerror returns C string with lifetime of 'static for MUSL, Glibc, and FreeBSD.
+    if !strerr_ptr.is_null() {
       Self::NameInfoError {
-        inner: err_message.to_owned(),
+        inner: unsafe { CStr::from_ptr(strerr_ptr) },
       }
     } else {
       Self::UnspecifiedError
@@ -127,7 +131,7 @@ impl From<NonZeroI32> for Error {
 
 #[cfg(test)]
 mod test {
-  use crate::sync::reverse_dns::lookup_ip;
+  use crate::sync::reverse_dns::{Error, lookup_ip};
   use std::{
     net::{Ipv4Addr, Ipv6Addr},
     str::FromStr,
@@ -139,6 +143,18 @@ mod test {
     match lookup_ip(Ipv4Addr::new(1, 1, 1, 1)) {
       Ok(result) => assert_eq!("one.one.one.one", result.as_ref()),
       Err(err) => assert!(false, "cannot resolve cloudflare IPv4 DNS, {}", err),
+    }
+  }
+
+  #[test]
+  #[ignore = "must be explicitly enabled"]
+  fn lookup_failure() {
+    match lookup_ip(Ipv4Addr::new(255, 255, 255, 255)) {
+      Ok(_) => assert!(false, "lookup should've failed"),
+      Err(Error::NameInfoError { .. }) => {
+        assert!(true)
+      }
+      Err(err) => assert!(false, "lookup failed but error type is not correct {}", err),
     }
   }
 

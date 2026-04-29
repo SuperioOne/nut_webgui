@@ -50,7 +50,10 @@ mod skip_tls_verifier;
 mod state;
 mod sync;
 
-#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+#[cfg(all(
+  target_os = "linux",
+  any(target_arch = "x86_64", target_arch = "aarch64")
+))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 

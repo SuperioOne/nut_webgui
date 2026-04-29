@@ -66,5 +66,5 @@ tower-http = { version = "0.6", features = [
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
-[target.'cfg(any(target_arch = "x86_64", target_arch = "aarch64"))'.dependencies]
+[target.'cfg(all(target_os = "linux", any(target_arch = "x86_64", target_arch = "aarch64")))'.dependencies]
 mimalloc = { version = "0.1" }
