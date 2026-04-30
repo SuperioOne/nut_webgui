@@ -10,86 +10,77 @@ trait IntoCliArg {
   fn into_cli_arg(&self) -> Option<&str>;
 }
 
-impl IntoCliArg for &str {
-  #[inline]
-  fn into_cli_arg(&self) -> Option<&str> {
-    Some(self)
-  }
+enum PackageManager {
+  Pnpm,
+  Npm,
 }
 
-impl IntoCliArg for String {
-  #[inline]
-  fn into_cli_arg(&self) -> Option<&str> {
-    Some(self.as_str())
-  }
-}
-
-impl<T> IntoCliArg for Option<T>
-where
-  T: AsRef<str>,
-{
-  #[inline]
-  fn into_cli_arg(&self) -> Option<&str> {
-    self.as_ref().map(|v| v.as_ref())
-  }
+#[derive(Debug)]
+struct CommandError {
+  name: &'static str,
+  error: std::io::Error,
 }
 
 macro_rules! exec {
   ($cmd:literal) => {
-    std::process::Command::new($cmd)
-      .status()
-      .inspect(|status| {
-        if !status.success() {
-          println!("cargo::error={}: execution failed.", $cmd);
-        }
-      })
-      .inspect_err(|err| {
-        println!("cargo::error={}", err.to_string());
-      });
+      exec!(@internal std::process::Command::new($cmd), cmd);
   };
 
   ($cmd:literal, $($arg:expr),+) => {
     {
-      let mut args: Vec<&str> = Vec::new();
-
+      let mut cmd = std::process::Command::new($cmd);
       $(
         if let Some(arg) = $arg.into_cli_arg() {
-          args.push(arg);
+          _ = cmd.arg(arg);
         }
       )+
 
-      std::process::Command::new($cmd)
-        .args(&args)
-        .status()
-        .inspect(|status| {
-          if !status.success() {
-            println!("cargo::error={}: execution failed.", $cmd);
-          }
-        })
-        .inspect_err(|err| {
-          println!("cargo::error={}", err.to_string());
-        })
+      exec!(@internal $cmd, cmd)
     }
+  };
+
+  (@internal $name:literal, $cmd:expr) => {
+      match $cmd.status() {
+        Ok(status) => {
+          if status.success() {
+            Ok(status)
+          }
+          else {
+            Err(CommandError {
+                name: $name,
+                error: std::io::Error::new(std::io::ErrorKind::Other, "command execution failed"),
+            })
+          }
+        },
+        Err(err) => {
+          Err(CommandError {
+              name: $name,
+              error: err
+          })
+        }
+      }
   };
 }
 
-fn main() -> Result<(), std::io::Error> {
+fn main() {
+  if let Err(err) = bundle() {
+    println!("cargo::error=client asset bundler failed");
+    println!("cargo::error={}", err);
+  }
+}
+
+fn bundle() -> Result<(), Box<dyn core::error::Error>> {
   let outdir =
     std::env::var("OUT_DIR").expect("cargo did not set OUT_DIR env variable for build script.");
   let outdir = PathBuf::from_str(&outdir).unwrap();
-
   let profile =
     std::env::var("PROFILE").expect("cargo did not set PROFILE env variable for build script.");
 
-  match exec!("node", "--version") {
-    Ok(status) if status.success() => {}
-    _ => {
+  exec!("node", "--version").inspect_err(|_| {
       println!(
         "cargo::error=node is required for building the client assets. Make sure the system has nodejs installed."
       );
-      return Ok(());
-    }
-  }
+  })?;
 
   match detect_package_manager() {
     Some(PackageManager::Npm) => exec!("npm", "install")?,
@@ -119,7 +110,6 @@ fn main() -> Result<(), std::io::Error> {
 
   let outdir_arg = format!("--outdir={}", outdir.display());
   exec!(
-    "node",
     "node_modules/esbuild/bin/esbuild",
     "src/index.js",
     "--bundle",
@@ -184,11 +174,6 @@ fn calc_sha256(bytes: &[u8]) -> Result<String, std::io::Error> {
   Ok(base16ct::lower::encode_string(&digest))
 }
 
-enum PackageManager {
-  Pnpm,
-  Npm,
-}
-
 fn detect_package_manager() -> Option<PackageManager> {
   if let Ok(status) = exec!("pnpm", "--version")
     && status.success()
@@ -200,5 +185,37 @@ fn detect_package_manager() -> Option<PackageManager> {
     Some(PackageManager::Npm)
   } else {
     None
+  }
+}
+
+impl core::fmt::Display for CommandError {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    writeln!(f, "{}: {}", self.name, self.error)
+  }
+}
+
+impl core::error::Error for CommandError {}
+
+impl IntoCliArg for &str {
+  #[inline]
+  fn into_cli_arg(&self) -> Option<&str> {
+    Some(self)
+  }
+}
+
+impl IntoCliArg for String {
+  #[inline]
+  fn into_cli_arg(&self) -> Option<&str> {
+    Some(self.as_str())
+  }
+}
+
+impl<T> IntoCliArg for Option<T>
+where
+  T: AsRef<str>,
+{
+  #[inline]
+  fn into_cli_arg(&self) -> Option<&str> {
+    self.as_ref().map(|v| v.as_ref())
   }
 }
