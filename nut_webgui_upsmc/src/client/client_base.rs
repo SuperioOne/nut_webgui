@@ -17,6 +17,10 @@ use tokio::{
 };
 use tracing::{error, trace};
 
+// Expected message sizes are around 4KiB. This soft limit is a safeguard to prevent holding huge
+// chunks of memory.
+const SCRATCH_SOFT_LIMIT: usize = 1024 * 12;
+
 pub struct NutClient<S>
 where
   S: AsyncRead + AsyncWrite + Unpin + Send + Sync,
@@ -24,6 +28,7 @@ where
   reader: BufReader<ReadHalf<S>>,
   writer: WriteHalf<S>,
   timeout: Duration,
+  scratch_buff: String,
 }
 
 impl NutClient<TcpStream> {
@@ -62,6 +67,7 @@ where
       writer,
       reader,
       timeout: Duration::from_secs(60),
+      scratch_buff: String::new(),
     }
   }
 
@@ -80,8 +86,8 @@ where
 
   pub async fn is_open(&mut self) -> bool {
     match self.send_raw(command::GetProtVer.serialize()).await {
-      Ok(response) if !response.is_empty() => true,
-      _ => false,
+      Err(_) => false,
+      Ok(v) => !v.is_empty(),
     }
   }
 
@@ -90,50 +96,55 @@ where
     Ok(())
   }
 
-  pub async fn send_raw(&mut self, send: &str) -> Result<String, Error> {
-    match timeout(self.timeout, self.inner_send_raw(send)).await {
-      Ok(r) => r,
+  async fn send_raw(&mut self, request: &str) -> Result<&str, Error> {
+    match timeout(self.timeout, self.inner_send_raw(request)).await {
+      Ok(_) => Ok(self.scratch_buff.as_str()),
       Err(_) => Err(ErrorKind::RequestTimeout.into()),
     }
   }
 
-  async fn inner_send_raw(&mut self, send: &str) -> Result<String, Error> {
+  async fn inner_send_raw(&mut self, send: &str) -> Result<usize, Error> {
     trace!(message = "tcp message", send = send);
     const LIST_START: &str = "BEGIN LIST";
     const LIST_END: &str = "END LIST";
     const PROT_ERR: &str = "ERR";
 
+    if self.scratch_buff.len() >= SCRATCH_SOFT_LIMIT {
+      self.scratch_buff = String::new()
+    } else {
+      self.scratch_buff.clear();
+    }
+
     self.writer.write_all(send.as_bytes()).await?;
     self.writer.flush().await?;
 
-    let mut response_buf = String::new();
-    let mut start_pos = self.reader.read_line(&mut response_buf).await?;
+    let mut total_read = self.reader.read_line(&mut self.scratch_buff).await?;
 
-    if response_buf.starts_with(LIST_START) {
+    if self.scratch_buff.starts_with(LIST_START) {
       loop {
-        let read = self.reader.read_line(&mut response_buf).await?;
-        let line = &response_buf[start_pos..];
+        let read = self.reader.read_line(&mut self.scratch_buff).await?;
+        let line = &self.scratch_buff[total_read..];
 
         if line.starts_with(LIST_END) {
           break;
         } else {
-          start_pos += read;
+          total_read += read;
         }
       }
 
       trace!(
         message = "upsd tcp protocol: list message received",
-        response = &response_buf,
+        response = &self.scratch_buff,
         command = send
       );
 
-      Ok(response_buf)
-    } else if let Some(prot_err) = response_buf.strip_prefix(PROT_ERR) {
+      Ok(total_read)
+    } else if let Some(prot_err) = self.scratch_buff.strip_prefix(PROT_ERR) {
       let prot_err = ProtocolError::from(prot_err.trim());
 
       error!(
         message = "upsd tcp protocol: error received",
-        response = &response_buf,
+        response = &self.scratch_buff,
         command = send
       );
 
@@ -141,11 +152,11 @@ where
     } else {
       trace!(
         message = "upsd tcp protocol: line message received",
-        response = &response_buf,
+        response = &self.scratch_buff,
         command = send
       );
 
-      Ok(response_buf)
+      Ok(total_read)
     }
   }
 
@@ -159,8 +170,7 @@ where
     if response.is_empty() {
       Err(ErrorKind::EmptyResponse.into())
     } else {
-      let mut lexer = Lexer::new(&response);
-
+      let mut lexer = Lexer::new(response);
       R::deserialize(&mut lexer)
     }
   }
