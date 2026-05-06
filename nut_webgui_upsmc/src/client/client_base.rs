@@ -20,6 +20,9 @@ use tracing::{error, trace};
 // Expected message sizes are around 4KiB. This soft limit is a safeguard to prevent holding huge
 // chunks of memory.
 const SCRATCH_SOFT_LIMIT: usize = 1024 * 12;
+const LIST_START: &str = "BEGIN LIST";
+const LIST_END: &str = "END LIST";
+const PROT_ERR: &str = "ERR";
 
 pub struct NutClient<S>
 where
@@ -98,16 +101,14 @@ where
 
   async fn send_raw(&mut self, request: &str) -> Result<&str, Error> {
     match timeout(self.timeout, self.inner_send_raw(request)).await {
-      Ok(_) => Ok(self.scratch_buff.as_str()),
+      Ok(Ok(_)) => Ok(self.scratch_buff.as_str()),
+      Ok(Err(err)) => Err(err),
       Err(_) => Err(ErrorKind::RequestTimeout.into()),
     }
   }
 
   async fn inner_send_raw(&mut self, send: &str) -> Result<usize, Error> {
     trace!(message = "tcp message", send = send);
-    const LIST_START: &str = "BEGIN LIST";
-    const LIST_END: &str = "END LIST";
-    const PROT_ERR: &str = "ERR";
 
     if self.scratch_buff.len() >= SCRATCH_SOFT_LIMIT {
       self.scratch_buff = String::new()
