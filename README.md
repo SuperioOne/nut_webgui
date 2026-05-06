@@ -151,6 +151,14 @@ users_file = "/etc/nut_webgui/users.toml"
 
 For more detailed config template see [./dist/config.toml](./dist/config.toml).
 
+### UniFi NUT Specific Configuration
+
+The current UniFi NUT server supports up to 3 client connections, and when this limit is exceeded, the server restarts itself. To prevent this issue,
+**set the maximum connection limit to 1** using one of the following methods:
+
+- Set the `NUTWG__UPSD__MAX_CONNECTION` environment variable if you are using a single NUT server
+- Configure `max_connection` in the `config.toml` file
+
 ## JSON data API
 
 A simple JSON-based API is available for integration and automation purposes.

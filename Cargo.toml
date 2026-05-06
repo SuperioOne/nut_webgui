@@ -9,11 +9,11 @@ strip = "debuginfo"
 panic = "abort"
 
 [workspace.package]
-version = "0.9.1"
+version = "0.9.2"
 edition = "2024"
 authors = ["Timur Olur <pm@smdd.dev>"]
-documentation = "https://github.com/SuperioOne/nut_webgui"
-homepage = "https://github.com/SuperioOne/nut_webgui"
+documentation = "https://codeberg.org/SuperiorOne/nut_webgui"
+homepage = "https://codeberg.org/SuperiorOne/nut_webgui"
 keywords = ["nut", "ups", "network-ups-tools", "self-hosted", "management"]
 license = "Apache-2.0"
-repository = "https://github.com/SuperioOne/nut_webgui"
+repository = "https://codeberg.org/SuperiorOne/nut_webgui"

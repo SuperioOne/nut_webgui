@@ -1,3 +1,13 @@
+# v0.9.2 - May 06, 2026
+
+## Fixed
+- Client assets bundler fails to build when either npm or pnpm is missing on the host system instead of selecting one of them.
+- Compiling nut_webgui on FreeBSD fails due to minor differences in `sockaddr` types.
+
+## Changes
+- Failure on listing writable variables, instant commands, and monitoring clients are now considered as soft-fail. This change allows using non-compliant NUT servers to work with nut_webgui.
+- NUT TCP connections now reuse their buffers to minimize memory allocation.
+
 # v0.9.1 - April 12, 2026
 
 ## Fixed

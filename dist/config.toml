@@ -103,6 +103,9 @@ version = "1"
 ## actions like instcmd, set var, and fsd can create additional short-lived 
 ## connections.
 ##
+## Important: UniFi's embedded NUT server allows maximum 3 connections. If you use
+## UniFi NUT server, set max_connection to 1.
+##
 ## Default value is 4 connection.
 ## ------------------------------------------------------------------------------
 
