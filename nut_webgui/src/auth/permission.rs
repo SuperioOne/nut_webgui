@@ -163,9 +163,9 @@ impl<'de> Deserialize<'de> for Permissions {
 }
 
 impl askama::FastWritable for Permissions {
-  fn write_into<W: core::fmt::Write + ?Sized>(
+  fn write_into(
     &self,
-    dest: &mut W,
+    dest: &mut dyn core::fmt::Write,
     _: &dyn askama::Values,
   ) -> askama::Result<()> {
     if self.len() > 1 {

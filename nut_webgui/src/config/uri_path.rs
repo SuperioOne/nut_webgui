@@ -135,9 +135,9 @@ impl std::fmt::Display for UriPath {
 
 impl FastWritable for UriPath {
   #[inline]
-  fn write_into<W: core::fmt::Write + ?Sized>(
+  fn write_into(
     &self,
-    dest: &mut W,
+    dest: &mut dyn core::fmt::Write,
     _values: &dyn askama::Values,
   ) -> askama::Result<()> {
     dest.write_str(self.as_str())?;

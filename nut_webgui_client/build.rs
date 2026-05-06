@@ -1,7 +1,7 @@
 use sha2::Digest;
 use std::{
   fs::{File, canonicalize, copy},
-  io::{Read, Write},
+  io::Read,
   path::{Path, PathBuf},
   str::FromStr,
 };
@@ -151,7 +151,7 @@ fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(),
   let mut content: Vec<u8> = Vec::new();
   _ = File::open(&file_path)?.read_to_end(&mut content)?;
 
-  let sha256 = calc_sha256(&content)?;
+  let sha256 = calc_sha256(&content);
 
   println!(
     "cargo::rustc-env={env_prefix}_PATH={}",
@@ -163,15 +163,12 @@ fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(),
   Ok(())
 }
 
-fn calc_sha256(bytes: &[u8]) -> Result<String, std::io::Error> {
+fn calc_sha256(bytes: &[u8]) -> String {
   let mut sha256 = sha2::Sha256::new();
-
-  sha256.write_all(bytes)?;
-  sha256.flush()?;
-
+  sha256.update(bytes);
   let digest = sha256.finalize();
 
-  Ok(base16ct::lower::encode_string(&digest))
+  base16ct::lower::encode_string(&digest)
 }
 
 fn detect_package_manager() -> Option<PackageManager> {

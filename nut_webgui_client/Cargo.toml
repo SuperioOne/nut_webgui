@@ -12,5 +12,5 @@ license.workspace = true
 repository.workspace = true
 
 [build-dependencies]
-sha2 = "0.10"
+sha2 = "0.11"
 base16ct = { version = "1", features = ["alloc"] }

@@ -178,9 +178,9 @@ macro_rules! impl_unit {
 
     impl askama::FastWritable for $type {
       #[inline]
-      fn write_into<W: core::fmt::Write + ?Sized>(
+      fn write_into(
         &self,
-        dest: &mut W,
+        dest: &mut dyn core::fmt::Write,
         _: &dyn askama::Values,
       ) -> askama::Result<()> {
         dest.write_fmt(format_args!(
@@ -278,9 +278,9 @@ impl<T> askama::FastWritable for Approx<T>
 where
   T: UnitDisplay,
 {
-  fn write_into<W: core::fmt::Write + ?Sized>(
+  fn write_into(
     &self,
-    dest: &mut W,
+    dest: &mut dyn core::fmt::Write,
     _: &dyn askama::Values,
   ) -> askama::Result<()> {
     dest.write_fmt(format_args!("≈ {}", self.inner))?;
@@ -365,9 +365,9 @@ where
   T1: askama::FastWritable,
   T2: askama::FastWritable,
 {
-  fn write_into<W: core::fmt::Write + ?Sized>(
+  fn write_into(
     &self,
-    dest: &mut W,
+    dest: &mut dyn core::fmt::Write,
     values: &dyn askama::Values,
   ) -> askama::Result<()> {
     match self {

@@ -23,9 +23,9 @@ impl Display for SemanticType {
 }
 
 impl FastWritable for SemanticType {
-  fn write_into<W: core::fmt::Write + ?Sized>(
+  fn write_into(
     &self,
-    dest: &mut W,
+    dest: &mut dyn core::fmt::Write,
     _: &dyn askama::Values,
   ) -> askama::Result<()> {
     match self {

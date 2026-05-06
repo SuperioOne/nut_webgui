@@ -74,9 +74,9 @@ impl AsRef<str> for Username {
 
 impl FastWritable for Username {
   #[inline]
-  fn write_into<W: core::fmt::Write + ?Sized>(
+  fn write_into(
     &self,
-    dest: &mut W,
+    dest: &mut dyn core::fmt::Write,
     _: &dyn askama::Values,
   ) -> askama::Result<()> {
     dest.write_str(&self.0)?;

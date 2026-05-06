@@ -119,7 +119,8 @@ fn random_salt() -> Box<[u8; 32]> {
 
 impl UserStoreBuilder {
   pub fn new() -> Self {
-    let params = Params::new(10, 10, 2, 32).expect("scrypt parameters should've never fail");
+    let params =
+      Params::new_with_output_len(10, 10, 2, 32).expect("scrypt parameters should've never fail");
 
     Self {
       users: HashMap::new(),

@@ -1,5 +1,5 @@
 use super::{BinaryToken, error::SignatureError};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, Mac, digest::KeyInit as _};
 use sha2::Sha256;
 use std::marker::PhantomData;
 
