@@ -1,15 +1,16 @@
+use rolldown::{
+  Bundler, BundlerOptions, BundlerTransformOptions, CommentsOptions, OptimizationOption,
+  OutputFormat, Platform,
+};
 use sha2::Digest;
 use std::{
   fs::{File, canonicalize, copy},
-  io::Read,
+  io::{self, Read},
   path::{Path, PathBuf},
   str::FromStr,
 };
 
-trait IntoCliArg {
-  fn into_cli_arg(&self) -> Option<&str>;
-}
-
+#[derive(Clone, Copy)]
 enum PackageManager {
   Pnpm,
   Npm,
@@ -29,12 +30,7 @@ macro_rules! exec {
   ($cmd:literal, $($arg:expr),+) => {
     {
       let mut cmd = std::process::Command::new($cmd);
-      $(
-        if let Some(arg) = $arg.into_cli_arg() {
-          _ = cmd.arg(arg);
-        }
-      )+
-
+      $( _ = cmd.arg($arg); )+
       exec!(@internal $cmd, cmd)
     }
   };
@@ -47,81 +43,88 @@ macro_rules! exec {
           }
           else {
             Err(CommandError {
-                name: $name,
-                error: std::io::Error::new(std::io::ErrorKind::Other, "command execution failed"),
+              name: $name,
+              error: std::io::Error::new(std::io::ErrorKind::Other, "command execution failed"),
             })
           }
         },
         Err(err) => {
           Err(CommandError {
-              name: $name,
-              error: err
+            name: $name,
+            error: err
           })
         }
       }
   };
 }
 
-fn main() {
-  if let Err(err) = bundle() {
+#[tokio::main]
+async fn main() {
+  if let Err(err) = bundle().await {
     println!("cargo::error=client asset bundler failed");
     println!("cargo::error={}", err);
   }
 }
 
-fn bundle() -> Result<(), Box<dyn core::error::Error>> {
-  let outdir =
-    std::env::var("OUT_DIR").expect("cargo did not set OUT_DIR env variable for build script.");
-  let outdir = PathBuf::from_str(&outdir).unwrap();
-  let profile =
-    std::env::var("PROFILE").expect("cargo did not set PROFILE env variable for build script.");
-
-  exec!("node", "--version").inspect_err(|_| {
-      println!(
-        "cargo::error=node is required for building the client assets. Make sure the system has nodejs installed."
-      );
-  })?;
-
-  match detect_package_manager() {
-    Some(PackageManager::Npm) => exec!("npm", "install")?,
-    Some(PackageManager::Pnpm) => exec!("pnpm", "install")?,
-    None => {
-      println!("cargo::error=npm or pnpm is required for initializing node_modules directory.");
-      return Ok(());
-    }
-  };
-
+async fn bundle() -> Result<(), Box<dyn core::error::Error>> {
+  let srcdir = PathBuf::from_str("./src/")?.canonicalize()?;
+  let outdir = std::env::var("OUT_DIR")?;
+  let profile = std::env::var("PROFILE")?;
   let minify: Option<&'static str> = if profile.eq_ignore_ascii_case("release") {
     Some("--minify")
   } else {
     None
   };
 
-  let style_css_path = format!("{}", outdir.join("style.css").display());
-  exec!(
-    "node",
-    "node_modules/@tailwindcss/cli/dist/index.mjs",
-    "-i",
-    "src/style.css",
-    "-o",
-    style_css_path,
-    minify
-  )?;
+  match detect_package_manager() {
+    Some(PackageManager::Npm) => exec!("npm", "install")?,
+    Some(PackageManager::Pnpm) => exec!("pnpm", "install")?,
+    None => {
+      println!("cargo::error=npm or pnpm is required for initializing node_modules directory.");
+      return Err(io::Error::from(io::ErrorKind::NotFound).into());
+    }
+  };
 
-  let outdir_arg = format!("--outdir={}", outdir.display());
-  exec!(
-    "node_modules/esbuild/bin/esbuild",
-    "src/index.js",
-    "--bundle",
-    "--format=iife",
-    "--target=es2020",
-    outdir_arg,
-    minify
-  )?;
+  let mut js_bundler = Bundler::new(BundlerOptions {
+    comments: Some(CommentsOptions {
+      jsdoc: false,
+      annotation: false,
+      legal: true,
+    }),
+    minify: Some(rolldown::RawMinifyOptions::Bool(minify.is_some())),
+    treeshake: rolldown::TreeshakeOptions::Boolean(true),
+    minify_internal_exports: Some(true),
+    optimization: Some(OptimizationOption {
+      inline_const: Some(rolldown::InlineConstOption::Bool(false)),
+      ..Default::default()
+    }),
+    polyfill_require: Some(false),
+    format: Some(OutputFormat::Iife),
+    platform: Some(Platform::Browser),
+    input: Some(vec!["./index.js".to_owned().into()]),
+    cwd: Some(srcdir),
+    clean_dir: Some(false),
+    dir: Some(outdir.clone()),
+    transform: Some(BundlerTransformOptions {
+      target: Some(rolldown::Either::Left("es2022".to_owned())),
+      ..Default::default()
+    }),
+    ..Default::default()
+  })?;
 
-  copy("static/icon.svg", outdir.join("icon.svg"))?;
+  exec!("node", "--version").inspect_err(|_| {
+    println!(
+      "cargo::error=node is required for building the client assets. Make sure the system has nodejs installed."
+    );
+  })?;
+
+  let outdir = PathBuf::from_str(&outdir)?;
+
+  js_bundler.write().await?;
+  exec!("node", "./postcss.build.js", outdir.join("style.css"))?;
+  copy("./static/icon.svg", outdir.join("icon.svg"))?;
   copy(
-    "static/feather-sprite.svg",
+    "./static/feather-sprite.svg",
     outdir.join("feather-sprite.svg"),
   )?;
 
@@ -132,10 +135,25 @@ fn bundle() -> Result<(), Box<dyn core::error::Error>> {
 
   println!("cargo::rerun-if-changed=src");
   println!("cargo::rerun-if-changed=static");
-  println!("cargo::rerun-if-changed=../nut_webgui/src/http/hypermedia");
+  println!("cargo::rerun-if-changed=postcss.build.js");
+  println!("cargo::rerun-if-changed=build.rs");
   println!("cargo::rerun-if-changed=package.json");
 
   Ok(())
+}
+
+fn detect_package_manager() -> Option<PackageManager> {
+  if let Ok(status) = exec!("pnpm", "--version")
+    && status.success()
+  {
+    Some(PackageManager::Pnpm)
+  } else if let Ok(status) = exec!("npm", "--version")
+    && status.success()
+  {
+    Some(PackageManager::Npm)
+  } else {
+    None
+  }
 }
 
 fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(), std::io::Error> {
@@ -146,11 +164,9 @@ fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(),
       src_dir.to_path_buf()
     }
   };
-
   let file_path = src_dir.join(file_name);
   let mut content: Vec<u8> = Vec::new();
   _ = File::open(&file_path)?.read_to_end(&mut content)?;
-
   let sha256 = calc_sha256(&content);
 
   println!(
@@ -171,20 +187,6 @@ fn calc_sha256(bytes: &[u8]) -> String {
   base16ct::lower::encode_string(&digest)
 }
 
-fn detect_package_manager() -> Option<PackageManager> {
-  if let Ok(status) = exec!("pnpm", "--version")
-    && status.success()
-  {
-    Some(PackageManager::Pnpm)
-  } else if let Ok(status) = exec!("npm", "--version")
-    && status.success()
-  {
-    Some(PackageManager::Npm)
-  } else {
-    None
-  }
-}
-
 impl core::fmt::Display for CommandError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     writeln!(f, "{}: {}", self.name, self.error)
@@ -192,27 +194,3 @@ impl core::fmt::Display for CommandError {
 }
 
 impl core::error::Error for CommandError {}
-
-impl IntoCliArg for &str {
-  #[inline]
-  fn into_cli_arg(&self) -> Option<&str> {
-    Some(self)
-  }
-}
-
-impl IntoCliArg for String {
-  #[inline]
-  fn into_cli_arg(&self) -> Option<&str> {
-    Some(self.as_str())
-  }
-}
-
-impl<T> IntoCliArg for Option<T>
-where
-  T: AsRef<str>,
-{
-  #[inline]
-  fn into_cli_arg(&self) -> Option<&str> {
-    self.as_ref().map(|v| v.as_ref())
-  }
-}

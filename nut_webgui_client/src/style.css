@@ -14,7 +14,7 @@
 @plugin "daisyui/theme" {
         name: "tokyo-night";
         default: false;
-        prefersdark: false;
+        prefersdark: true;
         color-scheme: "dark";
         --color-base-100: oklch(20.45% 0.018 284.72);
         --color-base-200: oklch(22.68% 0.023 280.66);
@@ -49,7 +49,7 @@
 @plugin "daisyui/theme" {
         name: "kanagawa-dragon";
         default: false;
-        prefersdark: false;
+        prefersdark: true;
         color-scheme: "dark";
         --color-base-100: oklch(18.10% 0.006 106.98);
         --color-base-200: oklch(22.64% 0.006 91.62);
