@@ -550,6 +550,13 @@ impl PartialEq<VarName> for VarName {
   }
 }
 
+impl PartialEq<VarName> for &VarName {
+  #[inline]
+  fn eq(&self, other: &VarName) -> bool {
+    (*self).eq(other)
+  }
+}
+
 impl Borrow<str> for VarName {
   #[inline]
   fn borrow(&self) -> &str {

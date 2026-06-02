@@ -6,36 +6,17 @@ use axum::{
 };
 use std::sync::Arc;
 
+#[derive(Clone, Copy)]
 pub enum HealthStatus {
   Degraded,
   Ok,
   Dead,
 }
 
+#[derive(Clone, Copy)]
 pub enum Readiness {
   Ready,
   NotReady,
-}
-
-impl IntoResponse for HealthStatus {
-  fn into_response(self) -> Response {
-    match self {
-      HealthStatus::Degraded => (StatusCode::OK, "DEGRADED"),
-      HealthStatus::Ok => (StatusCode::OK, "OK"),
-      HealthStatus::Dead => (StatusCode::INTERNAL_SERVER_ERROR, "DEAD"),
-    }
-    .into_response()
-  }
-}
-
-impl IntoResponse for Readiness {
-  fn into_response(self) -> Response {
-    match self {
-      Readiness::Ready => (StatusCode::OK, "READY"),
-      Readiness::NotReady => (StatusCode::SERVICE_UNAVAILABLE, "NOT-READY"),
-    }
-    .into_response()
-  }
 }
 
 pub async fn get_health(State(state): State<Arc<ServerState>>) -> HealthStatus {
@@ -107,5 +88,26 @@ pub async fn get_namespace_readiness(
       status.into_response()
     }
     None => (StatusCode::NOT_FOUND, "UPSD NAMESPACE DOES NOT EXIST").into_response(),
+  }
+}
+
+impl IntoResponse for HealthStatus {
+  fn into_response(self) -> Response {
+    match self {
+      HealthStatus::Degraded => (StatusCode::OK, "DEGRADED"),
+      HealthStatus::Ok => (StatusCode::OK, "OK"),
+      HealthStatus::Dead => (StatusCode::INTERNAL_SERVER_ERROR, "DEAD"),
+    }
+    .into_response()
+  }
+}
+
+impl IntoResponse for Readiness {
+  fn into_response(self) -> Response {
+    match self {
+      Readiness::Ready => (StatusCode::OK, "READY"),
+      Readiness::NotReady => (StatusCode::SERVICE_UNAVAILABLE, "NOT-READY"),
+    }
+    .into_response()
   }
 }

@@ -29,6 +29,7 @@ use tower_http::{
 pub mod event_api;
 pub mod hypermedia;
 pub mod json_api;
+pub mod metric;
 pub mod probe;
 
 pub struct HttpServer {
@@ -48,6 +49,7 @@ impl HttpServer {
     let data_api = create_data_routes(server_state.clone());
     let hypermedia_api = create_hypermedia_routes(server_state.clone());
     let event_api = create_event_routes(server_state.clone());
+    let metrics = create_metric_routes(server_state.clone());
 
     let middleware = ServiceBuilder::new()
       .layer(TraceLayer::new_for_http())
@@ -76,6 +78,7 @@ impl HttpServer {
     let router = Router::new()
       .nest("/api", data_api)
       .nest("/probes", probes)
+      .nest("/metrics", metrics)
       .nest("/events", event_api)
       .merge(hypermedia_api)
       .layer(middleware)
@@ -95,6 +98,23 @@ impl HttpServer {
       .with_graceful_shutdown(close_signal)
       .await
   }
+}
+
+#[inline]
+fn create_metric_routes(server_state: Arc<ServerState>) -> Router<Arc<ServerState>> {
+  Router::new()
+    .route("/", get(metric::get))
+    .fallback(|| async { StatusCode::NOT_FOUND })
+    .layer(
+      ServiceBuilder::new()
+        .layer(CorsLayer::permissive())
+        .option_layer(
+          server_state
+            .auth_user_store
+            .as_ref()
+            .map(|_| ApiAuthLayer::new(server_state.config.clone())),
+        ),
+    )
 }
 
 #[inline]

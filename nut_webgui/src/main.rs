@@ -1,3 +1,4 @@
+use self::openmetric::collector::UpsdStatCollector;
 use crate::{
   auth::{
     AUTH_COOKIE_DURATION,
@@ -36,7 +37,6 @@ use tokio::{
 };
 use tracing::{debug, error, info, level_filters::LevelFilter, warn};
 use tracing_subscriber::{
-  Registry,
   prelude::*,
   reload::{self, Handle},
 };
@@ -46,6 +46,7 @@ mod background_service;
 mod config;
 mod event;
 mod http;
+mod openmetric;
 mod skip_tls_verifier;
 mod state;
 mod sync;
@@ -80,7 +81,7 @@ fn main() -> ExitCode {
 
 #[inline]
 fn nut_webgui(
-  logger_handle: Handle<LevelFilter, Registry>,
+  logger_handle: Handle<LevelFilter, tracing_subscriber::Registry>,
 ) -> Result<(), Box<dyn core::error::Error>> {
   let config = match load_configs() {
     Err(ConfigError::Arguments(e)) => e.exit(),
@@ -133,17 +134,19 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
   let message_broadcast = MessageBroadcast::new(256);
   let auth_user_store = create_user_store(&config)?;
   let mut upsd_servers = HashMap::new();
+  let mut openmetrics = prometheus_client::registry::Registry::with_prefix("nutwg");
 
   for (name, upsd_cfg) in config.upsd.iter() {
     let namespace = UpsdNamespace::from(name.as_ref());
-    let upsd_state = UpsdState {
+    let upsd_state = Arc::new(UpsdState {
       config: upsd_cfg.clone(),
       daemon_state: RwLock::new(DaemonState::new()),
       connection_pool: create_pool(upsd_cfg)?,
       namespace: namespace.clone(),
-    };
+    });
 
-    upsd_servers.insert(namespace, Arc::new(upsd_state));
+    openmetrics.register_collector(Box::new(UpsdStatCollector::new(upsd_state.clone())));
+    upsd_servers.insert(namespace, upsd_state);
   }
 
   let server_state = Arc::new(ServerState {
@@ -152,6 +155,7 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
     message_broadcast: message_broadcast.clone(),
     shared_desc: RwLock::new(HashMap::new()),
     upsd_servers,
+    openmetrics,
   });
 
   let mut bg_services = BackgroundServiceRunner::new()

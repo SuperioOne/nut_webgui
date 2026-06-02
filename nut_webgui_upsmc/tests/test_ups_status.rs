@@ -79,3 +79,29 @@ fn modify_status() {
 
   assert_eq!(new_status, UpsStatus::ONLINE | UpsStatus::LOW_BATTERY);
 }
+
+#[test]
+fn not_status() {
+  let input = !(UpsStatus::CALIBRATING | UpsStatus::TEST | UpsStatus::BOOST | UpsStatus::ONLINE);
+
+  assert!(!input.has(UpsStatus::CALIBRATING));
+  assert!(!input.has(UpsStatus::TEST));
+  assert!(!input.has(UpsStatus::BOOST));
+  assert!(!input.has(UpsStatus::ONLINE));
+
+  assert!(input.has(UpsStatus::ALARM));
+  assert!(input.has(UpsStatus::BYPASS));
+  assert!(input.has(UpsStatus::CHARGING));
+  assert!(input.has(UpsStatus::COMM));
+  assert!(input.has(UpsStatus::DISCHARGE));
+  assert!(input.has(UpsStatus::FORCED_SHUTDOWN));
+  assert!(input.has(UpsStatus::LOW_BATTERY));
+  assert!(input.has(UpsStatus::NOCOMM));
+  assert!(input.has(UpsStatus::OFFLINE));
+  assert!(input.has(UpsStatus::ON_BATTERY));
+  assert!(input.has(UpsStatus::OVERLOADED));
+  assert!(input.has(UpsStatus::REPLACE_BATTERY));
+  assert!(input.has(UpsStatus::TICK));
+  assert!(input.has(UpsStatus::TOCK));
+  assert!(input.has(UpsStatus::TRIM));
+}

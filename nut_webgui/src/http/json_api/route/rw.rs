@@ -97,9 +97,9 @@ pub async fn patch(
         }
         Some(VarDetail::Range { min, max }) => {
           if body.value.is_numeric() {
-            match (min.as_lossly_f64(), max.as_lossly_f64()) {
+            match (min.as_lossy_f64(), max.as_lossy_f64()) {
               (Some(min), Some(max)) => {
-                let valuef64 = body.value.as_lossly_f64().unwrap_or(0.0);
+                let valuef64 = body.value.as_lossy_f64().unwrap_or(0.0);
 
                 if min <= valuef64 && valuef64 <= max {
                   Ok(())

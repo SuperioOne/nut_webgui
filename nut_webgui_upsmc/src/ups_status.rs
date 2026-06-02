@@ -41,7 +41,9 @@ macro_rules! impl_status {
       impl_status!(@const_val $order + 1, $($rest)*);
   };
 
-  (@const_val $order:expr,) => { };
+  (@const_val $order:expr,) => {
+      const INTERNAL_MASK: u32 = !0 >> (32 - $order);
+  };
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -198,6 +200,15 @@ impl core::ops::BitXorAssign for UpsStatus {
   #[inline]
   fn bitxor_assign(&mut self, rhs: Self) {
     self.0 ^= rhs.0;
+  }
+}
+
+impl core::ops::Not for UpsStatus {
+  type Output = Self;
+
+  #[inline]
+  fn not(self) -> Self::Output {
+    Self(!self.0 & Self::INTERNAL_MASK)
   }
 }
 

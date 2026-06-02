@@ -63,7 +63,7 @@ macro_rules! impl_unit {
       type Error = UnsupportedValueType;
 
       fn try_from(value: Value) -> Result<Self, Self::Error> {
-        match value.as_lossly_f64() {
+        match value.as_lossy_f64() {
           Some(v) => Ok(Self {
             raw_value: v,
             semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,
@@ -77,7 +77,7 @@ macro_rules! impl_unit {
       type Error = UnsupportedValueType;
 
       fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        match value.as_lossly_f64() {
+        match value.as_lossy_f64() {
           Some(v) => Ok(Self {
             raw_value: v,
             semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,
@@ -137,7 +137,7 @@ macro_rules! impl_unit {
       type Error = UnsupportedValueType;
 
       fn try_from(value: Value) -> Result<Self, Self::Error> {
-        match value.as_lossly_i64() {
+        match value.as_lossy_i64() {
           Some(v) => Ok(Self {
             raw_value: v,
             semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,
@@ -151,7 +151,7 @@ macro_rules! impl_unit {
       type Error = UnsupportedValueType;
 
       fn try_from(value: &Value) -> Result<Self, Self::Error> {
-        match value.as_lossly_i64() {
+        match value.as_lossy_i64() {
           Some(v) => Ok(Self {
             raw_value: v,
             semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,

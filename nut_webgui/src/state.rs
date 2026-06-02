@@ -17,19 +17,23 @@ pub type UpsdNamespace = Arc<str>;
 
 /// Server internal state.
 pub struct ServerState {
-  /// Connected UPSD servers
+  /// Connected UPSD servers.
   pub upsd_servers: HashMap<UpsdNamespace, Arc<UpsdState>>,
 
-  /// Shared description table for ups variables and commands.
+  /// Shared description table for UPS variables and commands.
   pub shared_desc: RwLock<HashMap<DescriptionKey, Box<str>>>,
 
-  /// Server configurations
+  /// Server configurations.
   pub config: Arc<ServerConfig>,
 
-  /// Optional user store for authentication
+  /// Optional user store for authentication.
   pub auth_user_store: Option<Arc<UserStore>>,
 
+  /// Shared message-broker for WebSocket connections.
   pub message_broadcast: MessageBroadcast,
+
+  /// OpenMetric registry for exporters.
+  pub openmetrics: prometheus_client::registry::Registry,
 }
 
 /// Individial UPSD connection state.

@@ -70,9 +70,9 @@ fn validate_request(request_value: Box<str>, detail: &VarDetail) -> ValidationRe
       }
     }
     VarDetail::Range { min, max } => match Value::infer_number_from(request_value.as_ref()) {
-      Ok(value) => match (min.as_lossly_f64(), max.as_lossly_f64()) {
+      Ok(value) => match (min.as_lossy_f64(), max.as_lossy_f64()) {
         (Some(min), Some(max)) => {
-          let valuef64 = value.as_lossly_f64().unwrap_or(0.0);
+          let valuef64 = value.as_lossy_f64().unwrap_or(0.0);
 
           if min <= valuef64 && valuef64 <= max {
             ValidationResult::Valid { value }

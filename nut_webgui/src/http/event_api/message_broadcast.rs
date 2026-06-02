@@ -106,8 +106,7 @@ impl SerializeTask {
 
     match payload {
       Ok(v) => {
-        let payload = Arc::from(v);
-        _ = self.broadcast.send(payload).inspect_err(|err| {
+        _ = self.broadcast.send(v).inspect_err(|err| {
           warn!(
           message = "sending serialized message data to broadcast channel failed",
           reason = %err)

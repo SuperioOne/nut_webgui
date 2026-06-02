@@ -135,7 +135,6 @@ pub async fn get(
         .render_with_config(&state.config, session.as_ref())?,
     )
     .into_response(),
-
     _ => Html(template.render_with_config(&state.config, session.as_ref())?).into_response(),
   };
 

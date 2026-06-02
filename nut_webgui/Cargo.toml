@@ -32,6 +32,7 @@ nut_webgui_upsmc = { path = "../nut_webgui_upsmc", features = [
 ] }
 libc = "0.2"
 getrandom = { version = "0.4" }
+prometheus-client = { version = "0.24" }
 rustls-platform-verifier = { version = "0.7" }
 serde = { version = "1", features = ["serde_derive"] }
 serde_json = { version = "1", features = ["raw_value"] }

@@ -28,13 +28,13 @@ impl DeviceEntry {
         let low_temp = self
           .variables
           .get(VarName::UPS_TEMPERATURE_LOW)
-          .and_then(|v| v.as_lossly_f64())
+          .and_then(|v| v.as_lossy_f64())
           .unwrap_or(0.0);
 
         let high_temp = self
           .variables
           .get(VarName::UPS_TEMPERATURE_HIGH)
-          .and_then(|v| v.as_lossly_f64())
+          .and_then(|v| v.as_lossy_f64())
           .unwrap_or(60.0);
 
         value.set_semantic_type(SemanticType::from_range(
@@ -70,13 +70,13 @@ impl DeviceEntry {
         let warn_level = self
           .variables
           .get(VarName::BATTERY_CHARGE_WARNING)
-          .and_then(|v| v.as_lossly_f64())
+          .and_then(|v| v.as_lossy_f64())
           .unwrap_or(50.0);
 
         let danger_level = self
           .variables
           .get(VarName::BATTERY_CHARGE_LOW)
-          .and_then(|v| v.as_lossly_f64())
+          .and_then(|v| v.as_lossy_f64())
           .unwrap_or(25.0);
 
         value.set_semantic_type(SemanticType::from_range_inverted(
@@ -99,7 +99,7 @@ impl DeviceEntry {
         let danger_level = self
           .variables
           .get(VarName::BATTERY_RUNTIME_LOW)
-          .and_then(|v| v.as_lossly_i64())
+          .and_then(|v| v.as_lossy_i64())
           .unwrap_or(60);
 
         if value.as_raw_value() < danger_level {
@@ -118,12 +118,12 @@ impl DeviceEntry {
     let load = self
       .variables
       .get(VarName::UPS_LOAD)
-      .and_then(|v| v.as_lossly_f64())?;
+      .and_then(|v| v.as_lossy_f64())?;
 
     let nominal_power = self
       .variables
       .get(VarName::UPS_REALPOWER_NOMINAL)
-      .and_then(|v| v.as_lossly_f64())?;
+      .and_then(|v| v.as_lossy_f64())?;
 
     let calc = (nominal_power * load / 100.0).round();
 
@@ -134,12 +134,12 @@ impl DeviceEntry {
     let load = self
       .variables
       .get(VarName::UPS_LOAD)
-      .and_then(|v| v.as_lossly_f64())?;
+      .and_then(|v| v.as_lossy_f64())?;
 
     let nominal = self
       .variables
       .get(VarName::UPS_POWER_NOMINAL)
-      .and_then(|v| v.as_lossly_f64())?;
+      .and_then(|v| v.as_lossy_f64())?;
 
     let calc = (nominal * load / 100.0).round();
 
@@ -174,12 +174,12 @@ impl DeviceEntry {
         let low_volt = self
           .variables
           .get(VarName::INPUT_VOLTAGE_LOW_CRITICAL)
-          .and_then(|v| v.as_lossly_f64());
+          .and_then(|v| v.as_lossy_f64());
 
         let high_volt = self
           .variables
           .get(VarName::INPUT_VOLTAGE_HIGH_CRITICAL)
-          .and_then(|v| v.as_lossly_f64());
+          .and_then(|v| v.as_lossy_f64());
 
         let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
           || high_volt.is_some_and(|target| value.as_raw_value() >= target)
@@ -205,12 +205,12 @@ impl DeviceEntry {
         let low_volt = self
           .variables
           .get(VarName::OUTPUT_VOLTAGE_LOW)
-          .and_then(|v| v.as_lossly_f64());
+          .and_then(|v| v.as_lossy_f64());
 
         let high_volt = self
           .variables
           .get(VarName::OUTPUT_VOLTAGE_HIGH)
-          .and_then(|v| v.as_lossly_f64());
+          .and_then(|v| v.as_lossy_f64());
 
         let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
           || high_volt.is_some_and(|target| value.as_raw_value() >= target)
@@ -236,12 +236,12 @@ impl DeviceEntry {
         let low_volt = self
           .variables
           .get(VarName::BATTERY_VOLTAGE_LOW)
-          .and_then(|v| v.as_lossly_f64());
+          .and_then(|v| v.as_lossy_f64());
 
         let high_volt = self
           .variables
           .get(VarName::BATTERY_VOLTAGE_HIGH)
-          .and_then(|v| v.as_lossly_f64());
+          .and_then(|v| v.as_lossy_f64());
 
         let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
           || high_volt.is_some_and(|target| value.as_raw_value() >= target)
