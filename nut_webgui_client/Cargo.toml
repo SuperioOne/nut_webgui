@@ -15,4 +15,5 @@ repository.workspace = true
 sha2 = "0.11"
 base16ct = { version = "1", features = ["alloc"] }
 rolldown = { version = "1.0.3" }
+blake3 = { version = "1", features = ["pure", "no_avx2", "no_avx512", "no_neon", "no_sse2", "no_sse41"]}
 tokio = { version = "1" }

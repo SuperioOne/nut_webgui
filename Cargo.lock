@@ -1727,6 +1727,7 @@ name = "nut_webgui_client"
 version = "0.9.2"
 dependencies = [
  "base16ct",
+ "blake3",
  "rolldown",
  "sha2",
  "tokio",
