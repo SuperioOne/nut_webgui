@@ -1,4 +1,6 @@
-use super::known_metric::{KnownMetricDescriptors, METRIC_UPS_STATUS, METRIC_UPS_STATUS_HELP};
+use super::known_metric::{
+  Either, KnownMetricDescriptors, METRIC_UPS_STATUS, METRIC_UPS_STATUS_HELP,
+};
 use crate::state::UpsdState;
 use prometheus_client::{
   collector::Collector,
@@ -78,7 +80,10 @@ impl Collector for UpsdStatCollector {
           let mut metric_encoder = encoder.encode_descriptor(
             descriptor.name,
             descriptor.help,
-            descriptor.unit.as_ref(),
+            descriptor.unit.as_ref().map(|v| match v {
+              Either::L(u) => u,
+              Either::R(u) => *u,
+            }),
             descriptor.metric_type,
           )?;
 
