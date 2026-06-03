@@ -6,6 +6,7 @@
 Required host tools are:
   - make
   - cargo
+  - rust 1.95
   - node
   - pnpm or npm
   - jq
@@ -33,7 +34,7 @@ Multi-Arch Container Images:
   - Qemu emulators for each target architecture.
   - Any OCI compliant image building tool of your choice (Buildah, Docker, Podman).
 
-### Building Binaries
+### Building binaries
 
 > To list all available recipes, use `make help`.
 
@@ -57,7 +58,7 @@ make gen-dockerfiles
 # Output location ./bin/dockerfiles
 ```
 
-# Development and Testing
+# Development and testing
 
 1. Clone the git repository.
 

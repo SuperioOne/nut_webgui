@@ -1,10 +1,9 @@
 # Configuration: Volumes and Arguments
 
-## 1. Mounting a Configuration File
+## Mounting a configuration file
 
-You can create a `config.toml` file on your host machine and mount it directly into the container.
+Create a `config.toml` on your host and mount it into the container:
 
-*Create a basic `config.toml`*
 ```bash
 echo 'version = "1"
 
@@ -16,7 +15,7 @@ password = "test"
 ' > config.toml;
 ```
 
-*Run nut_webgui with the `config.toml` file*
+*Start nut_webgui with the `config.toml` file*
 ```bash
 docker run \
   -p 9000:9000 \
@@ -24,11 +23,12 @@ docker run \
   ghcr.io/superioone/nut_webgui:latest
 ```
 
-## 2. Using an Auto-Generated Configuration
+## Using an auto-generated configuration
 
-If a configuration file is not found at the default location (`/etc/nut_webgui/config.toml`), `nut_webgui` will automatically generate a new one. You can mount a directory to this location to persist the generated file and edit it on the host.
+If no config exists at `/etc/nut_webgui/config.toml`, `nut_webgui` generates one
+automatically. You can mount an empty directory to `/etc/nut_webgui` to persist
+generated file.
 
-*Create an empty directory and mount it to nut_webgui's config directory*
 ```bash
 mkdir app_config
 
@@ -38,16 +38,19 @@ docker run \
   ghcr.io/superioone/nut_webgui:latest
 ```
 
-*After container starts, generated `config.toml` can be read/edited on the host machine*
+After container starts, generated `config.toml` can be read/edited on the host
+machine.
+
 ```bash
 cat app_config/config.toml
 ```
 
-> **Note:** The container must be restarted for any changes to the configuration file to take effect. The file is not reloaded automatically.
+> **Note:** Changes require a container restart; the config is not hot-reloaded.
 
-## 3. Using CLI Arguments
+## Using CLI arguments
 
-You can also override settings by passing arguments directly to the server command.
+You can also override settings by passing arguments directly to the server
+command.
 
 ```bash
 docker run \

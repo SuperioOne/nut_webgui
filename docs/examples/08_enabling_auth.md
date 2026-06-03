@@ -9,7 +9,7 @@ Authentication can be enabled in one of the following ways:
   users_file = "/etc/nut_webgui/users.toml"
   ```
 
-## 1. Creating the Users File
+## 1. Creating the users file
 
 Create a `users.toml` file to define users, passwords, and permissions.
 
@@ -17,13 +17,13 @@ Create a `users.toml` file to define users, passwords, and permissions.
 ```toml
 [username]
 password = "asdf"
-permissions = ["setvar", "instcmd", "fsd"]  # Optional: Grant additional permissions.
+permissions = ["setvar", "instcmd", "fsd"]  # Grant additional permissions.
 
 [username2]
 password = "passw0rd"
 
 [spear-of-democracy]
-password = "⇩⇧⇨⇧⇦⇨" # Passwords do not have any character limit.
+password = "⇩⇧⇨⇧⇦⇨"  # Passwords do not have any character limit.
 permissions = ["instcmd"]
 
 [sector-g-admin]
@@ -31,9 +31,9 @@ password = "otis123"
 permissions = ["fsd"]
 ```
 
-## 2. Mount Users File to Container
+## 2. Mount users file to container
 
-Example `docker-compose.yaml` that uses secrets to mount `users.toml` file.
+Example `docker-compose.yaml` that uses secrets to mount the `users.toml` file.
 
 **docker-compose.yaml**
 ```yaml
@@ -61,7 +61,7 @@ secrets:
     file: ./users.toml
 ```
 
-Example CLI argument to mount `users.toml` file.
+Example CLI argument to mount the `users.toml` file.
 
 ```shell
 docker run \
@@ -71,13 +71,20 @@ docker run \
   ghcr.io/superioone/nut_webgui:latest
 ```
 
-## 3. (Optional) Persisting the Server Key
+## 3. (Optional) Persisting the server key
 
-All user sessions are signed with a server key. Changing this key invalidates all existing user sessions and API keys. To preserve sessions across container restarts or synchronize sessions across multiple instances, the server key must be persisted.
+All user sessions are signed with a server key. Changing this key invalidates
+all existing user sessions and API keys. To preserve sessions across container
+restarts or synchronize sessions across multiple instances, the server key must
+be persisted.
 
-On startup, `nut_webgui` automatically generates a server key at `/etc/nut_webgui/server.key` if one does not already exist and no custom key is provided.
+On startup, `nut_webgui` automatically generates a server key at
+`/etc/nut_webgui/server.key` if one does not already exist and no custom key is
+provided.
 
-For single-instance deployments, you can persist the automatically generated key by mounting the `/etc/nut_webgui` directory to a volume. This ensures the same key is used when the container restarts.
+For single-instance deployments, you can persist the automatically generated key
+by mounting the `/etc/nut_webgui` directory to a volume. This ensures the same
+key is used when the container restarts.
 
 ```yaml
 # Part of docker-compose.yaml
@@ -90,7 +97,9 @@ volumes:
 # ...
 ```
 
-For multi-instance deployments (e.g., behind a load balancer), all instances must use the same server key. You can achieve this by providing a custom key via an environment variable, file/secret.
+For multi-instance deployments (e.g., behind a load balancer), all instances
+must use the same server key. You can achieve this by providing a custom key via
+an environment variable, file, or secret.
 
 The example below shows how to provide a key for a replicated service.
 
@@ -124,11 +133,13 @@ secrets:
     file: ./users.toml
 ```
 
-## API Keys
+## API keys
 
-When authentication is enabled, all `/api` endpoints require `Bearer` token authorization. You can create and manage API keys on the `/api-keys` page.
+When authentication is enabled, all `/api` endpoints require `Bearer` token
+authorization. You can create and manage API keys on the `/api-keys` page.
 
-> You can only issue API keys that have the same or fewer permissions than your own.
+> You can only issue API keys that have the same or fewer permissions than your
+> own.
 
 ![key_menu](../images/api_keys.webp)
 

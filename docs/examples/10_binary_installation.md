@@ -2,13 +2,13 @@
 
 ## Method 1: install.sh script
 
-`install.sh` script automatically detects the system configuration and installs `nut_webgui`.
-It also creates empty `/etc/nut_webgui/config.toml` file and systemd `nut_webgui.service`
-if they're not already present on the system.
+`install.sh` script automatically detects the system configuration and installs
+`nut_webgui`. It also creates empty `/etc/nut_webgui/config.toml` file and
+systemd `nut_webgui.service` if they're not already present on the system.
 
 > For x86_64, please note that install script does not check CPU flags to detect
-> micro-architecture levels. See `Custom Target` section if you want to take advantage of
-> the modern features such as AVX512.
+> micro-architecture levels. See `Custom Target` section if you want to take
+> advantage of the modern features such as AVX512.
 
 ### Steps
 1. Download
@@ -25,8 +25,7 @@ if they're not already present on the system.
    sh ./install.sh
    ```
 
-
-Or pipe curl output into `sh` directly (* *Insert Michael worried meme here* *):
+Or pipe the curl output directly into `sh` (* *Insert Michael worried meme here* *):
  ```shell
 curl -sfL https://github.com/SuperioOne/nut_webgui/releases/download/v0.9.2/install.sh | sh -
 ```
@@ -73,7 +72,8 @@ rm -r /etc/nut_webgui
 
 `nut_webgui` can be build and install directly from the source code.
 
-> This installation method does not create systemd service or empty config.toml file.
+> This installation method does not create systemd service or empty config.toml
+> file.
 
 **Prerequisites:**
    - cargo
@@ -112,8 +112,9 @@ cargo install --git https://github.com/SuperioOne/nut_webgui.git
 
 ## Method 3: I use Arch Linux btw™
 
-A `PKGBUILD` file is available on the [releases page](https://github.com/SuperioOne/nut_webgui/releases). 
-Similar to `install.sh`, it creates `systemd` service and empty config file.
+A `PKGBUILD` file is available on the 
+[releases page](https://github.com/SuperioOne/nut_webgui/releases). Similar to
+`install.sh`, it creates `systemd` service and empty config file.
 
 > Package is currently not available on AUR.
 
@@ -124,8 +125,11 @@ makepkg -i
 
 ## Method 4: Extracting tar archive
 
-`nut_webgui` is only a single executable and does not require any runtime dependency*.
-You can simply download and extract the tar archive from the [releases page](https://github.com/SuperioOne/nut_webgui/releases) to anywhere you want.
+`nut_webgui` is only a single executable and does not require any runtime
+dependency*. You can simply download and extract the tar archive from the
+[releases page](https://github.com/SuperioOne/nut_webgui/releases) to anywhere
+you want.
 
-> `*` The only exceptions are `*-gnu` targets, they link with `glibc`. This is only relevant if you use a distro with different libc implementation such as Alpine Linux.
-
+> `*` The only exceptions are `*-gnu` targets, they link with `glibc`. This is
+> only relevant if you use a distro with different libc implementation such as
+> Alpine Linux.

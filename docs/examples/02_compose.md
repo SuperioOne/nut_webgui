@@ -1,7 +1,8 @@
 # Docker Compose Examples
 
-## Basic Usage
+## Basic usage
 
+Example topology:
 ```
 ┌──────┐
 │ UPS1 ├──┐                                                  ┌─┐
@@ -40,14 +41,11 @@ services:
 
 volumes:
   config-data:
-
-# You can add other services here, such as a reverse proxy.
 ```
 
-## Same Host
+## Same host
 
-This setup is for when `nut_webgui` and the NUT service are running on the same network space. Using `network_mode: host` allows `nut_webgui` to connect to the NUT service via `localhost`.
-
+Example topology:
 ```
 ┌──────┐
 │ UPS1 ├──┐                         ┌─┐
@@ -62,6 +60,10 @@ This setup is for when `nut_webgui` and the NUT service are running on the same 
 └──────┘
 ```
 
+This setup is for when `nut_webgui` and the NUT service are running on the host
+network space. Using `network_mode: host` allows `nut_webgui` to connect to the
+NUT service via `localhost`.
+
 **docker-compose.yaml**
 ```yaml
 version: "3.3"
@@ -69,7 +71,7 @@ services:
   nutweb:
     image: ghcr.io/superioone/nut_webgui:latest
     restart: always
-    network_mode: host         # Use the host's network stack.
+    network_mode: host       # Use the host's network stack.
     environment:
       POLL_FREQ: "60"
       POLL_INTERVAL: "5"
@@ -77,13 +79,15 @@ services:
       UPSD_PORT: "3493"
       UPSD_USER: "admin"
       UPSD_PASS: "test"
-      PORT: "80"               # The container will listen on port 80 of the host.
+      PORT: "80"             # The container will listen on port 80 of the host.
       LOG_LEVEL: "debug"
 ```
 
-## Using Docker Secrets
+## Using Docker secrets
 
-You can use Docker secrets to manage sensitive information like passwords and configuration files. All environment variables support loading their values from files.
+[Docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/) can be
+used for managing sensitive informations like passwords and other configuration
+files.
 
 **docker-compose.yaml**
 ```yaml
@@ -111,5 +115,3 @@ secrets:
   config_file:
     file: ./other_configs.toml
 ```
-
-

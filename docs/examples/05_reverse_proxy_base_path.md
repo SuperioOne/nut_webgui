@@ -1,6 +1,7 @@
 # Custom base path for reverse proxy
 
-`nut_webgui` supports base path overrides, which is useful if you're using path-based routing between multiple services on the same hostname.
+`nut_webgui` supports base path overrides, which is useful if you're using 
+path-based routing between multiple services on the same hostname.
 
 The base path can be configured in three ways:
 - Via `config.toml`
@@ -12,16 +13,20 @@ The base path can be configured in three ways:
 
     #... other configs
     ```
-- Via environment variables: Set either `NUTWG__HTTP_SERVER__BASE_PATH` or `BASE_PATH`.
+- Via environment variables: Set either `NUTWG__HTTP_SERVER__BASE_PATH` or
+  `BASE_PATH`.
 - Via CLI argumennt: Use the flag `--base-path 'uk/birmingham/nut'`
 
 ## Base path rules
 
 - Allows multiple path segments (e.g. `segment1/segment2/...`).
-- Whitespaces and trailing forward slashes (`/`) are trimmed. For example, `   base_path   /` and `/base_path/` are treated as the same.
-- Percent encoded characters are not supported.
-- Unlike RFC3986 path definition, the `:` character is not allowed. However, you can still define some questionable base paths such as `(-_-)/(@_@)/($_$)/nut-xyz.monitor/`
-
+- Leading/trailing whitespace and trailing forward slashes (`/`) are
+  automatically trimmed. For example, `   base_path   /` and `/base_path/` are
+  treated as the same.
+- Percent-encoded characters are not supported.
+- Unlike RFC3986 path definition, the `:` character is not allowed. However, you
+  can still define some questionable base paths such as
+  `(-_-)/(@_@)/($_$)/nut-xyz.monitor/`
 
 ## Example case: `services/nut-web` as base path
 

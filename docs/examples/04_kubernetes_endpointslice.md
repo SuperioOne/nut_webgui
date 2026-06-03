@@ -1,9 +1,11 @@
 # Kubernetes: Connecting with an EndpointSlice
 
-If your NUT (Network UPS Tools) service is running outside the Kubernetes cluster, you can use a `Service` and `EndpointSlice` to make it discoverable within the cluster. This approach allows you to refer to the external service by a local Kubernetes DNS name (e.g., `nut-service`), just as you would with any other service running inside the cluster.
+When your NUT service runs outside the cluster, you can use a `Service` and
+`EndpointSlice` to expose it internally. This enables DNS-based discovery within
+the cluster (e.g., `nut-service`).
 
-## Topology
 
+Example topology:
 ```
  ┌──────┐                                   Kubernetes
  │ UPS1 ├──┐                                 Cluster
@@ -18,9 +20,11 @@ If your NUT (Network UPS Tools) service is running outside the Kubernetes cluste
  └──────┘
 ```
 
-## 1. Exposing the External NUT Service
+## 1. Exposing the external NUT service
 
-First, create a `Service` without a selector and an `EndpointSlice` that points to the external IP address of your NUT service. This makes the external service available at `nut-service.default.svc.cluster.local` (or simply `nut-service` from within the same namespace).
+Create a headless `Service` and an `EndpointSlice` pointing to your external NUT
+daemon. This resolves `nut-service` (`nut-service.default.svc.cluster.local`) to
+the external IP inside the cluster.
 
 **nut-external-service.yaml**
 ```yaml
@@ -56,9 +60,7 @@ endpoints:
 
 ## 2. Deploying nut_webgui
 
-Now, you can deploy `nut_webgui` and configure it to connect to the NUT service using the Kubernetes service name (`nut-service`) you just created.
-
-The following manifests define the `nut_webgui` Deployment, its Service, and the Secret for its credentials.
+Configure `nut_webgui` to route traffic to the internal `nut-service` DNS name.
 
 **nut-webgui-secret.yaml**
 ```yaml
@@ -147,9 +149,7 @@ spec:
             periodSeconds: 30
 ```
 
-## Applying the Configuration
-
-You can apply these manifest files to your cluster using `kubectl`.
+## 3. Applying the manifest files
 
 ```bash
 kubectl apply -f nut-external-service.yaml

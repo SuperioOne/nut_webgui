@@ -1,6 +1,6 @@
 # NUT Web GUI
 
-Light weight web interface for [Network UPS Tools](https://networkupstools.org/).
+Lightweight web interface for [Network UPS Tools](https://networkupstools.org/).
 
 ![DetailImage](docs/images/views.webp)
 
@@ -16,6 +16,12 @@ docker run -p 9000:9000 \
   ghcr.io/superioone/nut_webgui:latest
 ```
 
+Container image registries:
+ - **Codeberg:**
+     codeberg.org/superiorone/nut_webgui:latest
+ - **GitHub:**
+    ghcr.io/superioone/nut_webgui:latest
+
 ## Features
 
 - Monitors UPS variables with auto-refresh.
@@ -24,7 +30,8 @@ docker run -p 9000:9000 \
 - Basic JSON API.
 - Supports RISC-V and older ARM devices.
 
-> In order to run `INSTCMD` and `FSD`, make sure the configured user has proper privileges given at `upsd.users`. See
+> In order to run `INSTCMD` and `FSD`, make sure the configured user has the 
+> proper privileges in `upsd.users`. See
 > man([upsd.users](https://networkupstools.org/docs/man/upsd.users.html)).
 
 ## Examples/How-To's
@@ -40,47 +47,54 @@ docker run -p 9000:9000 \
 - [Connecting multiple NUT servers](docs/examples/09_multiple_nut_connection.md)
 - [Binary installation](docs/examples/10_binary_installation.md)
 - [Events API](docs/examples/11_events_api.md)
+- [OpenMetrics](docs/examples/12_openmetrics.md)
 
 ## CPU architecture support
 
 | Arch     | Test Hardware          | Notes                                                                                         |
 |----------|------------------------|-----------------------------------------------------------------------------------------------|
 | amd64    | AM4 CPU                | Works across all amd64 platforms.                                                             |
-| amd64-v3 | AM4 CPU                | Snake oil level optimizations with AVX. It mostly improves response compression, and TLS.     |
-| amd64-v4 | Intel® SDE             | Snake oil level optimizations with AVX-512. It mostly improves response compression, and TLS. |
+| amd64-v3 | AM4 CPU                | Snake-oil level optimizations with AVX. It mostly improves response compression, and TLS.     |
+| amd64-v4 | Intel® SDE             | Snake-oil level optimizations with AVX-512. It mostly improves response compression, and TLS. |
 | arm64    | Raspberry Pi 4 Model B |                                                                                               |
 | armv7    | Qemu emulation         | Uses software floating-point.                                                                 |
 | armv6    | Qemu emulation         | Uses software floating-point.                                                                 |
 | riscv64  | Qemu emulation         |                                                                                               |
 
-> amd64 v3 and v4 variants require certain CPU feature flags to run. If you are a crackhead min-max enjoyer (like me), you can use 
-> `nut_webgui:latest-amd64-v3` and `nut_webgui:latest-amd64-v4` images.
->
-> See [x86-64 Microarchitecture levels](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels) for more details.
+> amd64 v3 and v4 variants require certain CPU feature flags to run. If you are
+> a crackhead min-max enjoyer (like me), you can use `nut_webgui:latest-amd64-v3`
+> and `nut_webgui:latest-amd64-v4` images.
+> See [x86-64 Microarchitecture levels](https://en.wikipedia.org/wiki/X86-64#Microarchitecture_levels)
+> for more details.
 
 ## Configuration
 
-nut_webgui can be configured via args, environment variables, or config file. All configuration options are merged into single unified config based on their priority.
+nut_webgui can be configured via args, environment variables, or config file.
+All configuration options are merged into single unified config based on their
+priority.
 
 ### CLI arguments
 
 CLI arguments hold the highest priority in configuration settings.
 
-* `--allow-env`: Allows application to load configuration from environment variables.
+* `--allow-env`: Allows application to load configuration from environment
+variables.
 * `--base-path`: Overrides HTTP server base path. Default is `/`.
 * `--config-file`: config.toml path.
 * `--default-theme`: Web UI default theme.
 * `--listen`: Listen address for the HTTP server. Default is `0.0.0.0`.
 * `--log-level`: Log level for the HTTP server. Default is `info`.
 * `--port`: Port used by the HTTP server. Default is `9000`.
-* `--server-key`: Private server key value. Default is randomly auto-generated value.
+* `--server-key`: Private server key value. Default is randomly auto-generated
+value.
 * `--with-auth`: Enables authentication with `user.toml` file.
 * `--worker-count`: Sets HTTP server worker count.
 
 ### Container image environment variables
 
-Environment variables have the second-highest priority in configuration settings. They can also accept file paths as values. When an environment variable 
-specifies a file path, the system automatically reads content of that file as a value.
+Environment variables have the second-highest priority in configuration
+settings. Accepts direct values or file paths (automatically reads file
+contents).
 
 #### General
 
@@ -99,7 +113,9 @@ specifies a file path, the system automatically reads content of that file as a 
 
 #### Default UPSD
 
-If you only connect to a single NUT server and want to keep configurations simple as possible, connection details can be configured via `NUTWG__UPSD__*` environment variables.
+If you only connect to a single NUT server and want to keep configurations
+simple as possible, connection details can be configured via `NUTWG__UPSD__*`
+environment variables.
 
 | Name                          | Alias (Container Only) | Default     | Value                       | Description                                                       |
 |-------------------------------|------------------------|-------------|-----------------------------|-------------------------------------------------------------------|
@@ -116,8 +132,9 @@ If you only connect to a single NUT server and want to keep configurations simpl
 
 ### TOML config
 
-Config.toml has the least priority, but it's recommended to use the config file as a baseline configuration and use environment variables or command-line arguments 
-to override settings when needed.
+Config.toml has the least priority, but it's recommended to use the config file
+as a baseline configuration and use environment variables and command-line
+arguments to override settings when needed.
 
 ```toml
 version = "1"
@@ -153,21 +170,25 @@ For more detailed config template see [./dist/config.toml](./dist/config.toml).
 
 ### UniFi NUT Specific Configuration
 
-The current UniFi NUT server supports up to 3 client connections, and when this limit is exceeded, the server restarts itself. To prevent this issue,
+The current UniFi NUT server supports up to 3 client connections, and when this
+limit is exceeded, the server restarts itself. To prevent this issue,
 **set the maximum connection limit to 1** using one of the following methods:
 
-- Set the `NUTWG__UPSD__MAX_CONNECTION` environment variable if you are using a single NUT server
+- Set the `NUTWG__UPSD__MAX_CONNECTION` environment variable if you are using
+a single NUT server
 - Configure `max_connection` in the `config.toml` file
 
 ## JSON data API
 
-A simple JSON-based API is available for integration and automation purposes.
+A simple JSON-based API is available for general-purpose integrations.
 
-OpenAPI 3.0.0 specification files: [json](docs/api_specs/openapi3_spec.json) | [yaml](docs/api_specs/openapi3_spec.yaml)
+OpenAPI 3.0.0 specification files: [json](docs/api_specs/openapi3_spec.json)
+| [yaml](docs/api_specs/openapi3_spec.yaml)
 
 ## Events API
 
-`/events` WebSocket endpoint can be used for reading UPS events. For more details see [Events API](docs/examples/11_events_api.md).
+Real-time UPS events can read via WebSocket at `/events`. For more details see
+[Events API](docs/examples/11_events_api.md).
 
 ## Probes
 
@@ -175,10 +196,16 @@ nut_webgui has basic probe endpoints to check server health and readiness:
 - `/probes/health`
 - `/probes/readiness`
 
-If you've multiple NUT server connections, you can also probe the individual connection
+If you've multiple NUT server connections, you can also probe the individual
+connection:
 
 - `/probes/health/<namespace>`
 - `/probes/readiness/<namespace>`
+
+## OpenMetrics
+
+UPS metrics can be scraped from `/metrics` endpoint. For more details see the 
+[OpenMetrics](docs/examples/12_openmetrics.md).
 
 ## Building from source and debugging
 

@@ -1,6 +1,7 @@
 # Multiple NUT Connection
 
-Multiple NUT server connection can be defined in `config.toml` using the `upsd.<namespace>` syntax.
+Connections to multiple NUT servers can be configured in `config.toml` using the
+`upsd.<namespace>` syntax.
 
 **config.toml**
 ```toml
@@ -27,7 +28,7 @@ poll_freq = 10
 poll_interval = 1
 tls_mode = "strict"
 
-# Connection with default configurations
+# Connection with default values
 [upsd.haruna]
 ## Default values are:
 # address = "localhost"
@@ -41,7 +42,7 @@ tls_mode = "strict"
 ## ... Other config.toml options ...
 ```
 
-Example config.toml with inline tables:
+Exact same `config.toml` with inline tables:
 ```toml
 version = "1"
 
@@ -65,7 +66,7 @@ kirishima = {
 haruna = {}
 ```
 
-After creating the `config.toml`, it can be mounted into the container.
+After creating `config.toml`, mount it into the container.
 
 **docker/podman run**
 ```bash
@@ -99,7 +100,8 @@ secrets:
 ## Notes
 
 - Namespaces must be unique.
-- UPS devices are always referred by their namespace, allowing the use of the same UPS name under different namespaces. For example: `ups@kongou` and `ups@hiei`.
-- The same NUT server address and port can be added multiple times as different namespace. This is kinda useless feature for 99.99% of users but is available as an option.
-
-
+- UPS devices are always referred to by their namespace, allowing the same UPS
+  name to exist across different namespaces (e.g., `ups@kongou` and `ups@hiei`).
+- The same NUT server address and port can be registered under multiple
+  namespaces. This is kinda useless feature for 99.99% of users but still
+  available as an option.

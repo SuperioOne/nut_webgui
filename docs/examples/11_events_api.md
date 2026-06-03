@@ -3,7 +3,7 @@
 ## Basic example
 *“Let's see Paul Allen's code”*
 
-Instead of a long and boring wall of text, here's a basic example using Nodejs.
+Instead of a long and boring wall of text, here's a basic example using Node.js.
 
 ```javascript
 #!/bin/node
@@ -31,10 +31,9 @@ socket.addEventListener("message", (event) => {
       break;
 
     case "HandshakeError":
-      // Think of the server as a tsundere character. It calls you a baka and closes the
-      // socket connection when the login attempt fails. Do not bother sending
-      // any other LOGIN messages after this. Simply create a new socket connection
-      // and try again with the proper API key.
+      // Authentication failed. The server closes the connection immediately.
+      // Do not send any other LOGIN messages. Create a new socket connection
+      // and try again with the correct API key.
       console.warn(`Server is mad at you: ${msg.message}`);
       break;
 
@@ -185,32 +184,37 @@ type NutEventMessage =
 
 ## Initializing the connection
 
-When authentication is enabled, the Events API requires authentication through a WebSocket connection.
-The server will send a `WaitingForAuth` message first. The client must respond with a `LOGIN:APIKEY` command
-within 30 seconds. 
+When authentication is enabled, the Events API requires authentication through a
+WebSocket connection. The server will send a `WaitingForAuth` message first. The
+client must respond with a `LOGIN:APIKEY` command within 30 seconds.
 
-If authentication fails, the server will send a `HandshakeError` message and close
-the connection. The client should create a new socket connection and try again with the proper API key.
+If authentication fails, the server will send a `HandshakeError` message and
+close the connection. The client should create a new socket connection and try
+again with the proper API key.
 
-If authentication succeeds, the server will respond with an `AuthOk` message, and it'll start sending event
-messages.
+If authentication succeeds, the server will respond with an `AuthOk` message,
+and it'll start sending event messages.
 
-Other than login command, connection is unidirectional. If you send any other message through the
-socket, server simply closes the socket.
+Other than login command, connection is unidirectional. If you send any other
+message through the socket, server simply closes the socket.
 
 ## Message types
 
-All messages are in JSON formatted text. The Events API supports several message types for monitoring UPS devices and system status:
+All messages are in JSON formatted text. The Events API supports several message
+types for monitoring UPS devices and system status:
 
-   - **DeviceConnected** - Communication established with an UPS device
-   - **DeviceRemoved** - An UPS device has been removed from the system (NUT server no longer lists the UPS)
-   - **DeviceUpdate** - Information about a device has been updated
-   - **DeviceStatus** - Status of a device has changed, including old and new status values and associated events
-   - **DaemonStatus** - Status of the UPSD server has changed (Online, Dead, or Not Ready)
-   - **ClientConnect** - A 'monitoring' client has attached to the UPS device
-   - **ClientDisconnect** - A 'monitoring' client has detached from the UPS device
-   - **HandshakeError** - Authentication failed with error details
-   - **SessionEnded** - The session has ended
-   - **WaitingForAuth** - Authentication is required
-   - **AuthOk** - Authentication successful
+- **DeviceConnected** - Communication established with an UPS device
+- **DeviceRemoved** - An UPS device has been removed from the system (NUT server
+  no longer lists the UPS)
+- **DeviceUpdate** - Information about a device has been updated
+- **DeviceStatus** - Status of a device has changed, including old and new
+  status values and associated events
+- **DaemonStatus** - Status of the UPSD server has changed (Online, Dead, or
+  Not Ready)
+- **ClientConnect** - A 'monitoring' client has attached to the UPS device
+- **ClientDisconnect** - A 'monitoring' client has detached from the UPS device
+- **HandshakeError** - Authentication failed with error details
+- **SessionEnded** - The session has ended
+- **WaitingForAuth** - Authentication is required
+- **AuthOk** - Authentication successful
 
