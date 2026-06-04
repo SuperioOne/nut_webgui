@@ -98,18 +98,18 @@ contents).
 
 #### General
 
-| Name                             | Alias (Container Only) | Default                       | Value                                       | Description                                                 |
-|----------------------------------|------------------------|-------------------------------|---------------------------------------------|-------------------------------------------------------------|
-|`NUTWG__CONFIG_FILE`              |`CONFIG_FILE`           |`/etc/nut_webgui/config.toml`  |File path                                    |Custom `config.toml` file path.                              |
-|`NUTWG__DEFAULT_THEME`            |`DEFAULT_THEME`         |None                           |See [config.toml](./dist/config.toml)        |Web UI default theme.                                        |
-|`NUTWG__LOG_LEVEL`                |`LOG_LEVEL`             |`info`                         |`error`, `warn`, `info`, `debug`, `trace`    |Log level.                                                   |
-|`NUTWG__SERVER_KEY`               |`SERVER_KEY`            |`/etc/nut_webgui/server.key`   |File path, UTF-8 string                      |Server sign key used for signing session tokens.             |
-|`NUTWG__AUTH__USERS_FILE`         |`AUTH_USERS_FILE`       |None                           |File path                                    |Enables authentication with the provided `users.toml` file.  |
-|`NUTWG__HTTP_SERVER__BASE_PATH`   |`BASE_PATH`             |`/`                            |                                             |Overrides HTTP server base path.                             |
-|`NUTWG__HTTP_SERVER__LISTEN`      |`LISTEN`                |`0.0.0.0`                      |                                             |HTTP server listen address.                                  |
-|`NUTWG__HTTP_SERVER__PORT`        |`PORT`                  |`9000`                         |1-65535                                      |HTTP server listen port.                                     |
-|`NUTWG__HTTP_SERVER__WORKER_COUNT`|                        |All CPU cores                  |1-usize::MAX                                 |HTTP server worker count.                                    |
-|`UPSD_ROOT_CA`                    |                        |None                           |                                             |Path to the Root CA certificate for TLS.                     |
+|Name                              |Alias (Container Only)|Default                      |Value Type                               |Description                                                |
+|----------------------------------|----------------------|-----------------------------|-----------------------------------------|-----------------------------------------------------------|
+|`NUTWG__CONFIG_FILE`              |`CONFIG_FILE`         |`/etc/nut_webgui/config.toml`|File path                                |Custom `config.toml` file path.                            |
+|`NUTWG__DEFAULT_THEME`            |`DEFAULT_THEME`       |None                         |See [config.toml](./dist/config.toml)    |Web UI default theme.                                      |
+|`NUTWG__LOG_LEVEL`                |`LOG_LEVEL`           |`info`                       |`error`, `warn`, `info`, `debug`, `trace`|Log level.                                                 |
+|`NUTWG__SERVER_KEY`               |`SERVER_KEY`          |`/etc/nut_webgui/server.key` |File path, UTF-8 string                  |Server sign key used for signing session tokens.           |
+|`NUTWG__AUTH__USERS_FILE`         |`AUTH_USERS_FILE`     |None                         |File path                                |Enables authentication with the provided `users.toml` file.|
+|`NUTWG__HTTP_SERVER__BASE_PATH`   |`BASE_PATH`           |`/`                          |URI path                                 |Overrides HTTP server base path.                           |
+|`NUTWG__HTTP_SERVER__LISTEN`      |`LISTEN`              |`0.0.0.0`                    |IPv4, IPv6                               |HTTP server listen address.                                |
+|`NUTWG__HTTP_SERVER__PORT`        |`PORT`                |`9000`                       |1-65535                                  |HTTP server listen port.                                   |
+|`NUTWG__HTTP_SERVER__WORKER_COUNT`|                      |All CPU cores                |1-usize::MAX                             |HTTP server worker count.                                  |
+
 
 #### Default UPSD
 
@@ -117,18 +117,28 @@ If you only connect to a single NUT server and want to keep configurations
 simple as possible, connection details can be configured via `NUTWG__UPSD__*`
 environment variables.
 
-| Name                          | Alias (Container Only) | Default     | Value                       | Description                                                       |
-|-------------------------------|------------------------|-------------|-----------------------------|-------------------------------------------------------------------|
-| `NUTWG__UPSD__ADDRESS`        | `UPSD_ADDR`            |             | IPv6, IPv4, hostname        | UPS daemon address.                                               |
-| `NUTWG__UPSD__MAX_CONNECTION` |                        | `4`         |                             | Allowed maximum connection for UPSD client.                       |
-| `NUTWG__UPSD__NAME`           |                        | `default`   |                             | Target namespace for the `NUTWG__UPSD__*` environment variables.  |
-| `NUTWG__UPSD__PASSWORD`       | `UPSD_PASS`            | None        |                             | UPS daemon password.                                              |
-| `NUTWG__UPSD__POLL_FREQ`      | `POLL_FREQ`            | `30`        |                             | Non-critical ups variables update frequency in seconds.           |
-| `NUTWG__UPSD__POLL_INTERVAL`  | `POLL_INTERVAL`        | `2`         |                             | Critical ups variables (`ups.status`) update interval in seconds. |
-| `NUTWG__UPSD__PORT`           | `UPSD_PORT`            | `3493`      | 1-65535                     | UPS daemon port.                                                  |
-| `NUTWG__UPSD__TLS_MODE`       | `UPSD_TLS`             | `disable`   | `strict`, `disable`, `skip` | Configures TLS communication between UPSD and client.             |
-| `NUTWG__UPSD__USERNAME`       | `UPSD_USER`            | None        |                             | UPS daemon username.                                              |
+|Name                         |Alias (Container Only)| Default  |Value Type                 |Description                                                      |
+|-----------------------------|----------------------|----------|---------------------------|-----------------------------------------------------------------|
+|`NUTWG__UPSD__ADDRESS`       |`UPSD_ADDR`           |          |IPv6, IPv4, hostname       |UPS daemon address.                                              |
+|`NUTWG__UPSD__MAX_CONNECTION`|                      | `4`      |1-usize::Max               |Allowed maximum connection for UPSD client.                      |
+|`NUTWG__UPSD__NAME`          |                      | `default`|Text                       |Target namespace for the `NUTWG__UPSD__*` environment variables. |
+|`NUTWG__UPSD__PASSWORD`      |`UPSD_PASS`           | None     |Text                       |UPS daemon password.                                             |
+|`NUTWG__UPSD__POLL_FREQ`     |`POLL_FREQ`           | `30`     |1-u64::Max                 |Non-critical ups variables update frequency in seconds.          |
+|`NUTWG__UPSD__POLL_INTERVAL` |`POLL_INTERVAL`       | `2`      |1-u64::Max                 |Critical ups variables (`ups.status`) update interval in seconds.|
+|`NUTWG__UPSD__PORT`          |`UPSD_PORT`           | `3493`   |1-65535                    |UPS daemon port.                                                 |
+|`NUTWG__UPSD__TLS_MODE`      |`UPSD_TLS`            | `disable`|`strict`, `disable`, `skip`|Configures TLS communication between UPSD and client.            |
+|`NUTWG__UPSD__USERNAME`      |`UPSD_USER`           | None     |Text                       |UPS daemon username.                                             |
 
+#### Container only
+
+The following environment variables are available only to container images and
+do not apply to binary installations.
+
+|Name          |Default       |Value Type| Description                            |
+|--------------|--------------|----------|----------------------------------------|
+|`UPSD_ROOT_CA`|None          |Path      |Path to the Root CA certificate for TLS.|
+|`UID`         |1000          |1-65535   |User UID running the server.            |
+|`GID`         |Value of `UID`|1-65535   |User GID running the server.            |
 
 ### TOML config
 
