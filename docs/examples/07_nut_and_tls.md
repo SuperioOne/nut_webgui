@@ -50,7 +50,7 @@ server's certificate.
 You can provide the Root CA by mounting the certificate file into the container
 and setting the `UPSD_ROOT_CA` environment variable to its path.
 
-> **Important:** The `nut_webgui` container runs as a non-root user. Ensure the
+> **IMPORTANT:** The `nut_webgui` server runs as a non-root user. Ensure the
 > mounted certificate file has appropriate read permissions
 > (e.g., `chmod 644 rootca.crt`).
 

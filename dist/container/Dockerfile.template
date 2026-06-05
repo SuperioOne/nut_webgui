@@ -1,9 +1,6 @@
 FROM --platform=${PLATFORM} ${BASE_CONTAINER_IMAGE}
-RUN adduser -H -D -g "<nut_webgui>" -u 1000 nut_webgui; \
-        install -d -m 775 -o root -g "nut_webgui" /etc/nut_webgui; \
-        install -d -m 775 -o root -g "nut_webgui" /etc/ssl/certs
-COPY --chmod=755 --chown=root:nut_webgui ${EXE_DIR}/nut_webgui /usr/local/bin/nut_webgui
-COPY --chmod=755 --chown=root:nut_webgui ./dist/container/server_init.sh /usr/local/bin/server_init.sh
-COPY --chmod=644 --chown=root:nut_webgui ./dist/config.toml /usr/local/share/nut_webgui/config.toml
+COPY --chmod=755 ${EXE_DIR}/nut_webgui /usr/local/bin/nut_webgui
+COPY --chmod=755 ./dist/container/server_init.sh /usr/local/bin/server_init.sh
+COPY --chmod=644 ./dist/config.toml /usr/local/share/nut_webgui/config.toml
 ENTRYPOINT ["/usr/local/bin/server_init.sh"]
 CMD ["/usr/local/bin/nut_webgui", "--allow-env"]

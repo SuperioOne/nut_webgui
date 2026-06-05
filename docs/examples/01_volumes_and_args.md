@@ -1,5 +1,18 @@
 # Configuration: Volumes and Arguments
 
+`nut_webgui` has two main configuration files you may want to persist:
+
+- `/etc/nut_webgui/config.toml`: primary config file.
+- `/etc/nut_webgui/server.key`: server signing key.
+
+> **NOTE:** Changes to the files require a container restart; the configs are
+not hot-reloaded.
+
+> **IMPORTANT:** When the container user is overridden using the `--user` option,
+> the container will not automatically generate the default configuration file
+> or server key. You are responsible for mounting the configuration files with
+> the correct permissions and setting up any required environment variables.
+
 ## Mounting a configuration file
 
 Create a `config.toml` on your host and mount it into the container:
@@ -15,7 +28,8 @@ password = "test"
 ' > config.toml;
 ```
 
-*Start nut_webgui with the `config.toml` file*
+Start nut_webgui with the `config.toml` file
+
 ```bash
 docker run \
   -p 9000:9000 \
@@ -23,29 +37,30 @@ docker run \
   ghcr.io/superioone/nut_webgui:latest
 ```
 
-## Using an auto-generated configuration
+## Mounting directory as volume
+
+You can mount an empty directory to `/etc/nut_webgui` to persist configurations.
 
 If no config exists at `/etc/nut_webgui/config.toml`, `nut_webgui` generates one
-automatically. You can mount an empty directory to `/etc/nut_webgui` to persist
-generated file.
+automatically.
 
 ```bash
 mkdir app_config
+
+echo 'version = "1"
+
+[upsd.default]
+address = "10.0.0.1"
+username = "admin"
+password = "test"
+
+' > ./app_config/config.toml;
 
 docker run \
   -p 9000:9000 \
   -v "$(pwd)/app_config":"/etc/nut_webgui" \
   ghcr.io/superioone/nut_webgui:latest
 ```
-
-After container starts, generated `config.toml` can be read/edited on the host
-machine.
-
-```bash
-cat app_config/config.toml
-```
-
-> **Note:** Changes require a container restart; the config is not hot-reloaded.
 
 ## Using CLI arguments
 
@@ -56,6 +71,5 @@ command.
 docker run \
   -p 9000:9000 \
   ghcr.io/superioone/nut_webgui:latest \
-  /usr/local/bin/nut_webgui_server.sh \
-  --allow-env --config-file "/etc/nut_webgui/config.toml"
+  nut_webgui --allow-env --log-level "debug"
 ```

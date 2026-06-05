@@ -90,7 +90,7 @@ value.
 * `--with-auth`: Enables authentication with `user.toml` file.
 * `--worker-count`: Sets HTTP server worker count.
 
-### Container image environment variables
+### Environment variables
 
 Environment variables have the second-highest priority in configuration
 settings. Accepts direct values or file paths (automatically reads file
@@ -134,11 +134,11 @@ environment variables.
 The following environment variables are available only to container images and
 do not apply to binary installations.
 
-|Name          |Default       |Value Type| Description                            |
-|--------------|--------------|----------|----------------------------------------|
-|`UPSD_ROOT_CA`|None          |Path      |Path to the Root CA certificate for TLS.|
-|`UID`         |1000          |1-65535   |User UID running the server.            |
-|`GID`         |Value of `UID`|1-65535   |User GID running the server.            |
+|Name          |Default       |Value Type| Description                                                                                              |
+|--------------|--------------|----------|----------------------------------------------------------------------------------------------------------|
+|`UPSD_ROOT_CA`|None          |Path      |Path to the Root CA certificate for TLS.                                                                  |
+|`UID`         |1000          |1-65535   |User UID running the server. Ignored when container already starts with non-root user via `--user` option.|
+|`GID`         |Value of `UID`|1-65535   |User GID running the server. Ignored when container already starts with non-root via `--user` option.     |
 
 ### TOML config
 
