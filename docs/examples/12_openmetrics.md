@@ -11,45 +11,43 @@ The general metric naming syntax is:
 nutwg_<UPS_VAR_NAME>[_<UNIT>]
 ```
 
-| Name                                | Description               |
-|-------------------------------------|---------------------------|
-| nutwg_ambient_humidity              | Ambient humidity          |
-| nutwg_ambient_temperature_celcius   | Ambient temperature       |
-| nutwg_battery_charge                | Battery charge level      |
-| nutwg_battery_current_amperes       | Battery current           |
-| nutwg_battery_runtime_seconds       | Estimated battery runtime |
-| nutwg_battery_temperature_celcius   | Battery temperature       |
-| nutwg_battery_voltage_volts         | Battery voltage           |
-| nutwg_input_bypass_current_amperes  | Input bypass current      |
-| nutwg_input_bypass_frequency_hertzs | Input bypass frequency    |
-| nutwg_input_bypass_voltage_volts    | Input bypass voltage      |
-| nutwg_input_count                   | Number of input sources   |
-| nutwg_input_current_amperes         | Input current             |
-| nutwg_input_frequency_hertz         | Input frequency           |
-| nutwg_input_load                    | Input load percentage     |
-| nutwg_input_power_voltamps          | Input power in VA         |
-| nutwg_input_realpower_watts         | Input real power in Watt  |
-| nutwg_input_voltage_volts           | Input voltage             |
-| nutwg_outlet_count                  | Number of outlets         |
-| nutwg_outlet_current                | Outlet current            |
-| nutwg_outlet_power_voltamps         | Outlet power in VA        |
-| nutwg_outlet_realpower_watts        | Outlet real power in Watt |
-| nutwg_outlet_voltage_volts          | Outlet voltage            |
-| nutwg_output_current_amps           | Output current            |
-| nutwg_output_frequency_hertzs       | Output frequency          |
-| nutwg_output_power_percent          | Output power percentage   |
-| nutwg_output_power_voltamps         | Output power in VA        |
-| nutwg_output_realpower_watts        | Output real power in Watt |
-| nutwg_output_voltage_volts          | Output voltage            |
-| nutwg_ups_input_frequency_hertzs    | UPS input frequency       |
-| nutwg_ups_input_voltage_volts       | UPS input voltage         |
-| nutwg_ups_load                      | UPS load percentage       |
-| nutwg_ups_output_voltage_volts      | UPS output voltage        |
-| nutwg_ups_power_voltamps            | UPS power in VA           |
-| nutwg_ups_realpower_watts           | UPS real power in Watt    |
-| nutwg_ups_runtime_seconds           | UPS estimated runtime     |
-| nutwg_ups_status                    | UPS status                |
-| nutwg_ups_temperature_celcius       | UPS temperature           |
+|Name                               |Description              |
+|-----------------------------------|-------------------------|
+|nutwg_ambient_humidity             |Ambient humidity         |
+|nutwg_ambient_temperature_celcius  |Ambient temperature      |
+|nutwg_battery_charge               |Battery charge level     |
+|nutwg_battery_current_amperes      |Battery current          |
+|nutwg_battery_runtime_seconds      |Estimated battery runtime|
+|nutwg_battery_temperature_celcius  |Battery temperature      |
+|nutwg_battery_voltage_volts        |Battery voltage          |
+|nutwg_input_bypass_current_amperes |Input bypass current     |
+|nutwg_input_bypass_frequency_hertzs|Input bypass frequency   |
+|nutwg_input_bypass_voltage_volts   |Input bypass voltage     |
+|nutwg_input_count                  |Number of input sources  |
+|nutwg_input_current_amperes        |Input current            |
+|nutwg_input_frequency_hertz        |Input frequency          |
+|nutwg_input_load                   |Input load percentage    |
+|nutwg_input_power_voltamps         |Input power in VA        |
+|nutwg_input_realpower_watts        |Input real power in Watt |
+|nutwg_input_voltage_volts          |Input voltage            |
+|nutwg_outlet_count                 |Number of outlets        |
+|nutwg_outlet_current               |Outlet current           |
+|nutwg_outlet_power_voltamps        |Outlet power in VA       |
+|nutwg_outlet_realpower_watts       |Outlet real power in Watt|
+|nutwg_outlet_voltage_volts         |Outlet voltage           |
+|nutwg_output_current_amps          |Output current           |
+|nutwg_output_frequency_hertzs      |Output frequency         |
+|nutwg_output_power_percent         |Output power percentage  |
+|nutwg_output_power_voltamps        |Output power in VA       |
+|nutwg_output_realpower_watts       |Output real power in Watt|
+|nutwg_output_voltage_volts         |Output voltage           |
+|nutwg_ups_load                     |UPS load percentage      |
+|nutwg_ups_output_voltage_volts     |UPS output voltage       |
+|nutwg_ups_power_voltamps           |UPS power in VA          |
+|nutwg_ups_realpower_watts          |UPS real power in Watt   |
+|nutwg_ups_runtime_seconds          |UPS estimated runtime    |
+|nutwg_ups_status                   |UPS status               |
+|nutwg_ups_temperature_celcius      |UPS temperature          |
 
 ## Metric labels
 

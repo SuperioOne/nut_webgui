@@ -1,6 +1,4 @@
-use super::known_metric::{
-  Either, KnownMetricDescriptors, METRIC_UPS_STATUS, METRIC_UPS_STATUS_HELP,
-};
+use super::known_metric::{KNOWN_DESCRIPTORS, METRIC_UPS_STATUS, METRIC_UPS_STATUS_HELP};
 use crate::state::UpsdState;
 use prometheus_client::{
   collector::Collector,
@@ -70,29 +68,24 @@ impl Collector for UpsdStatCollector {
           .encode_gauge(&0)?;
       }
 
-      for (var_name, value) in entry.variables.iter() {
-        let metric_value = match value.as_lossy_f64() {
-          Some(v) => v,
+      for descriptor in KNOWN_DESCRIPTORS {
+        match descriptor.value(&entry.variables) {
+          Some(metric_value) => {
+            let mut metric_encoder = encoder.encode_descriptor(
+              descriptor.metric_family(),
+              descriptor.help(),
+              descriptor.unit(),
+              descriptor.metric_type(),
+            )?;
+
+            metric_encoder
+              .encode_family(&UpsdLabelSet {
+                namespace: self.inner.namespace.clone(),
+                device: device_name.clone().into_boxed_str(),
+              })?
+              .encode_gauge(&metric_value)?;
+          }
           None => continue,
-        };
-
-        if let Some(descriptor) = KnownMetricDescriptors::from_var_name(var_name) {
-          let mut metric_encoder = encoder.encode_descriptor(
-            descriptor.name,
-            descriptor.help,
-            descriptor.unit.as_ref().map(|v| match v {
-              Either::L(u) => u,
-              Either::R(u) => *u,
-            }),
-            descriptor.metric_type,
-          )?;
-
-          metric_encoder
-            .encode_family(&UpsdLabelSet {
-              namespace: self.inner.namespace.clone(),
-              device: device_name.clone().into_boxed_str(),
-            })?
-            .encode_gauge(&metric_value)?;
         }
       }
     }

@@ -298,8 +298,6 @@ impl_standard_names!(
   (UPS_FIRMWARE                                     ,UpsFirmware                                 ,"ups.firmware");
   (UPS_FIRMWARE_AUX                                 ,UpsFirmwareAux                              ,"ups.firmware.aux");
   (UPS_ID                                           ,UpsId                                       ,"ups.id");
-  (UPS_INPUT_FREQUENCY                              ,UpsInputFrequency                           ,"ups.input.frequency");
-  (UPS_INPUT_VOLTAGE                                ,UpsInputVoltage                             ,"ups.input.voltage");
   (UPS_LOAD                                         ,UpsLoad                                     ,"ups.load");
   (UPS_LOAD_HIGH                                    ,UpsLoadHigh                                 ,"ups.load.high");
   (UPS_LOAD_NOMINAL                                 ,UpsLoadNominal                              ,"ups.load.nominal");
@@ -310,8 +308,6 @@ impl_standard_names!(
   (UPS_MODEL                                        ,UpsModel                                    ,"ups.model");
   (UPS_MODEL_AUX                                    ,UpsModelAux                                 ,"ups.model.aux");
   (UPS_MODEL_TYPE                                   ,UpsModelType                                ,"ups.model.type");
-  (UPS_OUTPUT_PERCENTLOAD                           ,UpsOutputPercentload                        ,"ups.output.percentload");
-  (UPS_OUTPUT_VOLTAGE                               ,UpsOutputVoltage                            ,"ups.output.voltage");
   (UPS_POWER                                        ,UpsPower                                    ,"ups.power");
   (UPS_POWER_NOMINAL                                ,UpsPowerNominal                             ,"ups.power.nominal");
   (UPS_PRODUCT                                      ,UpsProduct                                  ,"ups.product");
