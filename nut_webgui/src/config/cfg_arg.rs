@@ -1,6 +1,5 @@
 use super::{
-  AuthConfig, ConfigLayer, ServerConfig, error::InvalidPathError, uri_path::UriPath,
-  utils::override_opt_field,
+  ConfigLayer, ServerConfig, error::InvalidPathError, uri_path::UriPath, utils::override_opt_field,
 };
 use clap::Parser;
 use core::net::IpAddr;
@@ -17,7 +16,7 @@ pub struct ServerCliArgs {
   #[arg(short, long)]
   pub port: Option<u16>,
 
-  /// Overrides HTTP server base path
+  /// Override HTTP server base path
   #[arg(long, value_parser =  uri_path_parser)]
   pub base_path: Option<UriPath>,
 
@@ -33,15 +32,19 @@ pub struct ServerCliArgs {
   #[arg(long)]
   pub config_file: Option<PathBuf>,
 
-  /// Enables config override from environment variables
+  /// Enable config override from environment variables
   #[arg(long, default_value_t = false)]
   pub allow_env: bool,
 
-  /// Private server key
+  /// Allow/Disallow anonymous access to metrics endpoint
+  #[arg(long)]
+  pub anonymous_metrics: Option<bool>,
+
+  /// Set private server key
   #[arg(long)]
   pub server_key: Option<Box<str>>,
 
-  /// Enables basic auth with users file
+  /// Enable basic auth with users file
   #[arg(long)]
   pub with_auth: Option<PathBuf>,
 
@@ -73,9 +76,11 @@ impl ConfigLayer for ServerCliArgs {
     override_opt_field!(config.http_server.port, inner_value: self.port);
     override_opt_field!(config.http_server.worker_count, self.worker_count);
 
-    if let Some(users_file) = self.with_auth {
-      config.auth = Some(AuthConfig { users_file });
-    }
+    override_opt_field!(config.auth.users_file, self.with_auth);
+    override_opt_field!(
+      config.auth.allow_anonymous_metrics,
+      inner_value: self.anonymous_metrics
+    );
 
     config
   }

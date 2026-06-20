@@ -7,7 +7,7 @@ use crate::{
   },
   background_service::BackgroundServiceRunner,
   config::{
-    AuthConfig, ServerConfig, UpsdConfig, cfg_arg::ServerCliArgs, cfg_env::ServerEnvArgs,
+    ServerConfig, UpsdConfig, cfg_arg::ServerCliArgs, cfg_env::ServerEnvArgs,
     cfg_fallback::FallbackArgs, cfg_toml::ServerTomlArgs, cfg_user::UsersConfigFile,
     error::ConfigError,
   },
@@ -284,8 +284,8 @@ fn create_pool(
 fn create_user_store(
   config: &ServerConfig,
 ) -> Result<Option<Arc<UserStore>>, Box<dyn core::error::Error + 'static>> {
-  match &config.auth {
-    Some(AuthConfig { users_file }) => {
+  match config.auth.users_file.as_ref() {
+    Some(users_file) => {
       let users_file = UsersConfigFile::load(users_file)?;
       let mut builder = UserStore::builder().with_session_duration(AUTH_COOKIE_DURATION);
 

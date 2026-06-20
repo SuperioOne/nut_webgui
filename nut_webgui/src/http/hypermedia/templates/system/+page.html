@@ -43,19 +43,47 @@
                 {%- endif -%}
               </td>
             </tr>
-            <tr>
-              <td class="font-bold text-primary">Authentication</td>
-              <td>
-                <div>
-                  {%- if let Some(auth) = config.auth -%}
-                    <p class="text-success">Enabled</p>
-                    <p>{{auth.users_file.display()}}</p>
-                  {%- else -%}
-                    <span class="text-info">Disabled</span>
-                  {%- endif -%}
-                </div>
-              </td>
-            </tr>
+            {%- if config.auth.is_enabled() -%}
+              <tr>
+                <td class="font-bold text-primary">Authentication</td>
+                <td>
+                  <div>
+                      <span class="text-success">Enabled</span>
+                  </div>
+                </td>
+              </tr>
+              {%- if let Some(users_file) = config.auth.users_file -%}
+                <tr>
+                  <td class="font-bold text-primary">Users File</td>
+                  <td>
+                    <div>
+                      {{users_file.display()}}
+                    </div>
+                  </td>
+                </tr>
+              {%- endif -%}
+              <tr>
+                <td class="font-bold text-primary">Allow anonymous metrics</td>
+                <td>
+                  <div>
+                    {%- if config.auth.allow_anonymous_metrics -%}
+                      <span class="text-warning">Yes</span>
+                    {%- else -%}
+                      <span class="text-success">No</span>
+                    {%- endif -%}
+                  </div>
+                </td>
+              </tr>
+            {%- else -%}
+              <tr>
+                <td class="font-bold text-primary">Authentication</td>
+                <td>
+                  <div>
+                      <span class="text-warning">Disabled</span>
+                  </div>
+                </td>
+              </tr>
+            {%- endif -%}
             <tr>
               <td class="font-bold text-primary">Listen address</td>
               <td>{{config.http_server.listen}}</td>

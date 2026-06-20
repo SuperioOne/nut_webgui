@@ -51,15 +51,15 @@ Container image registries:
 
 ## CPU architecture support
 
-| Arch     | Test Hardware          | Notes                                                                                         |
-|----------|------------------------|-----------------------------------------------------------------------------------------------|
-| amd64    | AM4 CPU                | Works across all amd64 platforms.                                                             |
-| amd64-v3 | AM4 CPU                | Snake-oil level optimizations with AVX. It mostly improves response compression, and TLS.     |
-| amd64-v4 | Intel® SDE             | Snake-oil level optimizations with AVX-512. It mostly improves response compression, and TLS. |
-| arm64    | Raspberry Pi 4 Model B |                                                                                               |
-| armv7    | Qemu emulation         | Uses software floating-point.                                                                 |
-| armv6    | Qemu emulation         | Uses software floating-point.                                                                 |
-| riscv64  | Qemu emulation         |                                                                                               |
+|Arch    |Test Hardware         |Notes                                                                                        |
+|--------|----------------------|---------------------------------------------------------------------------------------------|
+|amd64   |AM4 CPU               |Works across all amd64 platforms.                                                            |
+|amd64-v3|AM4 CPU               |Snake-oil level optimizations with AVX. It mostly improves response compression, and TLS.    |
+|amd64-v4|Intel® SDE            |Snake-oil level optimizations with AVX-512. It mostly improves response compression, and TLS.|
+|arm64   |Raspberry Pi 4 Model B|                                                                                             |
+|armv7   |Qemu emulation        |Uses software floating-point.                                                                |
+|armv6   |Qemu emulation        |Uses software floating-point.                                                                |
+|riscv64 |Qemu emulation        |                                                                                             |
 
 > amd64 v3 and v4 variants require certain CPU feature flags to run. If you are
 > a crackhead min-max enjoyer (like me), you can use `nut_webgui:latest-amd64-v3`
@@ -77,18 +77,19 @@ priority.
 
 CLI arguments hold the highest priority in configuration settings.
 
-* `--allow-env`: Allows application to load configuration from environment
-variables.
-* `--base-path`: Overrides HTTP server base path. Default is `/`.
+* `--allow-env`: Allow application to load configuration from environment
+  variables.
+* `--anonymous-metrics`: Set anonymous access on `/metrics` endpoint, ignored
+  when auth is disabled. Default is `false`.
+* `--base-path`: Override HTTP server base path. Default is `/`.
 * `--config-file`: config.toml path.
 * `--default-theme`: Web UI default theme.
 * `--listen`: Listen address for the HTTP server. Default is `0.0.0.0`.
 * `--log-level`: Log level for the HTTP server. Default is `info`.
 * `--port`: Port used by the HTTP server. Default is `9000`.
-* `--server-key`: Private server key value. Default is randomly auto-generated
-value.
-* `--with-auth`: Enables authentication with `user.toml` file.
-* `--worker-count`: Sets HTTP server worker count.
+* `--server-key`: Set private server key value. Default is auto-generated value.
+* `--with-auth`: Enable authentication with `user.toml` file.
+* `--worker-count`: Set HTTP server worker count.
 
 ### Environment variables
 
@@ -98,18 +99,18 @@ contents).
 
 #### General
 
-|Name                              |Alias (Container Only)|Default                      |Value Type                               |Description                                                |
-|----------------------------------|----------------------|-----------------------------|-----------------------------------------|-----------------------------------------------------------|
-|`NUTWG__CONFIG_FILE`              |`CONFIG_FILE`         |`/etc/nut_webgui/config.toml`|File path                                |Custom `config.toml` file path.                            |
-|`NUTWG__DEFAULT_THEME`            |`DEFAULT_THEME`       |None                         |See [config.toml](./dist/config.toml)    |Web UI default theme.                                      |
-|`NUTWG__LOG_LEVEL`                |`LOG_LEVEL`           |`info`                       |`error`, `warn`, `info`, `debug`, `trace`|Log level.                                                 |
-|`NUTWG__SERVER_KEY`               |`SERVER_KEY`          |`/etc/nut_webgui/server.key` |File path, UTF-8 string                  |Server sign key used for signing session tokens.           |
-|`NUTWG__AUTH__USERS_FILE`         |`AUTH_USERS_FILE`     |None                         |File path                                |Enables authentication with the provided `users.toml` file.|
-|`NUTWG__HTTP_SERVER__BASE_PATH`   |`BASE_PATH`           |`/`                          |URI path                                 |Overrides HTTP server base path.                           |
-|`NUTWG__HTTP_SERVER__LISTEN`      |`LISTEN`              |`0.0.0.0`                    |IPv4, IPv6                               |HTTP server listen address.                                |
-|`NUTWG__HTTP_SERVER__PORT`        |`PORT`                |`9000`                       |1-65535                                  |HTTP server listen port.                                   |
-|`NUTWG__HTTP_SERVER__WORKER_COUNT`|                      |All CPU cores                |1-usize::MAX                             |HTTP server worker count.                                  |
-
+|Name                                  |Alias (Container Only)|Default                      |Value Type                               |Description                                                                        |
+|--------------------------------------|----------------------|-----------------------------|-----------------------------------------|-----------------------------------------------------------------------------------|
+|`NUTWG__CONFIG_FILE`                  |`CONFIG_FILE`         |`/etc/nut_webgui/config.toml`|File path                                |Custom `config.toml` file path.                                                    |
+|`NUTWG__DEFAULT_THEME`                |`DEFAULT_THEME`       |None                         |See [config.toml](./dist/config.toml)    |Web UI default theme.                                                              |
+|`NUTWG__LOG_LEVEL`                    |`LOG_LEVEL`           |`info`                       |`error`, `warn`, `info`, `debug`, `trace`|Log level.                                                                         |
+|`NUTWG__SERVER_KEY`                   |`SERVER_KEY`          |`/etc/nut_webgui/server.key` |File path, UTF-8 string                  |Server sign key used for signing session tokens.                                   |
+|`NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS`|                      |`false`                      |`true` `1` `false` `0`                   |Allow access to `/metrics` endpoint without API key, ignored when auth is disabled.|
+|`NUTWG__AUTH__USERS_FILE`             |`AUTH_USERS_FILE`     |None                         |File path                                |Enable authentication with the provided `users.toml` file.                         |
+|`NUTWG__HTTP_SERVER__BASE_PATH`       |`BASE_PATH`           |`/`                          |URI path                                 |Override HTTP server base path.                                                    |
+|`NUTWG__HTTP_SERVER__LISTEN`          |`LISTEN`              |`0.0.0.0`                    |IPv4, IPv6                               |HTTP server listen address.                                                        |
+|`NUTWG__HTTP_SERVER__PORT`            |`PORT`                |`9000`                       |1-65535                                  |HTTP server listen port.                                                           |
+|`NUTWG__HTTP_SERVER__WORKER_COUNT`    |                      |All CPU cores                |1-usize::MAX                             |HTTP server worker count.                                                          |
 
 #### Default UPSD
 
@@ -174,6 +175,7 @@ password = "AbsoluteSecurity"
 
 [auth]
 users_file = "/etc/nut_webgui/users.toml"
+allow_anonymous_metrics = false
 ```
 
 For more detailed config template see [./dist/config.toml](./dist/config.toml).

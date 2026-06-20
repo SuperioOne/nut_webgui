@@ -41,7 +41,7 @@ pub struct ServerConfig {
   pub upsd: HashMap<Box<str>, UpsdConfig>,
 
   /// Authentication scheme configurations
-  pub auth: Option<AuthConfig>,
+  pub auth: AuthConfig,
 }
 
 #[derive(Debug)]
@@ -82,7 +82,14 @@ pub struct UpsdConfig {
 
 #[derive(Debug)]
 pub struct AuthConfig {
-  pub users_file: PathBuf,
+  pub users_file: Option<PathBuf>,
+  pub allow_anonymous_metrics: bool,
+}
+
+impl AuthConfig {
+  pub const fn is_enabled(&self) -> bool {
+    self.users_file.is_some()
+  }
 }
 
 impl UpsdConfig {
@@ -94,6 +101,15 @@ impl UpsdConfig {
 impl HttpServerConfig {
   pub fn get_listen_addr(&self) -> String {
     format!("{ip}:{port}", ip = self.listen, port = self.port)
+  }
+}
+
+impl Default for AuthConfig {
+  fn default() -> Self {
+    Self {
+      users_file: None,
+      allow_anonymous_metrics: false,
+    }
   }
 }
 
@@ -132,7 +148,7 @@ impl Default for ServerConfig {
       log_level: LevelFilter::INFO,
       server_key: rand_server_key_256bit(),
       upsd: Default::default(),
-      auth: None,
+      auth: Default::default(),
     }
   }
 }

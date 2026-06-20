@@ -73,21 +73,25 @@ if [ "$CURRENT_UID" -eq "0" ]; then
 
         NUTWG__SERVER_KEY="$DEFAULT_SERVER_KEY";
     fi
-
 else
-    echo "WARNING: Container started with different user, no default config will be generated on /etc/nut_webgui."
+    echo "WARNING: Container started with different user."
+    echo "Skipping CA linking and no default config will be generated on /etc/nut_webgui."
 fi
 
 EXEC="$(cat << EOF
+    export NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS="$NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS";
     export NUTWG__AUTH__USERS_FILE="$NUTWG__AUTH__USERS_FILE";
     export NUTWG__CONFIG_FILE="$NUTWG__CONFIG_FILE";
     export NUTWG__DEFAULT_THEME="$NUTWG__DEFAULT_THEME";
-    export NUTWG__LOG_LEVEL="$NUTWG__LOG_LEVEL";
-    export NUTWG__SERVER_KEY="$NUTWG__SERVER_KEY";
     export NUTWG__HTTP_SERVER__BASE_PATH="$NUTWG__HTTP_SERVER__BASE_PATH";
     export NUTWG__HTTP_SERVER__LISTEN="$NUTWG__HTTP_SERVER__LISTEN";
     export NUTWG__HTTP_SERVER__PORT="$NUTWG__HTTP_SERVER__PORT";
+    export NUTWG__HTTP_SERVER__WORKER_COUNT="$NUTWG__HTTP_SERVER__WORKER_COUNT";
+    export NUTWG__LOG_LEVEL="$NUTWG__LOG_LEVEL";
+    export NUTWG__SERVER_KEY="$NUTWG__SERVER_KEY";
     export NUTWG__UPSD__ADDRESS="$NUTWG__UPSD__ADDRESS";
+    export NUTWG__UPSD__MAX_CONNECTION="$NUTWG__UPSD__MAX_CONNECTION";
+    export NUTWG__UPSD__NAME="$NUTWG__UPSD__NAME";
     export NUTWG__UPSD__PASSWORD="$NUTWG__UPSD__PASSWORD";
     export NUTWG__UPSD__POLL_FREQ="$NUTWG__UPSD__POLL_FREQ";
     export NUTWG__UPSD__POLL_INTERVAL="$NUTWG__UPSD__POLL_INTERVAL";

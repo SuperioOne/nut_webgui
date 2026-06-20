@@ -122,10 +122,13 @@ The `/metrics` endpoint also requires authentication via an API key when auth is
 enabled. See [Enabling auth](./08_enabling_auth.md) for instructions on
 generating API keys.
 
+> Authentication on `/metrics` endpoint can be disabled via:
+> - CLI argument: `--anonymous-metrics "true"`
+> - environment variable: `NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS="true"`
+> - `config.toml`: `[auth].allow_anonymous_metrics = true`
+
 After generating the API key, add authorization using the `Bearer` scheme to
 your Prometheus configuration.
-
-> For other config options see the Prometheus own [documentation.](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_config)
 
 ```yaml
 scrape_configs:
@@ -141,3 +144,5 @@ scrape_configs:
       type: Bearer
       credentials: "SWYgb25seSBJIGNvdWxkIGJlIHNvIGluY2FuZGVzY2VudA=="
 ```
+
+> For other config options see the Prometheus own [documentation.](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_config)

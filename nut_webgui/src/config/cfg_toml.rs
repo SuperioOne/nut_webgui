@@ -1,5 +1,5 @@
 use super::{
-  AuthConfig, ConfigLayer, ServerConfig, UpsdConfig, error::TomlConfigError, tls_mode::TlsMode,
+  ConfigLayer, ServerConfig, UpsdConfig, error::TomlConfigError, tls_mode::TlsMode,
   uri_path::UriPath, utils::override_opt_field,
 };
 use core::{net::IpAddr, str};
@@ -88,6 +88,7 @@ pub struct UpsdConfigSection {
 #[derive(Deserialize, Default, Debug)]
 pub struct AuthConfigSection {
   users_file: PathBuf,
+  allow_anonymous_metrics: Option<bool>,
 }
 
 impl ServerTomlArgs {
@@ -147,10 +148,13 @@ impl ConfigLayer for ServerTomlArgs {
       override_opt_field!(config.http_server.worker_count, http_server.worker_count);
     }
 
-    if let Some(auth) = self.auth {
-      config.auth = Some(AuthConfig {
-        users_file: auth.users_file,
-      })
+    if let Some(auth_config) = self.auth {
+      config.auth.users_file = Some(auth_config.users_file);
+
+      override_opt_field!(
+        config.auth.allow_anonymous_metrics,
+        inner_value: auth_config.allow_anonymous_metrics
+      );
     }
 
     config

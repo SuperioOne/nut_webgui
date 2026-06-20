@@ -102,18 +102,22 @@ impl HttpServer {
 
 #[inline]
 fn create_metric_routes(server_state: Arc<ServerState>) -> Router<Arc<ServerState>> {
+  let auth_layer = if server_state.config.auth.allow_anonymous_metrics {
+    None
+  } else {
+    server_state
+      .auth_user_store
+      .as_ref()
+      .map(|_| ApiAuthLayer::new(server_state.config.clone()))
+  };
+
   Router::new()
     .route("/", get(metric::get))
     .fallback(|| async { StatusCode::NOT_FOUND })
     .layer(
       ServiceBuilder::new()
         .layer(CorsLayer::permissive())
-        .option_layer(
-          server_state
-            .auth_user_store
-            .as_ref()
-            .map(|_| ApiAuthLayer::new(server_state.config.clone())),
-        ),
+        .option_layer(auth_layer),
     )
 }
 
