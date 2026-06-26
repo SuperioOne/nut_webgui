@@ -1,3 +1,17 @@
+# v0.10.1 - June 26, 2026
+
+## Added
+- Option to disable authentication on the `/metrics` endpoint.
+
+## Changed
+- If UPS drivers don't report ups.power and ups.realpower, the metric exporter
+  tries to derive `nutwg_ups_power_voltamps` and `nutwg_ups_realpower_watts`
+  from ups.load and nominal values.
+
+## Removed
+- Removed `nutwg_ups_input_frequency_hertz` and `nutwg_ups_input_voltage_volts`
+  metrics.
+
 # v0.10.0 - June 06, 2026
 
 ## Added
