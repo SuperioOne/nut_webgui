@@ -1603,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "askama",
  "axum",
@@ -1636,7 +1636,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui_client"
-version = "0.10.1"
+version = "0.10.2"
 dependencies = [
  "base16ct",
  "blake3",

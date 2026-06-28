@@ -1,3 +1,10 @@
+# v0.10.2 - June 29, 2026
+
+## Fixed
+- UPS devices without a serial number produce an invalid topology graph.
+- The AC power symbol can be misaligned on some fonts. It now uses a custom SVG
+  icon.
+
 # v0.10.1 - June 26, 2026
 
 ## Added
