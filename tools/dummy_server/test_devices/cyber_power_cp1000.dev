@@ -29,6 +29,7 @@ ups.delay.start: 30
 ups.load: 26
 ups.mfr: CPS
 ups.model: UPS CP1000AVRLCD
+ups.serial: 0219385CPCP
 ups.productid: 0501
 ups.realpower.nominal: 88
 ups.status: OL

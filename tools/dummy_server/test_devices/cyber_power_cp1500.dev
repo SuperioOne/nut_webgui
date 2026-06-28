@@ -33,7 +33,7 @@ ups.mfr: CPS
 ups.model: CP1500PFCLCD
 ups.productid: 0501
 ups.realpower.nominal: 900
-ups.serial: 000000000000
+ups.serial: 12357352CP15
 ups.status: OL CHRG
 ups.test.result: No test initiated
 ups.timer.shutdown: -60

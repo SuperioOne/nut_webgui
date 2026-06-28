@@ -27,6 +27,7 @@ ups.firmware: VER1.01C
 ups.load: 1
 ups.mfr: TUNCMATIK
 ups.model: DG1200VA
+ups.serial: 1234567TNC
 ups.productid: 0000
 ups.status: ALARM OL FSD #BAD: the FSD bit is always set
 ups.temperature: 0.0

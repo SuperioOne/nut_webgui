@@ -27,6 +27,7 @@ ups.firmware: 01.04.0016
 ups.load: 14
 ups.mfr: EATON
 ups.model: 5E 650i
+ups.serial: 1234567EAT
 ups.power.nominal: 650
 ups.productid: ffff
 ups.start.battery: yes

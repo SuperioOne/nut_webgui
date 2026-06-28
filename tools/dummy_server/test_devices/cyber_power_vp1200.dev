@@ -30,6 +30,7 @@ ups.delay.start: 30
 ups.load: 8
 ups.mfr: CPS
 ups.model: ValueII_1200E
+ups.serial: 0219385CPVP
 ups.productid: 0501
 ups.realpower.nominal: 720
 ups.status: OL

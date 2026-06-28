@@ -1,4 +1,5 @@
 # DEVICE:URL:REPORT: https://lists.alioth.debian.org/pipermail/nut-upsuser/2016-November/010406.html
+# Test case: Device with no serial
 
 battery.voltage: 26.30
 device.type: ups

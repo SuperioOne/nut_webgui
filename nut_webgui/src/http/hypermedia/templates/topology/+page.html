@@ -21,7 +21,9 @@
       <table class="table table-xs">
         <tr>
           <td>
-            <div class="bg-base-300 border border-primary flex flex-row font-bold h-4 items-center justify-center rounded-full text-center text-lg w-4">∿</div>
+             <div class="bg-base-300 border border-primary flex flex-row font-bold h-4 items-center justify-center rounded-full text-center text-lg w-4">
+                {%- call icons::get_ac_icon(16) -%}{%- endcall -%}
+              </div>
           </td>
           <td>AC Supply</td>
         </tr>
@@ -273,7 +275,9 @@
           </div>
         </nut-graph-node>
         <nut-graph-node id="power_link_{{node_id}}">
-          <div class="bg-base-300 border-2 border-primary flex flex-row font-bold h-8 items-center justify-center rounded-full text-3xl w-8">∿</div>
+          <div class="bg-base-300 border-2 border-primary flex flex-row font-bold h-8 items-center justify-center rounded-full w-8">
+            {%- call icons::get_ac_icon(22) -%}{%- endcall -%}
+          </div>
         </nut-graph-node>
         <nut-graph-link
           {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}

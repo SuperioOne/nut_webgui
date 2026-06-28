@@ -437,7 +437,7 @@ impl Ord for DeviceId {
 
     match self.serial.cmp(&other.serial) {
       core::cmp::Ordering::Equal => {
-        if self.serial.is_none() && self.model.is_none() && self.manufacturer.is_none() {
+        if self.serial.is_none() {
           match self.namespace.cmp(&other.namespace) {
             std::cmp::Ordering::Equal => {}
             ord => return ord,

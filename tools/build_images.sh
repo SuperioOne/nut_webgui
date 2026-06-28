@@ -165,7 +165,6 @@ for conf in $(echo "$CONFIG_FILE_CONTENT" | jq -c '.oci.images[]'); do
 
     if [ "$ARG_DRY_RUN" != "true" ]; then
         buildah build \
-            --layers \
             --variant "$_ARCH_VARIANT" \
             --annotation "$OCI_VERSION" \
             --annotation "$OCI_AUTHORS" \
