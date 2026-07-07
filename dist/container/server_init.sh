@@ -48,15 +48,13 @@ if [ "$CURRENT_UID" -eq "0" ]; then
         ln -s "$UPSD_ROOT_CA" "$DEFAULT_ROOT_CA"
     fi
 
-    if [ -z "$NUTWG__CONFIG_FILE" ]; then
-        install -d -m 775 -o root -g "$APP_GROUP" "$DEFAULT_CONFIG_DIR"
+    if [ ! -d "$DEFAULT_CONFIG_DIR" ]; then
+        install -d -m 775 -o "$APP_USER" -g "$APP_GROUP" "$DEFAULT_CONFIG_DIR"
+    fi
 
+    if [ -z "$NUTWG__CONFIG_FILE" ]; then
         if [ ! -e "$DEFAULT_CONFIG" ]; then
-            if [ "$CURRENT_UID" -eq "0" ]; then
-                install -m 664 -o root -g "$APP_GROUP" "$CONFIG_TEMPLATE" "$DEFAULT_CONFIG"
-            else
-                install -m 664 "$CONFIG_TEMPLATE" "$DEFAULT_CONFIG"
-            fi
+            install -m 664 -o "$APP_USER" -g "$APP_GROUP" "$CONFIG_TEMPLATE" "$DEFAULT_CONFIG"
         fi
 
         NUTWG__CONFIG_FILE="$DEFAULT_CONFIG"
@@ -65,10 +63,8 @@ if [ "$CURRENT_UID" -eq "0" ]; then
     if [ -z "$NUTWG__SERVER_KEY" ]; then
         if [ ! -e "$DEFAULT_SERVER_KEY" ]; then
             head -c 128 /dev/urandom | sha256sum -b | head -c 64 > "$DEFAULT_SERVER_KEY"
-            if [ "$CURRENT_UID" -eq "0" ]; then
-                chmod 640 "$DEFAULT_SERVER_KEY";
-                chown :"$APP_GROUP" "$DEFAULT_SERVER_KEY";
-            fi
+            chmod 640 "$DEFAULT_SERVER_KEY";
+            chown "$APP_USER":"$APP_GROUP" "$DEFAULT_SERVER_KEY";
         fi
 
         NUTWG__SERVER_KEY="$DEFAULT_SERVER_KEY";
