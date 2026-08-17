@@ -1,0 +1,9 @@
+#!/bin/sh
+exec 2>&1
+set -e
+
+if [ -e /etc/nut_webgui/config.toml ]; then
+        exec /usr/bin/nut_webgui --config-file /etc/nut_webgui/config.toml --allow-env
+else
+        exec /usr/bin/nut_webgui --allow-env
+fi

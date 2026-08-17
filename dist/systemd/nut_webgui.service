@@ -1,0 +1,14 @@
+[Unit]
+Description=nut_webgui - Simple NUT Web interface
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/nut_webgui --config-file /etc/nut_webgui/config.toml --allow-env
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

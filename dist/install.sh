@@ -4,8 +4,7 @@ set -e;
 # Inspired from the first version of k3s install.sh
 # attribution: @ibuildthecloud
 
-NUTWG_VERSION="__PLACEHOLDER_NUTWG_VERSION";
-NUTWG_RELEASE_URL="https://github.com/SuperioOne/nut_webgui/releases/download/v${NUTWG_VERSION}";
+NUTWG_RELEASE_URL="https://github.com/SuperioOne/nut_webgui/releases/latest/download";
 NUTWG_INSTALL_PATH="/usr/local/bin/nut_webgui"
 NUTWG_CONFIG_DIR="/etc/nut_webgui"
 
@@ -20,6 +19,9 @@ detect_init_system() {
         case "$__INIT_SYSTEM" in
             systemd)
                 NUTWG_INIT_SYSTEM="systemd"
+                ;;
+            runit-init)
+                NUTWG_INIT_SYSTEM="runit"
                 ;;
             *)
                 ;;

@@ -1,0 +1,15 @@
+#!/sbin/openrc-run
+# Original-Author: @integratec
+
+name="NUT Webgui"
+description="nut_webgui - Simple NUT Web interface"
+
+depend() {
+    use net
+}
+
+command="/usr/local/bin/nut_webgui"
+command_args="--config-file /etc/nut_webgui/config.toml --allow-env"
+required_files="/etc/nut_webgui/config.toml /etc/nut_webgui/users.toml"
+pidfile="/run/${RC_SVCNAME}.pid"
+command_background=true

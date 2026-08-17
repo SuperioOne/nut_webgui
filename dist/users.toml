@@ -1,0 +1,18 @@
+# Example users.toml file
+#
+#        [Administrator]
+#        password = "Passw0rd"
+#        permissions = ["setvar", "instcmd", "fsd"]  # Grant permissions.
+#
+#        [HiveMind_01]
+#        password = "123456"
+#
+# User Permissions
+#
+# By default, all users have read access through both the API and the Web UI.
+# Some administrative actions require the following permissions:
+#
+# setvar  - Allows the user to change UPS variables.
+# instcmd - Allows the user to call instant commands.
+# fsd     - Allows the user to set forced-shutdown (FSD) flag on the UPS.
+
