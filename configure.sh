@@ -13,7 +13,7 @@ ENABLE_X86_64_V3_GNU=
 ENABLE_X86_64_V3_MUSL=
 ENABLE_X86_64_V4_GNU=
 ENABLE_X86_64_V4_MUSL=
-ENABLE_OCI_CONTAINER=
+ENABLE_CONTAINER_IMAGE=
 GITHUB_RELEASE_TARGETS=
 FORGEJO_RELEASE_TARGETS=
 OCI_REGISTRIES=
@@ -98,14 +98,24 @@ list_active_targets() {
     printif "$ENABLE_AARCH64_MUSL" "aarch64-musl"
     printif "$ENABLE_ARMV6_MUSLEABI" "armv6-musleabi"
     printif "$ENABLE_ARMV7_MUSLEABI" "armv7-musleabi"
-    printif "$ENABLE_RISCV_GNU" "riscv64-gnu"
-    printif "$ENABLE_RISCV_MUSL" "riscv64-musl"
+    printif "$ENABLE_RISCV_GNU" "riscv64gc-gnu"
+    printif "$ENABLE_RISCV_MUSL" "riscv64gc-musl"
     printif "$ENABLE_X86_64_GNU" "x86-64-gnu"
     printif "$ENABLE_X86_64_MUSL" "x86-64-musl"
     printif "$ENABLE_X86_64_V3_GNU" "x86-64-v3-gnu"
     printif "$ENABLE_X86_64_V3_MUSL" "x86-64-v3-musl"
     printif "$ENABLE_X86_64_V4_GNU" "x86-64-v4-gnu"
     printif "$ENABLE_X86_64_V4_MUSL" "x86-64-v4-musl"
+}
+
+list_active_image_targets() {
+    printif "$ENABLE_AARCH64_MUSL" "arm64"
+    printif "$ENABLE_ARMV6_MUSLEABI" "armv6"
+    printif "$ENABLE_ARMV7_MUSLEABI" "armv7"
+    printif "$ENABLE_RISCV_MUSL" "riscv64"
+    printif "$ENABLE_X86_64_MUSL" "amd64"
+    printif "$ENABLE_X86_64_V3_MUSL" "amd64-v3"
+    printif "$ENABLE_X86_64_V4_MUSL" "amd64-v4"
 }
 
 print_help() {
@@ -126,10 +136,10 @@ OPTIONS
   --enable-armv7-musleabi
         Enable ARMv7 (arm/v7) support with musl (soft-float).
 
-  --enable-riscv-musl
+  --enable-riscv64gc-musl
         Enable RISC-V (riscv64) support with musl.
 
-  --enable-riscv-gnu
+  --enable-riscv64gc-gnu
         Enable RISC-V (riscv64) support with glibc.
 
   --enable-x86-64-musl
@@ -205,10 +215,10 @@ do
         --enable-armv7-musleabi)
             ENABLE_ARMV7_MUSLEABI=true
             ;;
-        --enable-riscv-musl)
+        --enable-riscv64gc-musl)
             ENABLE_RISCV_MUSL=true
             ;;
-        --enable-riscv-gnu)
+        --enable-riscv64gc-gnu)
             ENABLE_RISCV_GNU=true
             ;;
         --enable-x86-64-musl)
@@ -230,7 +240,7 @@ do
             ENABLE_X86_64_V4_GNU=true
             ;;
         --enable-container-image)
-            ENABLE_OCI_CONTAINER=true
+            ENABLE_CONTAINER_IMAGE=true
             ;;
         --release-github)
             shift
@@ -290,9 +300,14 @@ VERSION="$ANNOTATION_VERSION"
 VERSION_MAJOR="$(echo "$VERSION" | awk -F '.' '{if($1 == "0") { print $2 } else { print $1 }}')"
 VERSION_MINOR="$(echo "$VERSION" | awk -F '.' '{if($1 == "0") { print $3 } else { print $2 }}')"
 TARGETS=
+IMAGE_TARGETS=
 
 for target in $(list_active_targets); do
     TARGETS="$target $TARGETS"
+done
+
+for image in $(list_active_image_targets); do
+    IMAGE_TARGETS="$image $IMAGE_TARGETS"
 done
 
 CONFIG_FILE="$(cat << EOF
@@ -308,7 +323,7 @@ ENABLE_X86_64_V3_GNU     := $ENABLE_X86_64_V3_GNU
 ENABLE_X86_64_V3_MUSL    := $ENABLE_X86_64_V3_MUSL
 ENABLE_X86_64_V4_GNU     := $ENABLE_X86_64_V4_GNU
 ENABLE_X86_64_V4_MUSL    := $ENABLE_X86_64_V4_MUSL
-ENABLE_OCI_CONTAINER     := $ENABLE_OCI_CONTAINER
+ENABLE_CONTAINER_IMAGE   := $ENABLE_CONTAINER_IMAGE
 FORGEJO_RELEASE_TARGETS  := $FORGEJO_RELEASE_TARGETS
 GITHUB_RELEASE_TARGETS   := $GITHUB_RELEASE_TARGETS
 OCI_REGISTRIES           := $OCI_REGISTRIES
@@ -325,6 +340,7 @@ VERSION                  := $VERSION
 VERSION_MAJOR            := $VERSION_MAJOR
 VERSION_MINOR            := $VERSION_MINOR
 TARGETS                  := $TARGETS
+IMAGE_TARGETS            := $IMAGE_TARGETS
 EOF
 )"
 

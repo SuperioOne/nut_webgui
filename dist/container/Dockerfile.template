@@ -1,6 +1,7 @@
-FROM --platform=${PLATFORM} ${BASE_CONTAINER_IMAGE}
-COPY --chmod=755 ${EXE_DIR}/nut_webgui /usr/local/bin/nut_webgui
+FROM docker.io/busybox:stable-musl
+COPY --chmod=755 $PLACEHOLDER_EXE_DIR/nut_webgui /usr/local/bin/nut_webgui
 COPY --chmod=755 ./dist/container/server_init.sh /usr/local/bin/server_init.sh
 COPY --chmod=644 ./dist/config.toml /usr/local/share/nut_webgui/config.toml
+COPY --chmod=644 ./dist/users.toml /usr/local/share/nut_webgui/users.toml
 ENTRYPOINT ["/usr/local/bin/server_init.sh"]
 CMD ["/usr/local/bin/nut_webgui", "--allow-env"]

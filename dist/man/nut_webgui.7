@@ -1,0 +1,249 @@
+.de MR
+. ie \\n(.$=1 \
+.      I \%\\$1
+.    el \
+.      IR \%\\$1 (\\$2)\\$3
+. .
+
+.TH nut_webgui 7 "__PLACEHOLDER_DATE" "__PLACEHOLDER_VERSION" "nut_webgui User Manual"
+.SH NAME
+.PP
+nut_webgui \- configuring server
+
+.SH DESCRIPTION
+.PP
+.B nut_webgui
+is an alternative to
+.MR upsstats.cgi 8 .
+It displays UPS device stats from multiple
+.MR upsd 8
+servers.
+.PP
+In addition to web interface, nut_webgui provides data endpoints for custom
+integrations:
+.TP
+.BR /api
+Return UPS device data in JSON format.
+.TP
+.BR /metrics
+Exposes device metrics in OpenMetrics 1.0 format.
+.TP
+.BR /events
+Streams real\-time events via a WebSocket connection.
+.TP
+.BR /probes
+Provides basic health check endpoints.
+.PP
+These APIs are primarily intended for programming helper tools for logging and
+visualization, rather than as an
+.MR upsmon 8
+replacement. For more detailed API usage, see the online documentation.
+
+.SH CONFIGURATION
+.PP
+.MR nut_webgui 1
+can be configured via args, environment variables, or config file. All
+configuration options are merged into single unified config based on their
+priority.
+
+Config priority order highest to lowest:
+
+.RS
+1. CLI args
+.br
+2. Environment variables
+.br
+3. config.toml file
+.RE
+.PP
+For CLI args and environment variables see
+.MR nut_webgui 1
+man page.
+
+.SH CONFIG.TOML
+.PP
+The config file is a TOML v1.1.0 formatted document that allows configuration
+for: HTTP server,
+.MR upsd 8
+server connections, authentication, etc.
+
+.PP
+The default config file location is
+.I /etc/nut_webgui/config.toml
+for most installation methods. However, it's not a requirement and the config
+file location can be changed to any path with the
+.I \-\-config\-file
+argument.
+
+.PP
+config.toml template is also available at
+.I /usr/local/share/nut_webgui/config.toml
+
+.SS EXAMPLE
+.PP
+The following config.toml example shows two
+.MR upsd 8
+server connections, authentication, and HTTP server settings.
+
+.EX
+        version = "1"
+        log_level = "info"
+        default_theme = "tokyo-night"
+
+        [http_server]
+        base_path = "/"
+        listen = "0.0.0.0"
+        port = 9000
+        worker_count = 8
+
+        [upsd.default]
+        username = "admin"
+        password = "Pass0rd"
+        address = "localhost"
+        port = 3493
+        max_connection = 4
+        poll_freq = 30
+        poll_interval = 2
+        tls_mode = "disable"
+
+        [upsd.reactor]
+        address = "10.0.12.10"
+        username = "observer"
+        password = "AbsoluteSecurity"
+
+        [auth]
+        users_file = "/etc/nut_webgui/users.toml"
+        allow_anonymous_metrics = false
+.EE
+
+.SH AUTHENTICATION
+.PP
+By default,
+.MR nut_webgui 1
+server can be accessed by everyone. Authentication can be enabled by providing
+.I users.toml
+file via configuration options.
+.PP
+Once authentication is enabled;
+.RS
+- Web UI requires session cookies to access the pages.
+.br
+- Both the Data API and WebSocket event streams require API keys to access data.
+.br
+- Metrics endpoint requires API key unless anonymous metrics flag is enabled.
+.RE
+.SS SERVER KEY
+.PP
+All user sessions and API keys are signed with a server key. Changing this key
+invalidates all existing user sessions and API keys.
+.PP
+For multi-instance deployments (e.g., behind a load balancer), all instances
+must use the same server key.
+.SS USERS FILE
+.PP
+user file is a simple TOML formatted file where each user is defined as a table.
+.SS EXAMPLE
+.EX
+        [username]
+        password = "asdf"
+        permissions = ["setvar", "instcmd", "fsd"]
+
+        [username2]
+        password = "passw0rd"
+
+        [spear-of-democracy]
+        password = "down-up-right-up-left-right"
+        permissions = ["instcmd"]
+
+        [sector-g-admin]
+        password = "otis123"
+        permissions = ["fsd"]
+.EE
+.SS USER PERMISSIONS
+nut_webgui has three different user permissions;
+.TP
+.BR setvar
+User can change UPS variables.
+.TP
+.BR instcmd
+User can call instant commands on target UPS.
+.TP
+.BR fsd
+User force shutdown target UPS.
+
+.SH TLS MODES
+.PP
+Secure communication between
+.MR nut_webgui 1
+and
+.MR upsd 8
+servers can be configured via
+.I tls_mode
+option.
+.MR nut_webgui 1
+uses openssl-prober to check system certificates located in
+.I /etc/ssl/certs/
+directory. Make sure required root certificates are present at this location.
+.PP
+Available TLS modes are;
+
+.TP
+.BR disable
+UPSD connection uses plain text communication and no TLS is enabled.
+.TP
+.BR strict
+UPSD connection is secured by TLS, and nut_webgui refuses to connect if
+certificate verification fails.
+.TP
+.BR skip
+UPSD connection is secured by TLS, and nut_webgui ignores any certificate
+verification issues. This option is only recommeded to test self-signed
+certificates.
+
+.SH LOG LEVELS
+.BR error,
+.BR warn,
+.BR info,
+.BR debug,
+.BR trace
+
+.SH THEME OPTIONS
+.BR light,
+.BR dark,
+.BR abyss,
+.BR autumn,
+.BR business,
+.BR black,
+.BR corporate,
+.BR dim,
+.BR dracula,
+.BR forest,
+.BR kanagawa-dragon,
+.BR night,
+.BR nord,
+.BR sunset,
+.BR synthwave,
+.BR tokyo-night
+
+.SH REPORTING BUGS
+.BR Codeberg:
+.UR https://codeberg.org/SuperiorOne/nut_webgui/issues
+.UE
+
+.BR GitHub:
+.UR https://github.com/SuperioOne/nut_webgui/issues
+.UE
+
+.BR Email:
+.MT pm@smdd.dev
+.ME
+
+.SH ONLINE DOCUMENTATION
+.UR https://codeberg.org/SuperiorOne/nut_webgui
+.UE
+
+.SH SEE ALSO
+.MR nut 7 ,
+.MR nut_webgui 1 ,
+.MR upsstats.cgi 8 ,
+.MR upsmon 8

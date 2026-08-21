@@ -11,6 +11,10 @@ include ./makefiles/arm.mk
 include ./makefiles/riscv.mk
 include ./makefiles/package.mk
 
+ifdef ENABLE_CONTAINER_IMAGE
+include ./makefiles/container_image.mk
+endif
+
 .PHONY: build-all
 build-all: $(TARGETS)
 
@@ -30,7 +34,7 @@ ifdef TARGETS
 	@echo "CONFIG SPECIFIC RECIPES"
 	@echo "  build-all     : Cross compile all configured targets."
 	@echo "  package       : Pack all artifacts for release."
-ifdef ENABLE_OCI_CONTAINER
+ifdef ENABLE_CONTAINER_IMAGE
 	@echo "  build-images  : Build container images for the supported targets. (Only self-contained musl targets are supported)"
 endif
 endif
@@ -49,42 +53,6 @@ build-native:
 	@export RUSTFLAGS="-Ctarget-cpu=native" && \
 		cargo build -p nut_webgui --release
 	@install -D "./target/release/nut_webgui" "$(ARTIFACT_DIR)/release/nut_webgui"
-
-.PHONY: gen-dockerfiles
-gen-dockerfiles:
-	@install -d "$(BIN_DIR)/dockerfiles"
-	@for entry in $$(jq -rc '.oci.images[]' "$(BUILD_CONFIG)"); do \
-			export PLATFORM="$$(echo $$entry | jq -r '.platform')"; \
-			export TARGET="$$(echo $$entry | jq -r '.target')"; \
-			export BASE_CONTAINER_IMAGE="$$(echo $$entry | jq -r '.base_image')"; \
-			export EXE_DIR="$(BIN_DIR)/$$TARGET"; \
-			echo "Creating $${TARGET}.dockerfile"; \
-			cat "$(DOCKER_TEMPLATE)" | envsubst > "$(BIN_DIR)/dockerfiles/$${TARGET}.Dockerfile"; \
-		done;
-	@echo "Creating annotation.json"
-	@REVISION="$$(git rev-parse --verify HEAD)"; \
-		cargo metadata \
-			--no-deps \
-			--frozen \
-			--format-version 1 \
-			--manifest-path "./nut_webgui/Cargo.toml" \
-		| jq -r \
-			--arg revision "$$REVISION" \
-			'.packages[0] | { title:.name, version:.version, url:.homepage, licenses:.license, documentation:.documentation, source:.repository, description:.description, authors:(.authors | join(";")), revision: $$revision}' \
-		> "$(BIN_DIR)/dockerfiles/annotations.json";
-
-.PHONY: gen-pkgbuild
-gen-pkgbuild: build-x86-64-gnu build-aarch64-gnu build-armv7-musleabi
-	@echo "Creating PKGBUILD"
-	@install -d $(DIST_DIR)
-	@NUTWG_SHA256_x86_64="$$(cat "$(DIST_DIR)/$(PROJECT_NAME)_$(PROJECT_VER)_x86-64-gnu.tar.gz.sha256" | awk -F ' ' '{print $$1}')"; \
-		NUTWG_SHA256_AARCH64="$$(cat "$(DIST_DIR)/$(PROJECT_NAME)_$(PROJECT_VER)_aarch64-gnu.tar.gz.sha256" | awk -F ' ' '{print $$1}')"; \
-		NUTWG_SHA256_ARMV7="$$(cat "$(DIST_DIR)/$(PROJECT_NAME)_$(PROJECT_VER)_armv7-musleabi.tar.gz.sha256" | awk -F ' ' '{print $$1}')"; \
-		cat "$(PKGBUILD_TEMPLATE)" \
-		| sed -e "s/__PLACEHOLDER_NUTWG_VERSION/$(PROJECT_VER)/g" \
-			-e "s/__PLACEHOLDER_NUTWG_SHA256_x86_64/$$NUTWG_SHA256_x86_64/g" \
-			-e "s/__PLACEHOLDER_NUTWG_SHA256_AARCH64/$$NUTWG_SHA256_AARCH64/g" \
-			-e "s/__PLACEHOLDER_NUTWG_SHA256_ARMV7/$$NUTWG_SHA256_ARMV7/g" > "$(DIST_DIR)/PKGBUILD"
 
 .PHONY: install
 install: build-native

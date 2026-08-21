@@ -2,7 +2,7 @@
 set -e;
 
 # Inspired from the first version of k3s install.sh
-# attribution: @ibuildthecloud
+# @ibuildthecloud
 
 NUTWG_RELEASE_URL="https://github.com/SuperioOne/nut_webgui/releases/latest/download";
 NUTWG_INSTALL_PATH="/usr/local/bin/nut_webgui"
@@ -13,17 +13,19 @@ detect_init_system() {
         __INIT_SYSTEM_PATH="$(realpath "/sbin/init")"
         __INIT_SYSTEM="$(basename "$__INIT_SYSTEM_PATH")"
 
-        echo "$__INIT_SYSTEM"
-
-        #NOTE: More options can be added such as openrc, /etc/init.d
         case "$__INIT_SYSTEM" in
             systemd)
                 NUTWG_INIT_SYSTEM="systemd"
                 ;;
             runit-init)
-                NUTWG_INIT_SYSTEM="runit"
+                if test -d "/etc/sv"; then
+                    NUTWG_INIT_SYSTEM="runit"
+                fi
                 ;;
             *)
+                if test -e "/sbin/openrc-run"; then
+                    NUTWG_INIT_SYSTEM="openrc"
+                fi
                 ;;
         esac
     fi
@@ -66,7 +68,12 @@ detect_target() {
             fi
             ;;
         riscv64)
-            NUTWG_TARGET="riscv64gc-gnu"
+            if test "$NUT_LIBC_TYPE" = "musl"; then
+                NUTWG_TARGET="riscv64gc-musl"
+            else
+                NUTWG_TARGET="riscv64gc-gnu"
+            fi
+
             ;;
         armv7)
             NUTWG_TARGET="armv7-musleabi"
@@ -82,6 +89,7 @@ detect_target() {
             echo "  armv6-musleabi"
             echo "  armv7-musleabi"
             echo "  riscv64gc-gnu"
+            echo "  riscv64gc-musl"
             echo "  x86-64-gnu"
             echo "  x86-64-musl"
             echo "  x86-64-v3-gnu"
@@ -119,24 +127,6 @@ download() {
     esac
 }
 
-default_systemd_service() {
-    cat <<EOF
-[Unit]
-Description=nut_webgui - Simple NUT Web interface
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-ExecStart=${NUTWG_INSTALL_PATH} --config-file ${NUTWG_CONFIG_DIR}/config.toml --allow-env
-Restart=on-failure
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-EOF
-}
-
 SUDO=
 if test "$(id -u)" -ne 0; then
     SUDO=sudo
@@ -144,13 +134,15 @@ fi
 
 if test -z "$NUTWG_TARGET"; then
     detect_target
+    echo "detected target: $NUTWG_TARGET"
+fi
+
+if test -z "$NUTWG_INIT_SYSTEM"; then
+    detect_init_system
+    echo "detected init system: ${NUTWG_INIT_SYSTEM:-"N/A"}"
 fi
 
 detect_download_client
-detect_init_system
-
-echo "detected target: $NUTWG_TARGET"
-echo "detected init system: ${NUTWG_INIT_SYSTEM:-"N/A"}"
 
 NUTWG_FULL_NAME="nut_webgui_${NUTWG_VERSION}_${NUTWG_TARGET}"
 NUTWG_PACKAGE="${NUTWG_FULL_NAME}.tar.gz"
@@ -187,9 +179,7 @@ case "$NUTWG_INIT_SYSTEM" in
     systemd)
         if test -d "/etc/systemd/system/" ; then
             if test ! -e "/etc/systemd/system/nut_webgui.service";then
-                __TMP_SVC="$(mktemp -t nut_webgui.service.XXX)"
-                default_systemd_service > "$__TMP_SVC"
-                $SUDO install -m=755 -D "$__TMP_SVC" "/etc/systemd/system/nut_webgui.service"
+                # $SUDO install -m=755 -D "$__TMP_SVC" "/etc/systemd/system/nut_webgui.service"
 
                 echo "optional systemd unit for nut_webgui is created at /etc/systemd/system/nut_webgui.service"
                 echo "to enable systemd unit use:"

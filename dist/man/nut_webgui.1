@@ -1,0 +1,204 @@
+.de MR
+. ie \\n(.$=1 \
+.      I \%\\$1
+.    el \
+.      IR \%\\$1 (\\$2)\\$3
+. .
+
+.TH nut_webgui 1 "__PLACEHOLDER_DATE" "__PLACEHOLDER_VERSION" "nut_webgui User Manual"
+.SH NAME
+.PP
+nut_webgui \- Simple NUT Web interface
+.SH SYNOPSIS
+.SY
+nut_webgui [\fB\-l\fR|\fB\-\-listen\fR \fI<LISTEN_ADDRESS>\fR]
+           [\fB\-p\fR|\fB\-\-port\fR \fI<PORT>\fR]
+           [\fB\-\-base\-path\fR \fI<PATH>\fR]
+           [\fB\-\-log\-level\fR \fI<LOG_LEVEL>\fR]
+           [\fB\-\-default\-theme\fR \fI<THEME>\fR]
+           [\fB\-\-config\-file\fR \fI<PATH>\fR]
+           [\fB\-\-allow\-env\fR]
+           [\fB\-\-anonymous\-metrics\fR \fI<true|false>\fR]
+           [\fB\-\-server\-key\fR \fI<TEXT>\fR]
+           [\fB\-\-with\-auth\fR \fI<AUTH_FILE_PATH>\fR]
+           [\fB\-w\fR|\fB\-\-worker\-count\fR \fI<NUMBER>\fR]
+           [\fB\-h\fR|\fB\-\-help\fR]
+           [\fB\-V\fR|\fB\-\-version\fR]
+.YS
+
+.SH DESCRIPTION
+.PP
+.B nut_webgui
+is a modern alternative to
+.MR upsstats.cgi 8 .
+See
+.MR nut_webgui 7
+for the additional config files and features.
+
+.SH OPTIONS
+.TP
+.BR \-l ", "\-\-listen
+Listen address for the HTTP server. Default is 
+.IR 0.0.0.0.
+.TP
+.BR \-p ", "\-\-port
+Port used by the HTTP server. Default is
+.IR 9000.
+.TP
+.BR \-\-base\-path
+Override HTTP server base path. Default is 
+.IR /.
+.TP
+.BR \-\-log\-level
+Log level for the HTTP server. Default is 
+.IR info.
+.TP
+.BR \-\-default\-theme
+Web UI default theme.
+.TP
+.BR \-\-config\-file
+Set
+.IR config.toml
+path
+.TP
+.BR \-\-allow\-env
+Allow application to load configuration from environment variables.
+.TP
+.BR \-\-anonymous\-metrics
+Set anonymous access on 
+.IR /metrics
+endpoint, ignored when auth is disabled.
+Default is
+.IR false.
+.TP
+.BR \-\-server\-key
+Set private server key value. Default is auto-generated random value.
+.TP
+.BR \-\-with\-auth
+Enable authentication with
+.IR user.toml
+file.
+.TP
+.BR \-\-worker\-count
+Set HTTP server worker count.
+.TP
+.BR \-h ", " \-\-help
+Print help menu and exit.
+.TP
+.BR \-V ", " \-\-version
+Print version and exit.
+
+.SH ENVIRONMENT
+.PP
+nut_webgui can read environment variables for configuration. In order to use
+environment variables, the user must explicitly enable
+.IR \-\-allow\-env
+flag.
+.TP
+.BR NUTWG__CONFIG_FILE
+Set
+.IR config.toml
+path
+.TP
+.BR NUTWG__DEFAULT_THEME
+Set Web UI default theme.
+.TP
+.BR NUTWG__LOG_LEVEL
+Set log level.
+.TP
+.BR NUTWG__SERVER_KEY
+Set private server key value.
+.TP
+.BR NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS
+Set anonymous access on
+.IR /metrics
+endpoint, ignored when auth is disabled.
+.TP
+.BR NUTWG__AUTH__USERS_FILE
+Enable authentication with
+.IR user.toml
+file.
+.TP
+.BR NUTWG__HTTP_SERVER__BASE_PATH
+Set HTTP server base path.
+.TP
+.BR NUTWG__HTTP_SERVER__LISTEN
+Set HTTP server listen address.
+.TP
+.BR NUTWG__HTTP_SERVER__PORT
+Set HTTP server port.
+.TP
+.BR NUTWG__HTTP_SERVER__WORKER_COUNT
+Set HTTP server worker count.
+
+.PP
+The following environment variables can be used to configure a single upsd
+server without requiring an additional config file.
+
+.TP
+.BR NUTWG__UPSD__ADDRESS
+Set UPSD address.
+.TP
+.BR NUTWG__UPSD__MAX_CONNECTION
+Set allowed maximum connection for UPSD client.
+.TP
+.BR NUTWG__UPSD__NAME
+Set namespace for the `NUTWG__UPSD__*` environment variables.
+.TP
+.BR NUTWG__UPSD__PASSWORD
+Set UPSD password.
+.TP
+.BR NUTWG__UPSD__POLL_FREQ
+Non-critical ups variables update frequency in seconds.
+.TP
+.BR NUTWG__UPSD__POLL_INTERVAL
+Critical ups variables (`ups.status`) update interval in seconds.
+.TP
+.BR NUTWG__UPSD__PORT
+Set UPSD port.
+.TP
+.BR NUTWG__UPSD__TLS_MODE
+Configure TLS mode between UPSD and client.
+.TP
+.BR NUTWG__UPSD__USERNAME
+Set UPSD username.
+
+.SH CAVEATS
+.PP
+nut_webgui's x86_64 and ARMv8 builds use Mimalloc v2 as the memory allocator.
+The change improves overall performance, especially for the self-contained Musl
+builds. However, Mimalloc uses thread-local segments, which can significantly
+increase memory usage on systems with high CPU count.
+.PP
+Recommended action is limiting
+.IR \-\-worker\-count
+to a reasonable value between 1 and 4.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful server exit.
+.TP
+.B 1
+Unrecoverable error, configuration error
+
+.SH REPORTING BUGS
+.BR Codeberg:
+.UR https://codeberg.org/SuperiorOne/nut_webgui/issues
+.UE
+
+.BR GitHub:
+.UR https://github.com/SuperioOne/nut_webgui/issues
+.UE
+
+.BR Email:
+.UR pm@smdd.dev
+.UE
+
+.SH ONLINE DOCUMENTATION
+.UR https://codeberg.org/SuperiorOne/nut_webgui
+.UE
+
+.SH SEE ALSO
+.MR nut 7 ,
+.MR nut_webgui 7
