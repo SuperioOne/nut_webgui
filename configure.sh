@@ -118,16 +118,55 @@ list_active_image_targets() {
     printif "$ENABLE_X86_64_V4_MUSL" "amd64-v4"
 }
 
+extract_name() {
+    echo "$1" | awk -F '=' '{print $1}' | tr '[:lower:]' '[:upper:]'
+}
+
+extract_uri() {
+    echo "$1"  | awk -F '=' '{d = index($0,"="); print substr($0,d+1)}'
+}
+
+extract_owner() {
+    echo "$1" | awk '{split($0, parts, "/"); print parts[length(parts) - 1]}'
+}
+
+extract_repo() {
+    echo "$1" | awk '{split($0, parts, "/"); print parts[length(parts)]}'
+}
+
+extract_base_uri() {
+    echo "$1" | awk '{split($0, parts, "/"); for(i = 1; i < length(parts) - 1; i++) {printf "%s/",parts[i]}}'
+}
+
+add_oci_registry() {
+    PREFIX="OCI_";
+    ENTRIES="$1";
+    ENTRY_TARGETS=;
+
+    for ENTRY in $ENTRIES; do
+        ENTRY_NAME="$(extract_name "$ENTRY")"
+        ENTRY_URI="$(extract_uri  "$ENTRY")"
+
+        CONFIG_FILE="$CONFIG_FILE\n${PREFIX}${ENTRY_NAME}_URI := $ENTRY_URI"
+        ENTRY_TARGETS="$ENTRY_NAME $ENTRY_TARGETS"
+    done
+
+    CONFIG_FILE="$CONFIG_FILE\n${PREFIX}TARGETS := $ENTRY_TARGETS"
+}
+
 add_release_targets() {
     PREFIX="$1";
     ENTRIES="$2";
     ENTRY_TARGETS=;
 
     for ENTRY in $ENTRIES; do
-        ENTRY_NAME="$(echo "$ENTRY" | awk -F '=' '{print $1}' | tr '[:lower:]' '[:upper:]')"
-        ENTRY_URI="$(echo "$ENTRY"  | awk -F '=' '{d = index($0,"="); print substr($0,d+1)}')"
+        ENTRY_NAME="$(extract_name "$ENTRY")"
+        ENTRY_URI="$(extract_uri "$ENTRY")"
 
-        CONFIG_FILE="$CONFIG_FILE\n${PREFIX}${ENTRY_NAME}_URI := $ENTRY_URI"
+        ENTRY_OWNER="${PREFIX}${ENTRY_NAME}_OWNER := $(extract_owner "$ENTRY_URI")"
+        ENTRY_REPO="${PREFIX}${ENTRY_NAME}_REPO := $(extract_repo "$ENTRY_URI")"
+        ENTRY_BASE_URI="${PREFIX}${ENTRY_NAME}_URI := $(extract_base_uri "$ENTRY_URI")"
+        CONFIG_FILE="$CONFIG_FILE\n${ENTRY_OWNER}\n${ENTRY_REPO}\n${ENTRY_BASE_URI}"
         ENTRY_TARGETS="$ENTRY_NAME $ENTRY_TARGETS"
     done
 
@@ -179,16 +218,14 @@ OPTIONS
   --enable-container-image
         Enable container image build only if enabled architectures supports it.
 
-  --release-github <ALIAS>=<URI>
+  --release-github <ALIAS>=<OWNER>/<REPO>
         Add a GitHub repo as a release target.
         ENV variables for credentials:
-                - GH_<ALIAS>_USERNAME
                 - GH_<ALIAS>_ACCESS_TOKEN
 
-  --release-forgejo <ALIAS>=<URI>
+  --release-forgejo <ALIAS>=<URI>/<OWNER>/<REPO>
         Add a Forgejo/Gitea repo as a release target.
         ENV variables for credentials:
-                - FJ_<ALIAS>_USERNAME
                 - FJ_<ALIAS>_ACCESS_TOKEN
 
   --image-registry <ALIAS>=<URI>
@@ -196,6 +233,7 @@ OPTIONS
         ENV variables for credentials:
                 - OCI_<ALIAS>_USERNAME
                 - OCI_<ALIAS>_ACCESS_TOKEN
+                - OCI_<ALIAS>_VERIFY_TLS
 
   -h, --help
         Show help menu.
@@ -359,7 +397,7 @@ EOF
 )"
 
 if [ -n "$OCI_REGISTRIES" ]; then
-    add_release_targets "OCI_" "$OCI_REGISTRIES"
+    add_oci_registry "$OCI_REGISTRIES"
 fi
 
 if [ -n "$GITHUB_RELEASE_TARGETS" ]; then

@@ -23,6 +23,10 @@ include ./makefiles/arm.mk
 include ./makefiles/riscv.mk
 include ./makefiles/package_build.mk
 
+ifdef GH_TARGETS
+include ./makefiles/release_github.mk
+endif
+
 ifdef ENABLE_CONTAINER_IMAGE
 include ./makefiles/image_build.mk
 
@@ -38,18 +42,27 @@ endif
 .PHONY: help
 help:
 	@echo "BASIC RECIPES"
-	@echo "  build         : Build server binary for the current system's CPU architecture and OS."
-	@echo "  build-native  : Build server binary specifically optimized for the current system's CPU."
-	@echo "  clean         : Clear all build directories."
-	@echo "  install       : Build nut_webgui and install it to /usr/bin/local (Requires permission)."
-	@echo "  install-local : Build nut_webgui and install it locally to $$HOME/.local/bin"
-	@echo "  test          : Call test suites."
+	@echo "  build           : Build server binary for the current system's CPU architecture and OS."
+	@echo "  build-native    : Build server binary specifically optimized for the current system's CPU."
+	@echo "  clean           : Clear all build directories."
+	@echo "  install         : Build nut_webgui and install it to /usr/bin/local (Requires permission)."
+	@echo "  install-local   : Build nut_webgui and install it locally to $$HOME/.local/bin"
+	@echo "  test            : Call test suites."
 ifdef TARGETS
 	@echo "CONFIG SPECIFIC RECIPES"
-	@echo "  build-all     : Cross compile all configured targets."
-	@echo "  package       : Pack all artifacts for release."
+	@echo "  build-all       : Cross compile all configured targets."
+	@echo "  package         : Pack all artifacts locally for distribution."
 ifdef ENABLE_CONTAINER_IMAGE
-	@echo "  build-images  : Build container images for the supported targets. (Only self-contained musl targets are supported)"
+	@echo "  build-images    : Build container images locally."
+ifdef OCI_TARGETS
+	@echo "  publish-images  : Build container images and publish to target container registries."
+endif
+endif
+ifdef GH_TARGETS
+	@echo "  release-github  : Pack all artifacts and create new draft release on target GitHub repos."
+endif
+ifdef FJ_TARGETS
+	@echo "  release-forgejo : Pack all artifacts and create new draft release on target Forgejo/Gitea repos."
 endif
 endif
 
