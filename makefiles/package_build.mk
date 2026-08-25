@@ -1,16 +1,16 @@
 PACKAGE_DIR      := $(BIN_DIR)/packages
 STAGING_DIR      := $(BIN_DIR)/staging
-STAGING_TARGETS  := $(foreach TARGET,$(TARGETS),$(STAGING_DIR)/nut_webgui_$(VERSION)_$(TARGET))
 PACKAGE_TARS     := $(foreach TARGET,$(TARGETS),$(PACKAGE_DIR)/nut_webgui_$(VERSION)_$(TARGET).tar.gz)
+ARTIFACT_FILES   := $(foreach TARGET,$(TARGETS),$(ARTIFACT_DIR)/$(TARGET)/nut_webgui)
 CHANGELOG_FILE   := $(STAGING_DIR)/CHANGELOG
-MAN_PAGES_DIR    := $(STAGING_DIR)/man
 INSTALL_SCRIPT   := $(PACKAGE_DIR)/install.sh
 MANIFEST_FILE    := $(PACKAGE_DIR)/MANIFEST
+MAN_OUT_DIR      := $(STAGING_DIR)/man
+MAN_PAGE_SRC     := $(wildcard ./dist/man/*)
 PKGBUILD_ENABLED := $(or $(ENABLE_ARMV7_MUSLEABI),$(ENABLE_AARCH64_GNU),$(ENABLE_X86_64_GNU))
-MAN_PAGE_SRCS    := ./dist/man/nut_webgui.1 \
-										./dist/man/nut_webgui.7
+STAGING_TARGETS  := $(foreach TARGET,$(TARGETS),$(STAGING_DIR)/nut_webgui_$(VERSION)_$(TARGET))
 PACKAGE_CONTENTS := $(CHANGELOG_FILE) \
-										$(MAN_PAGES_DIR) \
+										$(MAN_OUT_DIR) \
 										./LICENSE \
 										./dist/config.toml \
 										./dist/service \
@@ -20,13 +20,27 @@ ifdef PKGBUILD_ENABLED
 PKGBUILD_SCRIPT  := $(PACKAGE_DIR)/PKGBUILD
 endif
 
+# Parameters:
+# 1: Target architecture
+define tar_package_recipe =
+$(STAGING_DIR)/nut_webgui_$(VERSION)_$(1): $(ARTIFACT_DIR)/$(1)/nut_webgui $(PACKAGE_CONTENTS)
+	@install -p -D "$(ARTIFACT_DIR)/$(1)/nut_webgui" "$(STAGING_DIR)/nut_webgui_$(VERSION)_$(1)/nut_webgui"
+	@cp -p -r $(PACKAGE_CONTENTS) "$(STAGING_DIR)/nut_webgui_$(VERSION)_$(1)"
+
+$(PACKAGE_DIR)/nut_webgui_$(VERSION)_$(1).tar.gz: $(STAGING_DIR)/nut_webgui_$(VERSION)_$(1)
+	@install -d "$(PACKAGE_DIR)"
+	@tar -czf "$(PACKAGE_DIR)/nut_webgui_$(VERSION)_$(1).tar.gz" \
+		-C "$(STAGING_DIR)" \
+		"nut_webgui_$(VERSION)_$(1)"
+endef
+
 $(CHANGELOG_FILE): ./CHANGELOG
 	@install -d "$(STAGING_DIR)"
 	@cat ./CHANGELOG | awk -v version="^# v$(VERSION)" '$$0 ~ version {start=1}/^# v.*$$/ && $$0 !~ version {start=0}start' > "$(CHANGELOG_FILE)"
 
-$(MAN_PAGES_DIR): $(MAN_PAGE_SRCS)
+$(MAN_OUT_DIR): $(MAN_PAGE_SRC)
 	@DATE="$$(date -uI)"; \
-	for MANPAGE in $(MAN_PAGE_SRCS); do \
+	for MANPAGE in $(MAN_PAGE_SRC); do \
 		NAME="$$(basename "$$MANPAGE")"; \
 		SECTION="man1"; \
 		case "$$NAME" in \
@@ -39,32 +53,16 @@ $(MAN_PAGES_DIR): $(MAN_PAGE_SRCS)
 			*.8) SECTION="man8" ;; \
 			*) SECTION="man1" ;; \
 		esac; \
-		install -d "$(MAN_PAGES_DIR)/$$SECTION/"; \
-		cat "$$MANPAGE" | sed -e "s/__PLACEHOLDER_VERSION/$(VERSION)/g" -e "s/__PLACEHOLDER_DATE/$$DATE/g" > "$(MAN_PAGES_DIR)/$$SECTION/$$NAME"; \
+		install -d "$(MAN_OUT_DIR)/$$SECTION/"; \
+		cat "$$MANPAGE" | sed -e "s/__PLACEHOLDER_VERSION/$(VERSION)/g" -e "s/__PLACEHOLDER_DATE/$$DATE/g" > "$(MAN_OUT_DIR)/$$SECTION/$$NAME"; \
 	done
 
-$(STAGING_TARGETS): $(TARGETS) $(PACKAGE_CONTENTS)
-	@install -d "$(STAGING_DIR)"
-	@for TARGET_ARCH in $(TARGETS); do \
-		OUTDIR="$(STAGING_DIR)/nut_webgui_$(VERSION)_$$TARGET_ARCH"; \
-		install -D "$(ARTIFACT_DIR)/$$TARGET_ARCH/nut_webgui" "$$OUTDIR/nut_webgui"; \
-		for CONTENT in $(PACKAGE_CONTENTS); do \
-			cp -r "$$CONTENT" "$$OUTDIR"; \
-		done; \
-	done
-
-$(PACKAGE_TARS): $(STAGING_TARGETS)
-	@install -d "$(PACKAGE_DIR)"
-	@for TARGET in $(STAGING_TARGETS); do \
-		DIR_NAME="$$(basename "$$TARGET")"; \
-		OUTPUT_TAR="$(PACKAGE_DIR)/$$DIR_NAME.tar.gz"; \
-		tar -czf "$$OUTPUT_TAR" -C "$(STAGING_DIR)" "$$DIR_NAME";  \
-	done
+$(foreach TARGET,$(TARGETS),$(eval $(call tar_package_recipe,$(TARGET))))
 
 $(MANIFEST_FILE): $(PACKAGE_TARS)
 	@install -d "$(PACKAGE_DIR)"
-	@echo "---" > "$(MANIFEST_FILE)";
-	@for TAR_FILE in $(PACKAGE_TARS); do \
+	@echo "---" > "$(MANIFEST_FILE)"; \
+	for TAR_FILE in $(PACKAGE_TARS); do \
 		echo "Filename: $$(basename "$$TAR_FILE")" >> "$(MANIFEST_FILE)"; \
 		echo 'Version: $(VERSION)' >> "$(MANIFEST_FILE)"; \
 		echo "Target: $$(basename "$$TAR_FILE" | sed -e 's/nut_webgui_$(VERSION)_//' -e 's/.tar.gz//')" >> "$(MANIFEST_FILE)"; \
@@ -76,7 +74,7 @@ $(MANIFEST_FILE): $(PACKAGE_TARS)
 	done
 
 $(INSTALL_SCRIPT): ./dist/install.sh
-	@install -D "./dist/install.sh" "$(INSTALL_SCRIPT)"
+	@install -p -D "./dist/install.sh" "$(INSTALL_SCRIPT)"
 
 .PHONY: package
 package: $(MANIFEST_FILE) $(INSTALL_SCRIPT)

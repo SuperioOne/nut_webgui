@@ -1,9 +1,9 @@
+CONTAINER_DIR        := $(BIN_DIR)/container
+OCI_IMAGE_NAMESPACE  := org.opencontainers.image
 IMAGE_TEMPLATE       := ./dist/container/Dockerfile.template
 IMAGE_DEPENDENCIES   := ./dist/container/server_init.sh \
 												./dist/config.toml \
 												./dist/users.toml
-IMAGE_TEMPLATE_DIR   := $(BIN_DIR)/container
-OCI_IMAGE_NAMESPACE  := org.opencontainers.image
 
 define ANNOTATIONS =
 --annotation "$(OCI_IMAGE_NAMESPACE).authors=$(ANNOTATION_AUTHORS)" \
@@ -23,19 +23,39 @@ endef
 # 3: Architecture
 # 4: Variant
 define container_image_rule =
-$(IMAGE_TEMPLATE_DIR)/$(1).Dockerfile: $(2) $(IMAGE_DEPENDENCIES) $(IMAGE_TEMPLATE)
-	@install -d "$(IMAGE_TEMPLATE_DIR)"
+$(CONTAINER_DIR)/$(1).Dockerfile: $(2) $(IMAGE_DEPENDENCIES) $(IMAGE_TEMPLATE)
+	@install -d "$(CONTAINER_DIR)"
 	@export PLACEHOLDER_EXE_DIR="$(ARTIFACT_DIR)/$(2)"; \
-		cat "$(IMAGE_TEMPLATE)" | envsubst > "$(IMAGE_TEMPLATE_DIR)/$(1).Dockerfile"
+		cat "$(IMAGE_TEMPLATE)" | envsubst > "$(CONTAINER_DIR)/$(1).Dockerfile"
+
+$(CONTAINER_DIR)/$(1).info: $(CONTAINER_DIR)/$(1).Dockerfile
+	@install -d "$(CONTAINER_DIR)"
+	@REBUILD=; \
+	IMAGE_ID="$$$$(buildah inspect --type image -f "{{.FromImageID}}" "nut_webgui:$(VERSION)-$(1)")"; \
+		if [ -e "$(CONTAINER_DIR)/$(1).info" ]; then \
+			EXISTING_ID="$$$$(cat "$(CONTAINER_DIR)/$(1).info")"; \
+			if [ "$$$$EXISTING_ID" != "$$$$IMAGE_ID" ]; then \
+				REBUILD=true; \
+			fi; \
+		else \
+			REBUILD=true; \
+		fi; \
+		if [ -n "$$$$REBUILD" ]; then \
+			buildah build \
+				--arch "$(3)" \
+				--variant "$(4)" \
+				$(ANNOTATIONS) \
+				-t "nut_webgui:$(VERSION)-$(1)" \
+				-f "$(CONTAINER_DIR)/$(1).Dockerfile"; \
+			buildah inspect \
+				--type image \
+				-f "{{.FromImageID}}" \
+				"nut_webgui:$(VERSION)-$(1)" > "$(CONTAINER_DIR)/$(1).info"; \
+		fi;
 
 .PHONY: $(1)
-$(1): $(IMAGE_TEMPLATE_DIR)/$(1).Dockerfile
-	@buildah build \
-		--arch "$(3)" \
-		--variant "$(4)" \
-		$(ANNOTATIONS) \
-		-t "nut_webgui:$(VERSION)-$(1)" \
-		-f "$(IMAGE_TEMPLATE_DIR)/$(1).Dockerfile"
+$(1): $(CONTAINER_DIR)/$(1).info
+
 endef
 
 ifdef ENABLE_X86_64_MUSL
