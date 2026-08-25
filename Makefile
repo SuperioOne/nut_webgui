@@ -27,6 +27,10 @@ ifdef GH_TARGETS
 include ./makefiles/release_github.mk
 endif
 
+ifdef FJ_TARGETS
+include ./makefiles/release_forgejo.mk
+endif
+
 ifdef ENABLE_CONTAINER_IMAGE
 include ./makefiles/image_build.mk
 

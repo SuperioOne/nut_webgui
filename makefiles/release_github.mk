@@ -1,4 +1,4 @@
-GH_PUBLISH_DIR     := $(BIN_DIR)/gh-release/
+GH_PUBLISH_DIR     := $(BIN_DIR)/gh_release
 GH_RELEASE_TARGETS := $(foreach TARGET,$(GH_TARGETS),release-github-$(TARGET))
 GH_RELEASE_ASSETS  := $(PACKAGE_TARS) $(MANIFEST_FILE) $(INSTALL_SCRIPT)
 
@@ -33,9 +33,14 @@ release-github-$(1): $(GH_RELEASE_ASSETS) $(GH_PUBLISH_DIR)/$(1)/release-request
 		-X POST \
 		$$(GH_$(1)_HEADERS) \
 		-H "Accept: application/vnd.github+json" \
+		-H "Content-Type: application/json" \
 		"$$(GH_$(1)_API_URI)/releases" \
 		-d "@$(GH_PUBLISH_DIR)/$(1)/release-request.json" | jq -cr '.id' > "$(GH_PUBLISH_DIR)/$(1)/release.id"
 	@RELEASE_ID="$$$$(cat "$(GH_PUBLISH_DIR)/$(1)/release.id")"; \
+	if [ -z "$$$$RELEASE_ID" ]; then \
+		echo "Unable to create new release on $$(GH_$(1)_OWNER)/$$(GH_$(1)_REPO)"; \
+		exit 1; \
+	fi; \
 	for ASSET in $(GH_RELEASE_ASSETS); do \
 		NAME="$$$$(basename "$$$$ASSET")"; \
 		curl -Lfs \
@@ -44,7 +49,7 @@ release-github-$(1): $(GH_RELEASE_ASSETS) $(GH_PUBLISH_DIR)/$(1)/release-request
 			-H "Content-Type: application/octet-stream" \
 			--out-null \
 			"$$(GH_$(1)_UPLOAD_URI)/releases/$$$$RELEASE_ID/assets?name=$$$$NAME" \
-			--data-binary "@$$$$ASSET"; \
+			--data-binary "@$$$$ASSET" && \
 		echo "$$$$ASSET uploaded to $$(GH_$(1)_OWNER)/$$(GH_$(1)_REPO). Release Id: $$$$RELEASE_ID"; \
 	done
 endef
