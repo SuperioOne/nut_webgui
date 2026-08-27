@@ -1,4 +1,4 @@
-use super::error::InvalidPathError;
+use super::error::ParsePathError;
 use askama::FastWritable;
 use serde::{Deserialize, de::Visitor};
 
@@ -73,6 +73,8 @@ pub struct UriPath {
   inner: String,
 }
 
+struct UriPathVisitor;
+
 impl core::fmt::Debug for UriPath {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     self.inner.fmt(f)
@@ -80,7 +82,7 @@ impl core::fmt::Debug for UriPath {
 }
 
 impl UriPath {
-  pub fn new<T>(path: T) -> Result<Self, InvalidPathError>
+  pub fn new<T>(path: T) -> Result<Self, ParsePathError>
   where
     T: AsRef<str>,
   {
@@ -102,7 +104,7 @@ impl UriPath {
         })
       }
     } else {
-      Err(InvalidPathError)
+      Err(ParsePathError)
     }
   }
 
@@ -146,7 +148,7 @@ impl FastWritable for UriPath {
 }
 
 impl core::str::FromStr for UriPath {
-  type Err = InvalidPathError;
+  type Err = ParsePathError;
 
   #[inline]
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -160,8 +162,6 @@ impl AsRef<str> for UriPath {
     &self.inner
   }
 }
-
-struct UriPathVisitor;
 
 impl<'de> Visitor<'de> for UriPathVisitor {
   type Value = UriPath;

@@ -15,7 +15,7 @@ repository.workspace = true
 askama = { version = "0.16" }
 axum = { version = "0.8", features = ["ws"] }
 axum-extra = { version = "0.12", features = ["cookie"] }
-base64 = { version = "0.22" }
+base64 = { version = "0.23" }
 chrono = { version = "0.4", default-features = false, features = [
         "iana-time-zone",
         "now",

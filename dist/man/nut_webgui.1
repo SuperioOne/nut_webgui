@@ -20,6 +20,7 @@ nut_webgui [\fB\-l\fR|\fB\-\-listen\fR \fI<LISTEN_ADDRESS>\fR]
            [\fB\-\-allow\-env\fR]
            [\fB\-\-anonymous\-metrics\fR \fI<true|false>\fR]
            [\fB\-\-server\-key\fR \fI<TEXT>\fR]
+           [\fB\-\-server\-key\-file\fR \fI<PATH>\fR]
            [\fB\-\-with\-auth\fR \fI<AUTH_FILE_PATH>\fR]
            [\fB\-w\fR|\fB\-\-worker\-count\fR \fI<NUMBER>\fR]
            [\fB\-h\fR|\fB\-\-help\fR]
@@ -72,7 +73,10 @@ Default is
 .IR false.
 .TP
 .BR \-\-server\-key
-Set private server key value. Default is auto-generated random value.
+Set private server key value.
+.TP
+.BR \-\-server\-key\-file
+Set private server key from file.
 .TP
 .BR \-\-with\-auth
 Enable authentication with

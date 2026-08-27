@@ -1,23 +1,57 @@
 use super::{
-  ConfigLayer, ServerConfig, UpsdConfig, error::TomlConfigError, tls_mode::TlsMode,
-  uri_path::UriPath, utils::override_opt_field,
+  ConfigLayer, ServerConfig, UpsdConfig, error::ConfigError, tls_mode::TlsMode, uri_path::UriPath,
+  utils::override_opt_field,
 };
 use core::{net::IpAddr, str};
 use serde::{Deserialize, de::Visitor};
 use std::{
   collections::HashMap,
-  fs::File,
-  io::Read,
+  fs::{self},
   num::NonZeroUsize,
   path::{Path, PathBuf},
 };
 use toml::Table;
 use tracing::level_filters::LevelFilter;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct LogLevel(LevelFilter);
 
 struct TracingLevelVisitor;
+
+#[derive(Debug, Deserialize, Default)]
+pub struct ServerTomlArgs {
+  pub auth: Option<AuthConfigSection>,
+  pub default_theme: Option<Box<str>>,
+  pub http_server: Option<HttpServerConfigSection>,
+  pub log_level: Option<LogLevel>,
+  pub upsd: Option<HashMap<Box<str>, UpsdConfigSection>>,
+}
+
+#[derive(Deserialize, Default, Debug)]
+pub struct HttpServerConfigSection {
+  pub listen: Option<IpAddr>,
+  pub port: Option<u16>,
+  pub base_path: Option<UriPath>,
+  pub worker_count: Option<NonZeroUsize>,
+}
+
+#[derive(Deserialize, Default, Debug)]
+pub struct UpsdConfigSection {
+  pub address: Option<Box<str>>,
+  pub password: Option<Box<str>>,
+  pub poll_freq: Option<u64>,
+  pub poll_interval: Option<u64>,
+  pub port: Option<u16>,
+  pub username: Option<Box<str>>,
+  pub max_connection: Option<NonZeroUsize>,
+  pub tls_mode: Option<TlsMode>,
+}
+
+#[derive(Deserialize, Default, Debug)]
+pub struct AuthConfigSection {
+  users_file: PathBuf,
+  allow_anonymous_metrics: Option<bool>,
+}
 
 impl From<tracing::level_filters::LevelFilter> for LogLevel {
   fn from(value: tracing::level_filters::LevelFilter) -> Self {
@@ -56,69 +90,29 @@ impl<'de> Deserialize<'de> for LogLevel {
   }
 }
 
-#[derive(Debug, Deserialize, Default)]
-pub struct ServerTomlArgs {
-  pub default_theme: Option<Box<str>>,
-  pub log_level: Option<LogLevel>,
-  pub http_server: Option<HttpServerConfigSection>,
-  pub upsd: Option<HashMap<Box<str>, UpsdConfigSection>>,
-  pub auth: Option<AuthConfigSection>,
-}
-
-#[derive(Deserialize, Default, Debug)]
-pub struct HttpServerConfigSection {
-  pub listen: Option<IpAddr>,
-  pub port: Option<u16>,
-  pub base_path: Option<UriPath>,
-  pub worker_count: Option<NonZeroUsize>,
-}
-
-#[derive(Deserialize, Default, Debug)]
-pub struct UpsdConfigSection {
-  pub address: Option<Box<str>>,
-  pub password: Option<Box<str>>,
-  pub poll_freq: Option<u64>,
-  pub poll_interval: Option<u64>,
-  pub port: Option<u16>,
-  pub username: Option<Box<str>>,
-  pub max_connection: Option<NonZeroUsize>,
-  pub tls_mode: Option<TlsMode>,
-}
-
-#[derive(Deserialize, Default, Debug)]
-pub struct AuthConfigSection {
-  users_file: PathBuf,
-  allow_anonymous_metrics: Option<bool>,
-}
-
 impl ServerTomlArgs {
-  pub fn load<P>(path: P) -> Result<Self, TomlConfigError>
+  pub fn new<P>(path: P) -> Result<Self, ConfigError>
   where
     P: AsRef<Path>,
   {
-    let mut fd = File::open(path)?;
-    let mut buffer = String::new();
-    _ = fd.read_to_string(&mut buffer)?;
-
-    let deserializer = toml::Deserializer::parse(&buffer)?;
+    let toml_content =
+      fs::read_to_string(path).map_err(|err| ConfigError::ConfigFileIOError { inner: err })?;
+    let deserializer = toml::Deserializer::parse(&toml_content)?;
     let root = Table::deserialize(deserializer)?;
 
     match root.get("version") {
       None => root.try_into::<ServerTomlArgs>().map_err(|err| err.into()),
-      Some(toml::Value::String(version)) => {
-        let ver = version.as_str();
-        match ver {
-          "1" => root.try_into::<ServerTomlArgs>().map_err(|err| err.into()),
-          _ => Err(TomlConfigError::InvalidVersion),
-        }
-      }
-      _ => Err(TomlConfigError::InvalidVersion),
+      Some(toml::Value::String(version)) => match version.as_str() {
+        "1" => root.try_into::<ServerTomlArgs>().map_err(|err| err.into()),
+        _ => Err(ConfigError::UnsupportedVersion),
+      },
+      _ => Err(ConfigError::UnsupportedVersion),
     }
   }
 }
 
 impl ConfigLayer for ServerTomlArgs {
-  fn apply_layer(self, mut config: ServerConfig) -> ServerConfig {
+  fn apply_layer(self, mut config: ServerConfig) -> Result<ServerConfig, ConfigError> {
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level.map(|val| val.0));
 
@@ -157,6 +151,6 @@ impl ConfigLayer for ServerTomlArgs {
       );
     }
 
-    config
+    Ok(config)
   }
 }

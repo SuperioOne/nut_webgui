@@ -13,8 +13,10 @@ pub struct UsersConfigFile {
   pub users: HashMap<Username, UserConfig>,
 }
 
+struct UsersConfigVisitor;
+
 impl UsersConfigFile {
-  pub fn load<P>(path: P) -> Result<Self, UserTomlError>
+  pub fn new<P>(path: P) -> Result<Self, UserTomlError>
   where
     P: AsRef<Path>,
   {
@@ -32,8 +34,6 @@ impl UsersConfigFile {
     Ok(users_config)
   }
 }
-
-struct UsersConfigVisitor;
 
 impl<'de> Visitor<'de> for UsersConfigVisitor {
   type Value = UsersConfigFile;

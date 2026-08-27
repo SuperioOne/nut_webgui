@@ -1,4 +1,4 @@
-use self::openmetric::collector::UpsdStatCollector;
+use self::{config::tls_mode::TlsMode, openmetric::collector::UpsdStatCollector};
 use crate::{
   auth::{
     AUTH_COOKIE_DURATION,
@@ -63,17 +63,26 @@ fn main() -> ExitCode {
     eprintln!("thread panic, details = {}", info);
   }));
 
-  let (filter, handle) = reload::Layer::new(LevelFilter::INFO);
+  let (filter, logger_handle) = reload::Layer::new(LevelFilter::INFO);
 
   tracing_subscriber::registry()
     .with(filter)
     .with(tracing_subscriber::fmt::Layer::default())
     .init();
 
-  match nut_webgui(handle) {
+  let config = match load_configs() {
+    Err(ConfigError::ArgumentError { inner }) => inner.exit(),
+    Err(err) => {
+      error!(message = "configuration error", reason = %err);
+      return ExitCode::FAILURE;
+    }
+    Ok(c) => c,
+  };
+
+  match nut_webgui(config, logger_handle) {
     Ok(()) => ExitCode::SUCCESS,
     Err(err) => {
-      error!("{}", err);
+      error!(message = "server runtime error", reason = err);
       ExitCode::FAILURE
     }
   }
@@ -81,13 +90,9 @@ fn main() -> ExitCode {
 
 #[inline]
 fn nut_webgui(
+  config: ServerConfig,
   logger_handle: Handle<LevelFilter, tracing_subscriber::Registry>,
 ) -> Result<(), Box<dyn core::error::Error>> {
-  let config = match load_configs() {
-    Err(ConfigError::Arguments(e)) => e.exit(),
-    v => v,
-  }?;
-
   if config.log_level != LevelFilter::INFO {
     logger_handle.modify(|filter| *filter = config.log_level)?;
   }
@@ -135,6 +140,7 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
   let auth_user_store = create_user_store(&config)?;
   let mut upsd_servers = HashMap::new();
   let mut openmetrics = prometheus_client::registry::Registry::with_prefix("nutwg");
+  let mut bg_services = BackgroundServiceRunner::new().with_max_timeout(Duration::from_secs(10));
 
   for (name, upsd_cfg) in config.upsd.iter() {
     let namespace = UpsdNamespace::from(name.as_ref());
@@ -146,7 +152,22 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
     });
 
     openmetrics.register_collector(Box::new(UpsdStatCollector::new(upsd_state.clone())));
+    bg_services = bg_services
+      .add_service(DeviceSyncService::new(
+        event_channel.clone(),
+        upsd_state.clone(),
+      ))
+      .add_service(StatusSyncService::new(
+        event_channel.clone(),
+        upsd_state.clone(),
+      ));
+
     upsd_servers.insert(namespace, upsd_state);
+
+    debug!(
+      message = "upsd config registered",
+      namespace = name.as_ref()
+    );
   }
 
   let server_state = Arc::new(ServerState {
@@ -158,8 +179,8 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
     openmetrics,
   });
 
-  let mut bg_services = BackgroundServiceRunner::new()
-    .with_max_timeout(Duration::from_secs(10))
+  debug!(message = "starting background services");
+  let service_runner = bg_services
     .add_service(DescriptionSyncService::new(
       event_channel.clone(),
       server_state.clone(),
@@ -167,24 +188,10 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
     .add_service(MessageBroadcastService::new(
       event_channel.clone(),
       message_broadcast,
-    ));
+    ))
+    .start();
 
-  for (name, upsd_state) in server_state.upsd_servers.iter() {
-    debug!(
-      message = "adding background services for upsd config",
-      namespace = name.as_ref()
-    );
-
-    let device_sync = DeviceSyncService::new(event_channel.clone(), upsd_state.clone());
-    let status_sync = StatusSyncService::new(event_channel.clone(), upsd_state.clone());
-
-    bg_services = bg_services
-      .add_service(device_sync)
-      .add_service(status_sync);
-  }
-
-  debug!(message = "starting background services");
-  let service_runner = bg_services.start();
+  debug!(message = "starting http server");
   let http_server = HttpServer::new(server_state.clone());
 
   http_server
@@ -219,9 +226,9 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
 
 #[inline]
 fn load_configs() -> Result<ServerConfig, ConfigError> {
-  let cli_args = ServerCliArgs::load()?;
+  let cli_args = ServerCliArgs::new()?;
   let env_args = if cli_args.allow_env {
-    ServerEnvArgs::load()?
+    ServerEnvArgs::new()?
   } else {
     ServerEnvArgs::default()
   };
@@ -232,31 +239,29 @@ fn load_configs() -> Result<ServerConfig, ConfigError> {
     .or(env_args.config_file.as_ref());
 
   let toml_args = if let Some(path) = toml_path {
-    ServerTomlArgs::load(path)?
+    ServerTomlArgs::new(path)?
   } else {
     ServerTomlArgs::default()
   };
 
-  let config = ServerConfig::new()
-    .layer(toml_args)
-    .layer(env_args)
-    .layer(cli_args)
-    .layer(FallbackArgs);
-
-  Ok(config)
+  ServerConfig::new()
+    .layer(toml_args)?
+    .layer(env_args)?
+    .layer(cli_args)?
+    .layer(FallbackArgs)
 }
 
 fn create_pool(
   config: &UpsdConfig,
 ) -> Result<NutPoolClient, Box<dyn core::error::Error + 'static>> {
   let tls_client_conf = match config.tls_mode {
-    config::tls_mode::TlsMode::Disable => None,
-    config::tls_mode::TlsMode::Strict => Some(
+    TlsMode::Disable => None,
+    TlsMode::Strict => Some(
       ClientConfig::builder()
         .with_platform_verifier()?
         .with_no_client_auth(),
     ),
-    config::tls_mode::TlsMode::SkipVerify => {
+    TlsMode::SkipVerify => {
       let mut config = ClientConfig::builder()
         .with_platform_verifier()?
         .with_no_client_auth();
@@ -286,7 +291,7 @@ fn create_user_store(
 ) -> Result<Option<Arc<UserStore>>, Box<dyn core::error::Error + 'static>> {
   match config.auth.users_file.as_ref() {
     Some(users_file) => {
-      let users_file = UsersConfigFile::load(users_file)?;
+      let users_file = UsersConfigFile::new(users_file)?;
       let mut builder = UserStore::builder().with_session_duration(AUTH_COOKIE_DURATION);
 
       for (username, user_config) in users_file.users.into_iter() {

@@ -70,7 +70,7 @@ version = "1"
 
 ## -----------------------------------------------------------------------------
 ## UPSD connection settings.
-## Multiple connection can be defined under the `upsd` table. Table keys are 
+## Multiple connection can be defined under the `upsd` table. Table keys are
 ## used as connection namespace/identifier.
 ## -----------------------------------------------------------------------------
 

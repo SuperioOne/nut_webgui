@@ -1,9 +1,13 @@
 use super::{
-  ConfigLayer, ServerConfig, error::InvalidPathError, uri_path::UriPath, utils::override_opt_field,
+  ConfigLayer, ServerConfig,
+  error::{ConfigError, ParsePathError},
+  uri_path::UriPath,
+  utils::override_opt_field,
 };
 use clap::Parser;
 use core::net::IpAddr;
-use std::{num::NonZeroUsize, path::PathBuf};
+use std::{fs, num::NonZeroUsize, path::PathBuf};
+use tracing::warn;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -44,6 +48,10 @@ pub struct ServerCliArgs {
   #[arg(long)]
   pub server_key: Option<Box<str>>,
 
+  /// Set private server key from file
+  #[arg(long)]
+  pub server_key_file: Option<PathBuf>,
+
   /// Enable basic auth with users file
   #[arg(long)]
   pub with_auth: Option<PathBuf>,
@@ -53,23 +61,22 @@ pub struct ServerCliArgs {
   pub worker_count: Option<NonZeroUsize>,
 }
 
-fn uri_path_parser(input: &str) -> Result<UriPath, InvalidPathError> {
+fn uri_path_parser(input: &str) -> Result<UriPath, ParsePathError> {
   UriPath::new(input)
 }
 
 impl ServerCliArgs {
-  /// Alias for [ServerCliArgs::parse()]
-  pub fn load() -> Result<Self, clap::Error> {
+  #[inline]
+  pub fn new() -> Result<Self, clap::error::Error> {
     Self::try_parse()
   }
 }
 
 impl ConfigLayer for ServerCliArgs {
-  fn apply_layer(self, mut config: ServerConfig) -> ServerConfig {
+  fn apply_layer(self, mut config: ServerConfig) -> Result<ServerConfig, ConfigError> {
     override_opt_field!(config.config_file, self.config_file);
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level);
-    override_opt_field!(config.server_key, inner_value: self.server_key.map(|v| v.into_boxed_bytes()));
 
     override_opt_field!(config.http_server.base_path, inner_value:  self.base_path);
     override_opt_field!(config.http_server.listen, inner_value: self.listen);
@@ -82,6 +89,24 @@ impl ConfigLayer for ServerCliArgs {
       inner_value: self.anonymous_metrics
     );
 
-    config
+    if let Some(path) = self.server_key_file.as_ref() {
+      let key = fs::read_to_string(path)
+        .map_err(|err| ConfigError::ServerKeyIOError { inner: err })?
+        .into_boxed_str();
+
+      if key.is_empty() {
+        return Err(ConfigError::EmptyServerKey);
+      } else if self.server_key.is_some_and(|v| !v.is_empty()) {
+        warn!(
+          "both server_key and server_key_file options are set, server uses the key file as the default"
+        );
+      }
+
+      config.server_key = key.into_boxed_bytes();
+    } else {
+      override_opt_field!(config.server_key, inner_value: self.server_key.map(|v| v.into_boxed_bytes()));
+    }
+
+    Ok(config)
   }
 }

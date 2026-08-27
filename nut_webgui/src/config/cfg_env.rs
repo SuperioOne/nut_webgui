@@ -1,12 +1,10 @@
 use super::{
-  ConfigLayer, DEFAULT_UPSD_KEY, ServerConfig, TlsMode, UpsdConfig, UriPath, error::EnvConfigError,
+  ConfigLayer, DEFAULT_UPSD_KEY, ServerConfig, TlsMode, UpsdConfig, UriPath, error::ConfigError,
   utils::override_opt_field,
 };
 use core::net::IpAddr;
 use std::{
-  env,
-  fs::File,
-  io::Read,
+  env, fs,
   num::NonZeroUsize,
   path::{Path, PathBuf},
 };
@@ -14,7 +12,7 @@ use tracing::level_filters::LevelFilter;
 
 #[derive(Debug, Default)]
 pub struct ServerEnvArgs {
-  pub auth_allow_anoymous_metrics: Option<bool>,
+  pub auth_allow_anonymous_metrics: Option<bool>,
   pub auth_users_file: Option<PathBuf>,
   pub config_file: Option<PathBuf>,
   pub default_theme: Option<Box<str>>,
@@ -35,7 +33,7 @@ pub struct ServerEnvArgs {
   pub upsd_user: Option<Box<str>>,
 }
 
-fn load_from_env(key: &str) -> Result<Option<String>, EnvConfigError> {
+fn load_from_env(key: &str) -> Result<Option<String>, ConfigError> {
   match env::var(key) {
     Ok(value) => {
       if value.is_empty() {
@@ -44,9 +42,10 @@ fn load_from_env(key: &str) -> Result<Option<String>, EnvConfigError> {
         let path = Path::new(&value);
 
         if path.is_file() {
-          let mut buffer = String::new();
-          let mut fd = File::open(path)?;
-          _ = fd.read_to_string(&mut buffer)?;
+          let buffer = fs::read_to_string(path).map_err(|err| ConfigError::EnvFileIOError {
+            inner: err,
+            variable: key.to_owned(),
+          })?;
 
           Ok(Some(buffer))
         } else {
@@ -54,7 +53,9 @@ fn load_from_env(key: &str) -> Result<Option<String>, EnvConfigError> {
         }
       }
     }
-    Err(env::VarError::NotUnicode(variable)) => Err(EnvConfigError::NonUnicodeVar { variable }),
+    Err(env::VarError::NotUnicode(variable)) => {
+      Err(ConfigError::NonUnicodeEnvironmentVariable { variable })
+    }
     Err(env::VarError::NotPresent) => Ok(None),
   }
 }
@@ -109,32 +110,32 @@ macro_rules! load_var {
 }
 
 impl ServerEnvArgs {
-  pub fn load() -> Result<Self, EnvConfigError> {
+  pub fn new() -> Result<Self, ConfigError> {
     let mut env_config = Self::default();
 
     load_var!(
-      ("NUTWG__CONFIG_FILE"                  ,env_config.config_file                ,path_buf);
-      ("NUTWG__DEFAULT_THEME"                ,env_config.default_theme              ,boxed_str);
-      ("NUTWG__LOG_LEVEL"                    ,env_config.log_level                  ,LevelFilter);
-      ("NUTWG__SERVER_KEY"                   ,env_config.server_key                 ,boxed_bytes);
+      ("NUTWG__CONFIG_FILE"                  ,env_config.config_file                 ,path_buf);
+      ("NUTWG__DEFAULT_THEME"                ,env_config.default_theme               ,boxed_str);
+      ("NUTWG__LOG_LEVEL"                    ,env_config.log_level                   ,LevelFilter);
+      ("NUTWG__SERVER_KEY"                   ,env_config.server_key                  ,boxed_bytes);
 
-      ("NUTWG__HTTP_SERVER__BASE_PATH"       ,env_config.http_base_path             ,UriPath);
-      ("NUTWG__HTTP_SERVER__LISTEN"          ,env_config.http_listen                ,IpAddr);
-      ("NUTWG__HTTP_SERVER__PORT"            ,env_config.http_port                  ,u16);
-      ("NUTWG__HTTP_SERVER__WORKER_COUNT"    ,env_config.http_worker_count          ,NonZeroUsize);
+      ("NUTWG__HTTP_SERVER__BASE_PATH"       ,env_config.http_base_path              ,UriPath);
+      ("NUTWG__HTTP_SERVER__LISTEN"          ,env_config.http_listen                 ,IpAddr);
+      ("NUTWG__HTTP_SERVER__PORT"            ,env_config.http_port                   ,u16);
+      ("NUTWG__HTTP_SERVER__WORKER_COUNT"    ,env_config.http_worker_count           ,NonZeroUsize);
 
-      ("NUTWG__AUTH__USERS_FILE"             ,env_config.auth_users_file            ,path_buf);
-      ("NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS",env_config.auth_allow_anoymous_metrics,boolean);
+      ("NUTWG__AUTH__USERS_FILE"             ,env_config.auth_users_file             ,path_buf);
+      ("NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS",env_config.auth_allow_anonymous_metrics,boolean);
 
-      ("NUTWG__UPSD__NAME"                   ,env_config.upsd_name                  ,boxed_str);
-      ("NUTWG__UPSD__ADDRESS"                ,env_config.upsd_addr                  ,boxed_str);
-      ("NUTWG__UPSD__MAX_CONNECTION"         ,env_config.upsd_max_conn              ,NonZeroUsize);
-      ("NUTWG__UPSD__PASSWORD"               ,env_config.upsd_pass                  ,boxed_str);
-      ("NUTWG__UPSD__POLL_FREQ"              ,env_config.upsd_poll_freq             ,u64);
-      ("NUTWG__UPSD__POLL_INTERVAL"          ,env_config.upsd_poll_interval         ,u64);
-      ("NUTWG__UPSD__PORT"                   ,env_config.upsd_port                  ,u16);
-      ("NUTWG__UPSD__TLS_MODE"               ,env_config.upsd_tls                   ,TlsMode);
-      ("NUTWG__UPSD__USERNAME"               ,env_config.upsd_user                  ,boxed_str);
+      ("NUTWG__UPSD__NAME"                   ,env_config.upsd_name                   ,boxed_str);
+      ("NUTWG__UPSD__ADDRESS"                ,env_config.upsd_addr                   ,boxed_str);
+      ("NUTWG__UPSD__MAX_CONNECTION"         ,env_config.upsd_max_conn               ,NonZeroUsize);
+      ("NUTWG__UPSD__PASSWORD"               ,env_config.upsd_pass                   ,boxed_str);
+      ("NUTWG__UPSD__POLL_FREQ"              ,env_config.upsd_poll_freq              ,u64);
+      ("NUTWG__UPSD__POLL_INTERVAL"          ,env_config.upsd_poll_interval          ,u64);
+      ("NUTWG__UPSD__PORT"                   ,env_config.upsd_port                   ,u16);
+      ("NUTWG__UPSD__TLS_MODE"               ,env_config.upsd_tls                    ,TlsMode);
+      ("NUTWG__UPSD__USERNAME"               ,env_config.upsd_user                   ,boxed_str);
     );
 
     Ok(env_config)
@@ -142,7 +143,7 @@ impl ServerEnvArgs {
 }
 
 impl ConfigLayer for ServerEnvArgs {
-  fn apply_layer(self, mut config: ServerConfig) -> ServerConfig {
+  fn apply_layer(self, mut config: ServerConfig) -> Result<ServerConfig, ConfigError> {
     override_opt_field!(config.config_file, self.config_file);
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level);
@@ -156,7 +157,7 @@ impl ConfigLayer for ServerEnvArgs {
     override_opt_field!(config.auth.users_file, self.auth_users_file);
     override_opt_field!(
       config.auth.allow_anonymous_metrics,
-      inner_value: self.auth_allow_anoymous_metrics
+      inner_value: self.auth_allow_anonymous_metrics
     );
 
     let default_upsd_key: &str = self
@@ -181,6 +182,6 @@ impl ConfigLayer for ServerEnvArgs {
       override_opt_field!(default_upsd.user, self.upsd_user);
     }
 
-    config
+    Ok(config)
   }
 }

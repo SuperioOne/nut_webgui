@@ -2,81 +2,68 @@ use core::{net::AddrParseError, num::ParseIntError};
 use std::ffi::OsString;
 
 #[derive(Debug)]
-pub enum ConfigError {
-  File(TomlConfigError),
-  Environment(EnvConfigError),
-  Arguments(clap::Error),
-}
-
-#[derive(Debug)]
-pub enum TomlConfigError {
-  IOError { inner: std::io::Error },
-  ParseError { inner: toml::de::Error },
-  InvalidVersion,
-}
-
-#[derive(Debug)]
 pub enum UserTomlError {
   IOError { inner: std::io::Error },
-  ParseError { inner: toml::de::Error },
+  ParseTomlError { inner: toml::de::Error },
 }
+
+#[derive(Debug, Clone, Copy)]
+pub struct ParseTlsModeError;
+
+#[derive(Debug, Clone, Copy)]
+pub struct ParsePathError;
 
 #[derive(Debug)]
-pub enum EnvConfigError {
-  IOError { inner: std::io::Error },
-  InvalidAddrFormat { inner: core::net::AddrParseError },
-  InvalidLogLevelFormat,
-  InvalidNumericFormat,
-  InvalidTlsMode,
-  InvalidUriPath,
-  NonUnicodeVar { variable: OsString },
+pub enum ConfigError {
+  UnsupportedVersion,
+  EmptyServerKey,
+  ArgumentError {
+    inner: clap::Error,
+  },
+  NonUnicodeEnvironmentVariable {
+    variable: OsString,
+  },
+  ParseAddrError {
+    inner: core::net::AddrParseError,
+  },
+  ParseIntError {
+    inner: core::num::ParseIntError,
+  },
+  ParseLogLevelError {
+    inner: tracing::metadata::ParseLevelFilterError,
+  },
+  ParseTlsModeError {
+    inner: ParseTlsModeError,
+  },
+  ParseTomlError {
+    inner: toml::de::Error,
+  },
+  ParsePathError {
+    inner: ParsePathError,
+  },
+  ServerKeyIOError {
+    inner: std::io::Error,
+  },
+  ConfigFileIOError {
+    inner: std::io::Error,
+  },
+  EnvFileIOError {
+    inner: std::io::Error,
+    variable: String,
+  },
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct InvalidTlsModeError;
-
-#[derive(Debug, Clone, Copy)]
-pub struct InvalidPathError;
-
-impl std::fmt::Display for InvalidPathError {
+impl std::fmt::Display for ParsePathError {
   #[inline]
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    f.write_str("incorrect base path format")
+    f.write_str("invalid base path value")
   }
 }
 
-impl core::fmt::Display for InvalidTlsModeError {
+impl core::fmt::Display for ParseTlsModeError {
+  #[inline]
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    f.write_fmt(format_args!("not a valid tls mode option"))
-  }
-}
-
-impl std::fmt::Display for EnvConfigError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      EnvConfigError::IOError { inner } => f.write_fmt(format_args!("env config: {}", inner)),
-      EnvConfigError::NonUnicodeVar { variable } => f.write_fmt(format_args!(
-        "env config: non-unicode variable received, {:?}",
-        variable
-      )),
-      EnvConfigError::InvalidNumericFormat => f.write_str("env config: invalid numeric value"),
-      EnvConfigError::InvalidLogLevelFormat => f.write_str("env config: invalid log level"),
-      EnvConfigError::InvalidAddrFormat { inner } => {
-        f.write_fmt(format_args!("env config: {}", inner))
-      }
-      EnvConfigError::InvalidUriPath => f.write_str("env config: invalid uri path format"),
-      EnvConfigError::InvalidTlsMode => f.write_str("env config: invalid tls mode option"),
-    }
-  }
-}
-
-impl std::fmt::Display for TomlConfigError {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Self::IOError { inner } => f.write_fmt(format_args!("toml config file: {}", inner)),
-      Self::ParseError { inner } => f.write_fmt(format_args!("toml config file: {}", inner)),
-      Self::InvalidVersion => f.write_str("toml config file: unknown version"),
-    }
+    f.write_str("invalid tls mode option")
   }
 }
 
@@ -84,7 +71,7 @@ impl std::fmt::Display for UserTomlError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
       Self::IOError { inner } => f.write_fmt(format_args!("user toml file: {}", inner)),
-      Self::ParseError { inner } => f.write_fmt(format_args!("user toml file: {}", inner)),
+      Self::ParseTomlError { inner } => f.write_fmt(format_args!("user toml file: {}", inner)),
     }
   }
 }
@@ -92,101 +79,97 @@ impl std::fmt::Display for UserTomlError {
 impl std::fmt::Display for ConfigError {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      ConfigError::File(e) => e.fmt(f),
-      ConfigError::Environment(e) => e.fmt(f),
-      ConfigError::Arguments(e) => e.fmt(f),
+      ConfigError::ArgumentError { inner } => inner.fmt(f),
+      ConfigError::ParseAddrError { inner } => inner.fmt(f),
+      ConfigError::ParseTomlError { inner } => inner.fmt(f),
+      ConfigError::UnsupportedVersion => f.write_str("unsupported configuration scheme version"),
+      ConfigError::ParseIntError { inner } => inner.fmt(f),
+      ConfigError::ParseLogLevelError { inner } => inner.fmt(f),
+      ConfigError::ParseTlsModeError { inner } => inner.fmt(f),
+      ConfigError::ParsePathError { inner } => inner.fmt(f),
+      ConfigError::NonUnicodeEnvironmentVariable { variable } => f.write_fmt(format_args!(
+        "unable to read {} environment variable, it contains non-unicode characters",
+        variable.display()
+      )),
+      ConfigError::EmptyServerKey => f.write_str("server key value is empty"),
+      ConfigError::ServerKeyIOError { inner } => {
+        f.write_fmt(format_args!("unable to read server key file, {}", inner))
+      }
+      ConfigError::ConfigFileIOError { inner } => {
+        f.write_fmt(format_args!("unable to read toml file, {}", inner))
+      }
+      ConfigError::EnvFileIOError { inner, variable } => f.write_fmt(format_args!(
+        "unable to read target file path from environment variable {}, {}",
+        variable, inner
+      )),
     }
   }
 }
 
-impl From<std::io::Error> for TomlConfigError {
-  fn from(value: std::io::Error) -> Self {
-    Self::IOError { inner: value }
-  }
-}
-
-impl From<toml::de::Error> for TomlConfigError {
-  fn from(value: toml::de::Error) -> Self {
-    Self::ParseError { inner: value }
-  }
-}
-
-impl From<std::io::Error> for UserTomlError {
-  fn from(value: std::io::Error) -> Self {
-    Self::IOError { inner: value }
-  }
-}
-
-impl From<toml::de::Error> for UserTomlError {
-  fn from(value: toml::de::Error) -> Self {
-    Self::ParseError { inner: value }
-  }
-}
-
-impl From<EnvConfigError> for ConfigError {
+impl From<toml::de::Error> for ConfigError {
   #[inline]
-  fn from(value: EnvConfigError) -> Self {
-    Self::Environment(value)
-  }
-}
-
-impl From<TomlConfigError> for ConfigError {
-  #[inline]
-  fn from(value: TomlConfigError) -> Self {
-    Self::File(value)
+  fn from(value: toml::de::Error) -> Self {
+    Self::ParseTomlError { inner: value }
   }
 }
 
 impl From<clap::Error> for ConfigError {
   #[inline]
   fn from(value: clap::Error) -> Self {
-    Self::Arguments(value)
+    Self::ArgumentError { inner: value }
   }
 }
 
-impl From<ParseIntError> for EnvConfigError {
+impl From<ParseIntError> for ConfigError {
   #[inline]
-  fn from(_: ParseIntError) -> Self {
-    Self::InvalidNumericFormat
+  fn from(value: ParseIntError) -> Self {
+    Self::ParseIntError { inner: value }
   }
 }
 
-impl From<InvalidPathError> for EnvConfigError {
+impl From<ParsePathError> for ConfigError {
   #[inline]
-  fn from(_: InvalidPathError) -> Self {
-    Self::InvalidUriPath
+  fn from(value: ParsePathError) -> Self {
+    Self::ParsePathError { inner: value }
   }
 }
 
-impl From<AddrParseError> for EnvConfigError {
+impl From<AddrParseError> for ConfigError {
   #[inline]
   fn from(value: AddrParseError) -> Self {
-    Self::InvalidAddrFormat { inner: value }
+    Self::ParseAddrError { inner: value }
   }
 }
 
-impl From<InvalidTlsModeError> for EnvConfigError {
+impl From<ParseTlsModeError> for ConfigError {
   #[inline]
-  fn from(_value: InvalidTlsModeError) -> Self {
-    Self::InvalidTlsMode
+  fn from(value: ParseTlsModeError) -> Self {
+    Self::ParseTlsModeError { inner: value }
   }
 }
 
-impl From<tracing::metadata::ParseLevelFilterError> for EnvConfigError {
-  fn from(_: tracing::metadata::ParseLevelFilterError) -> Self {
-    Self::InvalidLogLevelFormat
+impl From<tracing::metadata::ParseLevelFilterError> for ConfigError {
+  #[inline]
+  fn from(value: tracing::metadata::ParseLevelFilterError) -> Self {
+    Self::ParseLogLevelError { inner: value }
   }
 }
 
-impl From<std::io::Error> for EnvConfigError {
+impl From<std::io::Error> for UserTomlError {
+  #[inline]
   fn from(value: std::io::Error) -> Self {
     Self::IOError { inner: value }
   }
 }
 
+impl From<toml::de::Error> for UserTomlError {
+  #[inline]
+  fn from(value: toml::de::Error) -> Self {
+    Self::ParseTomlError { inner: value }
+  }
+}
+
 impl core::error::Error for ConfigError {}
-impl core::error::Error for EnvConfigError {}
-impl core::error::Error for TomlConfigError {}
 impl core::error::Error for UserTomlError {}
-impl core::error::Error for InvalidTlsModeError {}
-impl std::error::Error for InvalidPathError {}
+impl core::error::Error for ParseTlsModeError {}
+impl std::error::Error for ParsePathError {}

@@ -1,4 +1,4 @@
-use super::error::InvalidTlsModeError;
+use super::error::ParseTlsModeError;
 use serde::{Deserialize, Serialize, de::Visitor};
 use std::str::FromStr;
 
@@ -14,15 +14,20 @@ pub enum TlsMode {
   SkipVerify,
 }
 
+struct TlsModeVisitor;
+
 impl core::str::FromStr for TlsMode {
-  type Err = InvalidTlsModeError;
+  type Err = ParseTlsModeError;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    match s.to_ascii_lowercase().as_str() {
-      "disable" => Ok(Self::Disable),
-      "skip" => Ok(Self::SkipVerify),
-      "strict" => Ok(Self::Strict),
-      _ => Err(InvalidTlsModeError),
+    if s.eq_ignore_ascii_case("disable") {
+      Ok(Self::Disable)
+    } else if s.eq_ignore_ascii_case("skip") {
+      Ok(Self::SkipVerify)
+    } else if s.eq_ignore_ascii_case("strict") {
+      Ok(Self::Strict)
+    } else {
+      Err(ParseTlsModeError)
     }
   }
 }
@@ -43,8 +48,6 @@ impl core::fmt::Display for TlsMode {
     f.write_str(self.as_str())
   }
 }
-
-struct TlsModeVisitor;
 
 impl<'de> Visitor<'de> for TlsModeVisitor {
   type Value = TlsMode;

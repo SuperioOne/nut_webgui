@@ -1,3 +1,4 @@
+use self::error::ConfigError;
 use self::utils::rand_server_key_256bit;
 use self::{tls_mode::TlsMode, uri_path::UriPath};
 use core::net::{IpAddr, Ipv4Addr};
@@ -18,7 +19,7 @@ pub mod uri_path;
 pub const DEFAULT_UPSD_KEY: &str = "default";
 
 pub trait ConfigLayer {
-  fn apply_layer(self, config: ServerConfig) -> ServerConfig;
+  fn apply_layer(self, config: ServerConfig) -> Result<ServerConfig, ConfigError>;
 }
 
 pub struct ServerConfig {
@@ -154,13 +155,15 @@ impl Default for ServerConfig {
 }
 
 impl ServerConfig {
+  #[inline]
   pub fn new() -> Self {
     Self::default()
   }
 }
 
 impl ServerConfig {
-  pub fn layer<L>(self, layer: L) -> Self
+  #[inline]
+  pub fn layer<L>(self, layer: L) -> Result<Self, ConfigError>
   where
     L: ConfigLayer,
   {
