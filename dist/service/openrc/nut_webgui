@@ -9,7 +9,7 @@ depend() {
 }
 
 command="/usr/local/bin/nut_webgui"
-command_args="--config-file /etc/nut_webgui/config.toml --allow-env"
-required_files="/etc/nut_webgui/config.toml /etc/nut_webgui/users.toml"
+command_args="--allow-env ${NUTWG_EXTRA_CMD_ARGS}"
+required_files="${NUTWG_REQUIRED_FILES}"
 pidfile="/run/${RC_SVCNAME}.pid"
 command_background=true

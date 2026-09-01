@@ -1,0 +1,14 @@
+[book]
+title = "nut_webgui"
+authors = ["Timur Olur"]
+language = "en"
+
+[output.html]
+smart-punctuation = true
+definition-lists = true
+admonitions = true
+mathjax-support = false
+no-section-label = false
+git-repository-url = "https://codeberg.org/SuperiorOne/nut_webgui"
+git-repository-icon = "fab-git-alt"
+sidebar-header-nav = true

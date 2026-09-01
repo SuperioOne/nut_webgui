@@ -1,121 +1,121 @@
-# v0.10.2 - June 29, 2026
+## v0.10.2 - June 29, 2026
 
-## Fixed
+### Fixed
 - UPS devices without a serial number produce an invalid topology graph.
 - The AC power symbol can be misaligned on some fonts. It now uses a custom SVG
   icon.
 
-# v0.10.1 - June 26, 2026
+## v0.10.1 - June 26, 2026
 
-## Added
+### Added
 - Option to disable authentication on the `/metrics` endpoint.
 
-## Changed
+### Changed
 - If UPS drivers don't report ups.power and ups.realpower, the metric exporter
   tries to derive `nutwg_ups_power_voltamps` and `nutwg_ups_realpower_watts`
   from ups.load and nominal values.
 
-## Removed
+### Removed
 - Removed `nutwg_ups_input_frequency_hertz` and `nutwg_ups_input_voltage_volts`
   metrics.
 
-# v0.10.0 - June 06, 2026
+## v0.10.0 - June 06, 2026
 
-## Added
+### Added
 - UID/GID environment variables to change the running user.
 - `/metrics` endpoint with OpenMetrics 1.0 format.
 
-## Changed
+### Changed
 - Some npm packages used for bundling JS had post-install scripts. Those
   packages were replaced by alternatives. (Bundling "modern" JS almost makes you
   wish for programming with punch cards)
 
-# v0.9.2 - May 06, 2026
+## v0.9.2 - May 06, 2026
 
-## Fixed
+### Fixed
 - Client assets bundler fails to build when either npm or pnpm is missing on the
   host system instead of selecting one of them.
 - Compiling nut_webgui on FreeBSD fails due to minor differences in `sockaddr`
   types.
 
-## Changed
+### Changed
 - Failure on listing writable variables, instant commands, and monitoring
   clients are now considered as soft-fail. This change allows using
   non-compliant NUT servers to work with nut_webgui.
 - NUT TCP connections now reuse their buffers to minimize memory allocation.
 
-# v0.9.1 - April 12, 2026
+## v0.9.1 - April 12, 2026
 
-## Fixed
+### Fixed
 - rustls's openssl-prober no longer checks the /usr/share/ssl directory, which
   breaks certificates mounted via the UPSD_ROOT_CA environment variable.
 
-# v0.9.0 - February 07, 2026
+## v0.9.0 - February 07, 2026
 
-## Added
+### Added
 - New events API based on web sockets.
 - Mimalloc set as main memory allocator for x86-64 and arm64 based builds.
 - Worker-count configuration options to change core count used by nut_webgui.
   With Mimalloc, this setting plays an important role in tweaking application
   memory usage.
 
-## Changed
+### Changed
 - Glorious potato symbol removed from README. They used to be just a
   funny-cringe addition, but nowadays they symbolize slop.
 
-## Fixed
+### Fixed
 - UPS device stops updating and only shows previous data when UPSD driver fails
   with DRIVER-NOT-CONNECT.
 - Failed UPS device status is now set as `NOCONN` (no connection).
 
-## Deprecated
+### Deprecated
 - Old config file format used in earlier versions is finally deprecated (v0.5.0
   to v0.6.0).
 
-# v0.8.1 - January 18, 2026
+## v0.8.1 - January 18, 2026
 
-## Fixed
+### Fixed
 - Data and electrical edges visually overlap when they connect to the same nodes
   on the topology page.
 
-## Changed
+### Changed
 - Last synchronized date now shows the localized time (based on the browser's
   locale) instead of UTC only.
 - Added an updated UI indicator for when network connectivity is lost.
 
-# v0.8.0 - December 18, 2025
+## v0.8.0 - December 18, 2025
 
-## Added
+### Added
 - Reverse DNS lookup to find and display host names of the attached client IPs.
 - TOML v1.1.0 support.
 
-## Changed
+### Changed
 - **(BREAKING)** The `attached` field in the device response now returns an
   array of objects instead of strings in the JSON Data API. This is a minor but
   breaking change.
 
-## Fixed
+### Fixed
 - Topology graph nodes sometimes disappears after a re-render.
 
-# v0.7.1 - December 8, 2025
+## v0.7.1 - December 8, 2025
 
-## Added
+### Added
 - New topology graph page to display all linked NUT servers, clients, and UPS
   devices.
 
-## Fixed
+### Fixed
 - Device sync background task uses `poll_interval` instead of `poll_freq`, which
   unnecessarily increases background noise.
 
-## Changed
+### Changed
 - UI content maximum width increased from 1584px to 2048px for better
   wide-screen monitor view.
 - Home page template struct is optimized. At this point, it's a nonsense tier
   latency improvement, but why not.
 
-# v0.7.0 - November 4, 2025
+## v0.7.0 - November 4, 2025
 
-## Added
+### Added
 - Multiple NUT server support.
 - New system page to display server, application, and user informations.
 - New connection page to display upsd connections and their configurations.
@@ -124,7 +124,7 @@
 - Config file version field for maintaining better backward compability in the
   future.
 
-## Changed
+### Changed
 - `NUTWG__UPSD__*` environment variables configure NUT server with `default`
   namespace. This allows prior nut_webgui configurations works without any change.
 - The config TOML now supports multiple NUT server configurations.
@@ -132,62 +132,62 @@
   support. Review the OpenAPI spec before updating if you rely on `v0.6.0` API.
   This changes only affects the `/api` endpoints.
 
-## Removed
+### Removed
 - Brotli compression support has been temporarily removed due to excessively
   high memory usage compared to deflate and gzip compressions.
 
-## Deprecated
+### Deprecated
 - The old config TOML format (without a version field and using a single upsd
   configuration table) is deprecated. No immediate action is required for
   `v0.7.0`, but it is planned to be removed in the `v0.8.0` release.
 
-# v0.6.0 - September 10, 2025
+## v0.6.0 - September 10, 2025
 
-## Added
+### Added
 - Optional authentication system with permissions and multi-user support for
   both UI and API.
 - TLS support for UPS management client (upsmc), users can now enable secure
   TCP communication between `nut_webgui` and NUT.
 
-## Fixed
+### Fixed
 - CLI options such as `--help` and `--version` print the same stdout message
   twice.
 - `CONFIG_FILE` environment variable with empty string now treated as
   `not configured` instead of invalid configuration error.
 
-# v0.5.4 - August 19, 2025
+## v0.5.4 - August 19, 2025
 
-## Added
+### Added
 - UI now displays power values with an approximately symbol(≈) when the value is
   not reported by UPSD but derived from load and nominal power variables.
 
-## Fixed
+### Fixed
 - UPS instant command list sometimes did not match with UPSD.
 
-# v0.5.3 - July 28, 2025
+## v0.5.3 - July 28, 2025
 
-## Fixed
+### Fixed
 - Compressed assets does not work on some browsers.
 
-# v0.5.2 - July 28, 2025
+## v0.5.2 - July 28, 2025
 
-## Changed
+### Changed
 - Client assets are now pre-compressed with Brotli.
 - Switched to a custom gauge web component. This shaves off additional 0.5 MiB
   of unnecessary Js from the bundle. (Though still can't beat TempleOS).
 
-## Fixed
+### Fixed
 - Attached clients' info does not update after the first initialization.
 
-# v0.5.1 - June 25, 2025
+## v0.5.1 - June 25, 2025
 
-## Fixed
+### Fixed
 - NUT packages prior to 2022 don't support `PROTVER`. Fallback to the old
   `NETVER`, since it's widely available.
 
-# v0.5.0 - June 25, 2025
+## v0.5.0 - June 25, 2025
 
-## Added
+### Added
 - Configuration system that supports CLI arguments, environment variables and
   TOML config file.
 - Configureable default theme option.
@@ -201,7 +201,7 @@
 - Support for updating UPS variables from both GUI and API.
 - Variable and command descriptions.
 
-## Changed
+### Changed
 - **(BREAKING)** JSON Data API schemas and endpoints are changed. Review the
   OpenAPI spec before updating if you rely on `v0.4.2` API.
 - All static content (index.js, icons, and css files) is now part of the
@@ -210,28 +210,28 @@
 - UPS info page now uses tabs for better organization.
 - DaisyUI has been updated to version 5 and TailwindCSS to version 4.
 
-## Removed
+### Removed
 - `--static-dir` configuration flag.
 
-# v0.4.2 - May 08, 2025
+## v0.4.2 - May 08, 2025
 
-## Added
+### Added
 
 - Configuration option for HTTP server base path.
 
-# v0.4.1 - April 13, 2025
+## v0.4.1 - April 13, 2025
 
-## Changed
+### Changed
 - The NUT protocol parser has been optimized slightly better performance.
 - The UI notifications have been simplified.
 
-## Fixed
+### Fixed
 - Missing cache-control headers caused 308 redirects to `not found` pages.
 - The page cannot be routed when the URL contains a trailing forward slash.
 
-# v0.4.0 - October 12, 2024
+## v0.4.0 - October 12, 2024
 
-## Changed
+### Changed
 
 - Bump `apexcharts` version from `3.50.0` to `3.53.0`.
 - Bump `htmx` version from `2.0.1` to `2.0.3`.
@@ -249,14 +249,14 @@
 - `health` probe returns application/json response. Response contains basic info
   like last sync time, daemon status, and daemon host.
 
-## Added
+### Added
 
 - Display UPS manufacturer and model information on UPS page.
 - `readiness` probe for Kubernetes deployments.
 - upsd_client logs upsd protocol messages when `LOG_LEVEL` is set to `TRACE`.
 - OpenAPI specification is added to docs.
 
-## Fixed
+### Fixed
 
 - A single failing UPS driver distrupts other UPS devices' states.
 - Probe endpoints don't support CORS.
@@ -269,23 +269,23 @@
   unreadable.
 - upsd_client uses wrong error types when list commands fail.
 
-# v0.3.2 - September 29, 2024
+## v0.3.2 - September 29, 2024
 
-## Fixed
+### Fixed
 
 - Corrected numeric type handling to prevent `Invalid digit found` errors on
   certain UPS devices.
 
-# v0.3.1 - July 19, 2024
+## v0.3.1 - July 19, 2024
 
-## Fixed
+### Fixed
 
 - Inconsistent UPS table cell sizing. (Chromium)
 - Missing gauge track background color. (Chromium)
 
-# v0.3.0 - July 17, 2024
+## v0.3.0 - July 17, 2024
 
-## Added
+### Added
 
 - Brotli compression support.
 - UPS beeper, UPS status and server connectivity indicators.
@@ -294,35 +294,35 @@
 - Support for ARM-v6, ARM-v7, RISC-v64 and x86-64 micro-architecture levels.
 - Self-contained binary releases for non-container environments.
 
-## Changed
+### Changed
 
 - Container base image changed to busybox, image sizes are now ~5MiB smaller
   than 0.2.1.
 - Security updates for dependencies.
 - Switched to apexcharts.
 
-## Fixed
+### Fixed
 
 - Gauge colors change correctly when theme changes.
 - Better theme initialization to prevent flashbang effect when page loaded.
 
-## Deleted
+### Deleted
 
 - Lofi theme.
 
-# v0.2.1 - April 08, 2024
+## v0.2.1 - April 08, 2024
 
-## Added
+### Added
 
 - 18 additional theme options.
 
-## Changed
+### Changed
 
 - Updated all dependencies.
 
-# v0.2.0 - March 18, 2024
+## v0.2.0 - March 18, 2024
 
-## Added
+### Added
 
 - Basic JSON API.
 - Health probe endpoint at `/probes/health`.
@@ -331,23 +331,23 @@
 - Added logo to the UI header.
 - `hx-boost` support at the HTML body level. 
 
-## Changed
+### Changed
 
 - UI will show `ups.realpower` value if UPS is supports this variable; otherwise,
   power is calculated using the formula (`ups.realpower.nominal` * `ups.load` ) / 100.
 - All dependencies have been updated to their latest stable versions.
 
-# v0.1.1, January 21, 2024
+## v0.1.1 - January 21, 2024
 
-## Added 
+### Added
 
 - New icon and title names to make browsers tabs more distinguishable.
 
-## Changed
+### Changed
 
 - All dependencies are up-to-date, addressing [RUSTSEC-2024-0003](https://rustsec.org/advisories/RUSTSEC-2024-0003.html)
 
-## Fixed
+### Fixed
 
 - Incorrect page sizing on mobile devices.
 - UPS path now routes to 404 page when requested UPS does not exists.

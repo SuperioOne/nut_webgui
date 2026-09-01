@@ -202,7 +202,7 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
     })?;
 
   info!(message = "http server is closed");
-  info!(message = "shutting down background services");
+  info!(message = "shutting down background services and connections");
 
   if let Err(err) = service_runner.stop().await {
     warn!(
@@ -210,8 +210,6 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
       reason = %err
     );
   }
-
-  info!("closing upsd client connections");
 
   if let Some(state) = Arc::into_inner(server_state) {
     for upsd in state.upsd_servers.into_values() {

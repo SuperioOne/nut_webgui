@@ -1,0 +1,25 @@
+# Warning: Any settings defined through environment variables will take
+# precedence over values set in your config.toml file.
+
+# export NUTWG__CONFIG_FILE="/etc/nut_webgui/config.toml"
+# export NUTWG__DEFAULT_THEME="dark"
+# export NUTWG__LOG_LEVEL="info"
+# export NUTWG__SERVER_KEY="/etc/nut_webgui/server.key"
+# export NUTWG__HTTP_SERVER__BASE_PATH="/"
+# export NUTWG__HTTP_SERVER__LISTEN="0.0.0.0"
+# export NUTWG__HTTP_SERVER__PORT="9000"
+# export NUTWG__HTTP_SERVER__WORKER_COUNT="1"
+# export NUTWG__AUTH__USERS_FILE="/etc/nut_webgui/users.toml"
+# export NUTWG__AUTH__ALLOW_ANONYMOUS_METRICS="false"
+
+# Optional settings for connecting to a single UPSD server without config.toml
+
+# export NUTWG__UPSD__NAME="default"
+# export NUTWG__UPSD__ADDRESS="127.0.0.1"
+# export NUTWG__UPSD__MAX_CONNECTION="4"
+# export NUTWG__UPSD__PASSWORD="Seriously"
+# export NUTWG__UPSD__POLL_FREQ="20"
+# export NUTWG__UPSD__POLL_INTERVAL="3"
+# export NUTWG__UPSD__PORT="3493"
+# export NUTWG__UPSD__TLS_MODE="disable"
+# export NUTWG__UPSD__USERNAME="upsd_user_name"

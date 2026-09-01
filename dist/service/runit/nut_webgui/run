@@ -2,8 +2,19 @@
 exec 2>&1
 set -e
 
-if [ -e /etc/nut_webgui/config.toml ]; then
-        exec /usr/bin/nut_webgui --config-file /etc/nut_webgui/config.toml --allow-env
-else
-        exec /usr/bin/nut_webgui --allow-env
+if [ -r ./conf ]; then
+    . ./conf
 fi
+
+CONFIG_ARG=
+SERVER_KEY_ARG=
+
+if [ -e "/etc/nut_webgui/config.toml" -a -z "$NUTWG__CONFIG_FILE" ]; then
+    CONFIG_ARG="--config-file /etc/nut_webgui/config.toml"
+fi
+
+if [ -e "/etc/nut_webgui/server.key" -a -z "$NUTWG__SERVER_KEY" ]; then
+    SERVER_KEY_ARG="--server-key-file /etc/nut_webgui/server.key"
+fi
+
+exec "/usr/local/bin/nut_webgui" --allow-env $CONFIG_ARG $SERVER_KEY_ARG

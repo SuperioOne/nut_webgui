@@ -1,5 +1,6 @@
 BIN_DIR           := ./bin
 ARTIFACT_DIR      := $(BIN_DIR)/artifact
+INSTALL_PREFIX    := /usr/local/bin
 NODE_MODULES_DIR  := ./nut_webgui_client/node_modules
 PROJECT_SRC       := ./Cargo.toml \
 											$(wildcard ./**/Cargo.toml) \
@@ -22,6 +23,7 @@ include ./makefiles/x86-64.mk
 include ./makefiles/arm.mk
 include ./makefiles/riscv.mk
 include ./makefiles/package_build.mk
+include ./makefiles/docs.mk
 
 ifdef GH_TARGETS
 include ./makefiles/release_github.mk
@@ -47,10 +49,8 @@ endif
 help:
 	@echo "BASIC RECIPES"
 	@echo "  build           : Build server binary for the current system's CPU architecture and OS."
-	@echo "  build-native    : Build server binary specifically optimized for the current system's CPU."
 	@echo "  clean           : Clear all build directories."
-	@echo "  install         : Build nut_webgui and install it to /usr/bin/local (Requires permission)."
-	@echo "  install-local   : Build nut_webgui and install it locally to $$HOME/.local/bin"
+	@echo "  install         : Build nut_webgui and install it to $(INSTALL_PREFIX)."
 	@echo "  test            : Call test suites."
 ifdef TARGETS
 	@echo "CONFIG SPECIFIC RECIPES"
@@ -71,34 +71,22 @@ endif
 endif
 
 # Builds with default toolchain
-.PHONY: build
-build:
-	@echo "Building binaries for the current system's architecture."
-	@cargo build -p nut_webgui --release
+$(ARTIFACT_DIR)/release/nut_webgui: $(PROJECT_SRC)
+	RUSTFLAGS="$(RUSTFLAGS)" cargo build -p nut_webgui --release
 	@install -D "./target/release/nut_webgui" "$(ARTIFACT_DIR)/release/nut_webgui"
 
-# Builds with default toolchain and host CPU specific optimizations enabled.
-.PHONY: build-native
-build-native:
-	@echo "Building binary for the current system's CPU."
-	@export RUSTFLAGS="-Ctarget-cpu=native" && \
-		cargo build -p nut_webgui --release
-	@install -D "./target/release/nut_webgui" "$(ARTIFACT_DIR)/release/nut_webgui"
+.PHONY: build
+build: $(ARTIFACT_DIR)/release/nut_webgui
 
 .PHONY: install
-install: build-native
-	@if [ -w "/usr/local/bin" ]; then \
-			install "./target/release/nut_webgui" "/usr/local/bin/nut_webgui"; \
-			echo "Install completed: /usr/local/bin/nut_webgui"; \
+install: $(ARTIFACT_DIR)/release/nut_webgui
+	@if [ -w "$(INSTALL_PREFIX)" ]; then \
+			install "$(ARTIFACT_DIR)/release/nut_webgui" "$(INSTALL_PREFIX)/nut_webgui"; \
+			echo "Install completed: $(INSTALL_PREFIX)/nut_webgui"; \
 		else \
-			echo "Current user cannot write into '/usr/local/bin'"; \
-		exit 1; \
+			echo "Current user cannot write into '$(INSTALL_PREFIX)'"; \
+			exit 1; \
 	 fi
-
-.PHONY: install-local
-install-local: build-native
-	@install -D "./target/release/nut_webgui" "$$HOME/.local/bin/nut_webgui"
-	@echo "Install completed: $$HOME/.local/bin/nut_webgui"
 
 .PHONY: test
 test:

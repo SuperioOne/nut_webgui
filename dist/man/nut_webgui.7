@@ -19,7 +19,7 @@ It displays UPS device stats from multiple
 .MR upsd 8
 servers.
 .PP
-In addition to web interface, nut_webgui provides data endpoints for custom
+In addition to the web interface, nut_webgui provides data endpoints for custom
 integrations:
 .TP
 .BR /api
@@ -43,7 +43,7 @@ replacement. For more detailed API usage, see the online documentation.
 .PP
 .MR nut_webgui 1
 can be configured via args, environment variables, or config file. All
-configuration options are merged into single unified config based on their
+configuration options are merged into a single unified config based on their
 priority.
 
 Config priority order highest to lowest:
@@ -56,21 +56,21 @@ Config priority order highest to lowest:
 3. config.toml file
 .RE
 .PP
-For CLI args and environment variables see
+For CLI args and environment variables, see the
 .MR nut_webgui 1
 man page.
 
 .SH CONFIG.TOML
 .PP
-The config file is a TOML v1.1.0 formatted document that allows configuration
-for: HTTP server,
+The config file is a TOML v1.1.0 formatted document that allows configuring
+the HTTP server,
 .MR upsd 8
 server connections, authentication, etc.
 
 .PP
 The default config file location is
 .I /etc/nut_webgui/config.toml
-for most installation methods. However, it's not a requirement and the config
+for most installation methods. However, this is not a requirement and the config
 file location can be changed to any path with the
 .I \-\-config\-file
 argument.
@@ -120,11 +120,12 @@ server connections, authentication, and HTTP server settings.
 .PP
 By default,
 .MR nut_webgui 1
-server can be accessed by everyone. Authentication can be enabled by providing
+server can be accessed without authentication. Authentication can be enabled by
+providing a
 .I users.toml
 file via configuration options.
 .PP
-Once authentication is enabled;
+Once authentication is enabled:
 .RS
 - Web UI requires session cookies to access the pages.
 .br
@@ -141,7 +142,7 @@ For multi-instance deployments (e.g., behind a load balancer), all instances
 must use the same server key.
 .SS USERS FILE
 .PP
-user file is a simple TOML formatted file where each user is defined as a table.
+user file is a simple TOML\-formatted file where each user is defined as a table.
 .SS EXAMPLE
 .EX
         [username]
@@ -160,16 +161,16 @@ user file is a simple TOML formatted file where each user is defined as a table.
         permissions = ["fsd"]
 .EE
 .SS USER PERMISSIONS
-nut_webgui has three different user permissions;
+nut_webgui has three different user permissions:
 .TP
 .BR setvar
 User can change UPS variables.
 .TP
 .BR instcmd
-User can call instant commands on target UPS.
+User can call instant commands on the target UPS.
 .TP
 .BR fsd
-User force shutdown target UPS.
+User can force shutdown of the target UPS.
 
 .SH TLS MODES
 .PP
@@ -177,15 +178,15 @@ Secure communication between
 .MR nut_webgui 1
 and
 .MR upsd 8
-servers can be configured via
+servers can be configured via the
 .I tls_mode
 option.
 .MR nut_webgui 1
-uses openssl-prober to check system certificates located in
+uses openssl-prober to check system certificates located in the
 .I /etc/ssl/certs/
-directory. Make sure required root certificates are present at this location.
+directory. Make sure the required root certificates are present at this location.
 .PP
-Available TLS modes are;
+Available TLS modes are:
 
 .TP
 .BR disable
@@ -197,8 +198,8 @@ certificate verification fails.
 .TP
 .BR skip
 UPSD connection is secured by TLS, and nut_webgui ignores any certificate
-verification issues. This option is only recommeded to test self-signed
-certificates.
+verification issues. This option is only recommended for testing
+self-signed certificates.
 
 .SH LOG LEVELS
 .BR error,

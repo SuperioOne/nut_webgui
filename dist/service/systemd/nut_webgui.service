@@ -5,7 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/nut_webgui --config-file /etc/nut_webgui/config.toml --allow-env
+EnvironmentFile=-/etc/nut_webgui/nut_webgui.env
+ExecStart=/usr/local/bin/nut_webgui --allow-env --config-file /etc/nut_webgui/config.toml --server-key-file /etc/nut_webgui/server.key
 Restart=on-failure
 RestartSec=5
 

@@ -39,20 +39,20 @@ for the additional config files and features.
 .SH OPTIONS
 .TP
 .BR \-l ", "\-\-listen
-Listen address for the HTTP server. Default is 
-.IR 0.0.0.0.
+Listen address for the HTTP server. Default is
+.IR 0.0.0.0 .
 .TP
 .BR \-p ", "\-\-port
 Port used by the HTTP server. Default is
 .IR 9000.
 .TP
 .BR \-\-base\-path
-Override HTTP server base path. Default is 
-.IR /.
+Override HTTP server base path. Default is
+.IR / .
 .TP
 .BR \-\-log\-level
-Log level for the HTTP server. Default is 
-.IR info.
+Log level for the HTTP server. Default is
+.IR info .
 .TP
 .BR \-\-default\-theme
 Web UI default theme.
@@ -60,17 +60,17 @@ Web UI default theme.
 .BR \-\-config\-file
 Set
 .IR config.toml
-path
+path.
 .TP
 .BR \-\-allow\-env
 Allow application to load configuration from environment variables.
 .TP
 .BR \-\-anonymous\-metrics
-Set anonymous access on 
+Set anonymous access on
 .IR /metrics
 endpoint, ignored when auth is disabled.
 Default is
-.IR false.
+.IR false .
 .TP
 .BR \-\-server\-key
 Set private server key value.
@@ -95,14 +95,14 @@ Print version and exit.
 .SH ENVIRONMENT
 .PP
 nut_webgui can read environment variables for configuration. In order to use
-environment variables, the user must explicitly enable
+environment variables, the user must explicitly use the
 .IR \-\-allow\-env
 flag.
 .TP
 .BR NUTWG__CONFIG_FILE
 Set
 .IR config.toml
-path
+path.
 .TP
 .BR NUTWG__DEFAULT_THEME
 Set Web UI default theme.
@@ -144,19 +144,23 @@ server without requiring an additional config file.
 Set UPSD address.
 .TP
 .BR NUTWG__UPSD__MAX_CONNECTION
-Set allowed maximum connection for UPSD client.
+Set the allowed maximum connections for the UPSD client.
 .TP
 .BR NUTWG__UPSD__NAME
-Set namespace for the `NUTWG__UPSD__*` environment variables.
+Set namespace for the
+.I NUTWG__UPSD__*
+environment variables.
 .TP
 .BR NUTWG__UPSD__PASSWORD
 Set UPSD password.
 .TP
 .BR NUTWG__UPSD__POLL_FREQ
-Non-critical ups variables update frequency in seconds.
+Non-critical UPS variables update frequency in seconds.
 .TP
 .BR NUTWG__UPSD__POLL_INTERVAL
-Critical ups variables (`ups.status`) update interval in seconds.
+Critical UPS variables
+.I (`ups.status`)
+update interval in seconds.
 .TP
 .BR NUTWG__UPSD__PORT
 Set UPSD port.
@@ -174,7 +178,7 @@ The change improves overall performance, especially for the self-contained Musl
 builds. However, Mimalloc uses thread-local segments, which can significantly
 increase memory usage on systems with high CPU count.
 .PP
-Recommended action is limiting
+The recommended action is to limit
 .IR \-\-worker\-count
 to a reasonable value between 1 and 4.
 
@@ -184,7 +188,7 @@ to a reasonable value between 1 and 4.
 Successful server exit.
 .TP
 .B 1
-Unrecoverable error, configuration error
+Unrecoverable error, configuration error.
 
 .SH REPORTING BUGS
 .BR Codeberg:
