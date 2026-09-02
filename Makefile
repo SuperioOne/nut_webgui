@@ -49,9 +49,12 @@ endif
 help:
 	@echo "BASIC RECIPES"
 	@echo "  build           : Build server binary for the current system's CPU architecture and OS."
-	@echo "  clean           : Clear all build directories."
+	@echo "  build-docs      : Build and pack HTML documentation."
+	@echo "  watch           : Start development server with 'bacon' on http://localhost:9000"
+	@echo "  watch-docs      : Start mdbook on http://localhost:3000"
 	@echo "  install         : Build nut_webgui and install it to $(INSTALL_PREFIX)."
 	@echo "  test            : Call test suites."
+	@echo "  clean           : Clean all build directories."
 ifdef TARGETS
 	@echo "CONFIG SPECIFIC RECIPES"
 	@echo "  build-all       : Cross compile all configured targets."

@@ -18,40 +18,28 @@ define ANNOTATIONS =
 endef
 
 # Parameters
-# 1: Image tag
+# 1: Image target
 # 2: Binary artifact directory name
 # 3: Architecture
 # 4: Variant
 define container_image_rule =
-$(CONTAINER_DIR)/$(1).Dockerfile: $(2) $(IMAGE_DEPENDENCIES) $(IMAGE_TEMPLATE)
+$(CONTAINER_DIR)/$(1).Dockerfile: $(ARTIFACT_DIR)/$(2)/nut_webgui $(IMAGE_DEPENDENCIES) $(IMAGE_TEMPLATE)
 	@install -d "$(CONTAINER_DIR)"
 	@export PLACEHOLDER_EXE_DIR="$(ARTIFACT_DIR)/$(2)"; \
 		cat "$(IMAGE_TEMPLATE)" | envsubst > "$(CONTAINER_DIR)/$(1).Dockerfile"
 
 $(CONTAINER_DIR)/$(1).info: $(CONTAINER_DIR)/$(1).Dockerfile
 	@install -d "$(CONTAINER_DIR)"
-	@REBUILD=; \
-	IMAGE_ID="$$$$(buildah inspect --type image -f "{{.FromImageID}}" "nut_webgui:$(VERSION)-$(1)")"; \
-		if [ -e "$(CONTAINER_DIR)/$(1).info" ]; then \
-			EXISTING_ID="$$$$(cat "$(CONTAINER_DIR)/$(1).info")"; \
-			if [ "$$$$EXISTING_ID" != "$$$$IMAGE_ID" ]; then \
-				REBUILD=true; \
-			fi; \
-		else \
-			REBUILD=true; \
-		fi; \
-		if [ -n "$$$$REBUILD" ]; then \
-			buildah build \
-				--arch "$(3)" \
-				--variant "$(4)" \
-				$(ANNOTATIONS) \
-				-t "nut_webgui:$(VERSION)-$(1)" \
-				-f "$(CONTAINER_DIR)/$(1).Dockerfile"; \
-			buildah inspect \
-				--type image \
-				-f "{{.FromImageID}}" \
-				"nut_webgui:$(VERSION)-$(1)" > "$(CONTAINER_DIR)/$(1).info"; \
-		fi;
+	@buildah build \
+		--arch "$(3)" \
+		--variant "$(4)" \
+		$(ANNOTATIONS) \
+		-t "nut_webgui:$(VERSION)-$(1)" \
+		-f "$(CONTAINER_DIR)/$(1).Dockerfile"
+	@buildah inspect \
+		--type image \
+		-f "{{.FromImageID}}" \
+		"nut_webgui:$(VERSION)-$(1)" > "$(CONTAINER_DIR)/$(1).info";
 
 .PHONY: $(1)
 $(1): $(CONTAINER_DIR)/$(1).info
@@ -95,5 +83,5 @@ build-images: $(IMAGE_TARGETS)
 		$(ANNOTATIONS) \
 		"nut_webgui:$(VERSION)"
 	@for TAG in $(IMAGE_TARGETS); do \
-		buildah manifest add "nut_webgui:$(VERSION)" "nut_webgui:$(VERSION)-$$TAG"; \
+		buildah manifest add "nut_webgui:$(VERSION)" "nut_webgui:$(VERSION)-$$TAG" || exit 1; \
 	done

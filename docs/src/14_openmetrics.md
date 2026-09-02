@@ -117,8 +117,8 @@ scrape_configs:
 ```
 
 The `/metrics` endpoint also requires authentication via an API key when auth is
-enabled. See [Enabling auth](./08_enabling_auth.md) for instructions on
-generating API keys.
+enabled. See [Authentication](./05_authentication.md) section for instructions
+on generating API keys.
 
 > [!TIP]
 > Authentication on `/metrics` endpoint can be disabled via:

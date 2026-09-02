@@ -1,7 +1,8 @@
 # Building from source
 
-## Requirements:
-Required host tools are:
+## Linux
+
+**Requirements:**
   - make
   - cargo
   - rust >= 1.95
@@ -10,25 +11,23 @@ Required host tools are:
   - jq
   - GNU gettext utilities
 
-## Building binary
+### Building server binary
 
 Basic usage of `make`:
 
 ```sh
 make build
-
-./bin/artifact/release/nut_webgui --help
+./bin/artifact/release/nut_webgui --version
 ```
 
 `cargo` can also be used directly:
 
 ```sh
 cargo build --release -p nut_webgui
-
-./target/release/nut_webgui --help
+./target/release/nut_webgui --version
 ```
 
-## Cross building
+### Cross building
 
 In order to compile the application for different architectures, the host system
 should have gcc, LLVM, and Rust targets for cross-compilation.
@@ -68,7 +67,7 @@ ls ./bin/package
 > [!TIP]
 > Run `./configure.sh --help` to see all available options.
 
-## Building Multi-Arch container images
+### Building Multi-Arch container images
 
 Building multi-arch container images requires `buildah`, `qemu`, and
 cross-building setup for `*-musl` targets.
@@ -85,4 +84,21 @@ Example setup for arm64/v8, amd64, riscv64, and arm/v7:
 
 make build-images
 buildah images
+```
+
+## FreeBSD
+
+The existing Makefile is primarily intended for Linux. You could try using
+`gmake`, but some of the coreutils commands are incompatible with FreeBSD.
+
+**Requirements:**
+  - rust >= 1.95
+  - node
+  - npm
+
+### Building server binary
+
+```sh
+cargo build --release -p nut_webgui
+./target/release/nut_webgui --version
 ```

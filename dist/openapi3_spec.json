@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "nut_webgui Data API",
-    "version": "0.10.2",
+    "version": "0.10.3",
     "description": "Simple JSON API to interface with nut_webgui.",
     "license": {
       "name": "Apache 2.0"
@@ -16,21 +16,21 @@
     {
       "url": "{protocol}://{host}:{port}/{base_path}",
       "variables": {
-        "host": {
-          "default": "localhost"
-        },
-        "base_path": {
-          "default": ""
-        },
-        "port": {
-          "default": "9000"
-        },
         "protocol": {
           "default": "http",
           "enum": [
             "http",
             "https"
           ]
+        },
+        "host": {
+          "default": "localhost"
+        },
+        "port": {
+          "default": "9000"
+        },
+        "base_path": {
+          "default": ""
         }
       }
     }
@@ -839,6 +839,41 @@
                 "schema": {
                   "type": "string",
                   "example": "NOT-READY"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Get UPS metrics",
+        "description": "Get all UPS metrics in OpenMetric1.0 formatted response.",
+        "security": [
+          {
+            "ApiToken": []
+          }
+        ],
+        "tags": [
+          "metrics"
+        ],
+        "operationId": "get_metrics",
+        "responses": {
+          "200": {
+            "description": "HTTP server is ready and has at least one healthy UPSD connection.",
+            "content": {
+              "application/openmetrics-text": {
+                "example": "# HELP nutwg_ups_load UPS load percentage\n# TYPE nutwg_ups_load gauge\nnutwg_ups_load{namespace=\"demo\",device=\"apc\"} 28.0\n# HELP nutwg_ups_realpower_watts UPS real power in Watt\n# TYPE nutwg_ups_realpower_watts gauge\n# UNIT nutwg_ups_realpower_watts watts\nnutwg_ups_realpower_watts{namespace=\"demo\",device=\"apc\"} 252.0\n# EOF"
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }

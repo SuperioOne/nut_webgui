@@ -65,6 +65,7 @@ gen_dev_integration_test!(
 (DEV_APC__BACK_UPS_CS_650__usbhid_ups__v2_7_2__r01                                         ,"../nut-ddl/APC/APC__Back-UPS_CS_650__usbhid-ups__2.7.2__01.dev");
 (DEV_APC__BACK_UPS_ES_525__usbhid_ups__v2_6_0__r01                                         ,"../nut-ddl/APC/APC__Back-UPS_ES_525__usbhid-ups__2.6.0__01.dev");
 (DEV_APC__BACK_UPS_ES_550__usbhid_ups__v2_2_0__r01                                         ,"../nut-ddl/APC/APC__Back-UPS_ES_550__usbhid-ups__2.2.0__01.dev");
+(DEV_APC__BACK_UPS_ES_650G2__newhidups__v2_8_1__01                                         ,"../nut-ddl/APC/APC__Back-UPS_ES_650G2__usbhid-ups__2.8.1__01.dev");
 (DEV_APC__BACK_UPS_ES_650__newhidups__v2_0_3__r01                                          ,"../nut-ddl/APC/APC__Back-UPS_ES_650__newhidups__2.0.3__01.dev");
 (DEV_APC__BACK_UPS_ES_700__usbhid_ups__v2_6_5__r01                                         ,"../nut-ddl/APC/APC__Back-UPS_ES_700__usbhid-ups__2.6.5__01.dev");
 (DEV_APC__BACK_UPS_ES_725__usbhid_ups__v2_6_5__r01                                         ,"../nut-ddl/APC/APC__Back-UPS_ES_725__usbhid-ups__2.6.5__01.dev");
@@ -302,6 +303,7 @@ gen_dev_integration_test!(
 (DEV_EATON__EPDU_MA_1P__snmp_ups__v2_7_4__r01                                              ,"../nut-ddl/Eaton/Eaton__ePDU_MA_1P__snmp-ups__2.7.4__01.dev");
 (DEV_EATON__EPDU_MI_38U_A__snmp_ups__v2_7_4__r01                                           ,"../nut-ddl/Eaton/Eaton__EPDU_MI_38U-A__snmp-ups__2.7.4__01.dev");
 (DEV_EATON__E_SERIES_DX_UPS_1_20_KVA__blazer_ser__v2_7_3__r01                              ,"../nut-ddl/Eaton/Eaton__E_Series_DX_UPS_1-20_kVA__blazer_ser__2.7.3__01.dev");
+(DEV_EATON__Eaton__9E2000i__usbhid_ups__2_8_4__01                                          ,"../nut-ddl/Eaton/Eaton__9E2000i__usbhid-ups__2.8.4.787-787+gf8ecd520a__01.dev");
 (DEV_EATON__NV_1000H__megatec_usb__v2_2_1__r01                                             ,"../nut-ddl/Eaton/Eaton__NV_1000H__megatec_usb__2.2.1__01.dev");
 (DEV_EATON__POWERWARE_3105__bcmxcp_usb__v2_6_3__r01                                        ,"../nut-ddl/Eaton/Eaton__Powerware_3105__bcmxcp_usb__2.6.3__01.dev");
 (DEV_EATON__POWERWARE_5110__bcmxcp_usb__v2_6_5__r01                                        ,"../nut-ddl/Eaton/Eaton__Powerware_5110__bcmxcp_usb__2.6.5__01.dev");
@@ -617,6 +619,7 @@ gen_dev_integration_test!(
 (DEV_POWER_SHIELD__CENTURION_2000__blazer_usb__v2_4_3__r01                                 ,"../nut-ddl/Power_Shield/Power_Shield__Centurion_2000__blazer_usb__2.4.3__01.dev");
 (DEV_POWER_SHIELD__DEFENDER_1200VA__blazer_usb__v2_6_3__r01                                ,"../nut-ddl/Power_Shield/Power_Shield__Defender_1200VA__blazer_usb__2.6.3__01.dev");
 (DEV_PROLINE__PCSTAR_PRO__blazer_ser__v2_6_5__r01                                          ,"../nut-ddl/Proline/Proline__PCStar_Pro__blazer_ser__2.6.5__01.dev");
+(DEV_Power_Shield__Centurion_RT_1000VA__snmp_ups__2_8_5__01_dev                            ,"../nut-ddl/Power_Shield/Power_Shield__Centurion_RT_1000VA__snmp-ups__2.8.5__01.dev");
 (DEV_RARITAN__PX2_1486__snmp_ups__v2_7_4_12_gf1a0d64__r01                                  ,"../nut-ddl/Raritan/Raritan__PX2-1486__snmp-ups__2.7.4-12-gf1a0d64__01.dev");
 (DEV_REDI__BLAZER_600VA_BLAZER600C__blazer_ser__v2_6_3__r01                                ,"../nut-ddl/REDi/REDi__Blazer_600VA_BLAZER600c__blazer_ser__2.6.3__01.dev");
 (DEV_REDI__BLAZER_600VA_BLAZER600C__blazer_ser__v2_6_3__r02                                ,"../nut-ddl/REDi/REDi__Blazer_600VA_BLAZER600c__blazer_ser__2.6.3__02.dev");
@@ -721,9 +724,11 @@ gen_dev_integration_test!(
 (DEV_TRIPP_LITE__SU2200XLA__usbhid_ups__v2_4_3__r01                                        ,"../nut-ddl/Tripp_Lite/Tripp_Lite__SU2200XLA__usbhid-ups__2.4.3__01.dev");
 (DEV_TRIPP_LITE__SU2200XL__snmp_ups__v2_0_3__r01                                           ,"../nut-ddl/Tripp_Lite/Tripp_Lite__SU2200XL__snmp-ups__2.0.3__01.dev");
 (DEV_TRIPP_LITE__SU6000RT4U__usbhid_ups__v2_1_0__r01                                       ,"../nut-ddl/Tripp_Lite/Tripp_Lite__SU6000RT4U__usbhid-ups__2.1.0__01.dev");
+(DEV_TRIPP_LITE__UPS__usbhid_ups__2_6_5__01_dev                                            ,"../nut-ddl/Tripp_Lite/Tripp_Lite__UPS_Agent__snmp-ups__2.8.4__01.dev");
 (DEV_TRIPP_LITE__UPS__usbhid_ups__v2_6_5__r01                                              ,"../nut-ddl/Tripp_Lite/Tripp_Lite__UPS__usbhid-ups__2.6.5__01.dev");
 (DEV_TRUST__UPS_1000_MANAGEMENT_PW_4105__powermust__v2_0_2__r01                            ,"../nut-ddl/Trust/Trust__UPS_1000_Management_PW-4105__powermust__2.0.2__01.dev");
 (DEV_TRUST__UPS_1000_MANAGEMENT_PW_4105__powermust__v2_0_3__r01                            ,"../nut-ddl/Trust/Trust__UPS_1000_Management_PW-4105__powermust__2.0.3__01.dev");
+(DEV_TS_SHARA__Universal_UPS_Senoidal_3200VA__nutdrv_qx__2_8_4__01_dev                     ,"../nut-ddl/TS_Shara/TS_Shara__Universal_UPS_Senoidal_3200VA__nutdrv_qx__2.8.4__01.dev");
 (DEV_TS_SHARA__XPRO_UPS_SENOIDAL_1500VA__nutdrv_qx__v2_8_0__r01                            ,"../nut-ddl/TS_Shara/TS_Shara__XPro_UPS_Senoidal_1500VA__nutdrv_qx__2.8.0__01.dev");
 (DEV_TUNCMATIK__DG1200VA__blazer_usb__v2_6_4__r01                                          ,"../nut-ddl/Tuncmatik/Tuncmatik__DG1200VA__blazer_usb__2.6.4__01.dev");
 (DEV_TUNCMATIK__DG1200VA__megatec_usb__v2_4_3__r01                                         ,"../nut-ddl/Tuncmatik/Tuncmatik__DG1200VA__megatec_usb__2.4.3__01.dev");

@@ -1,4 +1,4 @@
-# Enabling Authentication
+# Authentication
 
 Basic authentication can be enabled in one of the following ways:
 - Via the CLI argument: `--with-auth "/etc/nut_webgui/users.toml"`

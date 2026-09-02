@@ -32,6 +32,8 @@ Container image registries:
 
 ## Documentation
 
+For HTML version, see [https://nwg.smdd.dev](https://nwg.smdd.dev)
+
 - [Introduction](./docs/src/00_introduction.md)
 - [Binary installation](./docs/src/01_binary_installation.md)
 - [Container images](./docs/src/02_container_images.md)

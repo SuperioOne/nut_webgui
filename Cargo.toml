@@ -9,10 +9,10 @@ strip = "debuginfo"
 panic = "abort"
 
 [workspace.package]
-version = "0.10.2"
+version = "0.10.3"
 edition = "2024"
 authors = ["Timur Olur <pm@smdd.dev>"]
-documentation = "https://codeberg.org/SuperiorOne/nut_webgui"
+documentation = "nwg.smdd.dev"
 homepage = "https://codeberg.org/SuperiorOne/nut_webgui"
 keywords = ["nut", "ups", "network-ups-tools", "self-hosted", "management"]
 license = "Apache-2.0"

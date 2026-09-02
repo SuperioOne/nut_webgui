@@ -1,3 +1,28 @@
+## v0.10.3 - September 02, 2026
+
+### Fixed
+- Previous `install.sh` does not work on Alpine Linux or similar distributions
+  due to some incompatible command calls. The script now tries to use
+  alternatives *(e.g. `doas` instead of `sudo`)* and uses common option flags.
+- Auto-generated config files inside the container are now owned by the provided
+  `UID` instead of the root user.
+- Default configuration files are not created when users explicitly set
+  environment variables to the default paths.
+
+### Added
+- `--server-key-file` option for setting the server key from a file.
+- Self-contained RISC-V build with musl.
+- runit and OpenRC support for binary installations.
+
+### Changed
+- Tar packages now contain all necessary config templates, man docs, and basic
+  service files *(runit, openrc, systemd)*.
+- Due to file upload limits, SHA256 checksums are bundled in a `MANIFEST` file.
+
+### Removed
+- PKGBUILD file for Arch-based systems is no longer distributed with new
+  releases.
+
 ## v0.10.2 - June 29, 2026
 
 ### Fixed

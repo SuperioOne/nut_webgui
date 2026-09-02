@@ -338,7 +338,7 @@ else
     $SUDO install -D -m 644 "$TEMP_DIR/server.key" "$INSTALL_CONFIG_DIR/server.key"
 fi
 
-if [ $(confirm_prompt "Do you want to install service files for the selected init system ($INIT_SYSTEM)?") != 1 ]; then
+if [ $(confirm_prompt "Do you want to install service files for the selected init system ($INIT_SYSTEM)?") = 1 ]; then
     case "$INIT_SYSTEM" in
         runit)
             RUNINT_SVC_DIR="$INSTALL_PREFIX/etc/sv/nut_webgui"

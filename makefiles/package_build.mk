@@ -37,39 +37,40 @@ $(CHANGELOG_FILE): ./CHANGELOG
 
 $(MAN_OUT_DIR): $(MAN_PAGE_SRC)
 	@DATE="$$(date -uI)"; \
-	for MANPAGE in $(MAN_PAGE_SRC); do \
-		NAME="$$(basename "$$MANPAGE")"; \
-		SECTION="man1"; \
-		case "$$NAME" in \
-			*.2) SECTION="man2" ;; \
-			*.3) SECTION="man3" ;; \
-			*.4) SECTION="man4" ;; \
-			*.5) SECTION="man5" ;; \
-			*.6) SECTION="man6" ;; \
-			*.7) SECTION="man7" ;; \
-			*.8) SECTION="man8" ;; \
-			*) SECTION="man1" ;; \
-		esac; \
-		install -d "$(MAN_OUT_DIR)/$$SECTION/"; \
-		cat "$$MANPAGE" | sed -e "s/__PLACEHOLDER_VERSION/$(VERSION)/g" -e "s/__PLACEHOLDER_DATE/$$DATE/g" > "$(MAN_OUT_DIR)/$$SECTION/$$NAME"; \
-	done
+		for MANPAGE in $(MAN_PAGE_SRC); do \
+			NAME="$$(basename "$$MANPAGE")"; \
+			SECTION="man1"; \
+			case "$$NAME" in \
+				*.2) SECTION="man2" ;; \
+				*.3) SECTION="man3" ;; \
+				*.4) SECTION="man4" ;; \
+				*.5) SECTION="man5" ;; \
+				*.6) SECTION="man6" ;; \
+				*.7) SECTION="man7" ;; \
+				*.8) SECTION="man8" ;; \
+				*) SECTION="man1" ;; \
+			esac; \
+			install -d "$(MAN_OUT_DIR)/$$SECTION/"; \
+			cat "$$MANPAGE" | sed -e "s/__PLACEHOLDER_VERSION/$(VERSION)/g" -e "s/__PLACEHOLDER_DATE/$$DATE/g" > "$(MAN_OUT_DIR)/$$SECTION/$$NAME"; \
+		done
 
 $(foreach TARGET,$(TARGETS),$(eval $(call tar_package_recipe,$(TARGET))))
 
 $(MANIFEST_FILE): $(PACKAGE_TARS)
 	@install -d "$(PACKAGE_DIR)"
-	@echo "---" > "$(MANIFEST_FILE)"; \
-	for TAR_FILE in $(PACKAGE_TARS); do \
-		echo "Filename: $$(basename "$$TAR_FILE")" >> "$(MANIFEST_FILE)"; \
-		echo 'Version: $(VERSION)' >> "$(MANIFEST_FILE)"; \
-		echo "Fullname: $$(basename "$$TAR_FILE" | sed -e 's/.tar.gz//')" >> "$(MANIFEST_FILE)"; \
-		echo "Target: $$(basename "$$TAR_FILE" | sed -e 's/nut_webgui_$(VERSION)_//' -e 's/.tar.gz//')" >> "$(MANIFEST_FILE)"; \
-		echo 'Revision: $(ANNOTATION_REVISION)' >> "$(MANIFEST_FILE)"; \
-		sha1sum "$$TAR_FILE" | awk '{print "SHA1: "$$1}' >> $(MANIFEST_FILE) ; \
-		sha256sum "$$TAR_FILE" | awk '{print "SHA256: "$$1}' >> $(MANIFEST_FILE) ; \
-		md5sum "$$TAR_FILE" | awk '{print "MD5: "$$1}' >> $(MANIFEST_FILE) ; \
-	  echo "---" >> "$(MANIFEST_FILE)"; \
-	done
+	@set -e; \
+		echo "---" > "$(MANIFEST_FILE)"; \
+		for TAR_FILE in $(PACKAGE_TARS); do \
+			echo "Filename: $$(basename "$$TAR_FILE")" >> "$(MANIFEST_FILE)"; \
+			echo 'Version: $(VERSION)' >> "$(MANIFEST_FILE)"; \
+			echo "Fullname: $$(basename "$$TAR_FILE" | sed -e 's/.tar.gz//')" >> "$(MANIFEST_FILE)"; \
+			echo "Target: $$(basename "$$TAR_FILE" | sed -e 's/nut_webgui_$(VERSION)_//' -e 's/.tar.gz//')" >> "$(MANIFEST_FILE)"; \
+			echo 'Revision: $(ANNOTATION_REVISION)' >> "$(MANIFEST_FILE)"; \
+			sha1sum "$$TAR_FILE" | awk '{print "SHA1: "$$1}' >> $(MANIFEST_FILE) ; \
+			sha256sum "$$TAR_FILE" | awk '{print "SHA256: "$$1}' >> $(MANIFEST_FILE) ; \
+			md5sum "$$TAR_FILE" | awk '{print "MD5: "$$1}' >> $(MANIFEST_FILE) ; \
+			echo "---" >> "$(MANIFEST_FILE)"; \
+		done
 
 $(INSTALL_SCRIPT): ./dist/install.sh
 	@install -p -D "./dist/install.sh" "$(INSTALL_SCRIPT)"

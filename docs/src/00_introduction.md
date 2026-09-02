@@ -34,11 +34,11 @@ has the proper privileges in `upsd.users`[^upsd_users].
 |Arch    |Test Hardware         |Notes                                                                                        |
 |--------|----------------------|---------------------------------------------------------------------------------------------|
 |amd64   |AM4 CPU               |Works across all amd64 platforms.                                                            |
-|amd64-v3|AM4 CPU               |Snake-oil level optimizations with AVX. It mostly improves response compression and TLS.     |
-|amd64-v4|Intel® SDE            |Snake-oil level optimizations with AVX-512. It mostly improves response compression and TLS. |
-|arm64   |Raspberry Pi 4 Model B|                                                                                             |
-|armv7   |Qemu emulation        |Uses software floating-point.                                                                |
-|armv6   |Qemu emulation        |Uses software floating-point.                                                                |
+|amd64/v3|AM4 CPU               |Snake-oil level optimizations with AVX. It mostly improves response compression and TLS.     |
+|amd64/v4|Intel® SDE            |Snake-oil level optimizations with AVX-512. It mostly improves response compression and TLS. |
+|arm64/v8|Raspberry Pi 4 Model B|                                                                                             |
+|arm/v7  |Qemu emulation        |Uses software floating-point.                                                                |
+|arm/v6  |Qemu emulation        |Uses software floating-point.                                                                |
 |riscv64 |Qemu emulation        |                                                                                             |
 
 > [!NOTE]
