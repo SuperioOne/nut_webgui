@@ -47,10 +47,9 @@
           <div
             id="ups_status"
             class="flex flex-row flex-wrap gap-1 justify-center"
-            hx-ext="morph"
             hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?section=status"
             hx-indicator="#indicator"
-            hx-swap="morph:innerHTML"
+            hx-swap="innerMorph"
             hx-trigger="every {{upsd_config.poll_interval}}s"
           >
             {%- block ups_status -%}
@@ -78,7 +77,7 @@
         </div>
       </div>
     </div>
-    <div id="tab-content" class="flex flex-col gap-6" hx-ext="morph">
+    <div id="tab-content" class="flex flex-col gap-6">
       {%- block tab_content -%}
         {%- let permission = askama::get_value::<crate::auth::permission::Permissions>("USER_PERMISSION")? -%}
 

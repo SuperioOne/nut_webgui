@@ -115,9 +115,6 @@
                    tabindex="0"
                    role="button"
                    class="avatar avatar-placeholder btn btn-circle btn-ghost"
-                   hx-get="{{base_path}}/_layout/themes"
-                   hx-target="#themes-panel"
-                   hx-trigger="click once, pointerenter once"
                 >
                   <div class="bg-secondary rounded-full text-secondary-content uppercase w-10">
                     {{username.get_initials()}}
@@ -126,7 +123,13 @@
                 <ul tabindex="0" class="bg-base-200 dropdown-content menu menu-lg mt-5 p-2 rounded-box shadow-lg w-52 z-99">
                   <li class="menu-title">User: {{username}}</li>
                   <li>
-                    <label class="btn-ghost drawer-button" for="menu-toggle" >
+                    <label
+                      class="btn-ghost drawer-button"
+                      for="menu-toggle"
+                      hx-get="{{base_path}}/_layout/themes"
+                      hx-target="#themes-panel"
+                      hx-trigger="mousedown once"
+                    >
                       {%- call icons::get_svg("sliders", 18) -%}{%- endcall -%}
                       Themes
                     </label>
@@ -162,14 +165,14 @@
                 for="menu-toggle"
                 hx-get="{{base_path}}/_layout/themes"
                 hx-target="#themes-panel"
-                hx-trigger="click once, pointerenter once"
+                hx-trigger="mousedown once"
               >
                 {%- call icons::get_svg("sliders", 18) -%}{%- endcall -%}
               </label>
             {%- endif -%}
           </div>
         </header>
-        <div class="bg-error htmx-send-error-indicator p-2 text-center text-error-content w-full">
+        <div class="bg-error htmx-error-indicator p-2 text-center text-error-content w-full">
           <div class="font-bold">Connection lost</div>
           <div class="text-sm font-light">
             Unable to get response from server. Please check your internet connection and try again.

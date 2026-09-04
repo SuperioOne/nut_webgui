@@ -1,7 +1,3 @@
-use rolldown::{
-  Bundler, BundlerOptions, BundlerTransformOptions, CommentsOptions, OptimizationOption,
-  OutputFormat, Platform,
-};
 use sha2::Digest;
 use std::{
   fs::{File, canonicalize, copy},
@@ -58,23 +54,19 @@ macro_rules! exec {
   };
 }
 
-#[tokio::main]
-async fn main() {
-  if let Err(err) = bundle().await {
+fn main() {
+  if let Err(err) = bundle() {
     println!("cargo::error=client asset bundler failed");
     println!("cargo::error={}", err);
   }
 }
 
-async fn bundle() -> Result<(), Box<dyn core::error::Error>> {
+fn bundle() -> Result<(), Box<dyn core::error::Error>> {
   let srcdir = PathBuf::from_str("./src/")?.canonicalize()?;
   let outdir = std::env::var("OUT_DIR")?;
   let profile = std::env::var("PROFILE")?;
-  let minify: Option<&'static str> = if profile.eq_ignore_ascii_case("release") {
-    Some("--minify")
-  } else {
-    None
-  };
+  let minify = profile.eq_ignore_ascii_case("release").to_string();
+  let outdir = PathBuf::from_str(&outdir)?;
 
   match detect_package_manager() {
     Some(PackageManager::Npm) => exec!("npm", "install")?,
@@ -85,43 +77,34 @@ async fn bundle() -> Result<(), Box<dyn core::error::Error>> {
     }
   };
 
-  let mut js_bundler = Bundler::new(BundlerOptions {
-    comments: Some(CommentsOptions {
-      jsdoc: false,
-      annotation: false,
-      legal: true,
-    }),
-    minify: Some(rolldown::RawMinifyOptions::Bool(minify.is_some())),
-    treeshake: rolldown::TreeshakeOptions::Boolean(true),
-    minify_internal_exports: Some(true),
-    optimization: Some(OptimizationOption {
-      inline_const: Some(rolldown::InlineConstOption::Bool(false)),
-      ..Default::default()
-    }),
-    polyfill_require: Some(false),
-    format: Some(OutputFormat::Iife),
-    platform: Some(Platform::Browser),
-    input: Some(vec!["./index.js".to_owned().into()]),
-    cwd: Some(srcdir),
-    clean_dir: Some(false),
-    dir: Some(outdir.clone()),
-    transform: Some(BundlerTransformOptions {
-      target: Some(rolldown::Either::Left("es2022".to_owned())),
-      ..Default::default()
-    }),
-    ..Default::default()
-  })?;
-
   exec!("node", "--version").inspect_err(|_| {
     println!(
       "cargo::error=node is required for building the client assets. Make sure the system has nodejs installed."
     );
   })?;
 
-  let outdir = PathBuf::from_str(&outdir)?;
-
-  js_bundler.write().await?;
-  exec!("node", "./postcss.build.js", outdir.join("style.css"))?;
+  exec!(
+    "node",
+    "./build.js",
+    "bundle-js",
+    "-i",
+    srcdir.join("index.js"),
+    "-o",
+    outdir.join("index.js"),
+    "--minify",
+    &minify
+  )?;
+  exec!(
+    "node",
+    "./build.js",
+    "bundle-css",
+    "-i",
+    srcdir.join("style.css"),
+    "-o",
+    outdir.join("style.css"),
+    "--minify",
+    &minify
+  )?;
   copy("./static/icon.svg", outdir.join("icon.svg"))?;
   copy(
     "./static/feather-sprite.svg",
@@ -183,7 +166,6 @@ fn calc_sha256(bytes: &[u8]) -> String {
   let mut sha256 = sha2::Sha256::new();
   sha256.update(bytes);
   let digest = sha256.finalize();
-
   base16ct::lower::encode_string(&digest)
 }
 

@@ -10,17 +10,23 @@
   "keywords": [],
   "author": "Timur Olur",
   "devDependencies": {
-    "@tailwindcss/postcss": "4.3.0",
+    "@babel/core": "8.0.1",
+    "@babel/preset-env": "8.0.2",
+    "@rollup/plugin-babel": "7.1.0",
+    "@rollup/plugin-commonjs": "29.0.3",
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "@rollup/plugin-terser": "1.0.0",
+    "@tailwindcss/postcss": "4.3.3",
     "@types/d3": "7.4.3",
-    "cssnano": "8.0.1",
-    "daisyui": "5.5.8",
-    "postcss": "8.5.15",
-    "tailwindcss": "4.3.0"
+    "cssnano": "9.0.2",
+    "daisyui": "5.7.28",
+    "postcss": "8.5.28",
+    "rollup": "4.63.1",
+    "tailwindcss": "4.3.3"
   },
   "dependencies": {
     "@dagrejs/dagre": "1.1.8",
     "d3": "7.9.0",
-    "htmx.org": "2.0.10",
-    "idiomorph": "0.7.4"
+    "htmx.org": "4.0.0"
   }
 }

@@ -19,10 +19,9 @@
 {%- block content -%}
   <div 
     class="flex flex-col gap-4"
-    hx-ext="morph"
     hx-get="{{base_path}}/connection/?section=info_cards"
     hx-trigger="every 15s"
-    hx-swap="morph:innerHTML"
+    hx-swap="innerMorph"
     hx-indicator="#indicator"
   >
     {%- block info_cards -%}

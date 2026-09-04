@@ -1,6 +1,6 @@
 {%- import "icons.html" as icons -%}
 
-<div id="notifications" hx-swap-oob="afterbegin">
+<hx-partial hx-target="#notifications" hx-swap="afterbegin">
   <nut-ttl
     class="alert drop-shadow-lg wrap-break-words {{semantic_type.as_alert()}}"
     ttl="{{ttl}}"
@@ -29,4 +29,4 @@
       </button>
     </div>
   </nut-ttl>
-</div>
+</hx-partial>

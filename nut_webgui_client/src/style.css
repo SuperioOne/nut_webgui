@@ -88,11 +88,11 @@
 }
 
 @layer components {
-        .htmx-send-error-indicator {
+        .htmx-error-indicator {
                 display: none;
         }
 
-        .htmx-send-error-indicator.htmx-send-error-active {
+        .htmx-error-indicator.htmx-error-active {
                 display: inline-block;
                 color: var(--color-error);
                 animation: var(--animate-pulse);

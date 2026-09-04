@@ -21,19 +21,50 @@
   {%- endif -%}
 {%- endmacro -%}
 
-<form class="flex flex-row" hx-patch="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device_name | urlencode_strict}}/rw" hx-swap="morph" id="form_{{var_name.as_str()}}">
+<form
+  id="form_{{var_name.as_str()}}"
+  class="flex flex-row"
+  hx-patch="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device_name | urlencode_strict}}/rw"
+  hx-swap="innerMorph"
+>
   <fieldset class="grow">
     <input type="hidden" name="name" value="{{var_name.as_str()}}" />
     {%- match detail -%}
       {%- when VarDetail::String {max_len} -%}
-      <input class="input rounded-e-none w-full {{semantic.as_input()}}" maxlength="{{max_len}}" minlength="1" name="value" placeholder="Type here" required type="text" {% call set_value(value) -%}{%- endcall -%} />
+      <input
+        class="input rounded-e-none w-full {{semantic.as_input()}}"
+        maxlength="{{max_len}}"
+        minlength="1"
+        name="value"
+        placeholder="Type here"
+        required 
+        type="text"
+        {% call set_value(value) -%}{%- endcall -%}
+      />
         <p class="opacity-60 text-xs">max length: {{max_len}}</p>
       {%- when VarDetail::Number -%}
-        <input class="input rounded-e-none w-full {{semantic.as_input()}}" name="value" placeholder="Type here" required type="number" {% call set_value(value) -%}{%- endcall -%} />
+        <input
+          class="input rounded-e-none w-full {{semantic.as_input()}}"
+          name="value"
+          placeholder="Type here"
+          required
+          type="number"
+          {% call set_value(value) -%}{%- endcall -%} 
+        />
       {%- when VarDetail::Enum {options} -%}
-        <select class="input rounded-e-none w-full {{semantic.as_select()}}" name="value" placeholder="Select a value" required>
+        <select
+          class="input rounded-e-none w-full {{semantic.as_select()}}"
+          name="value"
+          placeholder="Select a value"
+          required
+        >
         {%- for opt in options -%}
-        <option value="{{opt}}" {% call is_selected(opt, value) %}{%- endcall -%}>{{opt}}</option>
+        <option
+          value="{{opt}}"
+          {% call is_selected(opt, value) %}{%- endcall -%}
+        >
+          {{opt}}
+        </option>
         {%- endfor -%}
       </select>
       {%- when VarDetail::Range {min, max} -%}
@@ -58,7 +89,9 @@
         <p class="opacity-60 text-xs {{semantic.as_text()}}">{{message}}</p>
       {%- endif -%}
     </fieldset>
-  <button class="btn btn-neutral rounded-s-none" type="submit">{%- call icons::get_svg("save", 16) -%}{%- endcall -%} Save</button>
+  <button class="btn btn-neutral rounded-s-none" type="submit">
+    {%- call icons::get_svg("save", 16) -%}{%- endcall -%} Save
+  </button>
 </form>
 
 {%- if let Some(notification) = notification -%}

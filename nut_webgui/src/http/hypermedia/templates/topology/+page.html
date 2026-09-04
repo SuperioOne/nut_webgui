@@ -189,8 +189,7 @@
     class="block grab-zone h-full object-none touch-none w-full"
     hx-get="{{base_path}}/topology?section=graph_nodes"
     hx-indicator="#indicator"
-    hx-ext="morph"
-    hx-swap="morph:innerHTML"
+    hx-swap="innerMorph"
     hx-trigger="every 15s"
   >
     {%- block graph_nodes -%}

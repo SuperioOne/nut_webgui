@@ -6,7 +6,7 @@
 
 {%- block content -%}
   <div class="flex flex-row justify-center">
-    <div hx-ext="morph" class="2xl:w-2xl content-card lg:w-lg md:w-md rounded shadow-md w-full xl:w-xl">
+    <div class="2xl:w-2xl content-card lg:w-lg md:w-md rounded shadow-md w-full xl:w-xl">
       <h1 class="font-bold text-2xl text-center">Generate API Key</h1>
 
       {%- block api_key_form -%}
@@ -15,9 +15,8 @@
         <form
           id="api-key-form"
           class="flex flex-col gap-6 p-6"
-          hx-ext="morph"
           hx-post="{{base_path}}/api-keys"
-          hx-swap="morph:outerHTML"
+          hx-swap="outerMorph"
         >
           <fieldset class="fieldset">
             <legend class="fieldset-legend">Key Expiration</legend>

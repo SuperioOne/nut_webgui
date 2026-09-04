@@ -3,28 +3,8 @@
  * Exports all web components, registers dom and htmx events.
  */
 
-/**
- * @typedef HtmxSendError
- * @property {HTMLElement} elt
- * @property {HTMLElement} target
- * @property {any} requestConfig
- * @property {XMLHttpRequest} xhr
- */
-
-/**
- * @typedef HtmxAfterRequest
- * @property {HTMLElement} elt
- * @property {HTMLElement} target
- * @property {any} requestConfig
- * @property {XMLHttpRequest} xhr
- * @property {boolean} successful
- */
-
-/** @typedef {CustomEvent<HtmxSendError>} HtmxSendErrorEvent **/
-/** @typedef {CustomEvent<HtmxAfterRequest>} HtmxAfterRequestEvent **/
-
-import htmx from "htmx.org";
-import { Idiomorph } from "idiomorph/dist/idiomorph.esm.js";
+import "htmx.org";
+import "htmx.org/dist/ext/hx-preload.js";
 
 import "./component/attribute_control.js";
 import "./component/bitflag_input.js";
@@ -58,94 +38,40 @@ function attr_preserve(attr_name, node, mutation_type) {
   }
 }
 
-/**
- * @param {string} swapStyle
- */
-function create_morph_config(swapStyle) {
-  let config;
-
-  if (swapStyle === "morph" || swapStyle === "morph:outerHTML") {
-    config = { morphStyle: "outerHTML" };
-  } else if (swapStyle === "morph:innerHTML") {
-    config = { morphStyle: "innerHTML" };
-  } else if (swapStyle.startsWith("morph:")) {
-    config = Function("return (" + swapStyle.slice(6) + ")")();
-  }
-
-  if (config) {
-    config.callbacks = { beforeAttributeUpdated: attr_preserve };
-    config.restoreFocus = true;
-  }
-
-  return config;
-}
-
-htmx.defineExtension("morph", {
-  isInlineSwap: function (swapStyle) {
-    const config = create_morph_config(swapStyle);
-    return config?.morphStyle === "outerHTML" || config?.morphStyle === null;
-  },
-  handleSwap: function (swapStyle, target, fragment) {
-    const config = create_morph_config(swapStyle);
-
-    if (config) {
-      return Idiomorph.morph(
-        target,
-        /** @type {Element} **/ (fragment).children,
-        config,
-      );
-    }
-  },
-});
-
 const ConnectionState = (() => {
+  const ERR_INDICATOR_QUERY = ".htmx-error-indicator";
+  const ERR_INDICATOR_CLASSNAME = "htmx-error-active";
+
   /** @type{boolean} **/
-  let state = false;
+  let is_failed = false;
 
   return {
-    get is_lost() {
-      return state;
+    set_error: (/**@type {Error}*/ err) => {
+      is_failed = true;
+
+      for (const element of document.querySelectorAll(ERR_INDICATOR_QUERY)) {
+        element.classList.add(ERR_INDICATOR_CLASSNAME);
+      }
     },
-    set is_lost(value) {
-      state = value;
+    reset: () => {
+      if (is_failed) {
+        is_failed = false;
+        for (const element of document.querySelectorAll(ERR_INDICATOR_QUERY)) {
+          element.classList.remove(ERR_INDICATOR_CLASSNAME);
+        }
+      }
     },
   };
 })();
 
-const HTMX_INDICATOR_QUERY = ".htmx-send-error-indicator";
-const HTMX_INDICATOR_CLASSNAME = "htmx-send-error-active";
+document.body.addEventListener("htmx:error", (ev) => {
+  ConnectionState.set_error(/**@type {Error}*/ (ev.detail.error));
+});
 
-document.body.addEventListener(
-  "htmx:sendError",
-  (/** @type{HtmxSendErrorEvent} **/ ev) => {
-    if (!ConnectionState.is_lost) {
-      ConnectionState.is_lost = true;
+document.body.addEventListener("htmx:after:request", (ev) => {
+  const status = ev.detail.ctx.response?.status;
 
-      const indicators = document.querySelectorAll(HTMX_INDICATOR_QUERY);
-
-      console.warn(
-        "Poll send request is failed, check your connection.",
-        ev.detail.xhr,
-      );
-
-      for (const element of indicators) {
-        element.classList.add(HTMX_INDICATOR_CLASSNAME);
-      }
-    }
-  },
-);
-
-document.body.addEventListener(
-  "htmx:afterRequest",
-  (/** @type{HtmxAfterRequestEvent} **/ ev) => {
-    if (ConnectionState.is_lost) {
-      const indicators = document.querySelectorAll(HTMX_INDICATOR_QUERY);
-
-      for (const element of indicators) {
-        element.classList.remove(HTMX_INDICATOR_CLASSNAME);
-      }
-
-      ConnectionState.is_lost = false;
-    }
-  },
-);
+  if (status !== undefined && status < 400 && status >= 200) {
+    ConnectionState.reset();
+  }
+});

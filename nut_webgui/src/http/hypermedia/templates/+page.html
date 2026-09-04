@@ -59,10 +59,9 @@
       {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
       <div id="device_container">
         <div
-          hx-ext="morph"
           hx-get="{{base_path}}/?section=device_table{%- if let Some(namespace) = active_namespace -%} &namespace={{namespace}} {%- endif -%}"
           hx-indicator="#indicator"
-          hx-swap="morph:innerHTML"
+          hx-swap="innerMorph"
           hx-trigger="every 15s"
         >
           {%- block device_table -%}
