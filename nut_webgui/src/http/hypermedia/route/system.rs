@@ -1,10 +1,7 @@
 use crate::{
   auth::{user_session::UserSession, user_store::UserStore},
   config::ServerConfig,
-  http::hypermedia::{
-    error::ErrorPage,
-    util::{AppDetails, RenderWithConfig, get_app_info},
-  },
+  http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
   state::ServerState,
 };
 use askama::Template;
@@ -19,7 +16,6 @@ use std::sync::Arc;
 #[template(path = "system/+page.html")]
 struct SystemPageTemplate<'a> {
   config: &'a ServerConfig,
-  app_info: AppDetails,
   users: Option<&'a UserStore>,
 }
 
@@ -31,7 +27,6 @@ pub async fn get(
 
   let template = SystemPageTemplate {
     config: &state.config,
-    app_info: get_app_info(),
     users: state.auth_user_store.as_ref().map(|v| v.as_ref()),
   };
 

@@ -15,18 +15,7 @@ macro_rules! htmx_swap {
   }};
 }
 
-macro_rules! redirect_not_found {
-  ($state:expr) => {
-    axum::response::Redirect::permanent(&format!(
-      "{}/not-found",
-      $state.config.http_server.base_path
-    ))
-    .into_response()
-  };
-}
-
 pub(super) use htmx_swap;
-pub(super) use redirect_not_found;
 
 pub fn normalize_id(input: &str) -> Cow<'_, str> {
   let first = input.as_bytes().first();
@@ -90,20 +79,5 @@ where
 
     values.insert("USER_PERMISSION", &permissions);
     self.render_with_values(&values)
-  }
-}
-
-#[derive(Debug)]
-pub struct AppDetails {
-  pub version: &'static str,
-  pub license: &'static str,
-  pub repository: &'static str,
-}
-
-pub const fn get_app_info() -> AppDetails {
-  AppDetails {
-    version: env!("CARGO_PKG_VERSION"),
-    license: env!("CARGO_PKG_LICENSE"),
-    repository: env!("CARGO_PKG_REPOSITORY"),
   }
 }

@@ -25,7 +25,7 @@
   id="form_{{var_name.as_str()}}"
   class="flex flex-row"
   hx-patch="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device_name | urlencode_strict}}/rw"
-  hx-swap="innerMorph"
+  hx-swap="outerMorph"
 >
   <fieldset class="grow">
     <input type="hidden" name="name" value="{{var_name.as_str()}}" />

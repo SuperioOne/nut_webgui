@@ -3,7 +3,7 @@ use crate::{
   http::{
     hypermedia::middleware::{
       auth_renew_session::RenewSessionLayer, auth_user::UserAuthLayer,
-      authorize_user::AuthorizeUserLayer, htmx_redirect::HtmxRedirectLayer,
+      authorize_user::AuthorizeUserLayer,
     },
     json_api::middleware::{
       auth_api::ApiAuthLayer, authorize_api::AuthorizeApiLayer, daemon_status::DaemonStateLayer,
@@ -56,7 +56,7 @@ impl HttpServer {
       .layer(RequestBodyLimitLayer::new(65556)) // 64 MiB request payload limit
       .layer(SetResponseHeaderLayer::if_not_present(
         header::CACHE_CONTROL,
-        HeaderValue::from_static("no-cache, max-age=0"),
+        HeaderValue::from_static("no-cache, max-age=0, no-store"),
       ))
       .layer(TimeoutLayer::with_status_code(
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -289,6 +289,5 @@ fn create_hypermedia_routes(server_state: Arc<ServerState>) -> Router<Arc<Server
     "/_layout/themes",
     get(hypermedia::route::layout::get_themes),
   )
-  .layer(HtmxRedirectLayer::new())
   .nest_service("/static", static_files)
 }

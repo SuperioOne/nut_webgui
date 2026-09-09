@@ -7,9 +7,10 @@ use crate::{
     ServerState,
     hypermedia::{
       error::ErrorPage,
+      not_found::NotFound,
       notification::NotificationTemplate,
       semantic_type::SemanticType,
-      util::{RenderWithConfig, htmx_swap, redirect_not_found},
+      util::{RenderWithConfig, htmx_swap},
     },
   },
 };
@@ -108,7 +109,7 @@ pub async fn post(
           user = %session.get_username()
         );
 
-        redirect_not_found!(&state)
+        NotFound::new_response(&state.config, Some(&session))?.into_response()
       }
     }
     Err(err) => {

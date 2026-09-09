@@ -4,10 +4,8 @@ use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
   http::hypermedia::{
-    error::ErrorPage,
-    notification::NotificationTemplate,
-    semantic_type::SemanticType,
-    util::{RenderWithConfig, redirect_not_found},
+    error::ErrorPage, not_found::NotFound, notification::NotificationTemplate,
+    semantic_type::SemanticType, util::RenderWithConfig,
   },
   state::ServerState,
 };
@@ -24,16 +22,16 @@ pub async fn post(
   Path((namespace, ups_name)): Path<(Box<str>, UpsName)>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
+  let session = session.map(|v| v.0);
   let upsd = match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd) => upsd,
-    None => return Ok(redirect_not_found!(&state)),
+    None => return Ok(NotFound::new_response(&state.config, session.as_ref())?.into_response()),
   };
 
   if let None = upsd.daemon_state.read().await.devices.get(&ups_name) {
-    return Ok(redirect_not_found!(&state));
+    return Ok(NotFound::new_response(&state.config, session.as_ref())?.into_response());
   }
 
-  let session = session.map(|v| v.0);
   let auth_client = match &upsd.config {
     UpsdConfig {
       pass: Some(pass),

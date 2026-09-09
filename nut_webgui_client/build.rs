@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_STANDARD};
 use sha2::Digest;
 use std::{
   fs::{File, canonicalize, copy},
@@ -16,6 +17,11 @@ enum PackageManager {
 struct CommandError {
   name: &'static str,
   error: std::io::Error,
+}
+
+struct Hashes {
+  sha256: String,
+  short_hash: String,
 }
 
 macro_rules! exec {
@@ -118,7 +124,7 @@ fn bundle() -> Result<(), Box<dyn core::error::Error>> {
 
   println!("cargo::rerun-if-changed=src");
   println!("cargo::rerun-if-changed=static");
-  println!("cargo::rerun-if-changed=postcss.build.js");
+  println!("cargo::rerun-if-changed=build.js");
   println!("cargo::rerun-if-changed=build.rs");
   println!("cargo::rerun-if-changed=package.json");
 
@@ -150,23 +156,28 @@ fn create_asset(src_dir: &Path, env_prefix: &str, file_name: &str) -> Result<(),
   let file_path = src_dir.join(file_name);
   let mut content: Vec<u8> = Vec::new();
   _ = File::open(&file_path)?.read_to_end(&mut content)?;
-  let sha256 = calc_sha256(&content);
+  let hashes = calc_hashes(&content);
 
   println!(
     "cargo::rustc-env={env_prefix}_PATH={}",
     file_path.to_str().expect("Not a valid unicode path string")
   );
   println!("cargo::rustc-env={env_prefix}_NAME={file_name}");
-  println!("cargo::rustc-env={env_prefix}_SHA256={sha256}",);
+  println!("cargo::rustc-env={env_prefix}_SHA256={}", hashes.sha256);
+  println!("cargo::rustc-env={env_prefix}_HASH={}", hashes.short_hash);
 
   Ok(())
 }
 
-fn calc_sha256(bytes: &[u8]) -> String {
+fn calc_hashes(bytes: &[u8]) -> Hashes {
   let mut sha256 = sha2::Sha256::new();
   sha256.update(bytes);
   let digest = sha256.finalize();
-  base16ct::lower::encode_string(&digest)
+
+  Hashes {
+    sha256: BASE64_STANDARD.encode(&digest),
+    short_hash: base16ct::lower::encode_string(&digest)[0..8].to_owned(),
+  }
 }
 
 impl core::fmt::Display for CommandError {

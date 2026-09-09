@@ -28,13 +28,17 @@
   {%- else -%}
     <nut-search-list for="variable-filter" class="list">
       {%- for (var_name,value) in variables.iter() -%}
-        <li morph-preserve-attr="class" id="var_{{var_name}}" class="list-row" search-value="{{var_name}}">
+        <li id="var_{{var_name}}" class="list-row" search-value="{{var_name}}">
           <div></div>
           <div class="gap-3 grid grid-cols-2 list-col-grows">
             <div>
-              <p class="break-all font-bold text-primary"> {{var_name.as_str()}} </p>
+              <p class="break-all font-bold text-primary">
+                {{var_name.as_str()}}
+              </p>
               {%- if let Some(desc) = descriptions.get(var_name.as_str()) -%}
-                <p class="font-light list-col-wrap opacity-60 text-xs"> {{desc}} </p>
+                <p class="font-light list-col-wrap opacity-60 text-xs">
+                  {{desc}}
+                </p>
               {%- endif -%}
             </div>
           <p>{{value}}</p>

@@ -4,22 +4,29 @@
   class="gap-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
   hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?tab=grid&section=tab_content"
   hx-indicator="#indicator"
-  hx-swap="morph:innerHTML"
+  hx-swap="innerMorph"
   hx-trigger="every {{upsd_config.poll_freq}}s"
   hx-target="#tab-content"
-  hx-ext="morph"
 >
   {%- if let Some(load) = device.get_ups_load() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Ups Load</h3>
-      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{load.get_semantic_type().as_fill()}}" value="{{load.as_raw_value()}}"></nut-gauge>
+      <nut-gauge
+        class="grow lg:px-14 md:px-10 px-8 {{load.get_semantic_type().as_fill()}}"
+        value="{{load.as_raw_value()}}"
+      >
+      </nut-gauge>
     </div>
   {%- endif -%}
 
   {%- if let Some(charge) = device.get_battery_charge() -%}
     <div class="content-card flex flex-col gap-4">
       <h3 class="opacity-60 tracking-wide">Battery Charge</h3>
-      <nut-gauge class="grow lg:px-14 md:px-10 px-8 {{charge.get_semantic_type().as_fill()}}" value="{{charge.as_raw_value()}}"></nut-gauge>
+      <nut-gauge 
+        class="grow lg:px-14 md:px-10 px-8 {{charge.get_semantic_type().as_fill()}}"
+        value="{{charge.as_raw_value()}}"
+      >
+      </nut-gauge>
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
         {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_LOW) -%}
           <p>
@@ -67,12 +74,14 @@
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
         {%- if let Some(nominal_power) = device.variables.get(nut_webgui_upsmc::VarName::UPS_POWER_NOMINAL) -%}
           <p>
-            Nominal apparent power <span class="text-info">{{nominal_power}} VA</span>
+            Nominal apparent power
+            <span class="text-info">{{nominal_power}} VA</span>
           </p>
         {%- endif -%}
         {%- if let Some(nominal_realpower) = device.variables.get(nut_webgui_upsmc::VarName::UPS_REALPOWER_NOMINAL) -%}
           <p>
-            Nominal real power <span class="text-info">{{nominal_realpower}} Watt</span>
+            Nominal real power
+            <span class="text-info">{{nominal_realpower}} Watt</span>
           </p>
         {%- endif -%}
       </div>
@@ -90,9 +99,16 @@
       </nut-time-display>
       <div class="flex flex-col gap-1 justify-end opacity-60">
         {%- if let Some(runtime_low) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_RUNTIME_LOW) -%}
-          <div class="font-bold text-sm tooltip tooltip-bottom" data-tip="{{runtime_low}} seconds">
-            Shutdown threshold 
-            <nut-time-display class="text-error" value="{{runtime_low.as_str()}}"></nut-time-display>
+          <div
+            class="font-bold text-sm tooltip tooltip-bottom"
+            data-tip="{{runtime_low}} seconds"
+          >
+            Shutdown threshold
+            <nut-time-display
+              class="text-error"
+              value="{{runtime_low.as_str()}}"
+            >
+            </nut-time-display>
           </div>
         {%- endif -%}
       </div>
@@ -110,19 +126,31 @@
         {%- if let Some(in_voltage) = in_voltage -%}
         <div class="p-2 stat">
           <div class="stat-title">Input</div>
-          <div class="stat-value text-center {{in_voltage.get_semantic_type().as_text()}}">{{in_voltage}}</div>
+          <div
+            class="stat-value text-center {{in_voltage.get_semantic_type().as_text()}}"
+           >
+            {{in_voltage}}
+          </div>
         </div>
         {%- endif -%}
         {%- if let Some(out_voltage) = out_voltage -%}
           <div class="p-2 stat">
             <div class="stat-title">Output</div>
-            <div class="stat-value text-center {{out_voltage.get_semantic_type().as_text()}}">{{out_voltage}}</div>
+            <div
+              class="stat-value text-center {{out_voltage.get_semantic_type().as_text()}}"
+            >
+              {{out_voltage}}
+            </div>
           </div>
         {%- endif -%}
         {%- if let Some(batt_voltage) = batt_voltage -%}
           <div class="p-2 stat">
             <div class="stat-title">Battery</div>
-            <div class="stat-value text-center {{batt_voltage.get_semantic_type().as_text()}}">{{batt_voltage}}</div>
+            <div
+              class="stat-value text-center {{batt_voltage.get_semantic_type().as_text()}}"
+            >
+              {{batt_voltage}}
+            </div>
           </div>
         {%- endif -%}
       </div>

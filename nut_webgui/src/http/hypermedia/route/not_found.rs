@@ -1,30 +1,18 @@
 use crate::{
   auth::user_session::UserSession,
-  http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
+  http::hypermedia::{error::ErrorPage, not_found::NotFound},
   state::ServerState,
 };
-use askama::Template;
 use axum::{
   Extension,
   extract::State,
-  http::StatusCode,
-  response::{Html, IntoResponse, Response},
+  response::{IntoResponse as _, Response},
 };
 use std::sync::Arc;
-
-#[derive(Template)]
-#[template(path = "not_found/+page.html")]
-struct NotFound;
 
 pub async fn get(
   state: State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
-  let response = (
-    StatusCode::NOT_FOUND,
-    Html(NotFound.render_with_config(&state.config, session.map(|v| v.0).as_ref())?),
-  )
-    .into_response();
-
-  Ok(response)
+  Ok(NotFound::new_response(&state.config, session.as_ref().map(|v| &v.0))?.into_response())
 }

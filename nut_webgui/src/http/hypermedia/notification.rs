@@ -15,19 +15,19 @@ const DEFAULT_DURATION_MS: u128 = 3000;
 
 impl<'a> NotificationTemplate<'a> {
   #[inline]
-  pub fn set_level(mut self, level: SemanticType) -> Self {
+  pub const fn set_level(mut self, level: SemanticType) -> Self {
     self.semantic_type = level;
     self
   }
 
   #[inline]
-  pub fn set_ttl(mut self, ttl: Duration) -> Self {
+  pub const fn set_ttl(mut self, ttl: Duration) -> Self {
     self.ttl = ttl.as_millis();
     self
   }
 
   #[inline]
-  pub fn new(message: &'a str) -> Self {
+  pub const fn new(message: &'a str) -> Self {
     Self {
       message: Cow::Borrowed(message),
       ttl: DEFAULT_DURATION_MS,

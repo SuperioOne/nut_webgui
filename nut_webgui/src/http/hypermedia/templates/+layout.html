@@ -4,34 +4,39 @@
 {%- let username = askama::get_value::<crate::auth::username::Username>("USER_NAME") -%}
 
 <!doctype html>
-<html lang="en" {% if let Ok(theme) = default_theme -%} data-theme="{{theme}}" {%- else -%} data-theme="dark" {%- endif -%} >
+<html lang="en" {% if let Ok(theme) = default_theme -%} data-theme="{{theme}}" {%- endif -%} >
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="{{base_path}}/static/index.js?h={{nut_webgui_client::JS.short_hash()}}" rel="preload" as="script" />
-    <link href="{{base_path}}/static/style.css?h={{nut_webgui_client::CSS.short_hash()}}" rel="preload" as="style"/>
     <title>
       {%- block page_title -%}{%- endblock page_title -%}
     </title>
-    <link href="{{base_path}}/static/style.css?h={{nut_webgui_client::CSS.short_hash()}}" rel="stylesheet"/>
-    <link rel="icon" href="{{base_path}}/static/icon.svg?h={{nut_webgui_client::ICON.short_hash()}}" />
-
-    {%- if let Ok(theme) = default_theme -%}
-      <script>
-        "use strict";
-        var t=localStorage.getItem("app_theme");
-        if(t){document.documentElement.setAttribute("data-theme",t)}
-      </script>
-    {%- else -%}
-      <script>
-        "use strict";
-        var o=window.matchMedia("(prefers-color-scheme: dark)");
-        var t=localStorage.getItem("app_theme")||(o&&o.matches&&"dark")||"light";
-        if(t){document.documentElement.setAttribute("data-theme",t)}
-      </script>
-    {%- endif -%}
-
-    <script src="{{base_path}}/static/index.js?h={{nut_webgui_client::JS.short_hash()}}" defer></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      "use strict";
+      var p=document.documentElement.getAttribute("data-theme");
+      var o=window.matchMedia("(prefers-color-scheme: dark)");
+      var t=localStorage.getItem("app_theme")||p||(o&&o.matches&&"dark")||"light"
+      if(t){document.documentElement.setAttribute("data-theme",t)}
+    </script>
+    <link
+      as="script"
+      href="{{base_path}}/static/index.js?h={{nut_webgui_client::JS.hash}}"
+      integrity="sha256-{{nut_webgui_client::JS.sha256}}"
+      rel="preload"
+    />
+    <link
+      href="{{base_path}}/static/style.css?h={{nut_webgui_client::CSS.hash}}"
+      rel="stylesheet"
+    />
+    <link
+      rel="icon"
+      href="{{base_path}}/static/icon.svg?h={{nut_webgui_client::ICON.hash}}"
+    />
+    <script
+      defer
+      src="{{base_path}}/static/index.js?h={{nut_webgui_client::JS.hash}}"
+    >
+    </script>
     {%- block page_head -%}{%- endblock page_head -%}
   </head>
   <body>
@@ -72,7 +77,7 @@
               </ul>
             </div>
             <a class="btn btn-ghost text-xl" href="{{base_path}}/">
-              <img width="32" height="32" src="{{base_path}}/static/icon.svg?h={{nut_webgui_client::ICON.short_hash()}}" alt="icon" />
+              <img width="32" height="32" src="{{base_path}}/static/icon.svg?h={{nut_webgui_client::ICON.hash}}" alt="icon" />
               <span class="hidden mx-1 sm:inline-block">NUT Web Monitor</span>
             </a>
           </div>
@@ -187,7 +192,7 @@
         </div>
         <footer class="bg-base-200 flex flex-row footer p-3">
           <aside>
-            {%- let app_info = crate::http::hypermedia::util::get_app_info() -%}
+            {%- let app_info = crate::http::hypermedia::app_info::APP_INFO -%}
             <a
               class="font-light link text-xs"
               href="{{app_info.repository}}/releases/tag/v{{app_info.version}}"

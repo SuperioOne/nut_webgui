@@ -3,10 +3,11 @@ use crate::{
   config::UpsdConfig,
   http::hypermedia::{
     error::ErrorPage,
+    not_found::NotFound,
     notification::NotificationTemplate,
     route::ups::RwFormTemplate,
     semantic_type::SemanticType,
-    util::{RenderWithConfig, htmx_swap, redirect_not_found},
+    util::{RenderWithConfig, htmx_swap},
   },
   state::{ServerState, VarDetail},
 };
@@ -102,12 +103,11 @@ pub async fn patch(
   session: Option<Extension<UserSession>>,
   Form(request): Form<RwRequest>,
 ) -> Result<Response, ErrorPage> {
+  let session = session.map(|v| v.0);
   let upsd = match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd) => upsd,
-    None => return Ok(redirect_not_found!(&state)),
+    None => return Ok(NotFound::new_response(&state.config, session.as_ref())?.into_response()),
   };
-
-  let session = session.map(|v| v.0);
 
   let (value, detail) = {
     let daemon_state = upsd.daemon_state.read().await;
@@ -129,9 +129,7 @@ pub async fn patch(
           ));
         }
       },
-      None => {
-        return Ok(redirect_not_found!(&state));
-      }
+      None => return Ok(NotFound::new_response(&state.config, session.as_ref())?.into_response()),
     };
 
     let value = match validate_request(request.value, &var_detail) {

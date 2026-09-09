@@ -2,11 +2,8 @@ use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
   http::hypermedia::{
-    error::ErrorPage,
-    notification::NotificationTemplate,
-    semantic_type::SemanticType,
-    unit::UnitDisplay,
-    util::{RenderWithConfig, redirect_not_found},
+    error::ErrorPage, not_found::NotFound, notification::NotificationTemplate,
+    semantic_type::SemanticType, unit::UnitDisplay, util::RenderWithConfig,
   },
   state::{DescriptionKey, DeviceEntry, ServerState, VarDetail},
 };
@@ -191,19 +188,18 @@ pub async fn get(
   state: State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
+  let tab_name = query.tab.unwrap_or(TabName::Grid);
+  let session = session.map(|v| v.0);
   let upsd = match state.upsd_servers.get(namespace.as_ref()) {
     Some(upsd) => upsd,
-    None => return Ok(redirect_not_found!(&state)),
+    None => return Ok(NotFound::new_response(&state.config, session.as_ref())?.into_response()),
   };
 
   let daemon_state = upsd.daemon_state.read().await;
   let device = match daemon_state.devices.get(&ups_name) {
     Some(ups) => ups,
-    None => return Ok(redirect_not_found!(&state)),
+    None => return Ok(NotFound::new_response(&state.config, session.as_ref())?.into_response()),
   };
-
-  let tab_name = query.tab.unwrap_or(TabName::Grid);
-  let session = session.map(|v| v.0);
 
   let mut template = UpsPageTemplate {
     device,

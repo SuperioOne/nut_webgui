@@ -2,10 +2,9 @@
 {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
 
 <div class="content-card flex flex-col gap-4"
-  hx-ext="morph"
   hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}/?tab=clients&section=tab_content"
   hx-trigger="every {{upsd_config.poll_freq}}s"
-  hx-swap="morph:innerHTML"
+  hx-swap="innerMorph"
   hx-indicator="#indicator"
   hx-target="#tab-content"
 >

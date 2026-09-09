@@ -21,6 +21,7 @@
     <div id="server-info" class="content-card overflow-x-auto">
       <table class="table table-fixed">
         <tbody>
+            {%- let app_info = crate::http::hypermedia::app_info::APP_INFO -%}
             <tr>
               <td class="font-bold text-primary">Application version</td>
               <td>{{app_info.version}}</td>
@@ -132,7 +133,9 @@
                 <td>
                   <div class="flex flex-row flex-wrap gap-1">
                     {%- for permission in user.permissions.iter() -%}
-                      <div class="badge badge-outline badge-primary badge-sm font-semibold uppercase">{{permission}}</div>
+                      <div class="badge badge-outline badge-primary badge-sm font-semibold uppercase">
+                        {{permission}}
+                      </div>
                     {%- endfor -%}
                   </div>
                 </td>
