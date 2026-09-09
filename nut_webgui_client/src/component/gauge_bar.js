@@ -6,17 +6,11 @@ export default class BarGauge extends HTMLElement {
   /** @type {ShadowRoot} */
   #shadow_root;
 
-  /** @type {number} */
-  #step = 5;
-
-  /** @type {number} */
-  #value = 5;
-
   /** @type{Element | undefined} */
   #container;
 
   /** @type {GaugeAtrributes[]} */
-  static observedAttributes = ["value", "step", "class"];
+  static observedAttributes = ["value", "class"];
 
   constructor() {
     super();
@@ -25,35 +19,16 @@ export default class BarGauge extends HTMLElement {
   }
 
   connectedCallback() {
-    this.#step = getAttributeNumeric(this, "step") ?? 5;
-    this.#value = getAttributeNumeric(this, "value") ?? 0;
+    const value = getAttributeNumeric(this, "value") ?? 0;
+    const bar_gauge = document.createElement("div");
+    const bar_gauge_fill = document.createElement("div");
+    bar_gauge.classList.add("bar-gauge", ...this.classList);
+    bar_gauge_fill.classList.add("bar-gauge-fill");
+    bar_gauge.replaceChildren(bar_gauge_fill);
 
-    const container = document.createElement("div");
-    container.classList.add("bar-gauge-container", ...this.classList);
-
-    this.#render(container, this.#value);
-    this.#container = container;
-    this.#shadow_root.append(container);
-  }
-
-  /**
-   * @param {Element} target
-   * @param {number} value
-   */
-  #render(target, value) {
-    target.replaceChildren();
-    const active = Math.round(value / (100 / this.#step));
-
-    for (let i = 0; i < this.#step; i++) {
-      const step_element = document.createElement("div");
-      step_element.classList.add("bar-gauge-step");
-
-      if (i < active) {
-        step_element.setAttribute("active", "true");
-      }
-
-      target.insertAdjacentElement("afterbegin", step_element);
-    }
+    this.#update_value(bar_gauge, value);
+    this.#container = bar_gauge;
+    this.#shadow_root.append(bar_gauge);
   }
 
   /**
@@ -61,17 +36,12 @@ export default class BarGauge extends HTMLElement {
    * @param {number} value
    */
   #update_value(target, value) {
-    const active = Math.round(value / (100 / this.#step));
-    let idx = this.#step;
+    const height = Math.max(0, Math.min(100, value));
+    /**@type {HTMLElement | null}*/
+    const fill = target.querySelector(".bar-gauge-fill");
 
-    for (const tick_element of target.querySelectorAll(".bar-gauge-step")) {
-      if (idx <= active) {
-        tick_element.setAttribute("active", "true");
-      } else {
-        tick_element.removeAttribute("active");
-      }
-
-      idx -= 1;
+    if (fill) {
+      fill.style.height = `${height}%`;
     }
   }
 
@@ -94,24 +64,13 @@ export default class BarGauge extends HTMLElement {
         if (isNaN(value)) {
           console.warn("bar gauge: cannot change value, not a number");
         } else {
-          this.#value = value;
           this.#update_value(target, value);
         }
         break;
       }
-      case "step": {
-        const step = Number(new_value);
-
-        if (isNaN(step)) {
-          console.warn("bar gauge: cannot change step, not a number");
-        } else {
-          this.#step = step;
-          this.#render(target, this.#value);
-        }
-      }
       case "class": {
         target.className = this.className;
-        target.classList.add("bar-gauge-container");
+        target.classList.add("bar-gauge");
       }
       default:
         break;

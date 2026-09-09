@@ -170,7 +170,9 @@
             <option value="UR">Up-Right</option>
           </select>
         </label>
-        <button class="btn btn-block btn-secondary btn-xs" type="reset">Reset</button>
+        <button class="btn btn-block btn-secondary btn-xs" type="reset">
+          Reset
+        </button>
       </nut-attr-control>
     </div>
     <input
@@ -235,32 +237,42 @@
               {%- endif -%}
             </div>
             <div class="gap-1 grid grid-cols-2">
-              <div>
-                <div class="font-bold opacity-70 text-center text-xs w-full">BATT</div>
+              <div class="flex flex-col gap-1 items-center">
+                <div class="font-bold opacity-70 text-center text-xs w-full">
+                  BATT
+                </div>
                 {%- if let Some(battery) = device.battery -%}
                   <nut-bar-gauge
-                    class="{{battery.get_semantic_type().as_bar_gauge()}}"
+                    class="w-24 {{battery.get_semantic_type().as_bar_gauge()}}"
                     value="{{battery.as_raw_value()}}"
-                    step="8"
                   >
                   </nut-bar-gauge>
-                  <div class="opacity-70 text-center text-xs w-full">{{battery}}</div>
+                  <div class="opacity-70 text-center text-xs w-full">
+                    {{battery}}
+                  </div>
                 {%- else -%}
-                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">N/A</div>
+                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">
+                    N/A
+                  </div>
                 {%- endif -%}
               </div>
-              <div>
-                <div class="font-bold opacity-70 text-center text-xs w-full">LOAD</div>
+              <div class="flex flex-col gap-1 items-center">
+                <div class="font-bold opacity-70 text-center text-xs w-full">
+                  LOAD
+                </div>
                 {%- if let Some(load) = device.load -%}
                   <nut-bar-gauge
-                    class="{{load.get_semantic_type().as_bar_gauge()}}"
+                    class="w-24 {{load.get_semantic_type().as_bar_gauge()}}"
                     value="{{load.as_raw_value()}}"
-                    step="8"
                   >
                   </nut-bar-gauge>
-                  <div class="opacity-70 text-center text-xs w-full">{{load}}</div>
+                  <div class="opacity-70 text-center text-xs w-full">
+                    {{load}}
+                  </div>
                 {%- else -%}
-                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">N/A</div>
+                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">
+                    N/A
+                  </div>
                 {%- endif -%}
               </div>
             </div>
@@ -311,7 +323,9 @@
                   {%- call icons::get_svg("server", 24) -%}{%- endcall -%}
                 </div>
                 <div>
-                  <div class="font-bold leading-tight text-nowrap text-primary">{{server.namespace}}</div>
+                  <div class="font-bold leading-tight text-nowrap text-primary">
+                    {{server.namespace}}
+                  </div>
                   <div class="leading-tight opacity-70 text-center text-nowrap text-xs">
                     {{server.address}}:{{server.port}}
                   </div>
@@ -335,12 +349,16 @@
                 </div>
                 <div>
                   {%- if let Some(name) = client.name -%}
-                    <div class="font-bold leading-tight text-nowrap text-primary">{{name}}</div>
+                    <div class="font-bold leading-tight text-nowrap text-primary">
+                      {{name}}
+                    </div>
                     <div class="leading-tight opacity-70 text-center text-nowrap text-xs">
                       {{client.address}}
                     </div>
                   {%- else -%}
-                    <div class="font-bold leading-tight text-nowrap text-primary">{{client.address}}</div>
+                    <div class="font-bold leading-tight text-nowrap text-primary">
+                      {{client.address}}
+                    </div>
                   {%- endif -%}
                 </div>
               </div>

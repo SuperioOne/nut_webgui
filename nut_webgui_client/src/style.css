@@ -4,278 +4,319 @@
 @source "../../nut_webgui/src/http/hypermedia/**/*.{rs,html}";
 
 @theme {
-        --breakpoint-xs: 30rem;
+  --breakpoint-xs: 30rem;
 }
 
 @plugin "daisyui" {
-        themes: light --default, dark --prefersdark, abyss, autumn, business, black, corporate, dim, dracula, forest, night, nord, sunset, synthwave;
+  themes:
+    light --default,
+    dark --prefersdark,
+    abyss,
+    autumn,
+    business,
+    black,
+    corporate,
+    dim,
+    dracula,
+    forest,
+    night,
+    nord,
+    sunset,
+    synthwave;
 }
 
 @plugin "daisyui/theme" {
-        name: "tokyo-night";
-        default: false;
-        prefersdark: true;
-        color-scheme: "dark";
-        --color-base-100: oklch(20.45% 0.018 284.72);
-        --color-base-200: oklch(22.68% 0.023 280.66);
-        --color-base-300: oklch(24% 0 0);
-        --color-base-content: oklch(76.66% 0.054 275.49);
-        --color-primary: oklch(71.90% 0.132 264.20);
-        --color-primary-content: oklch(100% 0 0);
-        --color-secondary: oklch(62.59% 0.129 298.13);
-        --color-secondary-content: oklch(100% 0 0);
-        --color-accent: oklch(73.47% 0.129 214.55);
-        --color-accent-content: oklch(100% 0 0);
-        --color-neutral: oklch(35% 0 0);
-        --color-neutral-content: oklch(100% 0 0);
-        --color-info: oklch(47.94% 0.121 266.01);
-        --color-info-content: oklch(92% 0.013 255.508);
-        --color-success: oklch(70.07% 0.140 133.72);
-        --color-success-content: oklch(37% 0.044 257.287);
-        --color-warning: oklch(70.57% 0.093 75.58);
-        --color-warning-content: oklch(0.00% 0.000 0);
-        --color-error: oklch(44.24% 0.110 15.96);
-        --color-error-content: oklch(81.83% 0.043 275.04);
-        --radius-selector: 0.5rem;
-        --radius-field: 0.5rem;
-        --radius-box: 0.5rem;
-        --size-selector: 0.25rem;
-        --size-field: 0.25rem;
-        --border: 1px;
-        --depth: 0;
-        --noise: 0;
+  name: "tokyo-night";
+  default: false;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-base-100: oklch(20.45% 0.018 284.72);
+  --color-base-200: oklch(22.68% 0.023 280.66);
+  --color-base-300: oklch(24% 0 0);
+  --color-base-content: oklch(76.66% 0.054 275.49);
+  --color-primary: oklch(71.9% 0.132 264.2);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(62.59% 0.129 298.13);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(73.47% 0.129 214.55);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(35% 0 0);
+  --color-neutral-content: oklch(100% 0 0);
+  --color-info: oklch(47.94% 0.121 266.01);
+  --color-info-content: oklch(92% 0.013 255.508);
+  --color-success: oklch(70.07% 0.14 133.72);
+  --color-success-content: oklch(37% 0.044 257.287);
+  --color-warning: oklch(70.57% 0.093 75.58);
+  --color-warning-content: oklch(0% 0 0);
+  --color-error: oklch(44.24% 0.11 15.96);
+  --color-error-content: oklch(81.83% 0.043 275.04);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
 }
 
 @plugin "daisyui/theme" {
-        name: "kanagawa-dragon";
-        default: false;
-        prefersdark: true;
-        color-scheme: "dark";
-        --color-base-100: oklch(18.10% 0.006 106.98);
-        --color-base-200: oklch(22.64% 0.006 91.62);
-        --color-base-300: oklch(24.10% 0.006 106.98);
-        --color-base-content: oklch(83.16% 0.007 145.51);
-        --color-primary: oklch(76.88% 0.058 86.58);
-        --color-primary-content: oklch(15.56% 0.002 17.34);
-        --color-secondary: oklch(67.94% 0.031 324.11);
-        --color-secondary-content: oklch(15.56% 0.002 17.34);
-        --color-accent: oklch(70.11% 0.035 264.32);
-        --color-accent-content: oklch(15.56% 0.002 17.34);
-        --color-neutral: oklch(35% 0 0);
-        --color-neutral-content: oklch(100% 0 0);
-        --color-info: oklch(59.78% 0.043 228.33);
-        --color-info-content: oklch(15.56% 0.002 17.34);
-        --color-success: oklch(74.77% 0.112 128.36);
-        --color-success-content: oklch(15.56% 0.002 17.34);
-        --color-warning: oklch(78.27% 0.158 61.68);
-        --color-warning-content: oklch(15.56% 0.002 17.34);
-        --color-error: oklch(59.76% 0.227 27.65);
-        --color-error-content: oklch(15.56% 0.002 17.34);
-        --radius-selector: 0.25rem;
-        --radius-field: 0.25rem;
-        --radius-box: 0.25rem;
-        --size-selector: 0.25rem;
-        --size-field: 0.25rem;
-        --border: 1px;
-        --depth: 0;
-        --noise: 0;
+  name: "kanagawa-dragon";
+  default: false;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-base-100: oklch(18.1% 0.006 106.98);
+  --color-base-200: oklch(22.64% 0.006 91.62);
+  --color-base-300: oklch(24.1% 0.006 106.98);
+  --color-base-content: oklch(83.16% 0.007 145.51);
+  --color-primary: oklch(76.88% 0.058 86.58);
+  --color-primary-content: oklch(15.56% 0.002 17.34);
+  --color-secondary: oklch(67.94% 0.031 324.11);
+  --color-secondary-content: oklch(15.56% 0.002 17.34);
+  --color-accent: oklch(70.11% 0.035 264.32);
+  --color-accent-content: oklch(15.56% 0.002 17.34);
+  --color-neutral: oklch(35% 0 0);
+  --color-neutral-content: oklch(100% 0 0);
+  --color-info: oklch(59.78% 0.043 228.33);
+  --color-info-content: oklch(15.56% 0.002 17.34);
+  --color-success: oklch(74.77% 0.112 128.36);
+  --color-success-content: oklch(15.56% 0.002 17.34);
+  --color-warning: oklch(78.27% 0.158 61.68);
+  --color-warning-content: oklch(15.56% 0.002 17.34);
+  --color-error: oklch(59.76% 0.227 27.65);
+  --color-error-content: oklch(15.56% 0.002 17.34);
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
 }
 
 @utility edge-* {
-        stroke-width: --value(integer);
-        stroke-dashoffset: 0;
-        fill: none;
+  stroke-width: --value(integer);
+  stroke-dashoffset: 0;
+  fill: none;
 }
 
 @layer components {
-        .htmx-error-indicator {
-                display: none;
-        }
+  .htmx-error-indicator {
+    display: none;
+  }
 
-        .htmx-error-indicator.htmx-error-active {
-                display: inline-block;
-                color: var(--color-error);
-                animation: var(--animate-pulse);
-        }
+  .htmx-error-indicator.htmx-error-active {
+    display: inline-block;
+    color: var(--color-error);
+    animation: var(--animate-pulse);
+  }
 
-        .content-card {
-                @apply bg-base-200 rounded-box shadow-md text-base-content p-6;
-        }
+  .content-card {
+    @apply bg-base-200 rounded-box shadow-md text-base-content p-6;
+  }
 
-        .feather {
-                stroke: currentColor;
-                stroke-width: 2;
-                stroke-linecap: round;
-                stroke-linejoin: round;
-                fill: none;
-        }
+  .feather {
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+  }
 
-        .border-daisy {
-                border-style: dashed;
-                border-color: color-mix(in oklab, currentColor 10%, #0000);
-        }
+  .border-daisy {
+    border-style: dashed;
+    border-color: color-mix(in oklab, currentColor 10%, #0000);
+  }
 
-        .divide-daisy> :not(:last-child) {
-                border-color: color-mix(in oklab, currentColor 10%, #0000);
-                border-top-width: 0px;
-                border-bottom-width: 1px;
-        }
+  .divide-daisy > :not(:last-child) {
+    border-color: color-mix(in oklab, currentColor 10%, #0000);
+    border-top-width: 0px;
+    border-bottom-width: 1px;
+  }
 
-        /* Based on https://github.com/dudleystorey big party button */
-        .fsd-button {
-                transform: rotate3d(1, 0, 0, 36deg);
-                border-radius: 50%;
-                width: 50px;
-                height: 50px;
-                min-width: 50px;
-                min-height: 50px;
-                border: none;
-                color: white;
-                font-size: 2.5rem;
-                background: #d31818;
-                text-shadow: 0 3px 1px rgba(0, 0, 0, .5);
-                box-shadow: 0 8px #640d09, 0 15px 20px #00000059;
-                text-transform: uppercase;
-                transition: .1s all ease-in;
-                outline: none;
-                cursor: pointer;
-                text-align: center;
-                user-select: none;
-                -webkit-user-select: none;
-                -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-        }
+  /* Based on https://github.com/dudleystorey big party button */
+  .fsd-button {
+    transform: rotate3d(1, 0, 0, 36deg);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    min-height: 50px;
+    border: none;
+    color: white;
+    font-size: 2.5rem;
+    background: #d31818;
+    text-shadow: 0 3px 1px rgba(0, 0, 0, 0.5);
+    box-shadow:
+      0 8px #640d09,
+      0 15px 20px #00000059;
+    text-transform: uppercase;
+    transition: 0.1s all ease-in;
+    outline: none;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  }
 
-        .fsd-button:active {
-                padding-top: 3px;
-                transform: translateY(8px) rotate3d(1, 0, 0, 36deg);
-                box-shadow: 0 4px 0 #640d09, 0 8px 6px rgba(0, 0, 0, .45);
-        }
+  .fsd-button:active {
+    padding-top: 3px;
+    transform: translateY(8px) rotate3d(1, 0, 0, 36deg);
+    box-shadow:
+      0 4px 0 #640d09,
+      0 8px 6px rgba(0, 0, 0, 0.45);
+  }
 
-        .bar-gauge-container .bar-gauge-step:not(:last-child) {
-                margin-bottom: 2px;
-        }
+  .bar-gauge {
+    --seg-size: 12px;
+    --seg-gap: 2px;
 
-        .bar-gauge-step {
-                height: 6px;
-                width: 100%;
-                background-color: var(--color-neutral);
-        }
+    position: relative;
+    width: 100%;
+    height: 110px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: repeating-linear-gradient(
+      to top,
+      var(--color-neutral) 0 var(--seg-size),
+      transparent var(--seg-size) calc(var(--seg-size) + var(--seg-gap))
+    );
+    padding: 0 10px;
+    box-sizing: border-box;
+  }
 
-        .bar-gauge-success .bar-gauge-step[active="true"] {
-                background-color: var(--color-success)
-        }
+  .bar-gauge-fill {
+    --gauge-fill-color: var(--color-success);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: repeating-linear-gradient(
+      to top,
+      var(--gauge-fill-color) 0 var(--seg-size),
+      transparent var(--seg-size) calc(var(--seg-size) + var(--seg-gap))
+    );
+  }
 
-        .bar-gauge-error .bar-gauge-step[active="true"] {
-                background-color: var(--color-error)
-        }
+  .bar-gauge-success .bar-gauge-fill {
+    --gauge-fill-color: var(--color-success);
+  }
 
-        .bar-gauge-info .bar-gauge-step[active="true"] {
-                background-color: var(--color-info)
-        }
+  .bar-gauge-error .bar-gauge-fill {
+    --gauge-fill-color: var(--color-error);
+  }
 
-        .bar-gauge-warning .bar-gauge-step[active="true"] {
-                background-color: var(--color-warning)
-        }
+  .bar-gauge-info  .bar-gauge-fill {
+    --gauge-fill-color: var(--color-info);
+  }
 
-        nut-graph-node,
-        nut-graph-link,
-        nut-graph-group {
-                position: absolute;
-                visibility: hidden;
-        }
+  .bar-gauge-warning .bar-gauge-fill {
+    --gauge-fill-color: var(--color-warning);
+  }
 
-        .bg-grid {
-                background-color: var(--color-base-100);
-                background-image: radial-gradient(circle at center, var(--color-base-300) 1px, transparent 0);
-                background-size: 20px 20px;
-                background-repeat: repeat;
-        }
+  nut-graph-node,
+  nut-graph-link,
+  nut-graph-group {
+    position: absolute;
+    visibility: hidden;
+  }
 
-        @keyframes line_flow_segment {
-                from {
-                        stroke-dashoffset: 20;
-                }
+  .bg-grid {
+    background-color: var(--color-base-100);
+    background-image: radial-gradient(
+      circle at center,
+      var(--color-base-300) 1px,
+      transparent 0
+    );
+    background-size: 20px 20px;
+    background-repeat: repeat;
+  }
 
-                to {
-                        stroke-dashoffset: 0;
-                }
-        }
+  @keyframes line_flow_segment {
+    from {
+      stroke-dashoffset: 20;
+    }
 
-        @keyframes line_flow_dot {
-                from {
-                        stroke-dashoffset: 22;
-                }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
 
-                to {
-                        stroke-dashoffset: 0;
-                }
-        }
+  @keyframes line_flow_dot {
+    from {
+      stroke-dashoffset: 22;
+    }
 
-        .edge-animate-flow.edge-dashed {
-                animation:
-                        line_flow_segment 2s linear infinite;
-        }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
 
-        .edge-animate-flow.edge-dotted {
-                animation:
-                        line_flow_dot 2s linear infinite;
-        }
+  .edge-animate-flow.edge-dashed {
+    animation: line_flow_segment 2s linear infinite;
+  }
 
-        .edge-base-content {
-                @apply stroke-base-content
-        }
+  .edge-animate-flow.edge-dotted {
+    animation: line_flow_dot 2s linear infinite;
+  }
 
-        .edge-neutral {
-                @apply stroke-neutral
-        }
+  .edge-base-content {
+    @apply stroke-base-content;
+  }
 
-        .edge-success {
-                @apply stroke-success
-        }
+  .edge-neutral {
+    @apply stroke-neutral;
+  }
 
-        .edge-warning {
-                @apply stroke-warning
-        }
+  .edge-success {
+    @apply stroke-success;
+  }
 
-        .edge-error {
-                @apply stroke-error
-        }
+  .edge-warning {
+    @apply stroke-warning;
+  }
 
-        .edge-info {
-                @apply stroke-info
-        }
+  .edge-error {
+    @apply stroke-error;
+  }
 
-        .edge-primary {
-                @apply stroke-primary
-        }
+  .edge-info {
+    @apply stroke-info;
+  }
 
-        .edge-secondary {
-                @apply stroke-secondary
-        }
+  .edge-primary {
+    @apply stroke-primary;
+  }
 
-        .edge-dotted {
-                stroke-linecap: round;
-                stroke-linejoin: round;
-                stroke-dashoffset: 0;
-                stroke-dasharray: 1, 10;
-        }
+  .edge-secondary {
+    @apply stroke-secondary;
+  }
 
-        .edge-dashed {
-                stroke-linecap: square;
-                stroke-linejoin: miter;
-                stroke-dashoffset: 0;
-                stroke-dasharray: 10, 10;
-        }
+  .edge-dotted {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dashoffset: 0;
+    stroke-dasharray: 1, 10;
+  }
 
-        .grab-zone {
-                cursor: grab;
-        }
+  .edge-dashed {
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    stroke-dashoffset: 0;
+    stroke-dasharray: 10, 10;
+  }
 
-        .grab-zone:state(grabbing) {
-                cursor: grabbing;
-        }
+  .grab-zone {
+    cursor: grab;
+  }
+
+  .grab-zone:state(grabbing) {
+    cursor: grabbing;
+  }
 }
 
 @view-transition {
-        navigation: auto;
+  navigation: auto;
 }
