@@ -8,37 +8,40 @@ import { into_debounced_fn, localCompareStr } from "../util.js";
  *
  * @param {string} term
  * @param {string} input
- * @param { { score_weight?: number, gap_penalty?: number }? } opts
+ * @param { {score_weight?: number, gap_penalty?: number} | undefined } [opts]
  * @returns {number}
  */
 function calc_score(term, input, opts) {
-  const { score_weight = 3, gap_penalty = 2 } = opts ?? {};
+  const score_weight = 3;
+  const gap_penalty = 1;
   const norm_term = term.toLocaleUpperCase();
   const norm_input = input.toLocaleUpperCase();
-  const row_len = norm_term.length + 1;
-  const col_len = norm_input.length + 1;
+  const rows = norm_term.length + 1;
+  const cols = norm_input.length + 1;
+  const score_table = new Float64Array(rows * cols);
 
-  /** @type {number[]} */
-  const score_table = new Array(col_len * row_len).fill(0);
   let max_score = 0;
 
-  for (let i = 1; i < row_len; i++) {
-    for (let j = 1; j < col_len; j++) {
-      const idx = j + i * (row_len - 1);
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      const idx = i * cols + j;
       const left_idx = idx - 1;
-      const top_idx = idx - (row_len - 1);
-      const adjacent_idx = top_idx - 1;
+      const top_idx = idx - cols;
+      const diag_idx = idx - cols - 1;
 
       const score_top = score_table[top_idx] - gap_penalty;
       const score_left = score_table[left_idx] - gap_penalty;
-      const score_adjacent =
-        score_table[adjacent_idx] +
-        (norm_input[j - 1] === norm_term[i - 1] ? 1 : -1) * score_weight;
+      const score_diag =
+        score_table[diag_idx] +
+        (norm_input[j - 1] === norm_term[i - 1] ? score_weight : -score_weight);
 
-      const cell_score = Math.max(0, score_adjacent, score_top, score_left);
-      max_score = max_score <= cell_score ? cell_score : max_score;
+      const score = Math.max(0, score_top, score_left, score_diag);
 
-      score_table[idx] = cell_score;
+      if (score > max_score) {
+        max_score = score;
+      }
+
+      score_table[idx] = score;
     }
   }
 
@@ -116,26 +119,20 @@ export default class SearchList extends HTMLElement {
 
       for (const elem of nodes) {
         const search_val = elem.getAttribute("search-value") ?? "";
-        const score =
-          search_val.length < 1
-            ? 0
-            : calc_score(term, search_val, {
-                gap_penalty: 3,
-                score_weight: 1,
-              });
+        const score = search_val.length < 1 ? 0 : calc_score(term, search_val);
 
         total_score += score;
         search_results.push({ score, node: elem });
       }
 
-      const mean = total_score / search_results.length;
+      const mean_threshold = total_score / search_results.length;
 
       children = search_results
         .sort((a, b) => b.score - a.score)
         .map((e, idx) => {
           const new_node = /** @type {Element} */ (e.node.cloneNode(true));
 
-          if (e.score - mean < 0) {
+          if (e.score < mean_threshold) {
             new_node.classList.add("hidden");
           } else {
             new_node.classList.remove("hidden");

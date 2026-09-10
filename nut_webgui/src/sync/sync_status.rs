@@ -169,9 +169,9 @@ impl StatusSyncTask {
 
               entry.status = new_status;
               entry.variables.insert(variable.name, variable.value);
-              entry.last_modified = Utc::now();
 
               if old_status != new_status {
+                entry.last_modified = Utc::now();
                 changes.push(DeviceStatusChange {
                   status_new: new_status,
                   status_old: old_status,
