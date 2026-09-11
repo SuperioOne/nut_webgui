@@ -1,49 +1,39 @@
 import { link_host_styles } from "../util.js";
 
-const TEMPLATE = document.createElement("template");
-TEMPLATE.innerHTML = `
-<dialog class="modal modal-bottom sm:modal-middle">
-   <div class="modal-box">
-      <h3 class="font-bold text-lg">
-        <slot name="title">Confirm</slot>
-      </h3>
-      <p class="py-4">
-        <slot></slot>
-      </p>
-      <div class="modal-action">
-        <form class="flex flex-row gap-3" method="dialog">
-          <button value="cancel" class="btn">
-            <slot name="cancel_text">Cancel</slot>
-          </button>
-          <button value="default" class="btn btn-primary">
-            <slot name="confirm_text">Confirm</slot>
-          </button>
-        </form>
-      </div>
-    </div>
-</dialog>`;
-
 export default class ConfirmationModal extends HTMLElement {
   /** @type{HTMLDialogElement | undefined | null} **/
   #dialog;
 
-  /** @type{ShadowRoot } **/
+  /** @type{string} **/
+  #template;
+
+  /** @type{ShadowRoot} **/
   #shadow_root;
 
-  constructor() {
+  /**
+   * @param {string | null} [template] Template element id.
+   **/
+  constructor(template) {
     super();
     this.#shadow_root = this.attachShadow({ mode: "open" });
+    this.#template = template ?? "confirm-modal";
     link_host_styles(this.#shadow_root);
   }
 
   /**
    * Create a confirmation modal programmatically
-   * @param {{message?: string | null, title?:string | null, confirmText?:string | null, cancelText?:string | null}} options
+   * @param {{
+   *   message?: string | null;
+   *   title?: string | null;
+   *   confirm?: string | null;
+   *   cancel?: string | null;
+   *   template?: string | null;
+   * }} options
    * @return {Promise<boolean>}
    */
   static create(options) {
     /** @type {ConfirmationModal} */
-    const modal = new ConfirmationModal();
+    const modal = new ConfirmationModal(options.template);
     document.body.appendChild(modal);
 
     const title = document.createElement("span");
@@ -52,11 +42,11 @@ export default class ConfirmationModal extends HTMLElement {
 
     const confirm = document.createElement("span");
     confirm.slot = "confirm_text";
-    confirm.textContent = options.confirmText ?? null;
+    confirm.textContent = options.confirm ?? null;
 
     const cancel = document.createElement("span");
     cancel.slot = "cancel_text";
-    cancel.textContent = options.cancelText ?? null;
+    cancel.textContent = options.cancel ?? null;
 
     const message = document.createElement("span");
     message.textContent = options.message ?? null;
@@ -87,8 +77,11 @@ export default class ConfirmationModal extends HTMLElement {
   }
 
   connectedCallback() {
-    this.#shadow_root.appendChild(TEMPLATE.content.cloneNode(true));
-
+    const template = /** @type {HTMLTemplateElement} **/ (
+      document.getElementById(this.#template)
+    );
+    const content = document.importNode(template.content, true);
+    this.#shadow_root.appendChild(content);
     this.#dialog = this.#shadow_root?.querySelector("dialog");
 
     if (this.#dialog) {

@@ -40,6 +40,28 @@
     {%- block page_head -%}{%- endblock page_head -%}
   </head>
   <body>
+    <template id="confirm-modal">
+      <dialog class="modal modal-bottom sm:modal-middle">
+         <div class="modal-box">
+            <h3 class="font-bold text-lg">
+              <slot name="title">Confirm</slot>
+            </h3>
+            <p class="py-4">
+              <slot></slot>
+            </p>
+            <div class="modal-action">
+              <form class="flex flex-row gap-3" method="dialog">
+                <button value="cancel" class="btn">
+                  <slot name="cancel_text">Cancel</slot>
+                </button>
+                <button value="default" class="btn btn-primary">
+                  <slot name="confirm_text">Confirm</slot>
+                </button>
+              </form>
+            </div>
+          </div>
+      </dialog>
+    </template>
     <div id="notifications" class="md:w-md toast w-full z-99"></div>
     <div class="drawer drawer-end">
       <input id="menu-toggle" type="checkbox" class="drawer-toggle" />
@@ -156,6 +178,7 @@
                       message="Are you sure about logout?"
                       name="logout"
                       target-event="logout-confirmed"
+                      template="confirm-modal"
                       title="Logout"
                     >
                       {%- call icons::get_svg("log-out", 18) -%}{%- endcall -%}

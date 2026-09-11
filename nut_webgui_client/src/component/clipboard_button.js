@@ -19,15 +19,7 @@ export default class ClipboardButton extends HTMLElement {
         () => {
           navigator.clipboard
             .writeText(data)
-            .then(() => {
-              this.dispatchEvent(
-                new CustomEvent("clipboard", {
-                  composed: true,
-                  detail: data,
-                  cancelable: false,
-                }),
-              );
-            })
+            .then(() => {})
             .catch(console.error);
         },
         {

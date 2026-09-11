@@ -23,15 +23,16 @@
               </p>
             </div>
             <nut-confirm-button
-              hx-post="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}/fsd"
-              hx-swap="none"
-              hx-trigger="command-confirmed"
               cancel-text="Cancel"
               class="flex flex-col fsd-button items-center justify-center"
               confirm-text="Yes, start forced shutdown"
+              hx-post="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}/fsd"
+              hx-swap="none"
+              hx-trigger="command-confirmed"
               message="Are you sure about the initiate FORCED SHUTDOWN?"
               name="command"
               target-event="command-confirmed"
+              template="confirm-modal"
               title="FSD"
             >
               {%- call icons::get_svg("power", 32) -%}{%- endcall -%}
@@ -55,15 +56,16 @@
               </div>
               <form>
                 <nut-confirm-button
-                  hx-post="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}/instcmd"
-                  hx-swap="none"
-                  hx-trigger="command-confirmed"
                   cancel-text="Cancel"
                   class="btn btn-ghost btn-primary"
                   confirm-text="Run"
+                  hx-post="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}/instcmd"
+                  hx-swap="none"
+                  hx-trigger="command-confirmed"
                   message="Are you sure about the run '{{cmd}}' command?"
                   name="command"
                   target-event="command-confirmed"
+                  template="confirm-modal"
                   title="Command Confirmation"
                   value="{{cmd}}"
                 >

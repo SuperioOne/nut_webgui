@@ -46,8 +46,8 @@ importers:
         specifier: 9.0.4
         version: 9.0.4(postcss@8.5.28)
       daisyui:
-        specifier: 5.7.32
-        version: 5.7.32
+        specifier: 5.7.34
+        version: 5.7.34
       postcss:
         specifier: 8.5.28
         version: 8.5.28
@@ -1236,8 +1236,8 @@ packages:
     resolution: {integrity: sha512-e1U46jVP+w7Iut8Jt8ri1YsPOvFpg46k+K8TpCb0P+zjCkjkPnV7WzfDJzMHy1LnA+wj5pLT1wjO901gLXeEhA==}
     engines: {node: '>=12'}
 
-  daisyui@5.7.32:
-    resolution: {integrity: sha512-8JQFneb+okHxzPimTGvRKX+5XF03GyAwGw7BaV6+6XpzW0klGuzc4rdfUpLQxIYPKEziwwlrsYfcxoltF2Rowg==}
+  daisyui@5.7.34:
+    resolution: {integrity: sha512-drdJxHnMKnXzOHuATunzvvCPwGonQEZjZXuWN8IQdE1PaOx/DRjv7pH4A1zZ4Jeyw/eAQktYYw1IzmRQKqLanw==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -3034,7 +3034,7 @@ snapshots:
       d3-transition: 3.0.1(d3-selection@3.0.0)
       d3-zoom: 3.0.0
 
-  daisyui@5.7.32: {}
+  daisyui@5.7.34: {}
 
   debug@4.4.3:
     dependencies:

@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@source "./src/**/*.{html,js}";
 @source "../../nut_webgui/src/http/hypermedia/**/*.{rs,html}";
 
 @theme {

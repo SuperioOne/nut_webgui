@@ -53,7 +53,7 @@ impl HttpServer {
 
     let middleware = ServiceBuilder::new()
       .layer(TraceLayer::new_for_http())
-      .layer(RequestBodyLimitLayer::new(65556)) // 64 MiB request payload limit
+      .layer(RequestBodyLimitLayer::new(10240)) // 10 MiB request payload limit
       .layer(SetResponseHeaderLayer::if_not_present(
         header::CACHE_CONTROL,
         HeaderValue::from_static("no-cache, max-age=0, no-store"),
@@ -264,16 +264,16 @@ fn create_hypermedia_routes(server_state: Arc<ServerState>) -> Router<Arc<Server
 
   match server_state.auth_user_store.as_ref() {
     Some(store) => hypermedia_api
+      .route(
+        "/api-keys",
+        get(hypermedia::route::api_key::get).post(hypermedia::route::api_key::post),
+      )
       .layer(RenewSessionLayer::new(
         server_state.config.clone(),
         store.clone(),
         AUTH_COOKIE_RENEW,
       ))
       .route("/logout", post(hypermedia::route::logout::post))
-      .route(
-        "/api-keys",
-        get(hypermedia::route::api_key::get).post(hypermedia::route::api_key::post),
-      )
       .layer(UserAuthLayer::new(
         server_state.config.clone(),
         store.clone(),

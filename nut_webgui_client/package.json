@@ -19,7 +19,7 @@
     "@tailwindcss/postcss": "4.3.3",
     "@types/d3": "7.4.3",
     "cssnano": "9.0.4",
-    "daisyui": "5.7.32",
+    "daisyui": "5.7.34",
     "postcss": "8.5.28",
     "rollup": "4.63.1",
     "tailwindcss": "4.3.3"
