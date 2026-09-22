@@ -13,13 +13,13 @@ use axum::{
   extract::{Path, Query, State},
   response::{Html, IntoResponse, Response},
 };
-use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::{Deserialize, de::Visitor};
 use std::{
   collections::{BTreeMap, HashMap},
   sync::Arc,
 };
 use tokio::sync::RwLockReadGuard;
+use upsmc::{UpsName, Value, VarName};
 
 pub mod fsd;
 pub mod instcmd;

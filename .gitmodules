@@ -1,4 +1,8 @@
-[submodule "nut-ddl"]
-	path = nut-ddl
+[submodule "crates/tsdb/lmdb"]
+	path = crates/tsdb/lmdb
+	url = https://github.com/LMDB/lmdb.git
+	branch = mdb.master3
+[submodule "crates/upsmc/nut-ddl"]
+	path = crates/upsmc/nut-ddl
 	url = https://github.com/networkupstools/nut-ddl.git
 	branch = master

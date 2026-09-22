@@ -23,10 +23,6 @@ use crate::{
     sync_status::StatusSyncService,
   },
 };
-use nut_webgui_upsmc::{
-  client::{NutPoolClient, NutPoolClientBuilder},
-  rustls::{ClientConfig, pki_types::ServerName},
-};
 use rustls_platform_verifier::BuilderVerifierExt;
 use std::{collections::HashMap, panic, process::ExitCode, sync::Arc, time::Duration};
 use tokio::{
@@ -39,6 +35,10 @@ use tracing::{debug, error, info, level_filters::LevelFilter, warn};
 use tracing_subscriber::{
   prelude::*,
   reload::{self, Handle},
+};
+use upsmc::{
+  client::{NutPoolClient, NutPoolClientBuilder},
+  rustls::{ClientConfig, pki_types::ServerName},
 };
 
 mod auth;

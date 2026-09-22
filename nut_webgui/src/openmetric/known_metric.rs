@@ -1,6 +1,6 @@
-use nut_webgui_upsmc::{VarName, ups_variables::UpsVariables};
 use prometheus_client::{metrics::MetricType, registry::Unit};
 use std::sync::LazyLock;
+use upsmc::{VarName, ups_variables::UpsVariables};
 
 pub const METRIC_UPS_STATUS: &str = "ups_status";
 pub const METRIC_UPS_STATUS_HELP: &str = "UPS status";

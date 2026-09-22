@@ -6,7 +6,6 @@ use crate::{
 };
 use chrono::Utc;
 use futures::{future::join_all, join};
-use nut_webgui_upsmc::{UpsName, VarName, client::AsyncNutClient, ups_status::UpsStatus};
 use std::{net::IpAddr, sync::Arc, time::Duration};
 use tokio::{
   select,
@@ -14,6 +13,7 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
+use upsmc::{UpsName, VarName, client::AsyncNutClient, ups_status::UpsStatus};
 
 pub struct StatusSyncService {
   event_channel: EventChannel,

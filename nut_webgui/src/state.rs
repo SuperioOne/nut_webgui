@@ -5,13 +5,13 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use core::net::IpAddr;
-use nut_webgui_upsmc::{
-  CmdName, UpsName, Value, VarName, client::NutPoolClient, ups_status::UpsStatus,
-  ups_variables::UpsVariables,
-};
 use serde::{Serialize, ser::SerializeStruct};
 use std::{borrow::Borrow, collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
+use upsmc::{
+  CmdName, UpsName, Value, VarName, client::NutPoolClient, ups_status::UpsStatus,
+  ups_variables::UpsVariables,
+};
 
 pub type UpsdNamespace = Arc<str>;
 

@@ -1,6 +1,6 @@
 #![allow(unused_assignments, unused_mut)]
 
-use nut_webgui_upsmc::{
+use upsmc::{
   ups_event::{UpsEvent, UpsEvents},
   ups_status::UpsStatus,
 };

@@ -8,7 +8,7 @@ use crate::{
   },
   state::DeviceEntry,
 };
-use nut_webgui_upsmc::{Value, VarName};
+use upsmc::{Value, VarName};
 
 // Provides hypermedia specific impls for DeviceEntry struct
 impl DeviceEntry {

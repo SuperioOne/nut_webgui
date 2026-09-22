@@ -12,10 +12,10 @@ use axum::{
   extract::{Path, State},
   response::{Html, IntoResponse, Response},
 };
-use nut_webgui_upsmc::{CmdName, UpsName};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::{error, info};
+use upsmc::{CmdName, UpsName};
 
 #[derive(Deserialize, Debug)]
 pub struct CommandRequest {

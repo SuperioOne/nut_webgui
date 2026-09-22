@@ -1,6 +1,6 @@
 use crate::state::{ConnectionStatus, UpsdNamespace};
-use nut_webgui_upsmc::{UpsName, ups_status::UpsStatus};
 use std::net::IpAddr;
+use upsmc::{UpsName, ups_status::UpsStatus};
 
 pub mod batch;
 pub mod channel;

@@ -1,4 +1,4 @@
-use nut_webgui_upsmc::{Value, VarName, ups_variables::UpsVariables};
+use upsmc::{Value, VarName, ups_variables::UpsVariables};
 
 #[test]
 fn initialize() {

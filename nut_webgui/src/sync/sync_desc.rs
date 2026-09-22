@@ -4,15 +4,15 @@ use crate::{
   state::ServerState,
 };
 use futures::future::join_all;
-use nut_webgui_upsmc::{
-  CmdName, UpsName, VarName,
-  client::{AsyncNutClient, NutPoolClient},
-  response::{CmdDesc, UpsVarDesc},
-};
 use std::{collections::HashSet, sync::Arc};
 use tokio::{join, select, sync::broadcast::error::RecvError, task::JoinSet};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, warn};
+use upsmc::{
+  CmdName, UpsName, VarName,
+  client::{AsyncNutClient, NutPoolClient},
+  response::{CmdDesc, UpsVarDesc},
+};
 
 pub struct DescriptionSyncService {
   event_channel: EventChannel,

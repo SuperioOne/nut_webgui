@@ -1,6 +1,6 @@
 [package]
-name = "nut_webgui_upsmc"
-description = "UPS Management Client"
+name = "upsmc"
+description = "Uninterruptible Power Supply Management Client"
 version = "0.2.6"
 edition.workspace = true
 authors.workspace = true

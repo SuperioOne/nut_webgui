@@ -13,10 +13,10 @@ use axum::{
   },
   http::StatusCode,
 };
-use nut_webgui_upsmc::{UpsName, Value, VarName};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::info;
+use upsmc::{UpsName, Value, VarName};
 
 #[derive(Debug, Deserialize)]
 pub struct RwRequest {

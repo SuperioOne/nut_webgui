@@ -8,8 +8,8 @@ use axum::{
   http::StatusCode,
   response::{IntoResponse, Response},
 };
-use nut_webgui_upsmc::UpsName;
 use std::sync::Arc;
+use upsmc::UpsName;
 
 pub async fn get(
   State(state): State<Arc<ServerState>>,

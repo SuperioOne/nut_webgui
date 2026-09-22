@@ -14,9 +14,9 @@ use axum::{
   extract::{Query, State},
   response::{Html, IntoResponse, Response},
 };
-use nut_webgui_upsmc::{UpsName, VarName, ups_status::UpsStatus};
 use serde::Deserialize;
 use std::{collections::BTreeMap, net::IpAddr, sync::Arc};
+use upsmc::{UpsName, VarName, ups_status::UpsStatus};
 
 #[derive(Template)]
 #[template(path = "topology/+page.html", blocks = ["graph_nodes"])]

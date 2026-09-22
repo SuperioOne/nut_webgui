@@ -1,16 +1,14 @@
-use nut_webgui_upsmc::UpsName;
+use upsmc::UpsName;
 
 #[derive(Debug)]
 pub enum SyncTaskError {
-  ClientError {
-    inner: nut_webgui_upsmc::error::Error,
-  },
+  ClientError { inner: upsmc::error::Error },
   DeviceLoadFailed,
 }
 
 #[derive(Debug)]
 pub struct DeviceLoadError {
-  pub inner: nut_webgui_upsmc::error::Error,
+  pub inner: upsmc::error::Error,
   pub name: UpsName,
 }
 
@@ -32,8 +30,8 @@ impl std::fmt::Display for DeviceLoadError {
   }
 }
 
-impl From<nut_webgui_upsmc::error::Error> for SyncTaskError {
-  fn from(value: nut_webgui_upsmc::error::Error) -> Self {
+impl From<upsmc::error::Error> for SyncTaskError {
+  fn from(value: upsmc::error::Error) -> Self {
     Self::ClientError { inner: value }
   }
 }

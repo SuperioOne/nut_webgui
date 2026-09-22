@@ -13,10 +13,10 @@ use axum::{
   },
   http::StatusCode,
 };
-use nut_webgui_upsmc::{CmdName, UpsName};
 use serde::Deserialize;
 use std::sync::Arc;
 use tracing::info;
+use upsmc::{CmdName, UpsName};
 
 #[derive(Debug, Deserialize)]
 pub struct InstcmdRequest {

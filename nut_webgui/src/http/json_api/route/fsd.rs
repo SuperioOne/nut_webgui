@@ -9,9 +9,9 @@ use axum::{
   extract::{Path, State, rejection::PathRejection},
   http::StatusCode,
 };
-use nut_webgui_upsmc::UpsName;
 use std::sync::Arc;
 use tracing::warn;
+use upsmc::UpsName;
 
 pub async fn post(
   State(state): State<Arc<ServerState>>,

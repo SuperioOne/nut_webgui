@@ -1,5 +1,5 @@
 use super::semantic_type::SemanticType;
-use nut_webgui_upsmc::Value;
+use upsmc::Value;
 
 pub struct UnsupportedValueType;
 

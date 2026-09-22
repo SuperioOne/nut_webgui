@@ -16,10 +16,10 @@ use axum::{
   extract::{Path, State},
   response::{Html, IntoResponse, Response},
 };
-use nut_webgui_upsmc::{InferValueFrom, UpsName, Value, VarName};
 use serde::Deserialize;
 use std::{sync::Arc, time::Duration};
 use tracing::{error, info};
+use upsmc::{InferValueFrom, UpsName, Value, VarName};
 
 #[derive(Deserialize, Debug)]
 pub struct RwRequest {

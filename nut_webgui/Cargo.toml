@@ -25,8 +25,8 @@ cookie = { package = "cookie", version = "0.18", features = ["percent-encode"] }
 clap = { version = "4", features = ["derive"] }
 futures = { version = "0.3" }
 hmac = { version = "0.13" }
-nut_webgui_client = { path = "../nut_webgui_client" }
-nut_webgui_upsmc = { path = "../nut_webgui_upsmc", features = [
+nut_webgui_client = { workspace = true }
+upsmc = { workspace = true, features = [
         "rustls",
         "serde",
 ] }

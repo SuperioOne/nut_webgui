@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@source "../../nut_webgui/src/http/hypermedia/**/*.{rs,html}";
+/* This is actually disgusting */
+@source "../../../nut_webgui/src/http/hypermedia/**/*.{rs,html}";
 
 @theme {
   --breakpoint-xs: 30rem;

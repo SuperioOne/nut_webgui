@@ -9,17 +9,17 @@ use crate::{
 };
 use chrono::Utc;
 use futures::{future::join_all, join};
-use nut_webgui_upsmc::{
+use std::{collections::HashMap, sync::Arc, time::Duration};
+use tokio::{select, task::JoinSet, time::interval, try_join};
+use tokio_util::sync::CancellationToken;
+use tracing::{debug, error, info, warn};
+use upsmc::{
   UpsName, Value, VarName, VarType,
   client::{AsyncNutClient, NutPoolClient},
   response::{DaemonVer, ProtVer, UpsDevice},
   ups_status::UpsStatus,
   ups_variables::UpsVariables,
 };
-use std::{collections::HashMap, sync::Arc, time::Duration};
-use tokio::{select, task::JoinSet, time::interval, try_join};
-use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info, warn};
 
 /// Synchronizes device list from UPSD.
 pub struct DeviceSyncService {
@@ -407,7 +407,7 @@ impl DeviceSyncTask {
   async fn load_clients(
     client: NutPoolClient,
     ups_name: &UpsName,
-  ) -> Result<Vec<ClientInfo>, nut_webgui_upsmc::error::Error> {
+  ) -> Result<Vec<ClientInfo>, upsmc::error::Error> {
     let client_list = client.list_client(ups_name).await?;
     let mut clients: Vec<ClientInfo> = Vec::with_capacity(client_list.ips.len());
 
@@ -427,7 +427,7 @@ impl DeviceSyncTask {
   async fn load_rw_vars(
     client: NutPoolClient,
     ups_name: &UpsName,
-  ) -> Result<HashMap<VarName, VarDetail>, nut_webgui_upsmc::error::Error> {
+  ) -> Result<HashMap<VarName, VarDetail>, upsmc::error::Error> {
     let rw_list = client.list_rw(ups_name).await?;
     let rw_details = join_all(
       rw_list
@@ -461,7 +461,7 @@ impl DeviceSyncTask {
     client: NutPoolClient,
     ups_name: &UpsName,
     var_name: VarName,
-  ) -> Result<(VarName, VarDetail), nut_webgui_upsmc::error::Error> {
+  ) -> Result<(VarName, VarDetail), upsmc::error::Error> {
     let type_info = client.get_var_type(ups_name, &var_name).await?;
 
     for var_type in type_info.var_types {

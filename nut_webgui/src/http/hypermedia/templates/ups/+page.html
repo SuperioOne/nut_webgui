@@ -33,10 +33,10 @@
     <div class="content-card flex flex-row flex-wrap gap-2 justify-between">
       <div class="basis-full md:basis-auto md:text-start text-center">
         <h1 class="font-bold leading-8 text-primary text-xl">{{device.name}}<span class="font-light opacity-70">@{{namespace}}</span></h1>
-        {%- if let Some(mfr) = device.variables.get(nut_webgui_upsmc::VarName::UPS_MFR) -%}
+        {%- if let Some(mfr) = device.variables.get(upsmc::VarName::UPS_MFR) -%}
           <p class="font-light leading-6 text-secondary">{{mfr}}</p>
         {%- endif -%}
-        {%- if let Some(model) = device.variables.get(nut_webgui_upsmc::VarName::UPS_MODEL) -%}
+        {%- if let Some(model) = device.variables.get(upsmc::VarName::UPS_MODEL) -%}
           <p class="font-light leading-6 text-accent">{{model}}</p>
         {%- endif -%}
         <p class="font-light mt-1 opacity-60 text-xs">{{device.desc}}</p>

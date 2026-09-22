@@ -5,7 +5,6 @@ use crate::{
   state::ConnectionStatus,
 };
 use chrono::Utc;
-use nut_webgui_upsmc::{UpsName, ups_event::UpsEvents};
 use std::sync::Arc;
 use tokio::{
   select,
@@ -13,6 +12,7 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{error, warn};
+use upsmc::{UpsName, ups_event::UpsEvents};
 
 pub type MessagePayload = Arc<[String]>;
 pub type MessageBroadcast = Sender<MessagePayload>;

@@ -1,5 +1,5 @@
-use nut_webgui_upsmc::client::AsyncNutClient;
-use nut_webgui_upsmc::{CmdName, UpsName, Value, VarName, VarType};
+use upsmc::client::AsyncNutClient;
+use upsmc::{CmdName, UpsName, Value, VarName, VarType};
 
 #[tokio::test]
 async fn cmd_desc() {
@@ -12,7 +12,7 @@ async fn cmd_desc() {
     .read(CMD_DESC)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let cmd_desc = client.get_cmd_desc(&ups, &cmd).await.unwrap();
 
   assert_eq!(cmd_desc.cmd, cmd);
@@ -37,7 +37,7 @@ async fn var_desc() {
     .read(VAR_DESC)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let var_desc = client
     .get_var_desc(&ups, VarName::UPS_BEEPER_STATUS)
     .await
@@ -59,7 +59,7 @@ async fn var_type() {
     .read(VAR_TYPE)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let var_desc = client.get_var_type(&ups, &var_name).await.unwrap();
 
   assert_eq!(var_desc.name, var_name);
@@ -87,7 +87,7 @@ END LIST UPS
     .read(LIST_UPS)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let ups_list = client.list_ups().await.unwrap();
 
   assert_eq!(ups_list.devices.len(), 1);
@@ -116,7 +116,7 @@ async fn get_var() {
     .read(GET_VAR)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let var = client
     .get_var(&ups, VarName::UPS_BEEPER_STATUS)
     .await
@@ -141,7 +141,7 @@ END LIST CLIENT bx1600mi
     .read(LIST_CLIENT)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let client_list = client.list_client(&ups).await.unwrap();
 
   assert_eq!(client_list.ups_name, ups);
@@ -163,7 +163,7 @@ async fn list_cmd() {
           cmd_len += { _ = $cmd; 1 };
         )+
 
-        let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi");
+        let ups = upsmc::UpsName::new_unchecked("bx1600mi");
         const INPUT : &str = concat!(
           "BEGIN LIST CMD bx1600mi\n",
           $("CMD bx1600mi ", $cmd, "\n",)+
@@ -175,7 +175,7 @@ async fn list_cmd() {
           .read(INPUT.as_bytes())
           .build();
 
-        let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+        let mut client = upsmc::client::NutClient::from(stream);
         let cmd_list = client.list_cmd(&ups).await.unwrap();
 
         assert_eq!(cmd_list.ups_name, ups);
@@ -221,7 +221,7 @@ async fn list_var() {
           var_len += { _ = $name; 1 };
         )+
 
-        let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi");
+        let ups = upsmc::UpsName::new_unchecked("bx1600mi");
         const INPUT : &str = concat!(
           "BEGIN LIST VAR bx1600mi\n",
           $("VAR bx1600mi ",$name, " \"",  $value, "\"\n",)+
@@ -233,7 +233,7 @@ async fn list_var() {
           .read(INPUT.as_bytes())
           .build();
 
-        let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+        let mut client = upsmc::client::NutClient::from(stream);
         let var_list = client.list_var(&ups).await.unwrap();
 
         assert_eq!(var_list.ups_name, ups);
@@ -321,7 +321,7 @@ END LIST RANGE bx1600mi input.transfer.low
     .read(LIST_RANGE)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let range_list = client
     .list_range(&ups, VarName::INPUT_TRANSFER_LOW)
     .await
@@ -358,7 +358,7 @@ END LIST ENUM bx1600mi input.transfer.low
     .read(LIST_ENUM)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let enum_list = client
     .list_enum(&ups, VarName::INPUT_TRANSFER_LOW)
     .await
@@ -385,7 +385,7 @@ async fn list_rw() {
           rw_len += { _ = $name; 1 };
         )+
 
-        let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi");
+        let ups = upsmc::UpsName::new_unchecked("bx1600mi");
 
         const INPUT : &str = concat!(
           "BEGIN LIST RW bx1600mi\n",
@@ -398,7 +398,7 @@ async fn list_rw() {
           .read(INPUT.as_bytes())
           .build();
 
-        let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+        let mut client = upsmc::client::NutClient::from(stream);
         let rw_list = client.list_rw(&ups).await.unwrap();
 
         assert_eq!(rw_list.ups_name, ups);
@@ -438,7 +438,7 @@ async fn get_versions() {
     .read(PROT_VER)
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+  let mut client = upsmc::client::NutClient::from(stream);
   let ver = client.get_ver().await.unwrap();
   let protver = client.get_protver().await.unwrap();
 
@@ -451,7 +451,7 @@ async fn get_versions() {
 
 #[tokio::test]
 async fn instcmd() {
-  let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi");
+  let ups = upsmc::UpsName::new_unchecked("bx1600mi");
   let stream = tokio_test::io::Builder::new()
     .write(b"USERNAME user\n")
     .read(b"OK\n")
@@ -461,7 +461,7 @@ async fn instcmd() {
     .read(b"OK\n")
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream)
+  let mut client = upsmc::client::NutClient::from(stream)
     .authenticate("user", "password")
     .await
     .unwrap();
@@ -474,7 +474,7 @@ async fn instcmd() {
 
 #[tokio::test]
 async fn fsd() {
-  let ups = nut_webgui_upsmc::UpsName::new_unchecked("home:bx1600mi@localhost:4242");
+  let ups = upsmc::UpsName::new_unchecked("home:bx1600mi@localhost:4242");
   let stream = tokio_test::io::Builder::new()
     .write(b"USERNAME user\n")
     .read(b"OK\n")
@@ -484,7 +484,7 @@ async fn fsd() {
     .read(b"OK FSD-SET\n")
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream)
+  let mut client = upsmc::client::NutClient::from(stream)
     .authenticate("user", "password")
     .await
     .unwrap();
@@ -494,7 +494,7 @@ async fn fsd() {
 
 #[tokio::test]
 async fn set_var() {
-  let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi");
+  let ups = upsmc::UpsName::new_unchecked("bx1600mi");
   let stream = tokio_test::io::Builder::new()
     .write(b"USERNAME user\n")
     .read(b"OK\n")
@@ -512,7 +512,7 @@ async fn set_var() {
     .read(b"OK\n")
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream)
+  let mut client = upsmc::client::NutClient::from(stream)
     .authenticate("user", "password")
     .await
     .unwrap();
@@ -525,7 +525,7 @@ async fn set_var() {
 
 #[tokio::test]
 async fn attach_ups_and_detach() {
-  let ups = nut_webgui_upsmc::UpsName::new_unchecked("bx1600mi");
+  let ups = upsmc::UpsName::new_unchecked("bx1600mi");
   let stream = tokio_test::io::Builder::new()
     .write(b"USERNAME user\n")
     .read(b"OK\n")
@@ -537,7 +537,7 @@ async fn attach_ups_and_detach() {
     .read(b"OK Goodbye\n")
     .build();
 
-  let mut client = nut_webgui_upsmc::client::NutClient::from(stream)
+  let mut client = upsmc::client::NutClient::from(stream)
     .authenticate("user", "password")
     .await
     .unwrap();

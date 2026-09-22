@@ -1,5 +1,5 @@
 use super::semantic_type::SemanticType;
-use nut_webgui_upsmc::ups_status::UpsStatus;
+use upsmc::ups_status::UpsStatus;
 
 #[derive(Debug)]
 pub struct StatusDetail {
@@ -10,7 +10,7 @@ pub struct StatusDetail {
 }
 
 pub struct StatusDetailIter {
-  inner: nut_webgui_upsmc::ups_status::Iter,
+  inner: upsmc::ups_status::Iter,
 }
 
 impl<'a> StatusDetailIter {

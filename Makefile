@@ -1,49 +1,21 @@
 BIN_DIR           := ./bin
 ARTIFACT_DIR      := $(BIN_DIR)/artifact
 INSTALL_PREFIX    := /usr/local/bin
-NODE_MODULES_DIR  := ./nut_webgui_client/node_modules
+NODE_MODULES_DIR  := ./crates/nut_webgui_client/node_modules
 PROJECT_SRC       := ./Cargo.toml \
 											$(wildcard ./**/Cargo.toml) \
 											$(wildcard ./nut_webgui/src/**/*.html) \
 											$(wildcard ./nut_webgui/src/**/*.rs) \
 											$(wildcard ./nut_webgui/src/*.rs) \
-											$(wildcard ./nut_webgui_client/package.json) \
-											$(wildcard ./nut_webgui_client/postcss.built.js) \
-											$(wildcard ./nut_webgui_client/src/**/*.js) \
-											$(wildcard ./nut_webgui_client/src/*.js) \
-											$(wildcard ./nut_webgui_client/static/*) \
-											$(wildcard ./nut_webgui_upsmc/src/**/*.rs) \
-											$(wildcard ./nut_webgui_upsmc/src/*.rs)
+											$(wildcard ./crates/nut_webgui_client/package.json) \
+											$(wildcard ./crates/nut_webgui_client/postcss.built.js) \
+											$(wildcard ./crates/nut_webgui_client/static/*) \
+											$(wildcard ./crates/*/src/**/*.js) \
+											$(wildcard ./crates/*/src/*.js) \
+											$(wildcard ./crates/*/src/**/*.rs) \
+											$(wildcard ./crates/*/src/*.rs)
 
 -include .config.mk
-
-ifdef TARGETS
-
-include ./makefiles/x86-64.mk
-include ./makefiles/arm.mk
-include ./makefiles/riscv.mk
-include ./makefiles/package_build.mk
-include ./makefiles/docs.mk
-
-ifdef GH_TARGETS
-include ./makefiles/release_github.mk
-endif
-
-ifdef FJ_TARGETS
-include ./makefiles/release_forgejo.mk
-endif
-
-ifdef ENABLE_CONTAINER_IMAGE
-include ./makefiles/image_build.mk
-
-ifdef OCI_TARGETS
-include ./makefiles/image_publish.mk
-endif
-endif
-
-.PHONY: build-all
-build-all: $(TARGETS)
-endif
 
 .PHONY: help
 help:
@@ -71,6 +43,34 @@ endif
 ifdef FJ_TARGETS
 	@echo "  release-forgejo : Pack all artifacts and create new draft release on target Forgejo/Gitea repos."
 endif
+endif
+
+ifdef TARGETS
+
+include ./makefiles/x86-64.mk
+include ./makefiles/arm.mk
+include ./makefiles/riscv.mk
+include ./makefiles/package_build.mk
+include ./makefiles/docs.mk
+
+ifdef GH_TARGETS
+include ./makefiles/release_github.mk
+endif
+
+ifdef FJ_TARGETS
+include ./makefiles/release_forgejo.mk
+endif
+
+ifdef ENABLE_CONTAINER_IMAGE
+include ./makefiles/image_build.mk
+
+ifdef OCI_TARGETS
+include ./makefiles/image_publish.mk
+endif
+endif
+
+.PHONY: build-all
+build-all: $(TARGETS)
 endif
 
 # Builds with default toolchain

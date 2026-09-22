@@ -1,9 +1,9 @@
-use nut_webgui_upsmc::ups_status::UpsStatus;
+use upsmc::ups_status::UpsStatus;
 
 macro_rules! assert_status_text {
   (validate_str = true, $(($name:literal, $target:expr);)+) => {
     $(
-        let status = nut_webgui_upsmc::ups_status::UpsStatus::new($name);
+        let status = upsmc::ups_status::UpsStatus::new($name);
 
         assert_eq!(status, $target);
         assert_eq!(&status.to_string(), $name);
@@ -14,7 +14,7 @@ macro_rules! assert_status_text {
   // Comparing `to_string()` does not makes sense.
   (validate_str = false ,$(($name:literal, $target:expr);)+) => {
     $(
-        assert_eq!(nut_webgui_upsmc::ups_status::UpsStatus::new($name), $target);
+        assert_eq!(upsmc::ups_status::UpsStatus::new($name), $target);
     )+
   };
 }

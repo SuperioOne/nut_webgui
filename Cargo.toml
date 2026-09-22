@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["nut_webgui", "nut_webgui_*"]
+members = ["nut_webgui", "crates/*"]
 
 [profile.release]
 codegen-units = 1
@@ -17,3 +17,8 @@ homepage = "https://codeberg.org/SuperiorOne/nut_webgui"
 keywords = ["nut", "ups", "network-ups-tools", "self-hosted", "management"]
 license = "Apache-2.0"
 repository = "https://codeberg.org/SuperiorOne/nut_webgui"
+
+[workspace.dependencies]
+upsmc = { path = "./crates/upsmc" }
+tsdb = { path = "./crates/tsdb" }
+nut_webgui_client = { path = "./crates/nut_webgui_client" }

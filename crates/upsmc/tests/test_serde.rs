@@ -1,8 +1,6 @@
 #![cfg(feature = "serde")]
 
-use nut_webgui_upsmc::{
-  CmdName, UpsName, Value, VarName, ups_status::UpsStatus, ups_variables::UpsVariables,
-};
+use upsmc::{CmdName, UpsName, Value, VarName, ups_status::UpsStatus, ups_variables::UpsVariables};
 
 #[test]
 fn cmd_name() {

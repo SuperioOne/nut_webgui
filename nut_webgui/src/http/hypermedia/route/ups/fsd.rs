@@ -14,8 +14,8 @@ use axum::{
   extract::{Path, State},
   response::{Html, IntoResponse, Response},
 };
-use nut_webgui_upsmc::UpsName;
 use tracing::{error, info};
+use upsmc::UpsName;
 
 pub async fn post(
   State(state): State<Arc<ServerState>>,

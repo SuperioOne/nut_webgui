@@ -3,8 +3,8 @@ use super::{
   channel::{ChannelSendError, EventChannel},
 };
 use crate::state::{ConnectionStatus, UpsdNamespace};
-use nut_webgui_upsmc::{UpsName, ups_status::UpsStatus};
 use std::net::IpAddr;
+use upsmc::{UpsName, ups_status::UpsStatus};
 
 /// This struct does not exactly send all events as a single message, but simply aggregates all events in
 /// one place.

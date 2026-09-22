@@ -28,12 +28,12 @@
       >
       </nut-gauge>
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
-        {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_LOW) -%}
+        {%- if let Some(threshold) = device.variables.get(upsmc::VarName::BATTERY_CHARGE_LOW) -%}
           <p>
             Shutdown threshold <span class="text-error">{{threshold}}%</span>
           </p>
         {%- endif -%}
-        {%- if let Some(threshold) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_CHARGE_WARNING) -%}
+        {%- if let Some(threshold) = device.variables.get(upsmc::VarName::BATTERY_CHARGE_WARNING) -%}
           <p>
             Warning threshold <span class="text-warning">{{threshold}}%</span>
           </p>
@@ -72,13 +72,13 @@
         {%- endif -%}
       </div>
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
-        {%- if let Some(nominal_power) = device.variables.get(nut_webgui_upsmc::VarName::UPS_POWER_NOMINAL) -%}
+        {%- if let Some(nominal_power) = device.variables.get(upsmc::VarName::UPS_POWER_NOMINAL) -%}
           <p>
             Nominal apparent power
             <span class="text-info">{{nominal_power}} VA</span>
           </p>
         {%- endif -%}
-        {%- if let Some(nominal_realpower) = device.variables.get(nut_webgui_upsmc::VarName::UPS_REALPOWER_NOMINAL) -%}
+        {%- if let Some(nominal_realpower) = device.variables.get(upsmc::VarName::UPS_REALPOWER_NOMINAL) -%}
           <p>
             Nominal real power
             <span class="text-info">{{nominal_realpower}} Watt</span>
@@ -98,7 +98,7 @@
       >
       </nut-time-display>
       <div class="flex flex-col gap-1 justify-end opacity-60">
-        {%- if let Some(runtime_low) = device.variables.get(nut_webgui_upsmc::VarName::BATTERY_RUNTIME_LOW) -%}
+        {%- if let Some(runtime_low) = device.variables.get(upsmc::VarName::BATTERY_RUNTIME_LOW) -%}
           <div
             class="font-bold text-sm tooltip tooltip-bottom"
             data-tip="{{runtime_low}} seconds"

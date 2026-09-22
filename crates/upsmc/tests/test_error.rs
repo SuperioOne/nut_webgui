@@ -1,5 +1,5 @@
-use nut_webgui_upsmc::client::AsyncNutClient;
-use nut_webgui_upsmc::error::ProtocolError;
+use upsmc::client::AsyncNutClient;
+use upsmc::error::ProtocolError;
 
 macro_rules! gen_prot_err_tests {
   ($(($test_name:ident, $expected:pat, $error:literal );)+) => {
@@ -11,21 +11,21 @@ macro_rules! gen_prot_err_tests {
           .read(concat!("ERR ", $error, "\n").as_bytes())
           .build();
 
-        let mut client = nut_webgui_upsmc::client::NutClient::from(stream);
+        let mut client = upsmc::client::NutClient::from(stream);
 
         match client.get_ver().await {
           Ok(_) => assert!(false, "Expected prot error received response"),
           Err(err) => match err.kind() {
-            nut_webgui_upsmc::error::ErrorKind::IOError { .. } => {
+            upsmc::error::ErrorKind::IOError { .. } => {
               assert!(false, "Expected prot error received IO error")
             }
-            nut_webgui_upsmc::error::ErrorKind::ParseError { .. } => {
+            upsmc::error::ErrorKind::ParseError { .. } => {
               assert!(false, "Expected prot error received parse error")
             }
-            nut_webgui_upsmc::error::ErrorKind::ProtocolError {
+            upsmc::error::ErrorKind::ProtocolError {
               inner: $expected,
             } => assert!(true),
-            nut_webgui_upsmc::error::ErrorKind::ConnectionPoolClosed => {
+            upsmc::error::ErrorKind::ConnectionPoolClosed => {
               assert!(false, "Expected prot error received connection pool error")
             }
             _ => assert!(

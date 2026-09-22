@@ -1,6 +1,6 @@
 use core::str::FromStr;
-use nut_webgui_upsmc::VarName;
-use nut_webgui_upsmc::error::VarNameParseError;
+use upsmc::VarName;
+use upsmc::error::VarNameParseError;
 
 macro_rules! var_name_test {
   ($test_name:ident, $name:literal) => {

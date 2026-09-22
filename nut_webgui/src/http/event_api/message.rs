@@ -1,9 +1,9 @@
 use super::error::HandshakeError;
 use crate::state::ConnectionStatus;
 use axum::extract::ws::Message;
-use nut_webgui_upsmc::{UpsName, ups_event::UpsEvents, ups_status::UpsStatus};
 use serde::Serialize;
 use std::net::IpAddr;
+use upsmc::{UpsName, ups_event::UpsEvents, ups_status::UpsStatus};
 
 #[derive(Serialize)]
 #[serde(tag = "type")]
