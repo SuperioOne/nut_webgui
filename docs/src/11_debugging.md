@@ -37,13 +37,13 @@ git clone --recurse-submodules https://codeberg.org/SuperiorOne/nut_webgui.git
 ## Simulating UPS devices and NUT server with containers
 
 A basic NUT server container image is available in the
-`test_tools/dummy_server` directory in the source code.
+`tools/dummy_server` directory in the source code.
 It starts a NUT server, and automatically configures test devices.
 
 Build container image:
 
 ```sh
-cd ./test_tools/dummy_server
+cd ./tools/dummy_server
 docker build -t dummy_server:latest -f dummy_server.Dockerfile
 ```
 
@@ -61,7 +61,7 @@ docker run --rm -p 3493:3493 -v \
 ## Testing TLS
 
 The dummy server is configured with a self-signed certificate.
-The root certificate is available at `test_tools/dummy_server/root.crt`.
+The root certificate is available at `tools/dummy_server/root.crt`.
 
 [^nut-ddl]: [Github - networkupstools/nut-ddl](https://github.com/networkupstools/nut-ddl)
 [^bacon]: [Github - Canop/bacon](https://github.com/Canop/bacon)

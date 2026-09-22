@@ -149,6 +149,7 @@ gen_dev_integration_test!(
 (DEV_APC__SMART_UPS_X_750__usbhid_ups__v2_7_4__r01                                         ,"./nut-ddl/APC/APC__Smart-UPS_X_750__usbhid-ups__2.7.4__01.dev");
 (DEV_APC__SMART_UPS_X_750__usbhid_ups__v2_7_4__r02                                         ,"./nut-ddl/APC/APC__Smart-UPS_X_750__usbhid-ups__2.7.4__02.dev");
 (DEV_APC__SMC2200BI_BR__usbhid_ups__v2_7_4_1__r01                                          ,"./nut-ddl/APC/APC__SMC2200BI-BR__usbhid-ups__2.7.4.1__01.dev");
+(DEV_APC__Smart_UPS_500__apcmicrolink__2_8_5_1168_1168_g2caa3c875__01                      ,"./nut-ddl/APC/APC__Smart-UPS_500__apcmicrolink__2.8.5.1168-1168+g2caa3c875__01.dev");
 (DEV_APOLLO__1000F__genericups__v2_0_2__r01                                                ,"./nut-ddl/Apollo/Apollo__1000F__genericups__2.0.2__01.dev");
 (DEV_APOLLO__850VA__blazer_usb__v2_6_3__r01                                                ,"./nut-ddl/Apollo/Apollo__850VA__blazer_usb__2.6.3__01.dev");
 (DEV_ASIUM__P700__blazer_usb__v2_6_4__r01                                                  ,"./nut-ddl/Asium/Asium__P700__blazer_usb__2.6.4__01.dev");
