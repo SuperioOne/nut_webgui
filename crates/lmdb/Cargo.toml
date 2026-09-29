@@ -1,5 +1,5 @@
 [package]
-name = "tsdb"
+name = "lmdb"
 description = "Experimental primitive timeseries database backed by LMDB."
 version = "0.1.0"
 edition.workspace = true

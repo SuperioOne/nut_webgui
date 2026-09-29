@@ -20,5 +20,5 @@ repository = "https://codeberg.org/SuperiorOne/nut_webgui"
 
 [workspace.dependencies]
 upsmc = { path = "./crates/upsmc" }
-tsdb = { path = "./crates/tsdb" }
+lmdb = { path = "./crates/lmdb" }
 nut_webgui_client = { path = "./crates/nut_webgui_client" }

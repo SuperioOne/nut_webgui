@@ -45,6 +45,19 @@ define_bitflag!(
 );
 
 define_bitflag!(
+  /// Environment flags
+  pub TransactionFlag u32,
+  values = [
+   /// don't fsync after commit
+  (NO_SYNC       = MDB_NOSYNC),
+   /// read only
+  (READONLY      = MDB_RDONLY),
+   /// don't fsync metapage after commit
+  (NO_META_SYNC  = MDB_NOMETASYNC)
+  ]
+);
+
+define_bitflag!(
   /// Database flags
   pub DbFlag u32,
   values = [

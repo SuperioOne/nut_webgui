@@ -19,25 +19,25 @@ macro_rules! impl_lmdb_errors {
     ) => {
         #[repr($type)]
         #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-        pub enum LmdbError {
+        pub enum MdbError {
             $(
                 $(#[$doc])*
                 $variant_name = $value
             ),+
         }
 
-        impl LmdbError {
+        impl MdbError {
             #[inline]
             pub const fn as_value(&self) -> $type {
                 *self as $type
             }
 
-            pub const fn from_raw_code(value:$type) -> LmdbError {
+            pub const fn from_raw_code(value:$type) -> MdbError {
                 match value {
                     $(
-                        $value => LmdbError::$variant_name,
+                        $value => MdbError::$variant_name,
                     )+
-                    _ => LmdbError::$catch_all
+                    _ => MdbError::$catch_all
                 }
             }
         }
@@ -117,33 +117,35 @@ impl_lmdb_errors!(catch_all = Unknown, repr_type = i32,
 
 #[derive(Debug)]
 pub enum ErrorKind {
-  LmdbError(LmdbError),
+  MdbError(MdbError),
   IOError(std::io::Error),
   PathError,
+  NullHandle,
+  DbNotOpen,
 }
 
 #[derive(Debug)]
-pub struct Error {
+pub struct LmdbError {
   kind: ErrorKind,
 }
 
-impl Error {
+impl LmdbError {
   pub fn kind(&self) -> &ErrorKind {
     &self.kind
   }
 
-  pub fn result_from_code(code: i32) -> Result<(), Error> {
+  pub fn result_from_code(code: i32) -> Result<(), LmdbError> {
     if code == 0 {
       Ok(())
     } else if code > 0 {
       Err(ErrorKind::IOError(std::io::Error::from_raw_os_error(code)).into())
     } else {
-      Err(ErrorKind::LmdbError(LmdbError::from_raw_code(code)).into())
+      Err(ErrorKind::MdbError(MdbError::from_raw_code(code)).into())
     }
   }
 }
 
-impl From<ErrorKind> for Error {
+impl From<ErrorKind> for LmdbError {
   #[inline]
   fn from(kind: ErrorKind) -> Self {
     Self { kind }
@@ -157,27 +159,31 @@ impl From<std::io::Error> for ErrorKind {
   }
 }
 
-impl From<LmdbError> for ErrorKind {
+impl From<MdbError> for ErrorKind {
   #[inline]
-  fn from(error: LmdbError) -> Self {
-    ErrorKind::LmdbError(error)
-  }
-}
-
-impl core::fmt::Display for Error {
-  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-    match self.kind() {
-      ErrorKind::LmdbError(lmdb_error) => lmdb_error.fmt(f),
-      ErrorKind::IOError(error) => error.fmt(f),
-      ErrorKind::PathError => f.write_str("invalid database path"),
-    }
+  fn from(error: MdbError) -> Self {
+    ErrorKind::MdbError(error)
   }
 }
 
 impl core::fmt::Display for LmdbError {
   fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    match self.kind() {
+      ErrorKind::MdbError(err) => err.fmt(f),
+      ErrorKind::IOError(err) => err.fmt(f),
+      ErrorKind::PathError => f.write_str("invalid database path"),
+      ErrorKind::NullHandle => f.write_str(
+        "handle pointer received from lmdb is null, possible implementation error in the rust code",
+      ),
+      ErrorKind::DbNotOpen => f.write_str("target database is not opened on the environment"),
+    }
+  }
+}
+
+impl core::fmt::Display for MdbError {
+  fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
     match self {
-      LmdbError::Unknown => f.write_str("unspecified error code from lmdb"),
+      MdbError::Unknown => f.write_str("unspecified error code from lmdb"),
       _ => {
         let val = self.as_value();
         let msg_ptr = unsafe { mdb_strerror(val) };
@@ -190,5 +196,5 @@ impl core::fmt::Display for LmdbError {
   }
 }
 
-impl core::error::Error for Error {}
+impl core::error::Error for MdbError {}
 impl core::error::Error for LmdbError {}
