@@ -118,10 +118,10 @@ detect_target() {
                 NUTWG_TARGET="riscv64gc-musl"
             fi
             ;;
-        armv7)
+        armv7*)
             NUTWG_TARGET="armv7-musleabi"
             ;;
-        armv6)
+        arm|armv6*)
             NUTWG_TARGET="armv6-musleabi"
             ;;
         *)
