@@ -1,6 +1,6 @@
 use super::{Transaction, txn::Txn};
 use crate::{error::LmdbError, flag::TransactionFlag};
-use std::{
+use core::{
   marker::PhantomData,
   ops::{Deref, DerefMut},
 };

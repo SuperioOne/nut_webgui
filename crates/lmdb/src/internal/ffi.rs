@@ -11,7 +11,7 @@ macro_rules! result_fn {
 
 use std::ptr::null_mut;
 
-pub(super) use result_fn;
+pub(crate) use result_fn;
 
 use crate::EnvInfo;
 

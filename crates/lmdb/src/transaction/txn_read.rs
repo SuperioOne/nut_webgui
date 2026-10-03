@@ -1,16 +1,19 @@
 use super::{ChildTxn, Transaction, txn::Txn};
 use crate::{
   DbHandle,
+  env::{Env, ReadMarker, WriteMarker},
   error::LmdbError,
-  ffi::{MDB_env, mdb_txn_env},
   flag::TransactionFlag,
+  internal::{
+    AsRawPtr,
+    ffi::{MDB_txn, mdb_txn_env},
+  },
   value::ValueRef,
 };
-use std::borrow::Borrow;
+use core::borrow::Borrow;
 
 pub struct ReadTxn<'a> {
   inner: Txn<'a>,
-  db_handle: DbHandle,
 }
 
 impl Transaction for ReadTxn<'_> {
@@ -41,28 +44,39 @@ impl Transaction for ReadTxn<'_> {
 }
 
 impl<'a> ReadTxn<'a> {
-  pub(crate) fn new(env: *mut MDB_env, dbi_handle: DbHandle) -> Result<Self, LmdbError> {
-    let inner = Txn::new(env, TransactionFlag::READONLY)?;
-    Ok(Self {
-      inner,
-      db_handle: dbi_handle,
-    })
+  #[inline]
+  pub(crate) fn new<R, W>(env: &'a Env<R, W>) -> Result<Self, LmdbError>
+  where
+    R: ReadMarker,
+    W: WriteMarker,
+  {
+    Self::new_with_flags(env, TransactionFlag::new())
+  }
+
+  pub(crate) fn new_with_flags<R, W>(
+    env: &'a Env<R, W>,
+    mut flags: TransactionFlag,
+  ) -> Result<Self, LmdbError>
+  where
+    R: ReadMarker,
+    W: WriteMarker,
+  {
+    flags.set_assign(TransactionFlag::READONLY);
+    let inner = Txn::new(env, flags)?;
+    Ok(Self { inner })
   }
 
   #[inline]
-  pub(super) fn from_txn(txn: Txn<'a>, db_handle: DbHandle) -> Self {
-    Self {
-      inner: txn,
-      db_handle,
-    }
+  pub(super) fn from_txn(txn: Txn<'a>) -> Self {
+    Self { inner: txn }
   }
 
   #[inline]
-  pub fn get<'b, K>(&self, key: K) -> Result<Option<ValueRef<'_>>, LmdbError>
+  pub fn get<'b, K>(&self, db_handle: DbHandle, key: K) -> Result<Option<ValueRef<'_>>, LmdbError>
   where
     K: Borrow<ValueRef<'b>>,
   {
-    self.inner.get(self.db_handle, key.borrow())
+    self.inner.get(db_handle, key.borrow())
   }
 
   pub fn begin_ro_child(&mut self) -> Result<ChildTxn<'_, Self>, LmdbError> {
@@ -70,6 +84,15 @@ impl<'a> ReadTxn<'a> {
     let flags = self.flags()?.set(TransactionFlag::READONLY);
     let child = Txn::new_with_parent(env, flags, self.inner.as_raw_ptr())?;
 
-    Ok(ChildTxn::from_child(Self::from_txn(child, self.db_handle)))
+    Ok(ChildTxn::from_child(Self::from_txn(child)))
+  }
+}
+
+impl<'a> AsRawPtr for ReadTxn<'a> {
+  type Return = MDB_txn;
+
+  #[inline]
+  fn as_raw_ptr(&self) -> *mut Self::Return {
+    self.inner.as_raw_ptr()
   }
 }

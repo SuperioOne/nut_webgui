@@ -1,6 +1,5 @@
-use crate::ffi::MDB_val;
-use core::{borrow::Borrow, marker::PhantomData};
-use std::ptr::null_mut;
+use crate::internal::ffi::MDB_val;
+use core::{borrow::Borrow, marker::PhantomData, ptr::null_mut};
 
 pub struct ValueRef<'a> {
   val: MDB_val,

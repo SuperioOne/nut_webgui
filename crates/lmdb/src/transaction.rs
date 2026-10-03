@@ -1,7 +1,7 @@
 use super::error::LmdbError;
 use crate::flag::TransactionFlag;
 
-pub(crate) mod txn;
+mod txn;
 mod txn_child;
 mod txn_read;
 mod txn_write;

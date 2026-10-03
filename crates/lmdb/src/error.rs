@@ -1,4 +1,4 @@
-use super::ffi::{
+use crate::internal::ffi::{
   MDB_ADDR_BUSY, MDB_BAD_CHECKSUM, MDB_BAD_DBI, MDB_BAD_RSLOT, MDB_BAD_TXN, MDB_BAD_VALSIZE,
   MDB_CANT_ROLLBACK, MDB_CORRUPTED, MDB_CRYPTO_FAIL, MDB_CURSOR_FULL, MDB_DBIS_BUSY, MDB_DBS_FULL,
   MDB_ENV_BUSY, MDB_ENV_ENCRYPTION, MDB_INCOMPATIBLE, MDB_INVALID, MDB_IS_READONLY, MDB_KEYEXIST,
@@ -122,6 +122,8 @@ pub enum ErrorKind {
   PathError,
   NullHandle,
   DbNotOpen,
+  NonUtf8Str,
+  ReaderListParseError,
 }
 
 #[derive(Debug)]
@@ -176,6 +178,10 @@ impl core::fmt::Display for LmdbError {
         "handle pointer received from lmdb is null, possible implementation error in the rust code",
       ),
       ErrorKind::DbNotOpen => f.write_str("target database is not opened on the environment"),
+      ErrorKind::NonUtf8Str => f.write_str("provided string value is not utf-8 encoded"),
+      ErrorKind::ReaderListParseError => {
+        f.write_str("unable to parse reader list output into structured format")
+      }
     }
   }
 }

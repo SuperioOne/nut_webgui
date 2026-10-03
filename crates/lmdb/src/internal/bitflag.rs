@@ -3,7 +3,7 @@ macro_rules! define_bitflag {
   $(#[$top_level_docs:meta])*
   $access_level:vis $name:ident $inner_type:ty, values = [$(
     $(#[$docs:meta])*
-    ($const_name:ident = $flag_value:expr)
+    ($flag_access:vis $const_name:ident = $flag_value:expr)
   ),+]) => {
 
     $(#[$top_level_docs])*
@@ -26,7 +26,7 @@ macro_rules! define_bitflag {
 
       $(
         $(#[$docs])*
-        pub const $const_name: Self = Self($flag_value);
+        $flag_access const $const_name: Self = Self($flag_value);
       )+
 
 

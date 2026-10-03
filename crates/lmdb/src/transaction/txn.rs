@@ -1,15 +1,19 @@
 use super::Transaction;
 use crate::{
   DbHandle,
+  env::{Env, ReadMarker, WriteMarker},
   error::{self, ErrorKind, LmdbError},
-  ffi::{
-    MDB_env, MDB_txn, MDB_val, mdb_get, mdb_put, mdb_txn_abort, mdb_txn_begin, mdb_txn_commit,
-    mdb_txn_flags, mdb_txn_id, mdb_txn_prepare, result_fn,
-  },
   flag::{TransactionFlag, WriteFlag},
+  internal::{
+    AsRawPtr,
+    ffi::{
+      MDB_env, MDB_txn, MDB_val, mdb_get, mdb_put, mdb_txn_abort, mdb_txn_begin, mdb_txn_commit,
+      mdb_txn_flags, mdb_txn_id, mdb_txn_prepare, result_fn,
+    },
+  },
   value::ValueRef,
 };
-use std::{ffi::c_uint, marker::PhantomData, ptr::null_mut};
+use core::{ffi::c_uint, marker::PhantomData, ptr::null_mut};
 
 pub struct Txn<'a> {
   handle: *mut MDB_txn,
@@ -17,13 +21,18 @@ pub struct Txn<'a> {
 }
 
 impl<'a> Txn<'a> {
-  pub fn new(env: *mut MDB_env, flags: TransactionFlag) -> Result<Self, LmdbError> {
-    if env.is_null() {
-      return Err(ErrorKind::NullHandle.into());
-    }
-
+  pub fn new<R, W>(env: &'a Env<R, W>, flags: TransactionFlag) -> Result<Self, LmdbError>
+  where
+    R: ReadMarker,
+    W: WriteMarker,
+  {
     let mut txn: *mut MDB_txn = null_mut();
-    result_fn!(mdb_txn_begin(env, null_mut(), flags.into_inner(), &mut txn))?;
+    result_fn!(mdb_txn_begin(
+      env.as_raw_ptr(),
+      null_mut(),
+      flags.into_inner(),
+      &mut txn
+    ))?;
 
     Ok(Self {
       handle: txn,
@@ -49,11 +58,6 @@ impl<'a> Txn<'a> {
     })
   }
 
-  #[inline]
-  pub const fn as_raw_ptr(&self) -> *mut MDB_txn {
-    self.handle
-  }
-
   pub fn get<'b>(
     &self,
     db_handle: DbHandle,
@@ -66,7 +70,7 @@ impl<'a> Txn<'a> {
     };
 
     let result = result_fn!(mdb_get(
-      self.as_raw_ptr(),
+      self.handle,
       db_handle,
       core::ptr::from_ref(key).cast_mut(),
       &mut data
@@ -98,6 +102,15 @@ impl<'a> Txn<'a> {
       core::ptr::from_ref(data).cast_mut(),
       flags.into_inner()
     ))
+  }
+}
+
+impl<'a> AsRawPtr for Txn<'a> {
+  type Return = MDB_txn;
+
+  #[inline]
+  fn as_raw_ptr(&self) -> *mut Self::Return {
+    self.handle
   }
 }
 
