@@ -19,7 +19,7 @@
 {%- block content -%}
   <div 
     class="flex flex-col gap-4"
-    hx-get="{{base_path}}/connection/?section=info_cards"
+    hx-get="{{base_path}}/connection/?section={{ConnectionPageSection::InfoCards}}"
     hx-trigger="every 15s"
     hx-swap="innerMorph"
     hx-indicator="#indicator"

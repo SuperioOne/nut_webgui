@@ -1,6 +1,6 @@
 use crate::http::{
   ServerState,
-  hypermedia::{error::ErrorPage, util::RenderWithConfig},
+  hypermedia::{error::ErrorPage, util::render_extra::RenderWithConfig},
 };
 use askama::Template;
 use axum::{
@@ -19,6 +19,6 @@ pub async fn get_themes(state: State<Arc<ServerState>>) -> Result<Response, Erro
   let template = ThemesTemplate {
     default_theme: state.config.default_theme.as_deref(),
   };
-
-  Ok(Html(template.render_with_config(&state.config, None)?).into_response())
+  let body = template.render_with_config(&state.config, None)?;
+  Ok(Html(body).into_response())
 }

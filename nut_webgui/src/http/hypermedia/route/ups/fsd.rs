@@ -1,11 +1,11 @@
-use std::sync::Arc;
-
 use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
   http::hypermedia::{
-    error::ErrorPage, not_found::NotFound, notification::NotificationTemplate,
-    semantic_type::SemanticType, util::RenderWithConfig,
+    error::ErrorPage,
+    not_found::NotFound,
+    notification::NotificationTemplate,
+    util::{render_extra::RenderWithConfig, semantic_type::SemanticType},
   },
   state::ServerState,
 };
@@ -14,6 +14,7 @@ use axum::{
   extract::{Path, State},
   response::{Html, IntoResponse, Response},
 };
+use std::sync::Arc;
 use tracing::{error, info};
 use upsmc::UpsName;
 
@@ -86,5 +87,6 @@ pub async fn post(
     }
   };
 
-  Ok(Html(template.render_with_config(&state.config, session.as_ref())?).into_response())
+  let body = template.render_with_config(&state.config, session.as_ref())?;
+  Ok(Html(body).into_response())
 }

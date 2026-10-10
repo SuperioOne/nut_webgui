@@ -2,8 +2,10 @@ use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
   http::hypermedia::{
-    error::ErrorPage, not_found::NotFound, notification::NotificationTemplate,
-    semantic_type::SemanticType, util::RenderWithConfig,
+    error::ErrorPage,
+    not_found::NotFound,
+    notification::NotificationTemplate,
+    util::{render_extra::RenderWithConfig, semantic_type::SemanticType},
   },
   state::ServerState,
 };
@@ -97,6 +99,7 @@ pub async fn post(
         .set_level(SemanticType::Error)
     }
   };
+  let body = template.render_with_config(&state.config, session.as_ref())?;
 
-  Ok(Html(template.render_with_config(&state.config, session.as_ref())?).into_response())
+  Ok(Html(body).into_response())
 }

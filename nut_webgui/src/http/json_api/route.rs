@@ -37,7 +37,7 @@ macro_rules! request_auth_client {
           "Insufficient UPSD configuration",
           axum::http::StatusCode::FORBIDDEN,
         )
-        .with_detail("Operation requires valid username and password to be configured for the UPSD connection.".into()),
+        .with_detail("Operation requires valid username and password to be configured for the UPSD connection."),
       ),
     }
   };

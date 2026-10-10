@@ -1,1 +1,7 @@
 tab_spaces = 2
+
+# Unstable options
+# imports_layout = "Horizontal"
+# merge_imports = true
+# struct_field_align_threshold = 25
+# enum_discrim_align_threshold = 25

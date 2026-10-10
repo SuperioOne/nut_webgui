@@ -69,7 +69,7 @@ where
       }
       Err(_) => {
         let problem_detail = ProblemDetail::new("Unauthorized", StatusCode::UNAUTHORIZED)
-          .with_detail("Authorization required.".to_owned());
+          .with_detail("Authorization required.");
 
         Box::pin(async move {
           let mut response = problem_detail.into_response();

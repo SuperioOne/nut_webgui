@@ -9,7 +9,6 @@ use std::sync::Arc;
 
 pub async fn post(state: State<Arc<ServerState>>) -> Result<Response, ErrorPage> {
   let redirect_path = format!("{}/", state.config.http_server.base_path);
-
   let cookie = Cookie::build((AUTH_COOKIE_NAME, ""))
     .http_only(true)
     .same_site(SameSite::Strict)
@@ -18,7 +17,6 @@ pub async fn post(state: State<Arc<ServerState>>) -> Result<Response, ErrorPage>
     .build();
 
   let mut response = Redirect::to(&redirect_path).into_response();
-
   response.headers_mut().insert(
     header::SET_COOKIE,
     HeaderValue::from_str(&cookie.to_string())?,

@@ -25,7 +25,7 @@
         <div class="filter">
           <input
             class="btn btn-sm btn-square filter-reset"
-            hx-get="{{base_path}}/?section=device_container"
+            hx-get="{{base_path}}/?section={{HomePageSection::DeviceContainer}}"
             hx-indicator="#indicator"
             hx-push-url="{{base_path}}/"
             hx-target="#device_container"
@@ -38,7 +38,7 @@
             <input
               aria-label="{{value}}"
               class="btn btn-sm"
-              hx-get="{{base_path}}/?section=device_container"
+              hx-get="{{base_path}}/?section={{HomePageSection::DeviceContainer}}"
               hx-indicator="#indicator"
               hx-push-url="{{base_path}}/?namespace={{value | urlencode_strict}}"
               hx-target="#device_container"
@@ -59,12 +59,12 @@
       {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
       <div id="device_container">
         <div
-          hx-get="{{base_path}}/?section=device_table{%- if let Some(namespace) = active_namespace -%} &namespace={{namespace}} {%- endif -%}"
+          hx-get="{{base_path}}/?section={{HomePageSection::DeviceList}}{%- if let Some(namespace) = active_namespace -%} &namespace={{namespace}} {%- endif -%}"
           hx-indicator="#indicator"
           hx-swap="innerMorph"
-          hx-trigger="every 15s"
+          hx-trigger="every 10s"
         >
-          {%- block device_table -%}
+          {%- block device_list -%}
             {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
 
             {% if rows_html.is_empty() -%}
@@ -78,7 +78,7 @@
                 {%- endfor -%}
               </nut-search-list>
             {%- endif -%}
-          {%- endblock device_table -%}
+          {%- endblock device_list -%}
         </div>
       </div>
     {%- endblock device_container -%}

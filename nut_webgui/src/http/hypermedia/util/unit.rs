@@ -20,19 +20,19 @@ macro_rules! impl_unit {
     #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
     pub struct $type {
       raw_value: f64,
-      semantic_type: $crate::http::hypermedia::semantic_type::SemanticType
+      semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType
     }
 
-    impl $crate::http::hypermedia::unit::UnitDisplay for $type {
+    impl $crate::http::hypermedia::util::unit::UnitDisplay for $type {
       type RawValue = f64;
 
       #[inline]
-      fn get_semantic_type(&self) -> $crate::http::hypermedia::semantic_type::SemanticType {
+      fn get_semantic_type(&self) -> $crate::http::hypermedia::util::semantic_type::SemanticType {
         self.semantic_type
       }
 
       #[inline]
-      fn set_semantic_type(&mut self, semantic_type: $crate::http::hypermedia::semantic_type::SemanticType)  {
+      fn set_semantic_type(&mut self, semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType)  {
         self.semantic_type = semantic_type
       }
 
@@ -54,7 +54,7 @@ macro_rules! impl_unit {
       fn from(value: f64) -> Self {
         Self {
           raw_value: value,
-          semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info
+          semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType::Info
         }
       }
     }
@@ -66,7 +66,7 @@ macro_rules! impl_unit {
         match value.as_lossy_f64() {
           Some(v) => Ok(Self {
             raw_value: v,
-            semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,
+            semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType::Info,
           }),
           None => Err(UnsupportedValueType),
         }
@@ -80,7 +80,7 @@ macro_rules! impl_unit {
         match value.as_lossy_f64() {
           Some(v) => Ok(Self {
             raw_value: v,
-            semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,
+            semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType::Info,
           }),
           None => Err(UnsupportedValueType),
         }
@@ -94,19 +94,19 @@ macro_rules! impl_unit {
     #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
     pub struct $type {
       raw_value: i64,
-      semantic_type: $crate::http::hypermedia::semantic_type::SemanticType
+      semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType
     }
 
-    impl $crate::http::hypermedia::unit::UnitDisplay for $type {
+    impl $crate::http::hypermedia::util::unit::UnitDisplay for $type {
       type RawValue = i64;
 
       #[inline]
-      fn get_semantic_type(&self) -> $crate::http::hypermedia::semantic_type::SemanticType {
+      fn get_semantic_type(&self) -> $crate::http::hypermedia::util::semantic_type::SemanticType {
         self.semantic_type
       }
 
       #[inline]
-      fn set_semantic_type(&mut self, semantic_type: $crate::http::hypermedia::semantic_type::SemanticType)  {
+      fn set_semantic_type(&mut self, semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType)  {
         self.semantic_type = semantic_type
       }
 
@@ -128,7 +128,7 @@ macro_rules! impl_unit {
       fn from(value: i64) -> Self {
         Self {
           raw_value: value,
-          semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info
+          semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType::Info
         }
       }
     }
@@ -140,7 +140,7 @@ macro_rules! impl_unit {
         match value.as_lossy_i64() {
           Some(v) => Ok(Self {
             raw_value: v,
-            semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,
+            semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType::Info,
           }),
           None => Err(UnsupportedValueType),
         }
@@ -154,7 +154,7 @@ macro_rules! impl_unit {
         match value.as_lossy_i64() {
           Some(v) => Ok(Self {
             raw_value: v,
-            semantic_type: $crate::http::hypermedia::semantic_type::SemanticType::Info,
+            semantic_type: $crate::http::hypermedia::util::semantic_type::SemanticType::Info,
           }),
           None => Err(UnsupportedValueType),
         }

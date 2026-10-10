@@ -10,10 +10,10 @@ use std::sync::Arc;
 use tokio::task::spawn_blocking;
 
 pub async fn get(State(state): State<Arc<ServerState>>) -> Result<Response, ProblemDetail> {
-  // NOTE: prometheus_client::collector::Collector trait only allows blocking code, and
-  // trying to convert already existing upsd state into openmetric format without data
-  // duplication is mostly...meh... In the future, prometheus_client may be dropped in
-  // favor of custom encoder.
+  // NOTE: prometheus_client::collector::Collector trait only allows blocking
+  // code (see UpsdStatCollector), and trying to convert already existing upsd
+  // state into openmetric format without data duplication is mostly...meh... In
+  // the future, prometheus_client may be dropped in favor of custom encoder.
   match spawn_blocking(move || {
     let mut buffer = String::new();
     encode(&mut buffer, &state.openmetrics).map(|_| buffer)

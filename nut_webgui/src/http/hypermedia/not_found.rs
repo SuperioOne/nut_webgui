@@ -1,6 +1,6 @@
 use crate::{
   auth::user_session::UserSession, config::ServerConfig,
-  http::hypermedia::util::RenderWithConfig as _,
+  http::hypermedia::util::render_extra::RenderWithConfig as _,
 };
 use askama::Template;
 use axum::response::IntoResponse;

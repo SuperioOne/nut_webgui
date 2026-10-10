@@ -2,8 +2,9 @@ use crate::{
   auth::{permission::Permissions, user_session::UserSession},
   config::ServerConfig,
   http::hypermedia::{
-    error::ErrorPage, notification::NotificationTemplate, semantic_type::SemanticType,
-    util::RenderWithConfig,
+    error::ErrorPage,
+    notification::NotificationTemplate,
+    util::{render_extra::RenderWithConfig, semantic_type::SemanticType},
   },
 };
 use axum::{

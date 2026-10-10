@@ -3,7 +3,7 @@ use crate::{
     AUTH_COOKIE_NAME, password_str::PasswordStr, token_signer::TokenSigner,
     user_session::UserSession, username::Username,
   },
-  http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
+  http::hypermedia::{error::ErrorPage, util::render_extra::RenderWithConfig},
   state::ServerState,
 };
 use askama::Template;
@@ -39,8 +39,8 @@ pub async fn get(
   {
     Ok(Redirect::to(&redirect_path).into_response())
   } else {
-    let template = LoginTemplate::default().render_with_config(&state.config, None)?;
-    Ok(Html(template).into_response())
+    let html_body = LoginTemplate::default().render_with_config(&state.config, None)?;
+    Ok(Html(html_body).into_response())
   }
 }
 

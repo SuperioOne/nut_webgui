@@ -14,7 +14,7 @@
     {%- else -%}
       class="tab"
     {%- endif %}
-    hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{name | urlencode_strict}}?tab={{tab_name}}&section=tab_content"
+    hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{name | urlencode_strict}}?tab={{tab_name}}&section={{UpsPageSection::TabContent}}"
     hx-indicator="#indicator"
     hx-target="#tab-content"
     hx-swap="innerHTML"
@@ -47,7 +47,7 @@
           <div
             id="ups_status"
             class="flex flex-row flex-wrap gap-1 justify-center"
-            hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?section=status"
+            hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?section={{UpsPageSection::Status}}"
             hx-indicator="#indicator"
             hx-swap="innerMorph"
             hx-trigger="every {{upsd_config.poll_interval}}s"
@@ -55,19 +55,28 @@
             {%- block ups_status -%}
               {%- match device.get_beeper_status() -%}
                 {%- when Some with (true) -%}
-                  <span class="badge badge-outline badge-success text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is enabled">
+                  <span
+                    class="badge badge-outline badge-success text-nowrap text-xs tooltip tooltip-bottom"
+                    data-tip="Beeper is enabled"
+                  >
                     {%- call icons::get_svg("volume-2", 16) -%}{%- endcall -%}
                     <span class="uppercase">Beeper-On</span>
                   </span>
                 {%- when Some with (false) -%}
-                  <span class="badge badge-outline badge-warning text-nowrap text-xs tooltip tooltip-bottom" data-tip="Beeper is disabled">
+                  <span
+                    class="badge badge-outline badge-warning text-nowrap text-xs tooltip tooltip-bottom"
+                    data-tip="Beeper is disabled"
+                  >
                     {%- call icons::get_svg("volume-x", 16) -%}{%- endcall -%}
                     <span class="uppercase">Beeper-Off</span>
                   </span>
                 {%- when None -%}
               {%- endmatch -%}
-              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(*device.status) -%}
-                <span class="badge badge-outline text-nowrap text-xs tooltip tooltip-bottom {{status_detail.class.as_badge()}}" data-tip="{{status_detail.desc}}">
+              {%- for status_detail in crate::http::hypermedia::util::ups_status::StatusDetailIter::new(*device.status) -%}
+                <span 
+                  class="badge badge-outline text-nowrap text-xs tooltip tooltip-bottom {{status_detail.class.as_badge()}}" 
+                  data-tip="{{status_detail.desc}}"
+                >
                   {%- call icons::get_svg(status_detail.icon_name, 16) -%}{%- endcall -%}
                   <span class="uppercase">{{status_detail.name}}</span>
                 </span>
@@ -79,28 +88,63 @@
     </div>
     <div id="tab-content" class="flex flex-col gap-6">
       {%- block tab_content -%}
-        {%- let permission = askama::get_value::<crate::auth::permission::Permissions>("USER_PERMISSION")? -%}
+        {%- if let Some(tab) = tab_template -%}
+          {%- let permission = askama::get_value::<crate::auth::permission::Permissions>("USER_PERMISSION")? -%}
+          {%- let active_tab_name = tab.get_tab_name() -%}
+          <div id="tab-control" class="flex flex-row justify-center">
+            <div role="tablist" class="md:w-fit tabs tabs-box w-full">
 
-        <div id="tab-control" class="flex flex-row justify-center">
-          <div role="tablist" class="md:w-fit tabs tabs-box w-full">
-            {%- let template_type = tab_template.as_type_str() -%}
+              {%- call tab_button(
+                device.name,
+                tab_name = TabName::Grid,
+                title = "Grid View",
+                icon = "grid",
+                is_active = (active_tab_name == TabName::Grid))
+              -%}{%- endcall -%}
 
-            {%- call tab_button(device.name, tab_name = "grid", title = "Grid View", icon = "grid", is_active = (template_type == "grid")) -%}{%- endcall -%}
-            {%- call tab_button(device.name, tab_name = "variables", title = "Variables", icon = "table", is_active = (template_type == "variables")) -%}{%- endcall -%}
-            {%- call tab_button(device.name, tab_name = "clients", title = "Clients", icon = "monitor", is_active = (template_type == "clients")) -%}{%- endcall -%}
+              {%- call tab_button(
+                device.name,
+                tab_name = TabName::Variables,
+                title = "Variables",
+                icon = "table",
+                is_active = (active_tab_name == TabName::Variables))
+              -%}{%- endcall -%}
 
-            {%- if permission.has(crate::auth::permission::Permissions::FSD) || permission.has(crate::auth::permission::Permissions::INSTCMD) -%}
-              {%- call tab_button(device.name, tab_name = "commands", title = "Commands", icon = "play", is_active = (template_type == "commands")) -%}{%- endcall -%}
-            {%- endif -%}
+              {%- call tab_button(
+                device.name,
+                tab_name = TabName::Clients,
+                title = "Clients",
+                icon = "monitor",
+                is_active = (active_tab_name == TabName::Clients))
+              -%}{%- endcall -%}
 
-            {%- if permission.has(crate::auth::permission::Permissions::SETVAR) -%}
-              {%- call tab_button(device.name, tab_name = "rw", title = "Edit", icon = "edit", is_active = (template_type == "rw")) -%}{%- endcall -%}
-            {%- endif -%}
+              {%- if permission.has(crate::auth::permission::Permissions::FSD)
+                || permission.has(crate::auth::permission::Permissions::INSTCMD)
+              -%}
+                {%- call tab_button(
+                  device.name,
+                  tab_name = TabName::Commands,
+                  title = "Commands",
+                  icon = "play",
+                  is_active = (active_tab_name == TabName::Commands))
+                -%}{%- endcall -%}
+              {%- endif -%}
+
+              {%- if permission.has(crate::auth::permission::Permissions::SETVAR) -%}
+                {%- call tab_button(
+                  device.name,
+                  tab_name = TabName::Rw,
+                  title = "Edit",
+                  icon = "edit",
+                  is_active = (active_tab_name == TabName::Rw))
+                -%}{%- endcall -%}
+              {%- endif -%}
+            </div>
           </div>
-        </div>
-        <div id="tab-body">
-          {{tab_template | safe}}
-        </div>
+          <div id="tab-body">
+            {{tab | safe}}
+          </div>
+        {%- endif -%}
       {%- endblock tab_content -%}
     </div>
   </div>

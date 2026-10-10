@@ -1,4 +1,4 @@
-use crate::http::hypermedia::semantic_type::SemanticType;
+use crate::http::hypermedia::util::semantic_type::SemanticType;
 use askama::Template;
 use core::time::Duration;
 use std::borrow::Cow;

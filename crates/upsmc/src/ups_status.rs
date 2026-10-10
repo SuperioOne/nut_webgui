@@ -140,6 +140,11 @@ impl UpsStatus {
   }
 
   #[inline]
+  pub const fn intersect(self, value: UpsStatus) -> Self {
+    Self(self.0 & value.0)
+  }
+
+  #[inline]
   pub const fn len(&self) -> u32 {
     self.0.count_ones()
   }

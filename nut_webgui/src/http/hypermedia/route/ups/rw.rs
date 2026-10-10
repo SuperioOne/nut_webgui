@@ -6,8 +6,7 @@ use crate::{
     not_found::NotFound,
     notification::NotificationTemplate,
     route::ups::RwFormTemplate,
-    semantic_type::SemanticType,
-    util::{RenderWithConfig, htmx_swap},
+    util::{htmx_swap, render_extra::RenderWithConfig, semantic_type::SemanticType},
   },
   state::{ServerState, VarDetail},
 };

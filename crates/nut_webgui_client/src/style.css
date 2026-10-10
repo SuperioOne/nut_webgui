@@ -171,16 +171,16 @@
   }
 
   .bar-gauge {
-    --seg-size: 12px;
-    --seg-gap: 2px;
+    --seg-size: calc(100% / 4);
+    --seg-gap: 1px;
 
     position: relative;
     width: 100%;
-    height: 110px;
+    height: 100%;
     overflow: hidden;
     border-radius: 3px;
     background: repeating-linear-gradient(
-      to top,
+      to right,
       var(--color-neutral) 0 var(--seg-size),
       transparent var(--seg-size) calc(var(--seg-size) + var(--seg-gap))
     );
@@ -190,15 +190,11 @@
 
   .bar-gauge-fill {
     --gauge-fill-color: var(--color-success);
+    background: var(--gauge-fill-color);
     position: absolute;
-    bottom: 0;
+    top: 0;
     left: 0;
-    width: 100%;
-    background: repeating-linear-gradient(
-      to top,
-      var(--gauge-fill-color) 0 var(--seg-size),
-      transparent var(--seg-size) calc(var(--seg-size) + var(--seg-gap))
-    );
+    height: 100%;
   }
 
   .bar-gauge-success .bar-gauge-fill {
@@ -215,6 +211,11 @@
 
   .bar-gauge-warning .bar-gauge-fill {
     --gauge-fill-color: var(--color-warning);
+  }
+
+  .bar-gauge-text {
+    @apply absolute top-0 left-0 h-full w-full text-center font-bold text-shadow-lg brightness-150;
+    color: var(--gauge-text-color);
   }
 
   nut-graph-node,

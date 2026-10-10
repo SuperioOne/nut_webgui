@@ -21,7 +21,7 @@
     <div id="server-info" class="content-card overflow-x-auto">
       <table class="table table-fixed">
         <tbody>
-            {%- let app_info = crate::http::hypermedia::app_info::APP_INFO -%}
+            {%- let app_info = crate::http::hypermedia::util::app_info::APP_INFO -%}
             <tr>
               <td class="font-bold text-primary">Application version</td>
               <td>{{app_info.version}}</td>

@@ -2,8 +2,10 @@ use crate::{
   auth::user_session::UserSession,
   http::hypermedia::{
     error::ErrorPage,
-    unit::UnitDisplay,
-    util::{RenderWithConfig, normalize_id},
+    util::{
+      named_enum::create_named_enum, normalize_id, render_extra::RenderWithConfig,
+      unit::UnitDisplay,
+    },
   },
   state::{DeviceEntry, ServerState, UpsdState},
 };
@@ -16,15 +18,25 @@ use axum::{
 use serde::Deserialize;
 use std::sync::Arc;
 
+create_named_enum!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+    named_enum HomePageSection {
+        /// Main container with HMTX polling
+        DeviceContainer = "device_container",
+        /// The actual device list block with fuzzy search list
+        DeviceList      = "device_list"
+    }
+);
+
 #[derive(Debug)]
-pub struct DeviceTableRow<'a> {
+struct DeviceTableRow<'a> {
   id: String,
   device: &'a DeviceEntry,
 }
 
 #[derive(Deserialize)]
 pub struct HomeFragmentQuery {
-  section: Option<Box<str>>,
+  section: Option<HomePageSection>,
   namespace: Option<Box<str>>,
 }
 
@@ -34,7 +46,7 @@ struct RenderedRows<'a> {
 }
 
 #[derive(Template)]
-#[template(path = "+page.html", blocks = ["device_table", "device_container"])]
+#[template(path = "+page.html", blocks = ["device_list", "device_container"])]
 struct HomeTemplate<'a> {
   rows_html: Vec<RenderedRows<'a>>,
   active_namespace: Option<&'a str>,
@@ -122,21 +134,15 @@ pub async fn get(
     namespaces,
   };
 
-  let response = match query.section.as_deref() {
-    Some("device_table") => Html(
-      template
-        .as_device_table()
-        .render_with_config(&state.config, session.as_ref())?,
-    )
-    .into_response(),
-    Some("device_container") => Html(
-      template
-        .as_device_container()
-        .render_with_config(&state.config, session.as_ref())?,
-    )
-    .into_response(),
-    _ => Html(template.render_with_config(&state.config, session.as_ref())?).into_response(),
-  };
+  let body = match query.section {
+    Some(HomePageSection::DeviceList) => template
+      .as_device_list()
+      .render_with_config(&state.config, session.as_ref()),
+    Some(HomePageSection::DeviceContainer) => template
+      .as_device_container()
+      .render_with_config(&state.config, session.as_ref()),
+    _ => template.render_with_config(&state.config, session.as_ref()),
+  }?;
 
-  Ok(response)
+  Ok(Html(body).into_response())
 }

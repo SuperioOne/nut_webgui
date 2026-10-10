@@ -38,8 +38,8 @@ struct StatusSyncTask {
 }
 
 struct ClientDiff {
-  pub connected: Vec<IpAddr>,
-  pub disconnected: Vec<IpAddr>,
+  connected: Vec<IpAddr>,
+  disconnected: Vec<IpAddr>,
 }
 
 impl StatusSyncService {

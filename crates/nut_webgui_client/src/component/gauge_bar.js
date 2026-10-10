@@ -22,9 +22,11 @@ export default class BarGauge extends HTMLElement {
     const value = getAttributeNumeric(this, "value") ?? 0;
     const bar_gauge = document.createElement("div");
     const bar_gauge_fill = document.createElement("div");
+    const bar_gauge_text = document.createElement("div");
     bar_gauge.classList.add("bar-gauge", ...this.classList);
     bar_gauge_fill.classList.add("bar-gauge-fill");
-    bar_gauge.replaceChildren(bar_gauge_fill);
+    bar_gauge_text.classList.add("bar-gauge-text");
+    bar_gauge.replaceChildren(bar_gauge_fill, bar_gauge_text);
 
     this.#update_value(bar_gauge, value);
     this.#container = bar_gauge;
@@ -36,12 +38,18 @@ export default class BarGauge extends HTMLElement {
    * @param {number} value
    */
   #update_value(target, value) {
-    const height = Math.max(0, Math.min(100, value));
+    const width = Math.max(0, Math.min(100, value));
     /**@type {HTMLElement | null}*/
     const fill = target.querySelector(".bar-gauge-fill");
+    const text = target.querySelector(".bar-gauge-text");
+    const val = `${width}%`;
 
     if (fill) {
-      fill.style.height = `${height}%`;
+      fill.style.width = val;
+    }
+
+    if (text) {
+      text.textContent = val;
     }
   }
 

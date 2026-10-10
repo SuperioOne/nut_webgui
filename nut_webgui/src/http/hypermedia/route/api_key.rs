@@ -9,8 +9,7 @@ use crate::{
       error::ErrorPage,
       not_found::NotFound,
       notification::NotificationTemplate,
-      semantic_type::SemanticType,
-      util::{RenderWithConfig, htmx_swap},
+      util::{htmx_swap, render_extra::RenderWithConfig, semantic_type::SemanticType},
     },
   },
 };
@@ -37,23 +36,22 @@ struct ApiKeySuccessTemplate<'a> {
   key: &'a str,
 }
 
-pub async fn get(
-  state: State<Arc<ServerState>>,
-  session: Extension<UserSession>,
-) -> Result<Response, ErrorPage> {
-  let template = ApiKeyFormTemplate {
-    error_message: None,
-  };
-
-  let response =
-    Html(template.render_with_config(&state.config, Some(&session.0))?).into_response();
-
-  Ok(response)
-}
 #[derive(Deserialize, Debug)]
 pub struct ApiKeyForm {
   permissions: Permissions,
   duration: NonZeroU64,
+}
+
+pub async fn get(
+  state: State<Arc<ServerState>>,
+  session: Extension<UserSession>,
+) -> Result<Response, ErrorPage> {
+  let body = ApiKeyFormTemplate {
+    error_message: None,
+  }
+  .render_with_config(&state.config, Some(&session.0))?;
+
+  Ok(Html(body).into_response())
 }
 
 pub async fn post(
@@ -62,7 +60,6 @@ pub async fn post(
   form: Result<Form<ApiKeyForm>, FormRejection>,
 ) -> Result<Response, ErrorPage> {
   let session = session.0;
-
   let response = match form {
     Ok(key_request) => {
       let ApiKeyForm {

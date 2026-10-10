@@ -215,7 +215,7 @@
         </div>
         <footer class="bg-base-200 flex flex-row footer p-3">
           <aside>
-            {%- let app_info = crate::http::hypermedia::app_info::APP_INFO -%}
+            {%- let app_info = crate::http::hypermedia::util::app_info::APP_INFO -%}
             <a
               class="font-light link text-xs"
               href="{{app_info.repository}}/releases/tag/v{{app_info.version}}"

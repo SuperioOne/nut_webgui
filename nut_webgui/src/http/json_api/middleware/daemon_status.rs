@@ -70,8 +70,7 @@ where
                 ConnectionStatus::Dead => Err(
                   ProblemDetail::new("No UPSD connection", StatusCode::SERVICE_UNAVAILABLE)
                     .with_detail(
-                      "Server is unable to connect UPSD. See application logs for more details."
-                        .into(),
+                      "Server is unable to connect UPSD. See application logs for more details.",
                     ),
                 ),
                 ConnectionStatus::NotReady => Err(ProblemDetail::new(
@@ -85,8 +84,7 @@ where
           },
           Ok(None) => Ok(()),
           Err(err) => Err(
-            ProblemDetail::new("Unexpected path rejection", err.status())
-              .with_detail(err.body_text()),
+            ProblemDetail::new("Unexpected path rejection", err.status()).with_detail_error(err),
           ),
         };
 

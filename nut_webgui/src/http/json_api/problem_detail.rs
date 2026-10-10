@@ -7,8 +7,12 @@ use axum::{
 use serde::{Serialize, ser::SerializeStruct};
 use upsmc::error::{Error, ErrorKind};
 
-/// Generalized Http problem details response. It's based on RFC9457, but it doesn't
-/// contain `type` field.
+pub trait IntoDetailStr {
+  fn into_detail_str(self) -> String;
+}
+
+/// Generalized Http problem details response. It's based on RFC9457, but it
+/// doesn't contain `type` field.
 #[derive(Debug)]
 pub struct ProblemDetail {
   pub title: &'static str,
@@ -17,7 +21,8 @@ pub struct ProblemDetail {
 }
 
 impl ProblemDetail {
-  pub fn new(title: &'static str, status: StatusCode) -> Self {
+  #[inline]
+  pub const fn new(title: &'static str, status: StatusCode) -> Self {
     Self {
       title,
       detail: None,
@@ -26,9 +31,20 @@ impl ProblemDetail {
   }
 
   #[inline]
-  pub fn with_detail(mut self, detail: String) -> Self {
-    self.detail = Some(detail);
+  pub fn with_detail<S>(mut self, detail: S) -> Self
+  where
+    S: IntoDetailStr,
+  {
+    self.detail = Some(detail.into_detail_str());
     self
+  }
+
+  #[inline]
+  pub fn with_detail_error<E>(self, err: E) -> Self
+  where
+    E: core::error::Error,
+  {
+    self.with_detail(err.to_string())
   }
 }
 
@@ -59,104 +75,61 @@ impl IntoResponse for ProblemDetail {
 
 impl From<Error> for ProblemDetail {
   fn from(err: Error) -> Self {
-    match err.kind() {
-      ErrorKind::EmptyResponse => ProblemDetail {
-        title: "UPSD empty response",
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        detail: Some(
-          "Server is able to connect the UPSD, but it does not responding to any commands for now."
-            .to_string(),
-        ),
-      },
-      ErrorKind::IOError { .. } => ProblemDetail {
-        title: "UPSD IO error",
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        detail: Some(err.to_string()),
-      },
-      ErrorKind::ParseError { .. } => ProblemDetail {
-        title: "Invalid UPSD response",
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        detail: Some(err.to_string()),
-      },
-      ErrorKind::ProtocolError { .. } => ProblemDetail {
-        title: "UPSD protocol error",
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        detail: Some(err.to_string()),
-      },
-      ErrorKind::ConnectionPoolClosed => ProblemDetail {
-        title: "UPSD connection pool error",
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        detail: Some(err.to_string()),
-      },
-      ErrorKind::RequestTimeout => ProblemDetail {
-        title: "Request timeout",
-        status: StatusCode::INTERNAL_SERVER_ERROR,
-        detail: Some(err.to_string()),
-      },
-    }
+    let title = match err.kind() {
+      ErrorKind::EmptyResponse => "UPSD empty response",
+      ErrorKind::IOError { .. } => "UPSD IO error",
+      ErrorKind::ParseError { .. } => "Invalid UPSD response",
+      ErrorKind::ProtocolError { .. } => "UPSD protocol error",
+      ErrorKind::ConnectionPoolClosed => "UPSD connection pool error",
+      ErrorKind::RequestTimeout => "Request timeout",
+    };
+
+    ProblemDetail::new(title, StatusCode::INTERNAL_SERVER_ERROR).with_detail_error(err)
   }
 }
 
 impl From<PathRejection> for ProblemDetail {
-  fn from(value: PathRejection) -> Self {
-    match value {
-      PathRejection::FailedToDeserializePathParams(err) => ProblemDetail {
-        title: "Unable to deserialize path parameter",
-        detail: Some(err.body_text()),
-        status: err.status(),
-      },
-      PathRejection::MissingPathParams(err) => ProblemDetail {
-        title: "Missing path parameter",
-        detail: Some(err.body_text()),
-        status: err.status(),
-      },
-      c => ProblemDetail {
-        title: "Invalid path",
-        detail: Some(c.body_text()),
-        status: c.status(),
-      },
-    }
+  fn from(err: PathRejection) -> Self {
+    let title = match err {
+      PathRejection::FailedToDeserializePathParams(_) => "Unable to deserialize path parameter",
+      PathRejection::MissingPathParams(_) => "Missing path parameter",
+      _ => "Invalid path",
+    };
+
+    ProblemDetail::new(title, err.status()).with_detail_error(err)
   }
 }
 
 impl From<JsonRejection> for ProblemDetail {
-  fn from(value: JsonRejection) -> Self {
-    match value {
-      JsonRejection::JsonDataError(err) => ProblemDetail {
-        title: "Json data error",
-        detail: Some(err.body_text()),
-        status: err.status(),
-      },
-      JsonRejection::JsonSyntaxError(err) => ProblemDetail {
-        title: "Json syntax error",
-        detail: Some(err.body_text()),
-        status: err.status(),
-      },
-      JsonRejection::MissingJsonContentType(err) => ProblemDetail {
-        title: "Missing content type",
-        detail: Some(err.body_text()),
-        status: err.status(),
-      },
-      JsonRejection::BytesRejection(err) => ProblemDetail {
-        title: "Bytes rejection",
-        detail: Some(err.body_text()),
-        status: err.status(),
-      },
-      c => ProblemDetail {
-        title: "Json content issue",
-        detail: Some(c.body_text()),
-        status: c.status(),
-      },
-    }
+  fn from(err: JsonRejection) -> Self {
+    let title = match err {
+      JsonRejection::JsonDataError(_) => "Json data error",
+      JsonRejection::JsonSyntaxError(_) => "Json syntax error",
+      JsonRejection::MissingJsonContentType(_) => "Missing content type",
+      JsonRejection::BytesRejection(_) => "Bytes rejection",
+      _ => "Json content issue",
+    };
+
+    ProblemDetail::new(title, err.status()).with_detail_error(err)
   }
 }
 
 impl From<serde_json::error::Error> for ProblemDetail {
   fn from(err: serde_json::error::Error) -> Self {
-    ProblemDetail {
-      title: "Json error",
-      detail: Some(err.to_string()),
-      status: StatusCode::INTERNAL_SERVER_ERROR,
-    }
+    ProblemDetail::new("Json error", StatusCode::INTERNAL_SERVER_ERROR).with_detail_error(err)
+  }
+}
+
+impl IntoDetailStr for &str {
+  #[inline]
+  fn into_detail_str(self) -> String {
+    self.to_owned()
+  }
+}
+
+impl IntoDetailStr for String {
+  #[inline]
+  fn into_detail_str(self) -> String {
+    self
   }
 }

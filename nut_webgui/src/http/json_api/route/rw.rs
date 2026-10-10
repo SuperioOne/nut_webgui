@@ -58,7 +58,7 @@ pub async fn patch(
             if trimmed.is_empty() {
               Err(
                 ProblemDetail::new("Empty value", StatusCode::BAD_REQUEST)
-                  .with_detail("Value cannot be empty or consist of only whitespaces.".to_owned()),
+                  .with_detail("Value cannot be empty or consist of only whitespaces."),
               )
             } else if trimmed.len() > *max_len {
               Err(
@@ -117,7 +117,7 @@ pub async fn patch(
                 }
               }
               _ => Err(ProblemDetail::new("Malformed driver response", StatusCode::INTERNAL_SERVER_ERROR).with_detail(
-                "Cannot process request since the reported min-max values by ups device are not number.".to_owned(),
+                "Cannot process request since the reported min-max values by ups device are not number.",
               ),
             ),
             }

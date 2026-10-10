@@ -1,9 +1,10 @@
-use std::sync::Arc;
-
 use crate::{
   auth::user_session::UserSession,
   config::UpsdConfig,
-  http::hypermedia::{error::ErrorPage, util::RenderWithConfig},
+  http::hypermedia::{
+    error::ErrorPage,
+    util::{named_enum::create_named_enum, render_extra::RenderWithConfig},
+  },
   state::{DaemonState, ServerState},
 };
 use askama::Template;
@@ -13,10 +14,18 @@ use axum::{
   response::{Html, IntoResponse, Response},
 };
 use serde::Deserialize;
+use std::sync::Arc;
 
-#[derive(Deserialize)]
+create_named_enum!(
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    named_enum ConnectionPageSection {
+        InfoCards = "info_cards"
+    }
+);
+
+#[derive(Deserialize, Clone, Copy)]
 pub struct ConnectionFragmentQuery {
-  section: Option<String>,
+  section: Option<ConnectionPageSection>,
 }
 
 struct RenderedUpsdInfo<'a> {
@@ -43,12 +52,11 @@ pub async fn get(
   State(state): State<Arc<ServerState>>,
   session: Option<Extension<UserSession>>,
 ) -> Result<Response, ErrorPage> {
-  let mut upsd_html = Vec::new();
+  let mut upsd_html = Vec::with_capacity(state.upsd_servers.len());
   let session = session.map(|v| v.0);
 
   for upsd in state.upsd_servers.values() {
     let daemon_state = upsd.daemon_state.read().await;
-
     let html = UpsdInfoTemplate {
       state: &daemon_state,
       config: &upsd.config,
@@ -61,20 +69,15 @@ pub async fn get(
       name: &upsd.namespace,
     });
   }
-
   upsd_html.sort_unstable_by_key(|v| v.name);
 
   let template = ConnectionPageTemplate { upsd_html };
+  let body = match query.section {
+    Some(ConnectionPageSection::InfoCards) => template
+      .as_info_cards()
+      .render_with_config(&state.config, session.as_ref()),
+    _ => template.render_with_config(&state.config, session.as_ref()),
+  }?;
 
-  let response = match query.section.as_deref() {
-    Some("info_cards") => Html(
-      template
-        .as_info_cards()
-        .render_with_config(&state.config, session.as_ref())?,
-    )
-    .into_response(),
-    _ => Html(template.render_with_config(&state.config, session.as_ref())?).into_response(),
-  };
-
-  Ok(response)
+  Ok(Html(body).into_response())
 }

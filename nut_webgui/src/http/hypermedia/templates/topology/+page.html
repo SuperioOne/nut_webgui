@@ -189,10 +189,10 @@
     id="topology_graph"
     tabindex="0"
     class="block grab-zone h-full object-none touch-none w-full"
-    hx-get="{{base_path}}/topology?section=graph_nodes"
+    hx-get="{{base_path}}/topology?section={{TopologyPageSection::GraphNodes}}"
     hx-indicator="#indicator"
-    hx-swap="innerMorph"
-    hx-trigger="every 15s"
+    hx-swap="innerHTML"
+    hx-trigger="every 10s"
   >
     {%- block graph_nodes -%}
     {%- let base_path = askama::get_value::<crate::config::uri_path::UriPath>("HTTP_SERVER__BASE_PATH")? -%}
@@ -216,68 +216,76 @@
                 {%- endfor -%}
               </div>
             </div>
-            <div>
+            <div class="flex flex-col gap-1 opacity-80 text-nowrap text-sm w-full">
               {%- if let Some(mfr) = device.device_id.manufacturer -%}
-                <p class="opacity-70 text-nowrap text-xs"><b>MFR:</b> {{mfr}}</p>
+                <div class="flex flex-row gap-1 w-full">
+                  <span class="font-bold w-12">MFR</span>
+                  <span class="font-bold">:</span>
+                  <span class="grow">{{mfr}}</span>
+                </div>
               {%- endif -%}
               {%- if let Some(model) = device.device_id.model -%}
-                <p class="opacity-70 text-nowrap text-xs"><b>MOD:</b> {{model}}</p>
+                <div class="flex flex-row gap-1 w-full">
+                  <span class="font-bold w-12">MOD</span>
+                  <span class="font-bold">:</span>
+                  <span class="grow">{{model}}</span>
+                </div>
               {%- endif -%}
               {%- if let Some(sn) = device.device_id.serial -%}
-                <p class="opacity-70 text-nowrap text-xs"><b>SN:</b> {{sn}}</p>
+                <div class="flex flex-row gap-1 w-full">
+                  <span class="font-bold w-12">SN</span>
+                  <span class="font-bold">:</span>
+                  <span class="grow">{{sn}}</span>
+                </div>
               {%- endif -%}
               {%- if let Some(rt) = device.runtime -%}
-              <p class="opacity-70 text-nowrap text-xs"><b>RT:</b>
-                <nut-time-display
-                  class="font-bold text-success {{rt.get_semantic_type().as_text()}}"
-                  value="{{rt.as_raw_value()}}"
-                >
-                </nut-time-display>
-              </p>
-              {%- endif -%}
-            </div>
-            <div class="gap-1 grid grid-cols-2">
-              <div class="flex flex-col gap-1 items-center">
-                <div class="font-bold opacity-70 text-center text-xs w-full">
-                  BATT
-                </div>
-                {%- if let Some(battery) = device.battery -%}
-                  <nut-bar-gauge
-                    class="w-24 {{battery.get_semantic_type().as_bar_gauge()}}"
-                    value="{{battery.as_raw_value()}}"
+                <div class="flex flex-row gap-1 w-full">
+                  <span class="font-bold w-12">RT</span>
+                  <span class="font-bold">:</span>
+                  <nut-time-display
+                    class="font-bold grow text-success {{rt.get_semantic_type().as_text()}}"
+                    value="{{rt.as_raw_value()}}"
                   >
-                  </nut-bar-gauge>
-                  <div class="opacity-70 text-center text-xs w-full">
-                    {{battery}}
+                  </nut-time-display>
+                </div>
+              {%- endif -%}
+              <div class="flex flex-row gap-1 items-center w-full">
+                <span class="font-bold w-12">BATT</span>
+                <span class="font-bold">:</span>
+                {%- if let Some(battery) = device.battery -%}
+                  <div class="grow">
+                    <nut-bar-gauge
+                      class="h-6 w-full {{battery.get_semantic_type().as_bar_gauge()}}"
+                      value="{{battery.as_raw_value()}}"
+                    >
+                    </nut-bar-gauge>
                   </div>
                 {%- else -%}
-                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">
+                  <span class="grow">
                     N/A
-                  </div>
+                  </span>
                 {%- endif -%}
               </div>
-              <div class="flex flex-col gap-1 items-center">
-                <div class="font-bold opacity-70 text-center text-xs w-full">
-                  LOAD
-                </div>
+              <div class="flex flex-row gap-1 items-center w-full">
+                <span class="font-bold w-12">LOAD</span>
+                <span class="font-bold">:</span>
                 {%- if let Some(load) = device.load -%}
-                  <nut-bar-gauge
-                    class="w-24 {{load.get_semantic_type().as_bar_gauge()}}"
-                    value="{{load.as_raw_value()}}"
-                  >
-                  </nut-bar-gauge>
-                  <div class="opacity-70 text-center text-xs w-full">
-                    {{load}}
+                  <div class="grow">
+                    <nut-bar-gauge
+                      class="h-6 w-full {{load.get_semantic_type().as_bar_gauge()}}"
+                      value="{{load.as_raw_value()}}"
+                    >
+                    </nut-bar-gauge>
                   </div>
                 {%- else -%}
-                  <div class="font-bold my-4 opacity-50 text-center text-xs w-full">
+                  <span class="grow">
                     N/A
-                  </div>
+                  </span>
                 {%- endif -%}
               </div>
             </div>
             <div class="border-success flex flex-col gap-1 items-center justify-center">
-              {%- for status_detail in crate::http::hypermedia::ups_status::StatusDetailIter::new(*device.status) -%}
+              {%- for status_detail in crate::http::hypermedia::util::ups_status::StatusDetailIter::new(*device.status) -%}
                 <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
                   {{status_detail.name}}
                 </span>
@@ -285,7 +293,7 @@
             </div>
           </div>
         </nut-graph-node>
-        <nut-graph-node id="power_link_{{node_id}}">
+        <nut-graph-node id="power_link_node_{{node_id}}">
           <div class="bg-base-300 border-2 border-primary flex flex-row font-bold h-8 items-center justify-center rounded-full w-8">
             {%- call icons::get_ac_icon(22) -%}{%- endcall -%}
           </div>
@@ -301,7 +309,7 @@
             class="edge-4 edge-animate-flow edge-dashed edge-success"
           {%- endif %}
           id="power_link_{{node_id}}"
-          from="power_link_{{node_id}}"
+          from="power_link_node_{{node_id}}"
           to="{{node_id}}"
         >
           {%- if let Some(input_voltage) = device.input_voltage -%}
@@ -373,7 +381,7 @@
           from="{{edge.from}}"
           id="{{edge.get_id()}}"
           to="{{edge.to}}"
-          {%- if edge.edge_type == EdgeType::Data -%}
+          {%- if edge.edge_type == crate::http::hypermedia::util::topology_graph::EdgeType::Data -%}
             from-offset="-32"
           {%- endif -%}
         >

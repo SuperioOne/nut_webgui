@@ -2,7 +2,7 @@
 
 <div
   class="gap-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-  hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?tab=grid&section=tab_content"
+  hx-get="{{base_path}}/ups/{{namespace | urlencode_strict}}/{{device.name | urlencode_strict}}?tab=grid&section={{UpsPageSection::TabContent}}"
   hx-indicator="#indicator"
   hx-swap="innerMorph"
   hx-trigger="every {{upsd_config.poll_freq}}s"

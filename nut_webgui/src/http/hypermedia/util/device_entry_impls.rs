@@ -1,13 +1,11 @@
-use crate::{
-  http::hypermedia::{
-    semantic_type::SemanticType,
-    unit::{
-      ApparentPower, Approx, Celcius, OneOf, Percentage, RealPower, RemainingSeconds, UnitDisplay,
-      Voltage,
-    },
+use super::{
+  semantic_type::SemanticType,
+  unit::{
+    ApparentPower, Approx, Celcius, OneOf, Percentage, RealPower, RemainingSeconds, UnitDisplay,
+    Voltage,
   },
-  state::DeviceEntry,
 };
+use crate::state::DeviceEntry;
 use upsmc::{Value, VarName};
 
 // Provides hypermedia specific impls for DeviceEntry struct
