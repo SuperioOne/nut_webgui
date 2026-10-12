@@ -1,7 +1,7 @@
 [package]
 name = "upsmc"
 description = "Uninterruptible Power Supply Management Client"
-version = "0.2.6"
+version = "0.2.7"
 edition.workspace = true
 authors.workspace = true
 documentation.workspace = true

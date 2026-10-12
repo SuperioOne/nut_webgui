@@ -1048,7 +1048,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui"
-version = "0.10.3"
+version = "0.10.4"
 dependencies = [
  "askama",
  "axum",
@@ -1081,7 +1081,7 @@ dependencies = [
 
 [[package]]
 name = "nut_webgui_client"
-version = "0.10.3"
+version = "0.10.4"
 dependencies = [
  "base16ct",
  "base64",
@@ -2005,7 +2005,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "upsmc"
-version = "0.2.6"
+version = "0.2.7"
 dependencies = [
  "serde",
  "serde_json",

@@ -214,8 +214,7 @@
   }
 
   .bar-gauge-text {
-    @apply absolute top-0 left-0 h-full w-full text-center font-bold text-shadow-lg brightness-150;
-    color: var(--gauge-text-color);
+    @apply absolute top-0 left-0 h-full w-full text-center font-bold text-shadow-lg brightness-150 text-white;
   }
 
   nut-graph-node,
