@@ -1,8 +1,8 @@
-## v0.10.4 – October 12, 2026
+## v0.10.4 - October 12, 2026
 
 ### Fixed
-- Fuzzy search algorithm (Smith-Waterman) had some bugs that made the search
-  scoring suboptimal.
+- Fuzzy search algorithm (Smith-Waterman) implementation had some bugs that made
+  the search scoring suboptimal.
 - UPS `last_modified` field is no longer updated on every `poll_interval` unless
   the device status actually changed.
 - `install.sh` script couldn't match ARMv7 targets (armv7l).

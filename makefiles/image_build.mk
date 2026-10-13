@@ -75,13 +75,13 @@ $(eval $(call container_image_rule,riscv64,riscv64gc-musl,riscv64,))
 endif
 
 .PHONY: build-images
-build-images: $(IMAGE_TARGETS)
+build-images: $(IMAGE_TARGETS) $(IMAGE_MANIFEST_TARGETS)
 	@if buildah manifest exists "nut_webgui:$(VERSION)"; then \
 		buildah manifest rm "nut_webgui:$(VERSION)"; \
 	fi
 	@buildah manifest create \
 		$(ANNOTATIONS) \
 		"nut_webgui:$(VERSION)"
-	@for TAG in $(IMAGE_TARGETS); do \
+	@for TAG in $(IMAGE_MANIFEST_TARGETS); do \
 		buildah manifest add "nut_webgui:$(VERSION)" "nut_webgui:$(VERSION)-$$TAG" || exit 1; \
 	done

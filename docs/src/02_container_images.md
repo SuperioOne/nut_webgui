@@ -30,9 +30,9 @@ However, there are some additional options for container-specific configuration,
 and additional aliases for backward-compatibility.
 
 ### Container only options
-|Name          |Default       |Value Type|Description                                                                                               |
-|--------------|--------------|----------|----------------------------------------------------------------------------------------------------------|
-|`UPSD_ROOT_CA`|None          |Path      |Path to the Root CA certificate for TLS. Symlinks the given path to the `/etc/ssl/certs` directory.       |
+|Name          |Default       |Value Type|Description                                                                                                     |
+|--------------|--------------|----------|----------------------------------------------------------------------------------------------------------------|
+|`UPSD_ROOT_CA`|None          |Path      |Path to the Root CA certificate for TLS. Symlinks the given path to the `/etc/ssl/certs` directory.             |
 |`UID`         |1000          |1-65535   |User UID running the server. Ignored when the container already starts with a non-root user via `--user` option.|
 |`GID`         |Value of `UID`|1-65535   |User GID running the server. Ignored when the container already starts with a non-root user via `--user` option.|
 
@@ -60,20 +60,11 @@ and additional aliases for backward-compatibility.
 
 ### Upstream image tags
 
-|Tag            |Description                                                               |
-|---------------|--------------------------------------------------------------------------|
-|`latest`         |Multi-arch image manifest to the most recent release.                     |
-|`latest-amd64-v4`|Most recent amd64 image with micro-architecture level 4 (e.g. AVX-512).  |
+|Tag              |Description                                                                |
+|-----------------|---------------------------------------------------------------------------|
+|`latest`         |Multi-arch image manifest to the most recent release.                      |
+|`latest-amd64-v4`|Most recent amd64 image with micro-architecture level 4 (e.g. AVX-512).    |
 |`latest-amd64-v3`|Most recent amd64 image with micro-architecture level 3 (e.g. SSE4, AVX-2).|
-
-> [!TIP]
-> **amd64/v3** and **amd64/v4** images are also available on the manifest, and
-> they can be selected via the `--arch` flag instead of image tag.
-> ```sh
-> podman run --arch="amd64/v3" \
-> -p 9000:9000 \
-> codeberg.org/superiorone/nut_webgui:latest
-> ```
 
 ### Version specific image tags
 
