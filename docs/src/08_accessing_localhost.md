@@ -45,16 +45,3 @@ podman run -d \
   -p 9000:9000 \
   codeberg.org/superiorone/nut_webgui:latest
 ```
-
-## Podman - slirp4netns with default loopback IP (10.0.2.2)
-
-> [!CAUTION]
-> slirp4netns is deprecated in Podman 5. Use `Pasta` network mode instead.
-
-```sh
-podman run -d \
-  --network=slirp4netns:allow_host_loopback=true \
-  -e UPSD_ADDR=10.0.2.2 \
-  -p 9000:9000 \
-  codeberg.org/superiorone/nut_webgui:latest
-```
