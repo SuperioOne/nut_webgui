@@ -9,7 +9,7 @@ strip = "debuginfo"
 panic = "abort"
 
 [workspace.package]
-version = "0.10.4"
+version = "0.10.5"
 edition = "2024"
 authors = ["Timur Olur <pm@smdd.dev>"]
 documentation = "nwg.smdd.dev"

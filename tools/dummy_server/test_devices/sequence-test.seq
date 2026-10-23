@@ -1,9 +1,10 @@
 battery.charge: 58
 battery.charge.low: 38
 battery.charge.warning: 58
+battery.temperature: 34
 battery.type: PbAc
-battery.voltage: 0.0	#BAD: Not zero with NUT v2.7.4 on same HW
-battery.voltage.nominal: 0.0	#BAD: Not zero with NUT v2.7.4 on same HW
+battery.voltage: 27.4
+battery.voltage.nominal: 34
 device.mfr: Emerson Network Power
 device.model: LiebertPSA
 device.serial:          
@@ -35,10 +36,13 @@ ups.vendorid: 10af
 TIMER 30
 ups.status: OB DISCHRG
 ups.load: 99
+battery.temperature: 47
+
 TIMER 30
 ups.status: OL CHRG
 ups.load: 11
+battery.temperature: 65
 
 TIMER 30
 ups.load: 55
-
+battery.temperature: 32

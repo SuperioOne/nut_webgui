@@ -102,7 +102,7 @@
           <div class="stat-value text-lg">
             {%- match row.device.get_ups_temperature() -%}
               {%- when Some(temperature) -%}
-                <div class="text-center text-info w-full {{temperature.get_semantic_type().as_text()}}">
+                <div class="text-center w-full {{temperature.get_semantic_type().as_text()}}">
                   {{temperature}}
                 </div>
               {%- when None -%}
