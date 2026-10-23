@@ -19,7 +19,10 @@ impl DeviceEntry {
   }
 
   pub fn get_ups_temperature(&self) -> Option<Celcius> {
-    let temp_var = self.variables.get(VarName::UPS_TEMPERATURE)?;
+    let temp_var = self
+        .variables
+        .get(VarName::UPS_TEMPERATURE)
+        .or_else(|| self.variables.get(VarName::BATTERY_TEMPERATURE))?;
 
     match Celcius::try_from(temp_var) {
       Ok(mut value) => {
