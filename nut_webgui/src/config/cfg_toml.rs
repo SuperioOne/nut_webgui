@@ -23,6 +23,7 @@ pub struct ServerTomlArgs {
   pub auth: Option<AuthConfigSection>,
   pub default_theme: Option<Box<str>>,
   pub http_server: Option<HttpServerConfigSection>,
+  pub ignore_clients: Option<Vec<IpAddr>>,
   pub log_level: Option<LogLevel>,
   pub upsd: Option<HashMap<Box<str>, UpsdConfigSection>>,
 }
@@ -38,6 +39,7 @@ pub struct HttpServerConfigSection {
 #[derive(Deserialize, Default, Debug)]
 pub struct UpsdConfigSection {
   pub address: Option<Box<str>>,
+  pub ignore_clients: Option<Vec<IpAddr>>,
   pub password: Option<Box<str>>,
   pub poll_freq: Option<u64>,
   pub poll_interval: Option<u64>,
@@ -114,6 +116,7 @@ impl ServerTomlArgs {
 impl ConfigLayer for ServerTomlArgs {
   fn apply_layer(self, mut config: ServerConfig) -> Result<ServerConfig, ConfigError> {
     override_opt_field!(config.default_theme, self.default_theme);
+    override_opt_field!(config.ignore_clients, inner_value: self.ignore_clients);
     override_opt_field!(config.log_level, inner_value: self.log_level.map(|val| val.0));
 
     if let Some(upsd_section) = self.upsd
@@ -123,6 +126,7 @@ impl ConfigLayer for ServerTomlArgs {
         let mut upsd_cfg = UpsdConfig::default();
 
         override_opt_field!(upsd_cfg.addr, inner_value: val.address);
+        override_opt_field!(upsd_cfg.ignore_clients, inner_value: val.ignore_clients);
         override_opt_field!(upsd_cfg.max_conn, inner_value: val.max_connection);
         override_opt_field!(upsd_cfg.pass, val.password);
         override_opt_field!(upsd_cfg.poll_freq, inner_value: val.poll_freq);

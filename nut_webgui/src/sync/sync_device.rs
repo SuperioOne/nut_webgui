@@ -8,6 +8,7 @@ use crate::{
   },
 };
 use chrono::Utc;
+use core::net::IpAddr;
 use futures::{future::join_all, join};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::{select, task::JoinSet, time::interval, try_join};
@@ -265,11 +266,13 @@ impl DeviceSyncTask {
     let mut failure_count = 0;
     let mut new_devices_task = JoinSet::from_iter(new_devices.into_iter().map(|dev| {
       let client = self.state.connection_pool.clone();
-      Self::load_device_entry(client, dev)
+      let ignore_clients = self.state.config.ignore_clients.clone();
+      Self::load_device_entry(client, dev, ignore_clients)
     }));
     let mut recheck_task = JoinSet::from_iter(recheck_devices.into_iter().map(|dev| {
       let client = self.state.connection_pool.clone();
-      Self::load_device_entry(client, dev)
+      let ignore_clients = self.state.config.ignore_clients.clone();
+      Self::load_device_entry(client, dev, ignore_clients)
     }));
 
     while let Some(result) = new_devices_task.join_next().await {
@@ -343,12 +346,13 @@ impl DeviceSyncTask {
   async fn load_device_entry(
     client: NutPoolClient,
     device: UpsDevice,
+    ignore_clients: Vec<IpAddr>,
   ) -> Result<DeviceEntry, DeviceLoadError> {
     let UpsDevice { ups_name, desc } = device;
     let (vars, commands, clients, rw_vars) = join!(
       client.list_var(&ups_name),
       client.list_cmd(&ups_name),
-      Self::load_clients(client.clone(), &ups_name),
+      Self::load_clients(client.clone(), &ups_name, &ignore_clients),
       Self::load_rw_vars(client.clone(), &ups_name)
     );
 
@@ -407,11 +411,16 @@ impl DeviceSyncTask {
   async fn load_clients(
     client: NutPoolClient,
     ups_name: &UpsName,
+    ignore_clients: &[IpAddr],
   ) -> Result<Vec<ClientInfo>, upsmc::error::Error> {
     let client_list = client.list_client(ups_name).await?;
     let mut clients: Vec<ClientInfo> = Vec::with_capacity(client_list.ips.len());
 
     for ip in client_list.ips.into_iter() {
+      if ignore_clients.contains(&ip) {
+        continue;
+      }
+
       let name = if !ip.is_loopback() {
         lookup_ip(ip).map_or(None, |n| Some(n))
       } else {

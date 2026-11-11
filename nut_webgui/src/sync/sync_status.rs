@@ -275,7 +275,10 @@ impl StatusSyncTask {
                 reason = %err,
               )
             })
-            .map_or_else(|_| Vec::new(), |v| v.ips);
+            .map_or_else(|_| Vec::new(), |v| v.ips)
+            .into_iter()
+            .filter(|ip| !self.state.config.is_client_ignored(ip))
+            .collect::<Vec<_>>();
 
           let client_diff = ClientDiff::diff(&entry.attached, &attached);
 

@@ -19,6 +19,15 @@ version = "1"
 # default_theme = "tokyo-night"
 
 ## -----------------------------------------------------------------------------
+## Ignore Clients: Client IPs that are dropped while syncing attached clients
+## from upsd. Ignored clients are not shown in the UI, API, WebSocket events or
+## topology graph. This global list is applied to all `upsd` connections.
+## Use `ignore_clients` under an `[upsd.<name>]` table for a single server.
+## -----------------------------------------------------------------------------
+
+# ignore_clients = ["192.0.2.9"]
+
+## -----------------------------------------------------------------------------
 ## HTTP server settings.
 ## -----------------------------------------------------------------------------
 
@@ -99,6 +108,13 @@ version = "1"
 ## -----------------------------------------------------------------------------
 
 # address = "localhost"
+
+## -----------------------------------------------------------------------------
+## Ignore Clients: Client IPs ignored only for this upsd connection. Entries are
+## merged with the global `ignore_clients` list.
+## -----------------------------------------------------------------------------
+
+# ignore_clients = ["192.0.2.10"]
 
 ## -----------------------------------------------------------------------------
 ## Port: Define the TCP port number on which the UPS server is listening.
