@@ -36,13 +36,17 @@ ups.vendorid: 10af
 TIMER 30
 ups.status: OB DISCHRG
 ups.load: 99
-battery.temperature: 47
+battery.temperature: 004.6
 
 TIMER 30
 ups.status: OL CHRG
 ups.load: 11
-battery.temperature: 65
+battery.temperature: 65.1234
 
 TIMER 30
 ups.load: 55
-battery.temperature: 32
+battery.temperature: 00000000000000042.12345678
+
+TIMER 30
+ups.load: 012.12
+battery.temperature: -00000000000000000000.80085

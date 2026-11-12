@@ -1,6 +1,9 @@
 use crate::{error::NumberParseError, internal::escape::escape_nut_str};
 use std::borrow::Cow;
 
+#[cfg(test)]
+mod test;
+
 macro_rules! impl_value_from {
   ($type:ty, $enum:ident) => {
     impl From<$type> for Value {
@@ -27,7 +30,7 @@ pub enum Value {
   String(Box<str>),
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum InferredType {
   Int,
   Float,
@@ -87,32 +90,41 @@ impl Value {
 }
 
 fn infer_type(input: &str) -> InferredType {
-  let mut char_iter = input.as_bytes().iter();
+  let mut char_iter = input.chars();
+  let mut dot_position: Option<usize> = None;
+  let mut idx: usize = 0;
 
-  // Checks first char to guess initial value type.
-  let mut inferred_type = match char_iter.next() {
-    Some(b'-') => InferredType::Int,
-    Some(b'0') => {
-      // Second char
-      match char_iter.next() {
-        Some(b'.') => InferredType::Float,
-        Some(_) => return InferredType::String,
-        None => InferredType::Int,
-      }
+  // Checks first char for early exit.
+  match char_iter.next() {
+    Some('0'..='9' | '-') => {
+      // Skip
     }
-    Some(b'0'..=b'9') => InferredType::Int,
     _ => return InferredType::String,
   };
 
-  for byte in char_iter {
-    inferred_type = match *byte {
-      b'.' if inferred_type == InferredType::Int => InferredType::Float,
-      b'0'..=b'9' => inferred_type,
-      _ => return InferredType::String,
+  for ch in char_iter {
+    idx += 1;
+
+    match ch {
+      '0'..='9' => {}
+      '.' => {
+        if dot_position.is_some() {
+          return InferredType::String;
+        } else {
+          dot_position = Some(idx);
+        }
+      }
+      _ => {
+        return InferredType::String;
+      }
     };
   }
 
-  inferred_type
+  if dot_position.is_some_and(|pos| pos != idx) {
+    InferredType::Float
+  } else {
+    InferredType::Int
+  }
 }
 
 pub trait InferValueFrom<T> {
