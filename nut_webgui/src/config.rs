@@ -1,6 +1,6 @@
-use self::error::ConfigError;
-use self::utils::rand_server_key_256bit;
-use self::{tls_mode::TlsMode, uri_path::UriPath};
+use self::{
+  error::ConfigError, tls_mode::TlsMode, uri_path::UriPath, utils::rand_server_key_256bit,
+};
 use core::net::{IpAddr, Ipv4Addr};
 use std::{collections::HashMap, num::NonZeroUsize, path::PathBuf};
 use tracing::level_filters::LevelFilter;
@@ -43,6 +43,9 @@ pub struct ServerConfig {
 
   /// Authentication scheme configurations
   pub auth: AuthConfig,
+
+  /// Global client filter list
+  pub ignore_clients: Box<[IpAddr]>,
 }
 
 #[derive(Debug)]
@@ -79,6 +82,9 @@ pub struct UpsdConfig {
 
   /// UPSD starts with TLS
   pub tls_mode: TlsMode,
+
+  /// UPSD specific client filter.
+  pub ignore_clients: Box<[IpAddr]>,
 }
 
 #[derive(Debug)]
@@ -129,6 +135,7 @@ impl Default for UpsdConfig {
   fn default() -> Self {
     Self {
       addr: "localhost".into(),
+      ignore_clients: Box::new([]),
       max_conn: NonZeroUsize::new(4).expect("static non-zero max_conn is provided as default"),
       pass: None,
       poll_freq: 30,
@@ -143,13 +150,14 @@ impl Default for UpsdConfig {
 impl Default for ServerConfig {
   fn default() -> Self {
     Self {
+      auth: Default::default(),
       config_file: None,
       default_theme: None,
       http_server: Default::default(),
+      ignore_clients: Box::new([]),
       log_level: LevelFilter::INFO,
       server_key: rand_server_key_256bit(),
       upsd: Default::default(),
-      auth: Default::default(),
     }
   }
 }
@@ -174,14 +182,15 @@ impl ServerConfig {
 impl core::fmt::Debug for UpsdConfig {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("UpsdConfig")
-      .field("pass", &self.pass.as_ref().map(|_| "******"))
-      .field("user", &self.user.as_ref().map(|_| "******"))
       .field("addr", &self.addr)
       .field("port", &self.port)
+      .field("max_conn", &self.max_conn)
       .field("poll_freq", &self.poll_freq)
       .field("poll_interval", &self.poll_interval)
-      .field("max_conn", &self.max_conn)
       .field("tls_mode", &self.tls_mode)
+      .field("ignored_clients", &self.ignore_clients)
+      .field("pass", &self.pass.as_ref().map(|_| "******"))
+      .field("user", &self.user.as_ref().map(|_| "******"))
       .finish()
   }
 }
@@ -189,13 +198,14 @@ impl core::fmt::Debug for UpsdConfig {
 impl core::fmt::Debug for ServerConfig {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.debug_struct("ServerConfig")
+      .field("auth", &self.auth)
       .field("config_file", &self.config_file)
       .field("default_theme", &self.default_theme)
+      .field("http_server", &self.http_server)
+      .field("ignored_clients", &self.ignore_clients)
       .field("log_level", &self.log_level)
       .field("server_key", &"******")
-      .field("http_server", &self.http_server)
       .field("upsd", &self.upsd)
-      .field("auth", &self.auth)
       .finish()
   }
 }

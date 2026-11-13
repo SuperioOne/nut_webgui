@@ -1,9 +1,9 @@
 version = "1"
 
-## ----------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ## Log Level: Configure the logging verbosity.
 ## Possible values include "info", "debug", "warn", "error" or "trace"
-## ----------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 # log_level = "info"
 
@@ -17,6 +17,16 @@ version = "1"
 ## -----------------------------------------------------------------------------
 
 # default_theme = "tokyo-night"
+
+## -----------------------------------------------------------------------------
+## Ignore clients: Global list of IP addresses to exclude as attached clients.
+## Applies to all UPSD configurations. Mainly for hiding upsmon clients with 0 
+## powered devices.
+##
+## Accepts IPv4 and IPv6 only. Hostnames and wildcards are not supported.
+## -----------------------------------------------------------------------------
+
+# ignore_clients = ["192.168.2.32", "2001:db8::1"]
 
 ## -----------------------------------------------------------------------------
 ## HTTP server settings.
@@ -151,3 +161,13 @@ version = "1"
 ## -----------------------------------------------------------------------------
 
 # tls_mode = "disable"
+
+## -----------------------------------------------------------------------------
+## Ignore clients: Similar to the global ignore_clients option, but only applies
+## to a specific UPSD instance.
+##
+## This option does not override the global ignore_clients list. nut_webgui
+## combines the UPSD-specific and global lists into a single filter.
+## -----------------------------------------------------------------------------
+
+# ignore_clients = ["192.168.2.32", "2001:db8::1"]

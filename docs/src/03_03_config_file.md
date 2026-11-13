@@ -8,6 +8,7 @@ arguments to override settings when needed.
 version = "1"
 log_level = "info"
 default_theme = "tokyo-night"
+ignore_clients = ["127.0.0.1"]
 
 [http_server]
 base_path = "/"
@@ -24,6 +25,7 @@ max_connection = 4
 poll_freq = 30
 poll_interval = 2
 tls_mode = "disable"
+ignore_clients = ["192.168.2.32", "2001:db8::1"]
 
 [upsd.reactor]
 address = "10.0.12.10"

@@ -5,7 +5,7 @@ use super::{
 use core::{net::IpAddr, str};
 use serde::{Deserialize, de::Visitor};
 use std::{
-  collections::HashMap,
+  collections::{BTreeSet, HashMap},
   fs::{self},
   num::NonZeroUsize,
   path::{Path, PathBuf},
@@ -25,6 +25,7 @@ pub struct ServerTomlArgs {
   pub http_server: Option<HttpServerConfigSection>,
   pub log_level: Option<LogLevel>,
   pub upsd: Option<HashMap<Box<str>, UpsdConfigSection>>,
+  pub ignore_clients: Option<BTreeSet<IpAddr>>,
 }
 
 #[derive(Deserialize, Default, Debug)]
@@ -45,6 +46,7 @@ pub struct UpsdConfigSection {
   pub username: Option<Box<str>>,
   pub max_connection: Option<NonZeroUsize>,
   pub tls_mode: Option<TlsMode>,
+  pub ignore_clients: Option<BTreeSet<IpAddr>>,
 }
 
 #[derive(Deserialize, Default, Debug)]
@@ -119,17 +121,26 @@ impl ConfigLayer for ServerTomlArgs {
     if let Some(upsd_section) = self.upsd
       && !upsd_section.is_empty()
     {
-      for (key, val) in upsd_section.into_iter() {
+      for (key, upsd) in upsd_section.into_iter() {
         let mut upsd_cfg = UpsdConfig::default();
 
-        override_opt_field!(upsd_cfg.addr, inner_value: val.address);
-        override_opt_field!(upsd_cfg.max_conn, inner_value: val.max_connection);
-        override_opt_field!(upsd_cfg.pass, val.password);
-        override_opt_field!(upsd_cfg.poll_freq, inner_value: val.poll_freq);
-        override_opt_field!(upsd_cfg.poll_interval, inner_value: val.poll_interval);
-        override_opt_field!(upsd_cfg.port, inner_value: val.port);
-        override_opt_field!(upsd_cfg.tls_mode, inner_value : val.tls_mode);
-        override_opt_field!(upsd_cfg.user, val.username);
+        override_opt_field!(upsd_cfg.addr, inner_value: upsd.address);
+        override_opt_field!(upsd_cfg.max_conn, inner_value: upsd.max_connection);
+        override_opt_field!(upsd_cfg.pass, upsd.password);
+        override_opt_field!(upsd_cfg.poll_freq, inner_value: upsd.poll_freq);
+        override_opt_field!(upsd_cfg.poll_interval, inner_value: upsd.poll_interval);
+        override_opt_field!(upsd_cfg.port, inner_value: upsd.port);
+        override_opt_field!(upsd_cfg.tls_mode, inner_value : upsd.tls_mode);
+        override_opt_field!(upsd_cfg.user, upsd.username);
+
+        match (upsd.ignore_clients, self.ignore_clients.as_ref()) {
+          (None, Some(global)) => upsd_cfg.ignore_clients = global.iter().copied().collect(),
+          (Some(local), None) => upsd_cfg.ignore_clients = local.iter().copied().collect(),
+          (Some(local), Some(global)) => {
+            upsd_cfg.ignore_clients = local.union(&global).copied().collect()
+          }
+          _ => {}
+        }
 
         config.upsd.insert(key, upsd_cfg);
       }
