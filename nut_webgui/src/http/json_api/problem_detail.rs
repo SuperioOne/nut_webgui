@@ -82,6 +82,7 @@ impl From<Error> for ProblemDetail {
       ErrorKind::ProtocolError { .. } => "UPSD protocol error",
       ErrorKind::ConnectionPoolClosed => "UPSD connection pool error",
       ErrorKind::RequestTimeout => "Request timeout",
+      ErrorKind::ConnectTimeout => "Connection timeout",
     };
 
     ProblemDetail::new(title, StatusCode::INTERNAL_SERVER_ERROR).with_detail_error(err)

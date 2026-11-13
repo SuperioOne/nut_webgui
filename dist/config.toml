@@ -124,6 +124,10 @@ version = "1"
 ## -----------------------------------------------------------------------------
 ## Poll Frequency: Configure how often (in seconds) the application should
 ## attempt to poll non-critical variables from the UPS. Default is 30 seconds.
+##
+## The same value limits a single request to the UPSD. Opening a new connection
+## is limited to 5 seconds, or to this value if it is shorter. A UPSD that does
+## not answer is shown as `connection lost` after about two of these periods.
 ## -----------------------------------------------------------------------------
 
 # poll_freq = 30

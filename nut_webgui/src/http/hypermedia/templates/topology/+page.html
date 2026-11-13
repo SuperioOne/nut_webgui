@@ -200,19 +200,25 @@
       {%- for device in graph.devices.values() -%}
         {%- let node_id = device.get_id() -%}
         <nut-graph-node id="{{node_id}}">
-          <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{device.get_semantic_type().as_border()}}">
+          <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {% if device.connection_lost %}border-neutral grayscale opacity-60{% else %}{{device.get_semantic_type().as_border()}}{% endif %}">
             <div class="flex flex-row gap-1 items-center">
               <div class="text-primary">
                 {%- call icons::get_svg("hard-drive", 24) -%}{%- endcall -%}
               </div>
               <div class="flex flex-col text-primary">
                 {%- for alias in device.aliases.iter() -%}
-                  <a
-                    href="{{base_path}}/ups/{{alias.namespace | urlencode_strict}}/{{alias.name | urlencode_strict}}"
-                    class="font-bold link link-primary text-nowrap"
-                  >
-                    <span>{{alias.name}}</span><span class="font-light opacity-70">@{{alias.namespace}}</span>
-                  </a>
+                  {%- if device.connection_lost -%}
+                    <span class="font-bold text-nowrap">
+                      <span>{{alias.name}}</span><span class="font-light opacity-70">@{{alias.namespace}}</span>
+                    </span>
+                  {%- else -%}
+                    <a
+                      href="{{base_path}}/ups/{{alias.namespace | urlencode_strict}}/{{alias.name | urlencode_strict}}"
+                      class="font-bold link link-primary text-nowrap"
+                    >
+                      <span>{{alias.name}}</span><span class="font-light opacity-70">@{{alias.namespace}}</span>
+                    </a>
+                  {%- endif -%}
                 {%- endfor -%}
               </div>
             </div>
@@ -285,21 +291,29 @@
               </div>
             </div>
             <div class="border-success flex flex-col gap-1 items-center justify-center">
-              {%- for status_detail in crate::http::hypermedia::util::ups_status::StatusDetailIter::new(*device.status) -%}
-                <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
-                  {{status_detail.name}}
+              {%- if device.connection_lost -%}
+                <span class="badge badge-neutral badge-outline badge-xs text-nowrap text-xs uppercase">
+                  Connection lost
                 </span>
-              {%- endfor -%}
+              {%- else -%}
+                {%- for status_detail in crate::http::hypermedia::util::ups_status::StatusDetailIter::new(*device.status) -%}
+                  <span class="badge badge-outline badge-xs text-nowrap text-xs uppercase {{status_detail.class.as_badge()}}">
+                    {{status_detail.name}}
+                  </span>
+                {%- endfor -%}
+              {%- endif -%}
             </div>
           </div>
         </nut-graph-node>
         <nut-graph-node id="power_link_node_{{node_id}}">
-          <div class="bg-base-300 border-2 border-primary flex flex-row font-bold h-8 items-center justify-center rounded-full w-8">
+          <div class="bg-base-300 border-2 flex flex-row font-bold h-8 items-center justify-center rounded-full w-8 {% if device.connection_lost %}border-neutral grayscale opacity-60{% else %}border-primary{% endif %}">
             {%- call icons::get_ac_icon(22) -%}{%- endcall -%}
           </div>
         </nut-graph-node>
         <nut-graph-link
-          {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
+          {% if device.connection_lost -%}
+            class="edge-4 edge-neutral opacity-60"
+          {% else if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
             class="animate-pulse edge-4 edge-error"
           {% else if device.status.has(UpsStatus::NOCOMM) -%}
             class="edge-4 edge-base-content"
@@ -325,7 +339,7 @@
       <nut-graph-group id="group_clients">
         {%- for server in graph.servers.values() -%}
           <nut-graph-node id="{{server.get_id()}}">
-            <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{server.get_semantic_type().as_border()}}">
+            <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {% if server.connection_lost() %}border-neutral grayscale opacity-60{% else %}{{server.get_semantic_type().as_border()}}{% endif %}">
               <div class="flex flex-row gap-2 items-center">
                 <div class="text-primary">
                   {%- call icons::get_svg("server", 24) -%}{%- endcall -%}
@@ -340,9 +354,15 @@
                 </div>
               </div>
               <div class="flex flex-row justify-center">
-                <span class="badge badge-info badge-outline text-nowrap text-xs uppercase">
-                  {{server.status}}
-                </span>
+                {%- if server.connection_lost() -%}
+                  <span class="badge badge-neutral badge-outline text-nowrap text-xs uppercase">
+                    Connection lost
+                  </span>
+                {%- else -%}
+                  <span class="badge badge-info badge-outline text-nowrap text-xs uppercase">
+                    {{server.status}}
+                  </span>
+                {%- endif -%}
               </div>
             </div>
           </nut-graph-node>
@@ -350,7 +370,7 @@
 
         {%- for client in graph.clients.values() -%}
           <nut-graph-node id="{{client.get_id()}}">
-            <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {{client.get_semantic_type().as_border()}}">
+            <div class="bg-base-300 border-2 border-collapse flex flex-col gap-4 min-w-32 p-2 rounded {% if client.connection_lost %}border-neutral grayscale opacity-60{% else %}{{client.get_semantic_type().as_border()}}{% endif %}">
               <div class="flex flex-row gap-2 items-center">
                 <div class="text-secondary">
                   {%- call icons::get_svg("monitor", 24) -%}{%- endcall -%}
@@ -370,6 +390,13 @@
                   {%- endif -%}
                 </div>
               </div>
+              {%- if client.connection_lost -%}
+                <div class="flex flex-row justify-center">
+                  <span class="badge badge-neutral badge-outline badge-xs text-nowrap text-xs uppercase">
+                    Connection lost
+                  </span>
+                </div>
+              {%- endif -%}
             </div>
           </nut-graph-node>
         {%- endfor -%}
@@ -377,7 +404,7 @@
 
       {%- for edge in graph.edges -%}
         <nut-graph-link
-          class="edge-2 edge-animate-flow {{edge.edge_type.as_class()}} {{edge.get_semantic_type().as_edge()}}"
+          class="edge-2 {% if edge.connection_lost %}edge-neutral opacity-60{% else %}edge-animate-flow {{edge.get_semantic_type().as_edge()}}{% endif %} {{edge.edge_type.as_class()}}"
           from="{{edge.from}}"
           id="{{edge.get_id()}}"
           to="{{edge.to}}"

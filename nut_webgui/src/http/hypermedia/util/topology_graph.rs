@@ -4,7 +4,7 @@ use crate::{
     semantic_type::SemanticType,
     unit::{Percentage, RemainingSeconds, Voltage},
   },
-  state::{ConnectionStatus, DaemonState, DeviceEntry, UpsdNamespace},
+  state::{ClientInfo, ConnectionStatus, DaemonState, DeviceEntry, StaleDevice, UpsdNamespace},
 };
 use std::{collections::BTreeMap, net::IpAddr, sync::Arc};
 use upsmc::{UpsName, VarName, ups_status::UpsStatus};
@@ -95,6 +95,8 @@ pub struct ClientNode {
   power_status: PowerStatusLevel,
   id: usize,
   pub address: IpAddr,
+  /// The connection to the UPSD that knows about this client is lost.
+  pub connection_lost: bool,
   pub name: Option<Box<str>>,
 }
 
@@ -112,6 +114,9 @@ pub struct DeviceNode {
   power_status: PowerStatusLevel,
   pub aliases: Vec<DeviceAlias>,
   pub battery: Option<Percentage>,
+  /// The connection to the UPSD that reports this device is lost, so the values here are not
+  /// real. Only the last known identity of the device is available.
+  pub connection_lost: bool,
   pub device_id: Arc<DeviceId>,
   pub input_voltage: Option<Voltage>,
   pub load: Option<Percentage>,
@@ -122,9 +127,70 @@ pub struct DeviceNode {
 pub struct EdgeNode {
   semantic_type: SemanticType,
   id: usize,
+  /// The edge starts at a device that is not reachable.
+  pub connection_lost: bool,
   pub edge_type: EdgeType,
   pub from: NodeId,
   pub to: NodeId,
+}
+
+/// Everything the graph needs to know about a device. It is created either from a live device or
+/// from the last known state of a device that is not reachable anymore.
+struct DeviceSnapshot<'a> {
+  attached: &'a [ClientInfo],
+  battery: Option<Percentage>,
+  connection_lost: bool,
+  input_voltage: Option<Voltage>,
+  load: Option<Percentage>,
+  manufacturer: Option<String>,
+  model: Option<String>,
+  name: &'a UpsName,
+  runtime: Option<RemainingSeconds>,
+  serial: Option<String>,
+  status: UpsStatus,
+}
+
+impl<'a> DeviceSnapshot<'a> {
+  fn live(device: &'a DeviceEntry) -> Self {
+    Self {
+      attached: device.attached.as_slice(),
+      battery: device.get_battery_charge(),
+      connection_lost: false,
+      input_voltage: device.get_input_voltage(),
+      load: device.get_ups_load(),
+      manufacturer: device
+        .variables
+        .get(VarName::UPS_MFR)
+        .map(|v| v.to_string()),
+      model: device
+        .variables
+        .get(VarName::UPS_MODEL)
+        .map(|v| v.to_string()),
+      name: &device.name,
+      runtime: device.get_battery_runtime(),
+      serial: device
+        .variables
+        .get(VarName::UPS_SERIAL)
+        .map(|v| v.to_string()),
+      status: device.status,
+    }
+  }
+
+  fn stale(device: &'a StaleDevice) -> Self {
+    Self {
+      attached: device.attached.as_slice(),
+      battery: None,
+      connection_lost: true,
+      input_voltage: None,
+      load: None,
+      manufacturer: device.manufacturer.clone(),
+      model: device.model.clone(),
+      name: &device.name,
+      runtime: None,
+      serial: device.serial.clone(),
+      status: UpsStatus::NOCOMM,
+    }
+  }
 }
 
 impl TopologyGraphBuilder {
@@ -155,7 +221,32 @@ impl TopologyGraphBuilder {
     };
 
     for device in upsd_state.devices.values() {
-      _ = self.add_device(device, &mut server_node);
+      self.add_device(DeviceSnapshot::live(device), &mut server_node);
+    }
+
+    // NOTE: A daemon that is not online has no devices. Instead of dropping everything that was
+    // connected to it, the last known devices are drawn with a `connection lost` mark.
+    if upsd_state.status != ConnectionStatus::Online {
+      if upsd_state.stale_devices.is_empty() {
+        // Nothing is known about the devices of the daemon, because it was never reachable since
+        // the start. Every configured daemon still gets a placeholder UPS until it is online, so
+        // the power chain is visible.
+        if let Ok(name) = UpsName::new("unknown") {
+          let placeholder = StaleDevice {
+            attached: Vec::new(),
+            manufacturer: None,
+            model: None,
+            name,
+            serial: None,
+          };
+
+          self.add_device(DeviceSnapshot::stale(&placeholder), &mut server_node);
+        }
+      } else {
+        for device in upsd_state.stale_devices.iter() {
+          self.add_device(DeviceSnapshot::stale(device), &mut server_node);
+        }
+      }
     }
 
     _ = self
@@ -173,22 +264,13 @@ impl TopologyGraphBuilder {
     }
   }
 
-  fn add_device(&mut self, device: &DeviceEntry, server_node: &mut NutServerNode) {
+  fn add_device(&mut self, device: DeviceSnapshot<'_>, server_node: &mut NutServerNode) {
     let key = DeviceId {
       name: device.name.to_owned(),
       namespace: server_node.namespace.clone(),
-      model: device
-        .variables
-        .get(VarName::UPS_MODEL)
-        .map(|v| v.to_string()),
-      serial: device
-        .variables
-        .get(VarName::UPS_SERIAL)
-        .map(|v| v.to_string()),
-      manufacturer: device
-        .variables
-        .get(VarName::UPS_MFR)
-        .map(|v| v.to_string()),
+      model: device.model,
+      serial: device.serial,
+      manufacturer: device.manufacturer,
     };
 
     let device_node_id = match self.devices.get_mut(&key) {
@@ -198,6 +280,8 @@ impl TopologyGraphBuilder {
           namespace: server_node.namespace.clone(),
         });
 
+        // The device is reachable if at least one daemon can still reach it.
+        node.connection_lost &= device.connection_lost;
         node.get_id()
       }
       None => {
@@ -209,24 +293,31 @@ impl TopologyGraphBuilder {
             name: device.name.to_owned(),
             namespace: server_node.namespace.clone(),
           }],
-          battery: device.get_battery_charge(),
-          input_voltage: device.get_input_voltage(),
-          load: device.get_ups_load(),
-          runtime: device.get_battery_runtime(),
+          battery: device.battery,
+          connection_lost: device.connection_lost,
+          input_voltage: device.input_voltage,
+          load: device.load,
+          runtime: device.runtime,
           power_status: PowerStatusLevel::from_ups_status(device.status),
           status: device.status,
         };
 
         let node_id = device_node.get_id();
         for client in device.attached.iter() {
-          let target_id = if client.addr.is_loopback() {
+          let is_remote_client = !client.addr.is_loopback();
+          let target_id = if is_remote_client {
+            self.add_client(
+              client.addr,
+              client.name.clone(),
+              device_node.power_status,
+              device.connection_lost,
+            )
+          } else {
             server_node
               .power_status
               .try_update(device_node.power_status);
 
             server_node.get_id()
-          } else {
-            self.add_client(client.addr, client.name.clone(), device_node.power_status)
           };
 
           self.add_edge(
@@ -234,6 +325,7 @@ impl TopologyGraphBuilder {
             target_id,
             EdgeType::Power,
             device_node.power_status.into(),
+            device.connection_lost,
           );
         }
 
@@ -253,23 +345,29 @@ impl TopologyGraphBuilder {
       server_node.get_id(),
       EdgeType::Data,
       edge_semantic,
+      device.connection_lost,
     );
   }
 
+  /// Adds a client or returns the existing one with the same address.
   fn add_client(
     &mut self,
     address: IpAddr,
     name: Option<Box<str>>,
     power_status: PowerStatusLevel,
+    connection_lost: bool,
   ) -> NodeId {
     let next_id = self.clients.len();
     let client = self.clients.entry(address).or_insert_with(|| ClientNode {
       id: next_id,
       address,
+      connection_lost,
       name: name.clone(),
       power_status: PowerStatusLevel::default(),
     });
 
+    // The client is reachable if at least one reachable device powers it.
+    client.connection_lost &= connection_lost;
     client.power_status.try_update(power_status);
     client.get_id()
   }
@@ -280,6 +378,7 @@ impl TopologyGraphBuilder {
     to: NodeId,
     edge_type: EdgeType,
     semantic_type: SemanticType,
+    connection_lost: bool,
   ) {
     self.edges.push(EdgeNode {
       id: self.edges.len(),
@@ -287,6 +386,7 @@ impl TopologyGraphBuilder {
       from,
       edge_type,
       semantic_type,
+      connection_lost,
     });
   }
 }
@@ -367,6 +467,14 @@ impl Ord for DeviceId {
       }
       ord => ord,
     }
+  }
+}
+
+impl NutServerNode {
+  /// The connection to this UPSD is lost.
+  #[inline]
+  pub fn connection_lost(&self) -> bool {
+    self.status == ConnectionStatus::Dead
   }
 }
 

@@ -55,6 +55,12 @@ pub struct DaemonState {
   /// Ups devices
   pub devices: HashMap<UpsName, DeviceEntry>,
 
+  /// Devices that were known right before the connection to the daemon was lost.
+  ///
+  /// This is only used to draw the last known topology while the daemon is unreachable. The list
+  /// is emptied as soon as the daemon is reachable again.
+  pub stale_devices: Vec<StaleDevice>,
+
   /// Last device sync timestamp
   pub last_device_sync: Option<DateTime<Utc>>,
 
@@ -99,10 +105,29 @@ pub struct DeviceEntry {
   pub variables: UpsVariables,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ClientInfo {
   pub addr: IpAddr,
   pub name: Option<Box<str>>,
+}
+
+/// Minimal snapshot of a device that was known before the connection to its daemon was lost.
+#[derive(Debug, Clone)]
+pub struct StaleDevice {
+  /// List of clients `attached` to the device.
+  pub attached: Vec<ClientInfo>,
+
+  /// Device manufacturer.
+  pub manufacturer: Option<String>,
+
+  /// Device model.
+  pub model: Option<String>,
+
+  /// Device name.
+  pub name: UpsName,
+
+  /// Device serial number.
+  pub serial: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -169,6 +194,27 @@ impl std::fmt::Display for ConnectionStatus {
   }
 }
 
+impl From<&DeviceEntry> for StaleDevice {
+  fn from(device: &DeviceEntry) -> Self {
+    Self {
+      attached: device.attached.clone(),
+      manufacturer: device
+        .variables
+        .get(VarName::UPS_MFR)
+        .map(|v| v.to_string()),
+      model: device
+        .variables
+        .get(VarName::UPS_MODEL)
+        .map(|v| v.to_string()),
+      name: device.name.clone(),
+      serial: device
+        .variables
+        .get(VarName::UPS_SERIAL)
+        .map(|v| v.to_string()),
+    }
+  }
+}
+
 impl DeviceEntry {
   pub fn mark_as_dead_with(&mut self, status: UpsStatus) {
     self.status = status;
@@ -184,6 +230,7 @@ impl DaemonState {
   pub fn new() -> DaemonState {
     DaemonState {
       devices: HashMap::new(),
+      stale_devices: Vec::new(),
       last_device_sync: None,
       prot_ver: None,
       status: ConnectionStatus::NotReady,
