@@ -16,6 +16,9 @@ use std::{
 use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::warn;
 
+/// Longest time a new connection (including the TLS handshake) may take.
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+
 #[derive(Debug)]
 pub enum ServerAddr {
   SocketAddr(SocketAddr),
@@ -134,37 +137,49 @@ impl ItemAllocator for ClientAllocator {
   fn init(&self) -> Pin<Box<dyn Future<Output = Result<Self::Item, Self::Error>> + Send + '_>> {
     Box::pin(async move {
       let addr_resolutions: Vec<_> = self.addr.to_socket_addrs()?.collect();
-      let connection: Box<dyn ClientStream> = {
-        #[cfg(feature = "rustls")]
-        {
-          if let Some(tls_config) = &self.tls_config {
-            Box::new(
-              NutClient::connect_with_tls(
-                addr_resolutions.as_slice(),
-                tls_config.srv_name.clone(),
-                tls_config.config.clone(),
+
+      // NOTE: Without a limit an unreachable host keeps `connect` waiting for the timeout of the
+      // operating system, which is minutes long, and nothing else can report the daemon as lost
+      // until then.
+      let connect_timeout = self
+        .timeout
+        .map_or(CONNECT_TIMEOUT, |t| t.min(CONNECT_TIMEOUT));
+      let connection: Box<dyn ClientStream> = tokio::time::timeout(connect_timeout, async {
+        let connection: Box<dyn ClientStream> = {
+          #[cfg(feature = "rustls")]
+          {
+            if let Some(tls_config) = &self.tls_config {
+              Box::new(
+                NutClient::connect_with_tls(
+                  addr_resolutions.as_slice(),
+                  tls_config.srv_name.clone(),
+                  tls_config.config.clone(),
+                )
+                .await?
+                .into_inner(),
               )
-              .await?
-              .into_inner(),
-            )
-          } else {
+            } else {
+              Box::new(
+                NutClient::connect(addr_resolutions.as_slice())
+                  .await?
+                  .into_inner(),
+              )
+            }
+          }
+
+          #[cfg(not(feature = "rustls"))]
+          {
             Box::new(
               NutClient::connect(addr_resolutions.as_slice())
                 .await?
                 .into_inner(),
             )
           }
-        }
-
-        #[cfg(not(feature = "rustls"))]
-        {
-          Box::new(
-            NutClient::connect(addr_resolutions.as_slice())
-              .await?
-              .into_inner(),
-          )
-        }
-      };
+        };
+        Ok::<_, Error>(connection)
+      })
+      .await
+      .map_err(|_| Error::from(ErrorKind::ConnectTimeout))??;
 
       let mut client = NutClient::from(connection);
 

@@ -7,7 +7,7 @@ use crate::{
       unit::UnitDisplay,
     },
   },
-  state::{DeviceEntry, ServerState, UpsdState},
+  state::{ConnectionStatus, DeviceEntry, ServerState, StaleDevice, UpsdState},
 };
 use askama::Template;
 use axum::{
@@ -34,6 +34,13 @@ struct DeviceTableRow<'a> {
   device: &'a DeviceEntry,
 }
 
+/// A device that was known before the connection to its daemon was lost.
+#[derive(Debug)]
+struct StaleTableRow<'a> {
+  id: String,
+  device: &'a StaleDevice,
+}
+
 #[derive(Deserialize)]
 pub struct HomeFragmentQuery {
   section: Option<HomePageSection>,
@@ -57,6 +64,7 @@ struct HomeTemplate<'a> {
 #[template(path = "table_rows.html")]
 struct TableRowsTemplate<'a> {
   devices: Vec<DeviceTableRow<'a>>,
+  stale_devices: Vec<StaleTableRow<'a>>,
   namespace: &'a str,
 }
 
@@ -82,8 +90,29 @@ async fn render_device_rows(
 
   devices.sort_unstable_by_key(|v| v.device.name.as_str());
 
+  // NOTE: Devices are removed when the connection to the daemon is lost. Instead of making them
+  // disappear, the last known devices are listed as grayed-out rows.
+  let stale_devices: Vec<StaleTableRow> = if daemon_state.status != ConnectionStatus::Online {
+    daemon_state
+      .stale_devices
+      .iter()
+      .filter(|device| !daemon_state.devices.contains_key(&device.name))
+      .map(|device| StaleTableRow {
+        id: format!(
+          "{}@{}",
+          normalize_id(device.name.as_str()),
+          normalize_id(&upsd.namespace)
+        ),
+        device,
+      })
+      .collect()
+  } else {
+    Vec::new()
+  };
+
   TableRowsTemplate {
     devices,
+    stale_devices,
     namespace: upsd.namespace.as_ref(),
   }
   .render_with_config(&state.config, session)

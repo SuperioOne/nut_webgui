@@ -1,7 +1,7 @@
 use crate::{
   background_service::BackgroundService,
   event::{batch::EventBatch, channel::EventChannel},
-  state::{ClientInfo, ConnectionStatus, DeviceEntry, UpsdState, VarDetail},
+  state::{ClientInfo, ConnectionStatus, DeviceEntry, StaleDevice, UpsdState, VarDetail},
   sync::{
     error::{DeviceLoadError, SyncTaskError},
     reverse_dns::lookup_ip,
@@ -146,6 +146,9 @@ impl DeviceSyncTask {
           events.removed_device(device_name);
         }
 
+        // Daemon is reachable again, last known devices are no longer needed.
+        write_lock.stale_devices.clear();
+
         if write_lock.status != ConnectionStatus::Online {
           info!(
             message = "ups daemon is online",
@@ -172,6 +175,17 @@ impl DeviceSyncTask {
       }
       Err(err) => {
         let mut write_lock = self.state.daemon_state.write().await;
+
+        // NOTE: Devices are cleared below, but topology page still needs to know what was
+        // connected to the daemon. Only the first failure has devices to remember, later
+        // failures must not overwrite the snapshot with an empty list.
+        if !write_lock.devices.is_empty() {
+          let mut stale_devices: Vec<StaleDevice> =
+            write_lock.devices.values().map(StaleDevice::from).collect();
+
+          stale_devices.sort_by(|a, b| a.name.cmp(&b.name));
+          write_lock.stale_devices = stale_devices;
+        }
 
         for device_name in write_lock.devices.keys() {
           info!(
