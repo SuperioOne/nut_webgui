@@ -180,6 +180,19 @@ impl ConfigLayer for ServerEnvArgs {
       override_opt_field!(default_upsd.port, inner_value: self.upsd_port);
       override_opt_field!(default_upsd.tls_mode, inner_value: self.upsd_tls);
       override_opt_field!(default_upsd.user, self.upsd_user);
+
+      if !config.ignore_clients.is_empty() {
+        let mut filter = Vec::new();
+        filter.extend(&default_upsd.ignore_clients);
+
+        for ip in config.ignore_clients.iter() {
+          if !filter.contains(ip) {
+            filter.push(*ip);
+          }
+        }
+
+        default_upsd.ignore_clients = filter.into_boxed_slice();
+      }
     }
 
     Ok(config)

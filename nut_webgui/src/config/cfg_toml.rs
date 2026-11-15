@@ -117,6 +117,7 @@ impl ConfigLayer for ServerTomlArgs {
   fn apply_layer(self, mut config: ServerConfig) -> Result<ServerConfig, ConfigError> {
     override_opt_field!(config.default_theme, self.default_theme);
     override_opt_field!(config.log_level, inner_value: self.log_level.map(|val| val.0));
+    override_opt_field!(config.ignore_clients, inner_value: self.ignore_clients.as_ref().map(|val| val.iter().copied().collect()));
 
     if let Some(upsd_section) = self.upsd
       && !upsd_section.is_empty()
