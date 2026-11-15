@@ -1,8 +1,8 @@
 ## v0.10.6 - November 15, 2026
 
 ### Fixed
-- Zero-padded UPS variables (e.g. 0004.12, 00002) are read as a string instead
-  of a number.
+- Zero-padded UPS variables (e.g. 0004.12, 00002) are now read as a numeric type
+  rather than a string
 
 ### Added
 - New config options to hide certain attached clients by IP address. Mainly for
