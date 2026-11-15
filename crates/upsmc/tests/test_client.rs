@@ -267,7 +267,7 @@ async fn list_var() {
     ("driver.parameter.pollfreq", 30);
     ("driver.parameter.pollinterval", 1);
     ("driver.parameter.port", "auto");
-    ("driver.parameter.productid", "0002");
+    ("driver.parameter.productid", 2);
     ("driver.parameter.serial", "9b000000000a");
     ("driver.parameter.synchronous", "auto");
     ("driver.parameter.vendorid", "051D");
@@ -288,7 +288,7 @@ async fn list_var() {
     ("ups.mfr", "American Power Conversion");
     ("ups.mfr.date", "2023/02/25");
     ("ups.model", "Back-UPS BX1600MI");
-    ("ups.productid", "0002");
+    ("ups.productid", 2);
     ("ups.realpower.nominal", 900);
     ("ups.serial", "9b000000000a");
     ("ups.status", "OL");

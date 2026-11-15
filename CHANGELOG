@@ -1,3 +1,13 @@
+## v0.10.6 - November 15, 2026
+
+### Fixed
+- Zero-padded UPS variables (e.g. 0004.12, 00002) are read as a string instead
+  of a number.
+
+### Added
+- New config options to hide certain attached clients by IP address. Mainly for
+  hiding upsmon clients with 0 powered devices.
+
 ## v0.10.5 - October 23, 2026
 
 ### Fixed

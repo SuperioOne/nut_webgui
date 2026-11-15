@@ -20,7 +20,7 @@ version = "1"
 
 ## -----------------------------------------------------------------------------
 ## Ignore clients: Global list of IP addresses to exclude as attached clients.
-## Applies to all UPSD configurations. Mainly for hiding upsmon clients with 0 
+## Applies to all UPSD configurations. Mainly for hiding upsmon clients with 0
 ## powered devices.
 ##
 ## Accepts IPv4 and IPv6 only. Hostnames and wildcards are not supported.
