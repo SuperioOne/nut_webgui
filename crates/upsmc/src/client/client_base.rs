@@ -103,7 +103,7 @@ where
     match timeout(self.timeout, self.inner_send_raw(request)).await {
       Ok(Ok(_)) => Ok(self.scratch_buff.as_str()),
       Ok(Err(err)) => Err(err),
-      Err(_) => Err(ErrorKind::RequestTimeout.into()),
+      Err(_) => Err(ErrorKind::ConnectionTimeout.into()),
     }
   }
 

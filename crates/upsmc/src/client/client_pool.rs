@@ -1,217 +1,42 @@
+use self::{
+  alloc::ClientAllocator, builder::NutPoolClientBuilder, marker::ClientStream,
+  server_addr::ServerAddr,
+};
 use super::AsyncNutClient;
 use crate::{
   CmdName, UpsName, VarName,
   client::NutClient,
   error::{Error, ErrorKind},
-  internal::item_pool::{ItemAllocator, ItemPool, ItemPoolError, ItemState},
+  internal::item_pool::{ItemPool, ItemPoolError},
   response,
 };
-use core::num::NonZeroUsize;
-use core::time::Duration;
-use std::{
-  net::{SocketAddr, ToSocketAddrs},
-  pin::Pin,
-  sync::Arc,
-};
-use tokio::io::{AsyncRead, AsyncWrite};
-use tracing::warn;
 
-#[derive(Debug)]
-pub enum ServerAddr {
-  SocketAddr(SocketAddr),
-  Host(String),
+mod alloc;
+
+pub mod builder;
+pub mod server_addr;
+
+pub(crate) mod marker {
+  use tokio::io::{AsyncRead, AsyncWrite};
+
+  pub trait ClientStream: AsyncRead + AsyncWrite + Send + Sync + Unpin {}
+  impl<A> ClientStream for A where A: AsyncWrite + AsyncRead + Send + Sync + Unpin {}
 }
 
-impl ToSocketAddrs for ServerAddr {
-  type Iter = std::vec::IntoIter<SocketAddr>;
-
-  fn to_socket_addrs(&self) -> std::io::Result<Self::Iter> {
-    match self {
-      ServerAddr::SocketAddr(socket_addr) => Ok(vec![*socket_addr].into_iter()),
-      ServerAddr::Host(host) => host.to_socket_addrs(),
-    }
-  }
-}
-
-impl From<String> for ServerAddr {
-  #[inline]
-  fn from(value: String) -> Self {
-    Self::Host(value)
-  }
-}
-
-impl From<SocketAddr> for ServerAddr {
-  #[inline]
-  fn from(value: SocketAddr) -> Self {
-    Self::SocketAddr(value)
-  }
-}
-
-impl From<ItemPoolError<Error>> for Error {
-  #[inline]
-  fn from(value: ItemPoolError<Error>) -> Self {
-    match value {
-      ItemPoolError::PoolClosed => ErrorKind::ConnectionPoolClosed.into(),
-      ItemPoolError::AllocatorError { inner } => inner,
-    }
-  }
-}
-
-#[cfg(feature = "rustls")]
-#[derive(Debug)]
-struct TlsConfig {
-  srv_name: tokio_rustls::rustls::pki_types::ServerName<'static>,
-  config: Arc<tokio_rustls::rustls::ClientConfig>,
-}
-
-#[derive(Debug)]
-struct ClientAllocator {
-  addr: Arc<ServerAddr>,
-  timeout: Option<Duration>,
-
-  #[cfg(feature = "rustls")]
-  tls_config: Option<TlsConfig>,
-}
-
-pub struct NutPoolClientBuilder {
-  allocator: ClientAllocator,
-  limit: NonZeroUsize,
-}
-
-impl NutPoolClientBuilder {
-  #[inline]
-  pub fn new(addr: ServerAddr) -> Self {
-    Self {
-      limit: NonZeroUsize::new(1).unwrap(),
-      allocator: ClientAllocator {
-        addr: Arc::new(addr),
-        timeout: None,
-
-        #[cfg(feature = "rustls")]
-        tls_config: None,
-      },
-    }
-  }
-
-  #[inline]
-  pub const fn with_timeout(mut self, timeout: Duration) -> Self {
-    self.allocator.timeout = Some(timeout);
-    self
-  }
-
-  #[inline]
-  pub const fn with_limit(mut self, limit: NonZeroUsize) -> Self {
-    self.limit = limit;
-    self
-  }
-
-  #[cfg(feature = "rustls")]
-  #[inline]
-  pub fn with_tls(
-    mut self,
-    srv_name: tokio_rustls::rustls::pki_types::ServerName<'static>,
-    config: Arc<tokio_rustls::rustls::ClientConfig>,
-  ) -> Self {
-    self.allocator.tls_config = Some(TlsConfig { srv_name, config });
-    self
-  }
-
-  #[inline]
-  pub fn build(self) -> NutPoolClient {
-    NutPoolClient {
-      pool: ItemPool::new(self.limit, self.allocator),
-    }
-  }
-}
-
-pub trait ClientStream: AsyncRead + AsyncWrite + Send + Sync + Unpin {}
-impl<A> ClientStream for A where A: AsyncWrite + AsyncRead + Send + Sync + Unpin {}
-
-impl ItemAllocator for ClientAllocator {
-  type Item = NutClient<Box<dyn ClientStream>>;
-  type Error = Error;
-
-  fn init(&self) -> Pin<Box<dyn Future<Output = Result<Self::Item, Self::Error>> + Send + '_>> {
-    Box::pin(async move {
-      let addr_resolutions: Vec<_> = self.addr.to_socket_addrs()?.collect();
-      let connection: Box<dyn ClientStream> = {
-        #[cfg(feature = "rustls")]
-        {
-          if let Some(tls_config) = &self.tls_config {
-            Box::new(
-              NutClient::connect_with_tls(
-                addr_resolutions.as_slice(),
-                tls_config.srv_name.clone(),
-                tls_config.config.clone(),
-              )
-              .await?
-              .into_inner(),
-            )
-          } else {
-            Box::new(
-              NutClient::connect(addr_resolutions.as_slice())
-                .await?
-                .into_inner(),
-            )
-          }
-        }
-
-        #[cfg(not(feature = "rustls"))]
-        {
-          Box::new(
-            NutClient::connect(addr_resolutions.as_slice())
-              .await?
-              .into_inner(),
-          )
-        }
-      };
-
-      let mut client = NutClient::from(connection);
-
-      if let Some(timeout) = self.timeout {
-        client.set_timeout(timeout);
-      }
-
-      Ok(client)
-    })
-  }
-
-  fn dealloc(&self, item: Self::Item) -> Pin<Box<dyn Future<Output = ()> + Send + '_>> {
-    Box::pin(async move {
-      if let Err(err) = item.close().await {
-        warn!(message = "unable to close a tcp connection in pool", error = %err);
-      }
-    })
-  }
-
-  fn prealloc_check(
-    &self,
-    mut item: Self::Item,
-  ) -> Pin<Box<dyn Future<Output = ItemState<Self::Item>> + Send + '_>> {
-    Box::pin(async move {
-      if item.is_open().await {
-        ItemState::Ready(item)
-      } else {
-        ItemState::Destroy(item)
-      }
-    })
-  }
-}
-
+#[derive(Clone)]
 pub struct NutPoolClient {
   pool: ItemPool<ClientAllocator>,
 }
 
-impl Clone for NutPoolClient {
-  #[inline]
-  fn clone(&self) -> Self {
-    Self {
-      pool: self.pool.clone(),
-    }
-  }
-}
-
 impl NutPoolClient {
+  #[inline]
+  pub fn new<T>(addr: T) -> NutPoolClientBuilder
+  where
+    T: Into<ServerAddr>,
+  {
+    NutPoolClientBuilder::new(addr)
+  }
+
   #[inline]
   pub fn close(self) -> impl Future<Output = ()> {
     self.pool.close()
@@ -239,7 +64,7 @@ macro_rules! impl_pooled_call {
       Ok(res) => Ok(res),
       Err(err) => {
         match err.kind() {
-          ErrorKind::IOError { .. } | ErrorKind::EmptyResponse | ErrorKind::RequestTimeout => {
+          ErrorKind::IOError { .. } | ErrorKind::EmptyResponse | ErrorKind::ConnectionTimeout => {
             let mut client = match $pool.get_checked().await {
               Ok(c) => c,
               Err(err) => {return Err(err.into());}
@@ -261,7 +86,7 @@ macro_rules! impl_pooled_call {
       },
       Err(err) => {
         match err.kind() {
-          ErrorKind::IOError { .. } | ErrorKind::ConnectionPoolClosed | ErrorKind::EmptyResponse | ErrorKind::RequestTimeout => {
+          ErrorKind::IOError { .. } | ErrorKind::ConnectionPoolClosed | ErrorKind::EmptyResponse | ErrorKind::ConnectionTimeout => {
           drop($client);
         }
           _ => {
@@ -369,5 +194,15 @@ impl AsyncNutClient for &NutPoolClient {
     N: std::borrow::Borrow<UpsName>,
   {
     impl_pooled_call!(self.pool, list_var, ups.borrow())
+  }
+}
+
+impl From<ItemPoolError<Error>> for Error {
+  #[inline]
+  fn from(value: ItemPoolError<Error>) -> Self {
+    match value {
+      ItemPoolError::PoolClosed => ErrorKind::ConnectionPoolClosed.into(),
+      ItemPoolError::AllocatorError { inner } => inner,
+    }
   }
 }

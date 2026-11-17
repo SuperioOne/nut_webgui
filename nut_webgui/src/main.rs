@@ -37,7 +37,7 @@ use tracing_subscriber::{
   reload::{self, Handle},
 };
 use upsmc::{
-  client::{NutPoolClient, NutPoolClientBuilder},
+  client::NutPoolClient,
   rustls::{ClientConfig, pki_types::ServerName},
 };
 
@@ -272,16 +272,16 @@ fn create_pool(
     }
   };
 
-  let mut builder = NutPoolClientBuilder::new(config.get_socket_addr().into())
+  let mut client = NutPoolClient::new(config.get_addr())
     .with_timeout(Duration::from_secs(config.poll_freq))
     .with_limit(config.max_conn);
 
   if let Some(tls_config) = tls_client_conf {
     let server_name = ServerName::try_from(config.addr.as_ref().to_owned())?;
-    builder = builder.with_tls(server_name, Arc::new(tls_config));
+    client = client.with_tls(server_name, Arc::new(tls_config));
   }
 
-  Ok(builder.build())
+  Ok(client.open())
 }
 
 fn create_user_store(

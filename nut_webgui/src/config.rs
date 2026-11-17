@@ -100,7 +100,7 @@ impl AuthConfig {
 }
 
 impl UpsdConfig {
-  pub fn get_socket_addr(&self) -> String {
+  pub fn get_addr(&self) -> String {
     format!("{address}:{port}", address = self.addr, port = self.port)
   }
 }

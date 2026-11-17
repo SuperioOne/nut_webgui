@@ -16,7 +16,7 @@ mod client_tls;
 
 pub use client_auth::NutAuthClient;
 pub use client_base::NutClient;
-pub use client_pool::{ClientStream, NutPoolClient, NutPoolClientBuilder};
+pub use client_pool::NutPoolClient;
 
 pub trait AsyncNutClient {
   fn get_cmd_desc<N, C>(self, ups: N, cmd: C) -> impl Future<Output = Result<CmdDesc, Error>>
