@@ -173,8 +173,8 @@ impl StatusSyncTask {
               if old_status != new_status {
                 entry.last_modified = Utc::now();
                 changes.push(DeviceStatusChange {
-                  status_new: new_status,
-                  status_old: old_status,
+                  new: new_status,
+                  old: old_status,
                   name: variable.ups_name,
                 });
               }
@@ -260,7 +260,10 @@ impl StatusSyncTask {
                 reason = %err
               );
 
-              events.status_change(name.clone(), entry.status, UpsStatus::NOCOMM);
+              if entry.status != UpsStatus::NOCOMM {
+                events.status_change(name.clone(), entry.status, UpsStatus::NOCOMM);
+              }
+
               entry.mark_as_dead_with(UpsStatus::NOCOMM);
               continue;
             }

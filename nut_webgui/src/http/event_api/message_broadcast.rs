@@ -190,9 +190,9 @@ impl SerializeTask {
 
     for change in changes {
       let message = NutEventMessage::DeviceStatus {
-        status_new: change.status_new,
-        status_old: change.status_old,
-        events: UpsEvents::new(change.status_old, change.status_new),
+        status_new: change.new,
+        status_old: change.old,
+        events: UpsEvents::new(change.old, change.new),
         name: &change.name,
         namespace,
         timestamp,

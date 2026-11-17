@@ -8,8 +8,8 @@ pub mod channel;
 #[derive(Debug, Clone)]
 pub struct DeviceStatusChange {
   pub name: UpsName,
-  pub status_old: UpsStatus,
-  pub status_new: UpsStatus,
+  pub old: UpsStatus,
+  pub new: UpsStatus,
 }
 
 #[derive(Debug, Clone)]

@@ -78,6 +78,12 @@ pub enum EdgeType {
   Power,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum AnimateType {
+  Flow,
+  Pulse,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Default, PartialOrd, Ord)]
 enum PowerStatusLevel {
   /// No power indicator.
@@ -125,6 +131,7 @@ pub struct EdgeNode {
   pub edge_type: EdgeType,
   pub from: NodeId,
   pub to: NodeId,
+  pub animate: AnimateType,
 }
 
 impl TopologyGraphBuilder {
@@ -234,6 +241,7 @@ impl TopologyGraphBuilder {
             target_id,
             EdgeType::Power,
             device_node.power_status.into(),
+            AnimateType::Flow,
           );
         }
 
@@ -242,18 +250,23 @@ impl TopologyGraphBuilder {
       }
     };
 
-    let edge_semantic = if device.status.has(UpsStatus::NOCOMM) {
-      SemanticType::Error
+    if device.status.has(UpsStatus::NOCOMM) {
+      self.add_edge(
+        device_node_id,
+        server_node.get_id(),
+        EdgeType::Data,
+        SemanticType::Error,
+        AnimateType::Pulse,
+      );
     } else {
-      SemanticType::Info
-    };
-
-    self.add_edge(
-      device_node_id,
-      server_node.get_id(),
-      EdgeType::Data,
-      edge_semantic,
-    );
+      self.add_edge(
+        device_node_id,
+        server_node.get_id(),
+        EdgeType::Data,
+        SemanticType::Info,
+        AnimateType::Flow,
+      );
+    }
   }
 
   fn add_client(
@@ -280,6 +293,7 @@ impl TopologyGraphBuilder {
     to: NodeId,
     edge_type: EdgeType,
     semantic_type: SemanticType,
+    animate: AnimateType,
   ) {
     self.edges.push(EdgeNode {
       id: self.edges.len(),
@@ -287,6 +301,7 @@ impl TopologyGraphBuilder {
       from,
       edge_type,
       semantic_type,
+      animate,
     });
   }
 }
@@ -296,6 +311,15 @@ impl EdgeType {
     match self {
       EdgeType::Power => "edge-dashed",
       EdgeType::Data => "edge-dotted",
+    }
+  }
+}
+
+impl AnimateType {
+  pub const fn as_class(&self) -> &'static str {
+    match self {
+      AnimateType::Flow => "edge-animate-flow",
+      AnimateType::Pulse => "animate-pulse",
     }
   }
 }
@@ -325,7 +349,7 @@ impl PowerStatusLevel {
 impl Into<SemanticType> for PowerStatusLevel {
   fn into(self) -> SemanticType {
     match self {
-      PowerStatusLevel::Unknown => SemanticType::None,
+      PowerStatusLevel::Unknown => SemanticType::Info,
       PowerStatusLevel::Critical => SemanticType::Error,
       PowerStatusLevel::Degraded => SemanticType::Warning,
       PowerStatusLevel::Active => SemanticType::Success,

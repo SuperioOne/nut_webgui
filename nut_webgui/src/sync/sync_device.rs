@@ -105,10 +105,9 @@ impl BackgroundService for DeviceSyncService {
 
 impl DeviceSyncTask {
   pub async fn next(&self) -> Result<(), SyncTaskError> {
-    let mut events = EventBatch::new(self.state.namespace.clone());
-
     match self.diff_upsd().await {
       Ok(patch) => {
+        let mut events = EventBatch::new(self.state.namespace.clone());
         let mut write_lock = self.state.daemon_state.write().await;
 
         for entry in patch.added.into_iter() {
@@ -173,42 +172,41 @@ impl DeviceSyncTask {
       Err(err) => {
         let mut write_lock = self.state.daemon_state.write().await;
 
-        for device_name in write_lock.devices.keys() {
-          info!(
-            message = "device disconnected",
-            namespace = %self.state.namespace,
-            device = %device_name
-          );
-
-          events.removed_device(device_name.clone());
-        }
-
         if write_lock.status != ConnectionStatus::Dead {
+          let mut events = EventBatch::new(self.state.namespace.clone());
+
+          write_lock.status = ConnectionStatus::Dead;
+          write_lock.prot_ver = None;
+          write_lock.ver = None;
+          events.set_upsd_status(ConnectionStatus::Dead);
+
+          for (name, device) in write_lock.devices.iter_mut() {
+            if device.status != UpsStatus::NOCOMM {
+              events.status_change(name.clone(), device.status, UpsStatus::NOCOMM);
+            }
+
+            device.mark_as_dead_with(UpsStatus::NOCOMM);
+          }
+
+          write_lock.last_device_sync = Some(Utc::now());
+
           error!(
             message = "ups daemon is disconnected",
             namespace = %self.state.namespace,
             reason = %err
           );
 
-          write_lock.status = ConnectionStatus::Dead;
-          write_lock.prot_ver = None;
-          write_lock.ver = None;
-          events.set_upsd_status(ConnectionStatus::Dead);
+          _ = self
+            .event_channel
+            .send_batch(events)
+            .inspect_err(|send_err| {
+              warn!(
+                message = "unable to send system events",
+                namespace = %self.state.namespace,
+                reason = %send_err
+              );
+            });
         }
-
-        write_lock.devices.clear();
-        write_lock.last_device_sync = Some(Utc::now());
-
-        _ = self
-          .event_channel
-          .send_batch(events)
-          .inspect_err(|send_err| {
-            warn!(
-              message = "unable to send system events",
-              namespace = %self.state.namespace,
-              reason = %send_err
-            );
-          });
 
         Err(err)
       }

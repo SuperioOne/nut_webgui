@@ -66,13 +66,7 @@ where
           Ok(Some(Path(parameters))) => match parameters.get("namespace") {
             Some(namespace) => match state.upsd_servers.get(namespace.as_str()) {
               Some(upsd) => match upsd.daemon_state.read().await.status {
-                ConnectionStatus::Online => Ok(()),
-                ConnectionStatus::Dead => Err(
-                  ProblemDetail::new("No UPSD connection", StatusCode::SERVICE_UNAVAILABLE)
-                    .with_detail(
-                      "Server is unable to connect UPSD. See application logs for more details.",
-                    ),
-                ),
+                ConnectionStatus::Online | ConnectionStatus::Dead => Ok(()),
                 ConnectionStatus::NotReady => Err(ProblemDetail::new(
                   "Upsd state is not ready",
                   StatusCode::SERVICE_UNAVAILABLE,

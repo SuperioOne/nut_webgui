@@ -293,33 +293,33 @@
             </div>
           </div>
         </nut-graph-node>
-        <nut-graph-node id="power_link_node_{{node_id}}">
-          <div class="bg-base-300 border-2 border-primary flex flex-row font-bold h-8 items-center justify-center rounded-full w-8">
-            {%- call icons::get_ac_icon(22) -%}{%- endcall -%}
-          </div>
-        </nut-graph-node>
-        <nut-graph-link
-          {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
-            class="animate-pulse edge-4 edge-error"
-          {% else if device.status.has(UpsStatus::NOCOMM) -%}
-            class="edge-4 edge-base-content"
-          {%- else if let Some(input_voltage) = device.input_voltage -%}
-            class="edge-4 edge-animate-flow edge-dashed {{input_voltage.get_semantic_type().as_edge()}}"
-          {%- else -%}
-            class="edge-4 edge-animate-flow edge-dashed edge-success"
-          {%- endif %}
-          id="power_link_{{node_id}}"
-          from="power_link_node_{{node_id}}"
-          to="{{node_id}}"
-        >
-          {%- if let Some(input_voltage) = device.input_voltage -%}
-            <div
-              class="backdrop-blur-sm bg-base-300/80 border border-neutral/30 font-bold p-1 rounded text-nowrap text-xs"
-            >
-              {{input_voltage}}
+        {%- if !device.status.has(UpsStatus::NOCOMM) -%}
+          <nut-graph-node id="power_link_node_{{node_id}}">
+            <div class="bg-base-300 border-2 border-primary flex flex-row font-bold h-8 items-center justify-center rounded-full w-8">
+              {%- call icons::get_ac_icon(22) -%}{%- endcall -%}
             </div>
-          {%- endif -%}
-        </nut-graph-link>
+          </nut-graph-node>
+          <nut-graph-link
+            {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
+              class="animate-pulse edge-4 edge-error"
+            {%- else if let Some(input_voltage) = device.input_voltage -%}
+              class="edge-4 edge-animate-flow edge-dashed {{input_voltage.get_semantic_type().as_edge()}}"
+            {%- else -%}
+              class="edge-4 edge-animate-flow edge-dashed edge-success"
+            {%- endif %}
+            id="power_link_{{node_id}}"
+            from="power_link_node_{{node_id}}"
+            to="{{node_id}}"
+          >
+            {%- if let Some(input_voltage) = device.input_voltage -%}
+              <div
+                class="backdrop-blur-sm bg-base-300/80 border border-neutral/30 font-bold p-1 rounded text-nowrap text-xs"
+              >
+                {{input_voltage}}
+              </div>
+            {%- endif -%}
+          </nut-graph-link>
+        {%- endif -%}
       {%- endfor -%}
 
       <nut-graph-group id="group_clients">
@@ -377,7 +377,7 @@
 
       {%- for edge in graph.edges -%}
         <nut-graph-link
-          class="edge-2 edge-animate-flow {{edge.edge_type.as_class()}} {{edge.get_semantic_type().as_edge()}}"
+          class="edge-2 {{edge.animate.as_class()}} {{edge.edge_type.as_class()}} {{edge.get_semantic_type().as_edge()}}"
           from="{{edge.from}}"
           id="{{edge.get_id()}}"
           to="{{edge.to}}"

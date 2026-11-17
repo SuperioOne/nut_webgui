@@ -49,12 +49,10 @@ impl EventBatch {
   }
 
   #[inline]
-  pub fn status_change(&mut self, name: UpsName, old_status: UpsStatus, new_status: UpsStatus) {
-    self.status_changes.push(DeviceStatusChange {
-      name,
-      status_old: old_status,
-      status_new: new_status,
-    });
+  pub fn status_change(&mut self, name: UpsName, old: UpsStatus, new: UpsStatus) {
+    self
+      .status_changes
+      .push(DeviceStatusChange { name, old, new });
   }
 
   #[inline]
