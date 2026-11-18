@@ -222,8 +222,8 @@ impl InferValueFrom<Cow<'_, str>> for Value {
 impl std::fmt::Display for Value {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      Value::Float(v) => f.write_fmt(format_args!("{v:.2}")),
-      Value::Int(v) => f.write_fmt(format_args!("{v}")),
+      Value::Float(v) => v.fmt(f),
+      Value::Int(v) => v.fmt(f),
       Value::String(v) => f.write_str(v),
     }
   }

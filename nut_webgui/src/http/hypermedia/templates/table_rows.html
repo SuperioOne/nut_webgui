@@ -87,7 +87,7 @@
             {%- match row.device.get_battery_runtime() -%}
               {%- when Some(runtime) -%}
                 <p class="font-bold text-center {{runtime.get_semantic_type().as_text()}}">
-                  <nut-time-display value="{{runtime.as_raw_value()}}"></nut-time-display>
+                  <nut-time-display value="{{runtime.get()}}"></nut-time-display>
                 </p>
               {%- when None -%}
                 <p class="font-bold opacity-50 text-center">N/A</p>

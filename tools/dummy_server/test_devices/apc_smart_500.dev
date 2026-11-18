@@ -1,0 +1,180 @@
+# DEVICE:URL:REPORT: https://github.com/networkupstools/nut/pull/3579
+
+# DEVICE:COMMENT
+# apcmicrolink is a new driver (merged via NUT PR #3579, not yet in any
+# tagged NUT release) for APC Smart-UPS units with no serial port,
+# using the AP9641-style "Microlink" protocol tunnelled over USB HID.
+# This report is from an APC Smart-UPS 500 (SCL500RM1UC). Needs the
+# APC/Schneider Electric cable 940-0504 (USB A to USB A) -- a standard
+# USB A-to-B cable will not work.
+#
+# Several settable variables (delays, thresholds, input.sensitivity,
+# battery.date, the outlet-group timer/schedule fields) are reported by
+# `upsrw` with `Type: NUMBER` and no declared min/max, which doesn't map
+# cleanly onto DDL's STRING/RANGE/ENUM #RW: markup -- left as plain
+# comments below rather than guessed at. Only the four genuine STRING
+# variables (three outlet-group names + ups.id, each with a published
+# max length) are given as #RW: tags.
+# DEVICE:EOC
+
+# DEVICE:COMMENT-BLOCK:UPSCONF: ups.conf
+# [scl500]
+#   driver = apcmicrolink
+#   port = auto
+#   vendorid = 051d
+#   productid = 0003
+#   desc = "APC Smart-UPS 500 (SCL500RM1UC), USB HID tunnel"
+# DEVICE:EOC
+
+# :; upsc scl500@localhost
+battery.charge: 100
+battery.date: 2021-11-30
+battery.date.maintenance: 2031-12-29
+battery.lifetime.status: LifeTimeStatusOK
+battery.lowruntimewarning: 120
+battery.runtime: 2830
+battery.temperature: 31.195312
+battery.voltage: 15.9375
+device.mfr: APC
+device.model: Smart-UPS 500
+device.part: SCL500RM1UC
+device.serial: 5S2145T34657
+device.type: ups
+driver.debug: 0
+driver.flag.allow_killpower: 0
+driver.name: apcmicrolink
+driver.parameter.pollinterval: 2
+driver.parameter.port: auto
+driver.parameter.productid: 0003
+driver.parameter.synchronous: auto
+driver.parameter.vendorid: 051d
+driver.state: updateinfo
+driver.version: 2.8.5.1168-1168+g2caa3c875
+driver.version.internal: 0.03
+driver.version.usb: libusb-1.0.28 (API: 0x0100010A)
+experimental.battery.firmware: 3Ah2_v1001
+experimental.battery.part: APCRBC167-LI
+experimental.battery.serial: 9H2417X10631
+experimental.microlink.battery.test.schedule: OnStartUp14Since	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+experimental.microlink.diag.auth_refused: 0
+experimental.microlink.diag.auth_status: 0x0001
+experimental.microlink.diag.hid_fallback.active: 0
+experimental.microlink.diag.slave_password_echo: 5c476804
+experimental.microlink.ups.test.result: Passed
+experimental.outlet.group.0.status.cause: UPSStatusChange
+experimental.outlet.group.1.status.cause: SystemInitialization UPSStatusChange
+experimental.outlet.group.2.status.cause: UPSStatusChange
+experimental.output.energy: 79123
+experimental.output.voltage.setting: VAC230	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+experimental.statistics.battery.totaltime: 731
+experimental.statistics.battery.transfers: 43
+experimental.statistics.input.totaltime: 75496349
+experimental.statistics.output.totaltime: 75497153
+experimental.statistics.ups.totaltime: 75497279
+experimental.ups.load.apparent: 13.042969
+input.frequency: 50.007812
+input.quality: Acceptable
+input.sensitivity: normal	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+input.transfer.high: 253	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+input.transfer.low: 207	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+input.transfer.reason: AcceptableInput
+input.voltage: 231.078125
+outlet.group.0.delay.reboot: 8	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.0.delay.shutdown: 180	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.0.delay.start: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.0.minimumreturnruntime: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.0.name: Unswitched Group
+outlet.group.0.status: StateOn
+outlet.group.0.switchable: no
+outlet.group.1.delay.reboot: 8	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.1.delay.shutdown: 180	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.1.delay.start: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.1.lowruntimewarning: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.1.minimumreturnruntime: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.1.name: Group 1
+outlet.group.1.status: StateOn
+outlet.group.1.switchable: yes
+outlet.group.1.timer.reboot: NotActive
+outlet.group.1.timer.shutdown: NotActive
+outlet.group.1.timer.start: NotActive
+outlet.group.2.delay.reboot: 8	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.2.delay.shutdown: 180	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.2.delay.start: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.2.lowruntimewarning: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.2.minimumreturnruntime: 0	#COMMENT: settable (upsrw), reported Type: NUMBER with no declared range -- see DEVICE:COMMENT above
+outlet.group.2.name: Group 2
+outlet.group.2.status: StateOn
+outlet.group.2.switchable: yes
+outlet.group.2.timer.reboot: NotActive
+outlet.group.2.timer.shutdown: NotActive
+outlet.group.2.timer.start: NotActive
+outlet.group.count: 3
+output.current: 0.28125
+output.frequency: 50
+output.voltage: 231.078125
+ups.beeper.status: enabled
+ups.id: APC UPS test
+ups.load: 9.75
+ups.mfr: APC
+ups.mfr.date: 2021-11-30
+ups.model: Smart-UPS 500
+ups.power: 65.2148
+ups.power.nominal: 500
+ups.productid: 0004
+ups.realpower: 39
+ups.realpower.nominal: 400
+ups.serial: 5S2145T34657
+ups.status: OL
+ups.temperature: 31.195312
+ups.test.interval: 1209600
+ups.test.result: Passed
+ups.vendorid: 051d
+
+#RW:outlet.group.0.name:STRING:16
+#RW:outlet.group.1.name:STRING:16
+#RW:outlet.group.2.name:STRING:16
+#RW:ups.id:STRING:16
+
+#CMD:beeper.disable
+#CMD:beeper.enable
+#CMD:bypass.start
+#CMD:bypass.stop
+#CMD:calibrate.start
+#CMD:calibrate.stop
+#CMD:driver.killpower
+#CMD:driver.reload
+#CMD:driver.reload-or-error
+#CMD:driver.reload-or-exit
+#CMD:load.cycle
+#CMD:load.off
+#CMD:load.off.delay
+#CMD:load.on
+#CMD:load.on.delay
+#CMD:outlet.group.1.load.cycle
+#CMD:outlet.group.1.load.off
+#CMD:outlet.group.1.load.off.delay
+#CMD:outlet.group.1.load.on
+#CMD:outlet.group.1.load.on.delay
+#CMD:outlet.group.1.shutdown.default
+#CMD:outlet.group.1.shutdown.reboot
+#CMD:outlet.group.1.shutdown.reboot.graceful
+#CMD:outlet.group.1.shutdown.return
+#CMD:outlet.group.1.shutdown.stayoff
+#CMD:outlet.group.2.load.cycle
+#CMD:outlet.group.2.load.off
+#CMD:outlet.group.2.load.off.delay
+#CMD:outlet.group.2.load.on
+#CMD:outlet.group.2.load.on.delay
+#CMD:outlet.group.2.shutdown.default
+#CMD:outlet.group.2.shutdown.reboot
+#CMD:outlet.group.2.shutdown.reboot.graceful
+#CMD:outlet.group.2.shutdown.return
+#CMD:outlet.group.2.shutdown.stayoff
+#CMD:shutdown.default
+#CMD:shutdown.reboot
+#CMD:shutdown.reboot.graceful
+#CMD:shutdown.return
+#CMD:shutdown.stayoff
+#CMD:test.battery.start
+#CMD:test.battery.stop
+#CMD:test.panel.start

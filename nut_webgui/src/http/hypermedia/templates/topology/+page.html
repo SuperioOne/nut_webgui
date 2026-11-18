@@ -244,7 +244,7 @@
                   <span class="font-bold">:</span>
                   <nut-time-display
                     class="font-bold grow text-success {{rt.get_semantic_type().as_text()}}"
-                    value="{{rt.as_raw_value()}}"
+                    value="{{rt.get()}}"
                   >
                   </nut-time-display>
                 </div>
@@ -256,7 +256,7 @@
                   <div class="grow">
                     <nut-bar-gauge
                       class="h-6 w-full {{battery.get_semantic_type().as_bar_gauge()}}"
-                      value="{{battery.as_raw_value()}}"
+                      value="{{battery.get()}}"
                     >
                     </nut-bar-gauge>
                   </div>
@@ -273,7 +273,7 @@
                   <div class="grow">
                     <nut-bar-gauge
                       class="h-6 w-full {{load.get_semantic_type().as_bar_gauge()}}"
-                      value="{{load.as_raw_value()}}"
+                      value="{{load.get()}}"
                     >
                     </nut-bar-gauge>
                   </div>

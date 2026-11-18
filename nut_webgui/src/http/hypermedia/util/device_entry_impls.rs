@@ -38,11 +38,7 @@ impl DeviceEntry {
           .and_then(|v| v.as_lossy_f64())
           .unwrap_or(60.0);
 
-        value.set_semantic_type(SemanticType::from_range(
-          value.as_raw_value(),
-          low_temp,
-          high_temp,
-        ));
+        value.set_semantic_type(SemanticType::from_range(value.get(), low_temp, high_temp));
 
         Some(value)
       }
@@ -55,7 +51,7 @@ impl DeviceEntry {
 
     match Percentage::try_from(load_var) {
       Ok(mut value) => {
-        value.set_semantic_type(SemanticType::from_range(value.as_raw_value(), 45.0, 75.0));
+        value.set_semantic_type(SemanticType::from_range(value.get(), 45.0, 75.0));
 
         Some(value)
       }
@@ -81,7 +77,7 @@ impl DeviceEntry {
           .unwrap_or(25.0);
 
         value.set_semantic_type(SemanticType::from_range_inverted(
-          value.as_raw_value(),
+          value.get(),
           danger_level,
           warn_level,
         ));
@@ -103,7 +99,7 @@ impl DeviceEntry {
           .and_then(|v| v.as_lossy_i64())
           .unwrap_or(60);
 
-        if value.as_raw_value() < danger_level {
+        if value.get() < danger_level {
           value.set_semantic_type(SemanticType::Error);
         } else {
           value.set_semantic_type(SemanticType::Success);
@@ -182,8 +178,8 @@ impl DeviceEntry {
           .get(VarName::INPUT_VOLTAGE_HIGH_CRITICAL)
           .and_then(|v| v.as_lossy_f64());
 
-        let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
-          || high_volt.is_some_and(|target| value.as_raw_value() >= target)
+        let semantic_type = if low_volt.is_some_and(|target| value.get() <= target)
+          || high_volt.is_some_and(|target| value.get() >= target)
         {
           SemanticType::Warning
         } else {
@@ -213,8 +209,8 @@ impl DeviceEntry {
           .get(VarName::OUTPUT_VOLTAGE_HIGH)
           .and_then(|v| v.as_lossy_f64());
 
-        let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
-          || high_volt.is_some_and(|target| value.as_raw_value() >= target)
+        let semantic_type = if low_volt.is_some_and(|target| value.get() <= target)
+          || high_volt.is_some_and(|target| value.get() >= target)
         {
           SemanticType::Error
         } else {
@@ -244,8 +240,8 @@ impl DeviceEntry {
           .get(VarName::BATTERY_VOLTAGE_HIGH)
           .and_then(|v| v.as_lossy_f64());
 
-        let semantic_type = if low_volt.is_some_and(|target| value.as_raw_value() <= target)
-          || high_volt.is_some_and(|target| value.as_raw_value() >= target)
+        let semantic_type = if low_volt.is_some_and(|target| value.get() <= target)
+          || high_volt.is_some_and(|target| value.get() >= target)
         {
           SemanticType::Error
         } else {

@@ -13,7 +13,7 @@
       <h3 class="opacity-60 tracking-wide">Ups Load</h3>
       <nut-gauge
         class="grow lg:px-14 md:px-10 px-8 {{load.get_semantic_type().as_fill()}}"
-        value="{{load.as_raw_value()}}"
+        value="{{load.get()}}"
       >
       </nut-gauge>
     </div>
@@ -24,7 +24,7 @@
       <h3 class="opacity-60 tracking-wide">Battery Charge</h3>
       <nut-gauge 
         class="grow lg:px-14 md:px-10 px-8 {{charge.get_semantic_type().as_fill()}}"
-        value="{{charge.as_raw_value()}}"
+        value="{{charge.get()}}"
       >
       </nut-gauge>
       <div class="flex flex-col font-bold gap-1 justify-end opacity-60 text-sm">
@@ -93,7 +93,7 @@
       <h3 class="opacity-60 tracking-wide">Battery Runtime</h3>
       <nut-time-display
         class="content-center grow py-6 text-6xl text-center tooltip tooltip-bottom {{runtime.get_semantic_type().as_text()}}"
-        value="{{runtime.as_raw_value()}}"
+        value="{{runtime.get()}}"
         data-tip="{{runtime}}"
       >
       </nut-time-display>
