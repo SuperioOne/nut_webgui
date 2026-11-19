@@ -49,4 +49,4 @@ battery.temperature: 00000000000000042.12345678
 
 TIMER 30
 ups.load: 012.12
-battery.temperature: -00000000000000000000.80085
+battery.temperature: -0000000000000000005.80085

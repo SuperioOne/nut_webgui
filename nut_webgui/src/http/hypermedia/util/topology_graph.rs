@@ -2,7 +2,7 @@ use super::named_enum::create_named_enum;
 use crate::{
   http::hypermedia::util::{
     semantic_type::SemanticType,
-    unit::{Percentage, RemainingSeconds, Voltage},
+    unit::{Percentage, Second, Voltage},
   },
   state::{ConnectionStatus, DaemonState, DeviceEntry, UpsdNamespace},
 };
@@ -121,7 +121,7 @@ pub struct DeviceNode {
   pub device_id: Arc<DeviceId>,
   pub input_voltage: Option<Voltage>,
   pub load: Option<Percentage>,
-  pub runtime: Option<RemainingSeconds>,
+  pub runtime: Option<Second>,
   pub status: UpsStatus,
 }
 

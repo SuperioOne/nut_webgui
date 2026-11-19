@@ -98,7 +98,7 @@
           <div class="stat-figure text-secondary">
             {%- call icons::get_svg("thermometer", 20) -%}{%- endcall -%}
           </div>
-          <div class="stat-title">Ups Temperature</div>
+          <div class="stat-title">Temperature</div>
           <div class="stat-value text-lg">
             {%- match row.device.get_ups_temperature() -%}
               {%- when Some(temperature) -%}

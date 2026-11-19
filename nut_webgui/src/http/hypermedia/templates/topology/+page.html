@@ -10,20 +10,19 @@
 <div class="bg-grid max-h-[calc(100dvh-112px)] overflow-hidden relative w-full">
   <div class="absolute bottom-0 flex flex-row justify-end max-w-96 right-0 tabs tabs-bottom tabs-lift tabs-sm z-10">
     <input
-        autocomplete="off"
-        aria-label="Legend"
-        checked="checked"
-        class="[--tab-bg:var(--color-base-300)] backdrop-blur-sm tab"
-        name="control_tab"
-        type="radio"
-      />
+      autocomplete="off"
+      aria-label="Legend"
+      class="[--tab-bg:var(--color-base-300)] backdrop-blur-sm tab"
+      name="control_tab"
+      type="radio"
+    />
     <div class="backdrop-blur-sm bg-base-300/60 p-2 tab-content">
       <table class="table table-xs">
         <tr>
           <td>
-             <div class="bg-base-300 border border-primary flex flex-row font-bold h-4 items-center justify-center rounded-full text-center text-lg w-4">
-                {%- call icons::get_ac_icon(16) -%}{%- endcall -%}
-              </div>
+            <div class="bg-base-300 border border-primary flex flex-row font-bold h-4 items-center justify-center rounded-full text-center text-lg w-4">
+              {%- call icons::get_ac_icon(16) -%}{%- endcall -%}
+            </div>
           </td>
           <td>AC Supply</td>
         </tr>
@@ -176,8 +175,9 @@
       </nut-attr-control>
     </div>
     <input
-      autocomplete="off"
       aria-label="Minimize"
+      autocomplete="off"
+      checked="checked"
       class="[--tab-bg:var(--color-base-300)] backdrop-blur-sm tab"
       name="control_tab"
       type="radio"
@@ -302,8 +302,6 @@
           <nut-graph-link
             {% if device.status.has(UpsStatus::ON_BATTERY) || device.status.has(UpsStatus::BYPASS) -%}
               class="animate-pulse edge-4 edge-error"
-            {%- else if let Some(input_voltage) = device.input_voltage -%}
-              class="edge-4 edge-animate-flow edge-dashed {{input_voltage.get_semantic_type().as_edge()}}"
             {%- else -%}
               class="edge-4 edge-animate-flow edge-dashed edge-success"
             {%- endif %}
@@ -313,7 +311,7 @@
           >
             {%- if let Some(input_voltage) = device.input_voltage -%}
               <div
-                class="backdrop-blur-sm bg-base-300/80 border border-neutral/30 font-bold p-1 rounded text-nowrap text-xs"
+                  class="backdrop-blur-sm bg-base-300/80 border border-neutral/30 font-bold p-1 rounded text-nowrap text-xs {{input_voltage.get_semantic_type().as_text()}}"
               >
                 {{input_voltage}}
               </div>

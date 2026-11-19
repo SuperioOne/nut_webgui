@@ -93,11 +93,11 @@ pub trait SemanticClass {
 
 impl SemanticType {
   #[inline]
-  pub fn from_range<T>(value: T, from: T, to: T) -> Self
+  pub fn from_upper_limits<T>(value: T, warning: T, critical: T) -> Self
   where
     T: PartialOrd + PartialEq,
   {
-    let level = (value >= from) as u8 + (value >= to) as u8;
+    let level = (value >= warning) as u8 + (value >= critical) as u8;
 
     match level {
       0 => SemanticType::Success,
@@ -108,17 +108,29 @@ impl SemanticType {
   }
 
   #[inline]
-  pub fn from_range_inverted<T>(value: T, from: T, to: T) -> Self
+  pub fn from_lower_limits<T>(value: T, warning: T, critical: T) -> Self
   where
     T: PartialOrd + PartialEq,
   {
-    let level = (value >= from) as u8 + (value >= to) as u8;
+    let level = (value >= warning) as u8 + (value >= critical) as u8;
 
     match level {
       0 => SemanticType::Error,
       1 => SemanticType::Warning,
       2 => SemanticType::Success,
       _ => unreachable!(),
+    }
+  }
+
+  #[inline]
+  pub fn from_bounds<T>(value: T, min: T, max: T) -> Self
+  where
+    T: PartialOrd + PartialEq,
+  {
+    if value < min || value > max {
+      SemanticType::Error
+    } else {
+      SemanticType::Success
     }
   }
 }

@@ -177,4 +177,4 @@ impl_unit!(pub Celcius(f64 ,"{} °C"));
 impl_unit!(pub Percentage(f64, "{} %"));
 impl_unit!(pub RealPower(f64, "{} W"));
 impl_unit!(pub Voltage(f64, "{} V"));
-impl_unit!(pub RemainingSeconds(i64, "{} s"));
+impl_unit!(pub Second(i64, "{} s"));
