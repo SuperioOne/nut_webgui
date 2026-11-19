@@ -43,7 +43,7 @@ pub async fn get_readiness(State(state): State<Arc<ServerState>>) -> Readiness {
   for upsd in state.upsd_servers.values() {
     let daemon_state = upsd.daemon_state.read().await;
 
-    if daemon_state.status == ConnectionStatus::Online {
+    if daemon_state.status != ConnectionStatus::NotReady {
       return Readiness::Ready;
     }
   }
@@ -79,7 +79,7 @@ pub async fn get_namespace_readiness(
     Some(upsd_state) => {
       let daemon_state = upsd_state.daemon_state.read().await;
 
-      let status = if daemon_state.status == ConnectionStatus::Online {
+      let status = if daemon_state.status != ConnectionStatus::NotReady {
         Readiness::Ready
       } else {
         Readiness::NotReady

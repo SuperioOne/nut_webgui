@@ -10,7 +10,6 @@ Probes return `text/plain` responses with HTTP codes (200, 404, 500, 503).
 - `/probes/health`
 - `/probes/health/<namespace>`
 
-
 ### Responses
 
 |Code|Body    |Description                                    |
@@ -34,6 +33,6 @@ before redirecting user traffic.
 
 |Code|Body     |Description                                                                                            |
 |----|---------|-------------------------------------------------------------------------------------------------------|
-|200 |READY    |Some of the NUT server connections are operational, and the server is ready for responses.             |
+|200 |READY    |Server is ready for responses.                                                                         |
 |503 |NOT-READY|None of the NUT server connections are operational yet, and the server is not ready to serve responses.|
 |404 |         |Requested namespace does not exist.                                                                    |
