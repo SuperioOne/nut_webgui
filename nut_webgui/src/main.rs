@@ -24,7 +24,13 @@ use crate::{
   },
 };
 use rustls_platform_verifier::BuilderVerifierExt;
-use std::{collections::HashMap, panic, process::ExitCode, sync::Arc, time::Duration};
+use std::{
+  collections::{BTreeMap, HashMap},
+  panic,
+  process::ExitCode,
+  sync::Arc,
+  time::Duration,
+};
 use tokio::{
   net::TcpListener,
   select,
@@ -138,7 +144,7 @@ async fn start_server(config: ServerConfig) -> Result<(), Box<dyn core::error::E
   let event_channel = EventChannel::new(256);
   let message_broadcast = MessageBroadcast::new(256);
   let auth_user_store = create_user_store(&config)?;
-  let mut upsd_servers = HashMap::new();
+  let mut upsd_servers = BTreeMap::new();
   let mut openmetrics = prometheus_client::registry::Registry::with_prefix("nutwg");
   let mut bg_services = BackgroundServiceRunner::new().with_max_timeout(Duration::from_secs(10));
 

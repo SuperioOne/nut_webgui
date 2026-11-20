@@ -6,7 +6,11 @@ use crate::{
 use chrono::{DateTime, Utc};
 use core::net::IpAddr;
 use serde::{Serialize, ser::SerializeStruct};
-use std::{borrow::Borrow, collections::HashMap, sync::Arc};
+use std::{
+  borrow::Borrow,
+  collections::{BTreeMap, HashMap},
+  sync::Arc,
+};
 use tokio::sync::RwLock;
 use upsmc::{
   CmdName, UpsName, Value, VarName, client::NutPoolClient, ups_status::UpsStatus,
@@ -18,7 +22,7 @@ pub type UpsdNamespace = Arc<str>;
 /// Server internal state.
 pub struct ServerState {
   /// Connected UPSD servers.
-  pub upsd_servers: HashMap<UpsdNamespace, Arc<UpsdState>>,
+  pub upsd_servers: BTreeMap<UpsdNamespace, Arc<UpsdState>>,
 
   /// Shared description table for UPS variables and commands.
   pub shared_desc: RwLock<HashMap<DescriptionKey, Box<str>>>,
@@ -53,7 +57,7 @@ pub struct UpsdState {
 
 pub struct DaemonState {
   /// Ups devices
-  pub devices: HashMap<UpsName, DeviceEntry>,
+  pub devices: BTreeMap<UpsName, DeviceEntry>,
 
   /// Last device sync timestamp
   pub last_device_sync: Option<DateTime<Utc>>,
@@ -183,7 +187,7 @@ impl DaemonState {
   #[inline]
   pub fn new() -> DaemonState {
     DaemonState {
-      devices: HashMap::new(),
+      devices: BTreeMap::new(),
       last_device_sync: None,
       prot_ver: None,
       status: ConnectionStatus::NotReady,

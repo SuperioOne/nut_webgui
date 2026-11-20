@@ -7,7 +7,14 @@ use axum::{
   extract::{Path, State},
   response::{IntoResponse, Response},
 };
-use std::sync::Arc;
+use serde::ser::SerializeSeq;
+use std::{collections::BTreeMap, sync::Arc};
+use upsmc::UpsName;
+
+// NOTE: Wrapper type to implement Serialize trait over values() iterator.
+struct DeviceList<'a> {
+  list: &'a BTreeMap<UpsName, DeviceEntry>,
+}
 
 pub async fn get(
   State(state): State<Arc<ServerState>>,
@@ -16,8 +23,25 @@ pub async fn get(
   let upsd = extract_upsd!(state, namespace.as_ref())?;
   let daemon_state = upsd.daemon_state.read().await;
 
-  let mut device_refs: Vec<&DeviceEntry> = daemon_state.devices.values().collect();
-  device_refs.sort_by(|r, l| r.name.cmp(&l.name));
+  Ok(
+    Json(DeviceList {
+      list: &daemon_state.devices,
+    })
+    .into_response(),
+  )
+}
 
-  Ok(Json(device_refs).into_response())
+impl serde::Serialize for DeviceList<'_> {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    let mut list = serializer.serialize_seq(Some(self.list.len()))?;
+
+    for entry in self.list.values() {
+      list.serialize_element(&entry)?;
+    }
+
+    list.end()
+  }
 }

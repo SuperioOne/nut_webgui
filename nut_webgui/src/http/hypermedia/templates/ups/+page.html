@@ -72,7 +72,7 @@
                   </span>
                 {%- when None -%}
               {%- endmatch -%}
-              {%- for status_detail in crate::http::hypermedia::util::ups_status::StatusDetailIter::new(*device.status) -%}
+              {%- for status_detail in device.iter_status() -%}
                 <span 
                   class="badge badge-outline text-nowrap text-xs tooltip tooltip-bottom {{status_detail.class.as_badge()}}" 
                   data-tip="{{status_detail.desc}}"

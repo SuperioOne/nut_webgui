@@ -21,8 +21,8 @@
           placeholder="Fuzzy search by device name"
         />
       </label>
-      {%- if namespaces.len() > 1 -%}
-        <div class="filter">
+      {%- if !state.upsd_servers.is_empty() -%}
+        <div class="filter gap-0.5">
           <input
             class="btn btn-sm btn-square filter-reset"
             hx-get="{{base_path}}/?section={{HomePageSection::DeviceContainer}}"
@@ -34,21 +34,19 @@
             value=""
             aria-label="x"
           />
-          {%- for value in namespaces -%}
+          {%- for name in state.upsd_servers.keys() -%}
             <input
-              aria-label="{{value}}"
+              aria-label="{{name}}"
               class="btn btn-sm"
               hx-get="{{base_path}}/?section={{HomePageSection::DeviceContainer}}"
               hx-indicator="#indicator"
-              hx-push-url="{{base_path}}/?namespace={{value | urlencode_strict}}"
+              hx-push-url="{{base_path}}/?namespace={{name | urlencode_strict}}"
               hx-target="#device_container"
               name="namespace"
               type="radio"
-              value="{{value | urlencode_strict}}"
-              {% if let Some(active) = active_namespace -%}
-                {%- if active == value %}
+              value="{{name | urlencode_strict}}"
+              {% if let Some(active) = active_namespace && *active == name.as_ref() -%}
               checked
-                {% endif -%}
               {%- endif %}
             />
           {%- endfor -%}
@@ -72,9 +70,13 @@
                 No device available
               </div>
             {%- else -%}
-              <nut-search-list for="device_filter" id="device_list" class="flex flex-col gap-1 list-none">
+              <nut-search-list
+                class="flex flex-col gap-1 list-none"
+                for="device_filter"
+                id="device_list"
+              >
                 {%- for row in rows_html -%}
-                  {{row.html | safe}}
+                  {{row | safe}}
                 {%- endfor -%}
               </nut-search-list>
             {%- endif -%}

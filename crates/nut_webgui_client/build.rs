@@ -122,6 +122,7 @@ fn bundle() -> Result<(), Box<dyn core::error::Error>> {
   create_asset(&outdir, "NUTWG_CLIENT_ICON", "icon.svg")?;
   create_asset(&outdir, "NUTWG_CLIENT_SPRITE_SHEET", "feather-sprite.svg")?;
 
+  println!("cargo::rerun-if-changed=../../nut_webgui/src/http/hypermedia/templates");
   println!("cargo::rerun-if-changed=src");
   println!("cargo::rerun-if-changed=static");
   println!("cargo::rerun-if-changed=build.js");

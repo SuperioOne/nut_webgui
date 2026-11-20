@@ -3,6 +3,7 @@ use super::{
   unit::{
     ApparentPower, Approx, Celcius, OneOf, Percentage, RealPower, Second, UnitDisplay, Voltage,
   },
+  ups_status::StatusDetailIter,
 };
 use crate::state::DeviceEntry;
 use askama::PrimitiveType;
@@ -220,5 +221,10 @@ impl DeviceEntry {
 
     value.set_semantic_type(SemanticType::from_bounds(value.get(), low, high));
     Some(value)
+  }
+
+  #[inline]
+  pub const fn iter_status(&self) -> StatusDetailIter {
+    StatusDetailIter::new(self.status)
   }
 }

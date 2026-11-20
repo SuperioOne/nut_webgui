@@ -13,7 +13,7 @@ pub struct StatusDetailIter {
   inner: upsmc::ups_status::Iter,
 }
 
-impl<'a> StatusDetailIter {
+impl StatusDetailIter {
   #[inline]
   pub const fn new(status: UpsStatus) -> Self {
     Self {
@@ -22,7 +22,7 @@ impl<'a> StatusDetailIter {
   }
 }
 
-impl<'a> Iterator for StatusDetailIter {
+impl Iterator for StatusDetailIter {
   type Item = StatusDetail;
 
   fn next(&mut self) -> Option<Self::Item> {

@@ -2,6 +2,7 @@
 /* This is actually disgusting */
 @source "../../../nut_webgui/src/http/hypermedia/**/*.{rs,html}";
 
+
 @theme {
   --breakpoint-xs: 30rem;
 }
@@ -115,17 +116,16 @@
     @apply bg-base-200 rounded-box shadow-md text-base-content p-6;
   }
 
+  .list-item-card {
+    @apply bg-base-200 rounded-box shadow-md text-base-content p-4;
+  }
+
   .feather {
     stroke: currentColor;
     stroke-width: 2;
     stroke-linecap: round;
     stroke-linejoin: round;
     fill: none;
-  }
-
-  .border-daisy {
-    border-style: dashed;
-    border-color: color-mix(in oklab, currentColor 10%, #0000);
   }
 
   .divide-daisy > :not(:last-child) {
