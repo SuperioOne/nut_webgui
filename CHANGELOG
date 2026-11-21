@@ -1,3 +1,29 @@
+# v0.11.0 - November 21, 2026
+
+### Fixed
+- High-precision decimal values are now formatted as human-readable numbers with
+  two decimal places on the UI. This does not affect the variable list, the data
+  API, or the metrics; they continue to use high-precision values.
+- upsmc applies a timeout constraint (poll_freq) to every stage of the UPSD
+  connection (DNS resolution, TLS handshake, opening a TCP socket, etc.).
+
+### Added
+- All temperature readings (ambient, battery, ups) are now displayed separately.
+  Note: Some UPS devices with a single sensor may show duplicate temperature
+  values because some drivers redundantly set both `ups.temperature` and
+  `battery.temperature` to the same value.
+
+### Changed
+- The UPS list no longer clears when UPSD connections are down. Instead, devices
+  are marked as `NOCOMM` (no communication) until the UPSD connection is
+  re-established.
+- `/api/<namespace>` endpoints now return an empty or last-known device list
+  instead of a service unavailable error when the UPSD connection is down.
+- The readiness probe now returns READY (200) instead of NOT-READY (503) when
+  all UPSD connections are down. It is now only meant for server's own
+  readiness, not that of the UPSD.
+- Reduced padding on the UPS list to make it visually more compact.
+
 ## v0.10.6 - November 15, 2026
 
 ### Fixed
