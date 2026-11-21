@@ -1,4 +1,4 @@
-# v0.11.0 - November 21, 2026
+## v0.11.0 - November 21, 2026
 
 ### Fixed
 - High-precision decimal values are now formatted as human-readable numbers with
