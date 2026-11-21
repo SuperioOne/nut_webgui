@@ -17,6 +17,7 @@ ENABLE_CONTAINER_IMAGE=
 GITHUB_RELEASE_TARGETS=
 FORGEJO_RELEASE_TARGETS=
 OCI_REGISTRIES=
+ENV_FILE=
 
 verify_publish_target() {
     _ALIAS="$(echo "$1" | awk -F "=" '{print $1}')"
@@ -226,6 +227,9 @@ OPTIONS
   --enable-container-image
         Enable container image build only if enabled architectures supports it.
 
+  --env-file <Path>
+        Environment file path to source.
+
   --release-github <ALIAS>=<OWNER>/<REPO>
         Add a GitHub repo as a release target.
         ENV variables for credentials:
@@ -319,6 +323,16 @@ do
             verify_publish_target "$1"
             set_target_registry "$1"
             ;;
+
+        --env-file)
+            shift
+            if [ -n "$1" ]; then
+                ENV_FILE="$1"
+            else
+                echo "--env-file: Missing or empty path."
+                exit 1;
+            fi
+            ;;
         --help)
             print_help
             exit 1
@@ -405,6 +419,7 @@ TARGETS                  := $TARGETS
 VERSION                  := $VERSION
 VERSION_MAJOR            := $VERSION_MAJOR
 VERSION_MINOR            := $VERSION_MINOR
+ENV_FILE                 := $ENV_FILE
 
 EOF
 )"

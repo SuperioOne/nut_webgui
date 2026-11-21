@@ -17,6 +17,10 @@ PROJECT_SRC       := ./Cargo.toml \
 
 -include .config.mk
 
+ifdef ENV_FILE
+include $(ENV_FILE)
+endif
+
 .PHONY: help
 help:
 	@echo "BASIC RECIPES"
